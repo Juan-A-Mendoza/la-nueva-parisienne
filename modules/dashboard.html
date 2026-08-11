@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Dashboard Gerencial - La Nueva Parisienne</title>
-  <meta name="description" content="Panel de Control e Inteligencia de Negocios para La Nueva Parisienne. KPIs financieros, tendencias de ventas y movimientos recientes.">
+  <meta name="description" content="Panel de Control e Inteligencia de Negocios para La Nueva Parisienne. KPIs financieros, tendencias de ventas y movimientos recientes (CU-02).">
   
   <!-- Hojas de Estilos Separadas (CSS3 Estricto) -->
   <link rel="stylesheet" href="../css/main.css">
@@ -21,7 +21,7 @@
         <div class="dashboard-brand-icon" aria-hidden="true">📊</div>
         <div>
           <h1 class="brand-title" style="font-size: 1.3rem;">La Nueva Parisienne</h1>
-          <span class="sub-title">Módulo 4: Dashboard Gerencial & Inteligencia de Negocios</span>
+          <span class="sub-title">Módulo 4: Dashboard Gerencial & Inteligencia de Negocios (CU-02)</span>
         </div>
       </div>
 
@@ -38,7 +38,8 @@
         <button id="btnExportReport" type="button" class="btn-export-report">
           <span>📄 Exportar Reporte</span>
         </button>
-        <button id="logoutBtn" class="btn-pos-logout">Cerrar Sesión</button>
+        <!-- Botón Exclusivo para Cerrar Sesión -->
+        <button id="logoutBtn" class="btn-pos-logout" title="Cerrar sesión activa y volver al login">Cerrar Sesión</button>
       </div>
     </header>
 
@@ -46,7 +47,7 @@
     <nav class="breadcrumbs-container" aria-label="Migas de pan">
       <ol class="breadcrumbs-list">
         <li class="breadcrumb-item">
-          <a href="../index.html">🏠 Inicio</a>
+          <a href="dashboard.html">🏠 Inicio (Panel Central)</a>
         </li>
         <li class="breadcrumb-separator">/</li>
         <li class="breadcrumb-item active" aria-current="page">Dashboard Gerencial</li>
@@ -62,13 +63,13 @@
         
         <div class="dashboard-kpi-card">
           <div class="kpi-card-header">
-            <span class="kpi-card-label">Ingresos Totales</span>
+            <span class="kpi-card-label">Ingresos Totales (Mensual)</span>
             <div class="kpi-card-icon">💰</div>
           </div>
           <div id="kpiRevenueVal" class="kpi-card-value">$4,850.00</div>
           <div class="kpi-card-footer">
             <span class="growth-badge positive">▲ +14.8%</span>
-            <span class="growth-subtitle">vs. período anterior</span>
+            <span class="growth-subtitle">vs. mes anterior</span>
           </div>
         </div>
 
@@ -80,7 +81,7 @@
           <div id="kpiOrdersVal" class="kpi-card-value">248 órdenes</div>
           <div class="kpi-card-footer">
             <span class="growth-badge positive">▲ +8.2%</span>
-            <span class="growth-subtitle">promedio 35/día</span>
+            <span class="growth-subtitle">volumen mensual CU-02</span>
           </div>
         </div>
 
@@ -111,12 +112,12 @@
       </section>
 
 
-      <!-- SECCIÓN 2: ÁREA CENTRAL - GRÁFICO DE TENDENCIA DE VENTAS -->
+      <!-- SECCIÓN 2: ÁREA CENTRAL - GRÁFICO DE TENDENCIA DE VENTAS (CU-02) -->
       <section class="chart-section-card" aria-label="Gráfico de Tendencia de Ventas">
         <div class="chart-card-header">
           <div class="chart-title-group">
-            <h2>📈 Tendencia de Ventas y Rendimiento Diario</h2>
-            <p>Comparativa entre ingresos brutos por ventas y costos de materias primas/producción.</p>
+            <h2>📈 Tendencia de Ventas y Rendimiento Mensual (CU-02)</h2>
+            <p>Comparativa entre volumen de ventas brutas e ingresos contra costos de materias primas y horneado.</p>
           </div>
 
           <div class="chart-legend-pills">

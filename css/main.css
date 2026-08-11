@@ -1,56 +1,57 @@
 /* ==========================================================================
    LA NUEVA PARISIENNE - HOJA DE ESTILOS PRINCIPAL (MAIN.CSS)
    Sistema de Diseño: Parisian Chic & Modern Management Information System
+   Identidad Visual: Tonalidades Cálidas Artesanales (Anti-Fatiga Visual)
    ========================================================================== */
 
-@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400&family=Plus+Jakarta Sans:wght@300;400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400&family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap');
 
 :root {
-  /* Paleta de Colores Curada */
-  --bg-main: #FAF7F2;
-  --bg-surface: #FFFFFF;
-  --bg-card: rgba(255, 255, 255, 0.88);
-  --bg-glass: rgba(255, 255, 255, 0.75);
+  /* PALETA DE COLORES DE LA PANADERÍA (IDENTIDAD VISUAL Y ANTI-FATIGA) */
+  --bg-main: #FAF7F2;            /* Crema Vainilla Suave / Pergamino */
+  --bg-surface: #FFFFFF;         /* Blanco Superficie Puro */
+  --bg-card: rgba(255, 255, 255, 0.92);
+  --bg-glass: rgba(255, 255, 255, 0.80);
   
-  --color-espresso: #2C1D11;
-  --color-espresso-dark: #1A1009;
-  --color-muted: #7A6B5D;
-  --color-light-muted: #A39587;
+  --color-espresso: #2C1D11;     /* Café Espresso Profundo (Texto / Marca) */
+  --color-espresso-dark: #1A1009;/* Café Oscuro Tostado */
+  --color-muted: #7A6B5D;        /* Marrón Arena Muted (Anti-fatiga) */
+  --color-light-muted: #A39587;  /* Gris Cálido Claro */
   
+  --color-trigo: #D49B54;        /* Trigo Dorado Artesanal (Acento Principal) */
   --color-gold: #D49B54;
-  --color-gold-light: #F3E5D0;
-  --color-gold-dark: #B57B36;
-  --color-terracotta: #C85A32;
-  --color-success: #2E7D32;
-  --color-danger: #D32F2F;
+  --color-mantequilla: #F5E6D3;  /* Mantequilla Suave */
+  --color-gold-light: #F3E5D0;   /* Crema Trigo Suave */
+  --color-gold-dark: #B57B36;    /* Trigo Dorado Tostado */
+  --color-terracotta: #C85A32;   /* Terracota Horneada */
+  --color-success: #2E7D32;      /* Verde Hoja Salvia */
+  --color-danger: #D32F2F;       /* Rojo Carmín Alert */
 
-  /* Gradientes de Lujo */
+  /* GRADIENTES ARTESANALES */
   --gradient-gold: linear-gradient(135deg, #E6B573 0%, #D49B54 50%, #B57B36 100%);
   --gradient-espresso: linear-gradient(145deg, #2C1D11 0%, #1A1009 100%);
   --gradient-bg: radial-gradient(circle at 10% 20%, #FFFDF9 0%, #F5EDE0 90%);
   
-  /* Sombras y Efectos */
+  /* SOMBRAS Y BORDES SUAVES */
   --shadow-subtle: 0 4px 20px rgba(44, 29, 17, 0.04);
   --shadow-medium: 0 12px 32px rgba(44, 29, 17, 0.08);
   --shadow-floating: 0 24px 48px rgba(44, 29, 17, 0.14);
   --shadow-gold: 0 8px 25px rgba(212, 155, 84, 0.3);
 
-  /* BORDES Y GLASSMORPHISM */
   --border-glass: 1px solid rgba(212, 155, 84, 0.22);
   --border-subtle: 1px solid rgba(44, 29, 17, 0.08);
   --backdrop-blur: blur(16px);
 
-  /* TIPOGRAFÍA */
+  /* TIPOGRAFÍA CORPORATIVA */
   --font-serif: 'Playfair Display', Georgia, serif;
   --font-sans: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
 
-  /* RADIO DE BORDES */
+  /* RADIOS Y TRANSICIONES */
   --radius-sm: 8px;
   --radius-md: 14px;
   --radius-lg: 24px;
   --radius-pill: 999px;
 
-  /* TRANSICIONES */
   --ease-smooth: cubic-bezier(0.25, 0.8, 0.25, 1);
   --transition-fast: 0.2s var(--ease-smooth);
   --transition-normal: 0.35s var(--ease-smooth);
@@ -91,8 +92,26 @@ body {
   outline-offset: 3px;
 }
 
-/* BOTONES GLOBALES BASE */
-button {
+/* ==========================================================================
+   REQUERIMIENTO NO FUNCIONAL: USABILIDAD Y BOTONES TÁCTILES (MIN 48x48 PX)
+   Todos los elementos interactivos principales deben cumplir el estándar táctil
+   ========================================================================== */
+button,
+.touch-target,
+.keypad-btn,
+.category-tab-btn,
+.order-type-btn,
+.btn-process-payment,
+.btn-oven-action,
+.btn-load-oven,
+.btn-add-product,
+.qty-btn,
+.filter-pill-btn {
+  min-height: 48px;
+  min-width: 48px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   font-family: var(--font-sans);
   border: none;
   cursor: pointer;
@@ -120,12 +139,12 @@ button:active {
 
 /* ==========================================================================
    COMPONENTE GLOBAL: MIGAS DE PAN (BREADCRUMBS)
-   Navegación jerárquica limpia y profesional para todas las vistas principales
+   Enrutamiento semántico hacia el Panel Principal (Dashboard) sin alterar la sesión
    ========================================================================== */
 .breadcrumbs-container {
   display: flex;
   align-items: center;
-  padding: 0.6rem 2rem;
+  padding: 0.65rem 2rem;
   background: var(--bg-surface);
   border-bottom: 1px dashed rgba(44, 29, 17, 0.08);
   font-size: 0.85rem;

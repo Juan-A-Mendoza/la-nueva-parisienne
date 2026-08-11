@@ -9,29 +9,29 @@ const STORAGE_KEY = 'LN_PARISIENNE_SESSION';
 const USERS_DATABASE = [
   {
     id: 'usr_baker',
-    name: 'Jean-Luc Dubois',
+    name: 'Juan',
     role: 'Chef de Cuisine / Maestro Panadero',
     roleCode: 'MAESTRO_PANADERO',
     icon: '👨‍🍳',
-    pin: '4321',
+    pin: '1234',
     description: 'Gestión de hornos, recetas, orden del día y preparación de masa.',
     redirectUrl: 'modules/kitchen.html',
     allowedModules: ['kitchen', 'inventory']
   },
   {
     id: 'usr_cashier',
-    name: 'Élodie Martin',
+    name: 'Enrique',
     role: 'Cajera Principal / POS',
     roleCode: 'CAJERO',
     icon: '👩‍💼',
-    pin: '1111',
+    pin: '1234',
     description: 'Facturación directa a clientes, cobros rápidos y apertura de caja.',
     redirectUrl: 'modules/pos.html',
     allowedModules: ['pos']
   },
   {
     id: 'usr_manager',
-    name: 'Antoine Moreau',
+    name: 'Henry',
     role: 'Gerente General',
     roleCode: 'GERENTE_GENERAL',
     icon: '👨‍💼',
@@ -42,11 +42,11 @@ const USERS_DATABASE = [
   },
   {
     id: 'usr_accountant',
-    name: 'Sophie Laurent',
+    name: 'Sebastian',
     role: 'Contadora & Administradora',
     roleCode: 'CONTADOR',
     icon: '📊',
-    pin: '7777',
+    pin: '1234',
     description: 'Auditoría financiera, margen de ganancias y órdenes de compra.',
     redirectUrl: 'modules/accounting.html',
     allowedModules: ['accounting', 'suppliers', 'inventory', 'settings']

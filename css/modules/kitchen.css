@@ -29,8 +29,8 @@
 }
 
 .kitchen-brand-icon {
-  width: 44px;
-  height: 44px;
+  width: 48px;
+  height: 48px;
   background: var(--gradient-espresso);
   color: var(--color-gold);
   border-radius: var(--radius-pill);
@@ -153,7 +153,6 @@
   box-shadow: var(--shadow-medium);
 }
 
-/* Alerta visual de horneado completado */
 .oven-card.ready-alert {
   border: 2px solid var(--color-gold);
   box-shadow: var(--shadow-gold);
@@ -210,7 +209,6 @@
   color: var(--color-muted);
 }
 
-/* Medidores de Temperatura y Tiempo */
 .oven-metrics-row {
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -242,7 +240,6 @@
   font-family: var(--font-sans);
 }
 
-/* Barra de Progreso del Horneado */
 .baking-progress-container {
   width: 100%;
 }
@@ -268,6 +265,7 @@
 }
 
 .btn-oven-action {
+  min-height: 48px;
   width: 100%;
   padding: 0.75rem;
   border-radius: var(--radius-md);
@@ -352,7 +350,6 @@
   gap: 0.5rem;
   font-size: 0.88rem;
   color: var(--color-espresso);
-
 }
 
 .kds-item-qty {
@@ -393,6 +390,7 @@
 }
 
 .btn-load-oven {
+  min-height: 48px;
   width: 100%;
   padding: 0.65rem;
   border-radius: var(--radius-md);

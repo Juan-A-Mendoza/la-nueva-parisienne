@@ -51,8 +51,8 @@
 }
 
 .pos-brand-icon {
-  width: 44px;
-  height: 44px;
+  width: 48px;
+  height: 48px;
   background: var(--gradient-espresso);
   color: var(--color-gold);
   border-radius: var(--radius-pill);
@@ -112,7 +112,8 @@
 }
 
 .btn-pos-logout {
-  padding: 0.5rem 1rem;
+  min-height: 48px;
+  padding: 0.5rem 1.25rem;
   background: rgba(200, 90, 50, 0.1);
   color: var(--color-terracotta);
   border-radius: var(--radius-pill);
@@ -148,6 +149,7 @@
 
 .pos-search-input {
   width: 100%;
+  height: 48px;
   padding: 0.85rem 1rem 0.85rem 3rem;
   border-radius: var(--radius-pill);
   border: var(--border-subtle);
@@ -164,7 +166,7 @@
   box-shadow: var(--shadow-gold);
 }
 
-/* PESTAÑAS DE CATEGORÍAS */
+/* PESTAÑAS DE CATEGORÍAS (TOUCH-FRIENDLY MIN 48PX) */
 .category-tabs-container {
   display: flex;
   gap: 0.75rem;
@@ -174,6 +176,8 @@
 }
 
 .category-tab-btn {
+  min-height: 48px;
+  min-width: 120px;
   display: flex;
   align-items: center;
   gap: 0.5rem;
@@ -299,12 +303,12 @@
 }
 
 .btn-add-product {
-  width: 34px;
-  height: 34px;
+  min-width: 48px;
+  min-height: 48px;
   border-radius: 50%;
   background: var(--gradient-gold);
   color: var(--color-espresso);
-  font-size: 1.1rem;
+  font-size: 1.2rem;
   font-weight: 700;
   display: flex;
   align-items: center;
@@ -351,10 +355,11 @@
 }
 
 .btn-clear-cart {
-  font-size: 0.8rem;
+  min-height: 48px;
+  font-size: 0.85rem;
   font-weight: 600;
   color: var(--color-terracotta);
-  padding: 0.35rem 0.65rem;
+  padding: 0.35rem 0.85rem;
   border-radius: var(--radius-sm);
 }
 
@@ -371,10 +376,11 @@
 }
 
 .order-type-btn {
+  min-height: 48px;
   flex: 1;
   padding: 0.4rem 0.6rem;
   border-radius: var(--radius-pill);
-  font-size: 0.78rem;
+  font-size: 0.82rem;
   font-weight: 600;
   color: var(--color-muted);
   text-align: center;
@@ -416,13 +422,12 @@
   gap: 0.85rem;
   padding: 0.85rem 0;
   border-bottom: 1px dashed rgba(44, 29, 17, 0.08);
-  animation: fadeIn 0.25s ease;
 }
 
 .cart-item-icon {
   font-size: 1.5rem;
-  width: 40px;
-  height: 40px;
+  width: 44px;
+  height: 44px;
   background: var(--bg-main);
   border-radius: var(--radius-sm);
   display: flex;
@@ -461,12 +466,12 @@
 }
 
 .qty-btn {
-  width: 24px;
-  height: 24px;
+  min-width: 48px;
+  min-height: 48px;
   border-radius: 50%;
   background: #FFFFFF;
   color: var(--color-espresso);
-  font-size: 0.9rem;
+  font-size: 1.1rem;
   font-weight: 700;
   display: flex;
   align-items: center;
@@ -480,9 +485,9 @@
 }
 
 .qty-count {
-  font-size: 0.85rem;
+  font-size: 0.95rem;
   font-weight: 700;
-  min-width: 18px;
+  min-width: 22px;
   text-align: center;
 }
 
@@ -495,9 +500,10 @@
 }
 
 .btn-remove-item {
+  min-width: 48px;
+  min-height: 48px;
   color: var(--color-light-muted);
-  font-size: 0.9rem;
-  padding: 0.25rem;
+  font-size: 1.1rem;
 }
 
 .btn-remove-item:hover {
@@ -536,15 +542,17 @@
 }
 
 .discount-select {
+  height: 48px;
   padding: 0.25rem 0.5rem;
   border-radius: var(--radius-sm);
   border: var(--border-subtle);
-  font-size: 0.8rem;
+  font-size: 0.85rem;
   background: #FFFFFF;
   color: var(--color-espresso);
 }
 
 .btn-process-payment {
+  min-height: 48px;
   width: 100%;
   margin-top: 1rem;
   padding: 1rem;
@@ -573,7 +581,7 @@
   box-shadow: none;
 }
 
-/* MODAL DE COBRO (PAYMENT MODAL) */
+/* MODAL DE COBRO */
 .payment-modal-card {
   max-width: 500px;
   padding: 2rem;
@@ -586,13 +594,6 @@
   border-radius: var(--radius-md);
   text-align: center;
   margin-bottom: 1.5rem;
-}
-
-.payment-total-banner span {
-  font-size: 0.85rem;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-  opacity: 0.85;
 }
 
 .payment-total-banner h2 {
@@ -609,6 +610,7 @@
 }
 
 .method-btn {
+  min-height: 48px;
   padding: 0.85rem 0.5rem;
   border-radius: var(--radius-md);
   border: var(--border-subtle);
@@ -644,6 +646,7 @@
 }
 
 .fast-cash-btn {
+  min-height: 48px;
   padding: 0.5rem;
   border-radius: var(--radius-sm);
   background: #FFFFFF;
@@ -658,19 +661,8 @@
   border-color: var(--color-gold);
 }
 
-.tender-input-group {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-bottom: 1rem;
-}
-
-.tender-input-group label {
-  font-weight: 700;
-  font-size: 0.9rem;
-}
-
 .tender-input {
+  height: 48px;
   width: 140px;
   padding: 0.5rem 0.85rem;
   border-radius: var(--radius-md);
@@ -697,50 +689,10 @@
   color: var(--color-success);
 }
 
-.change-amount.insufficient {
-  color: var(--color-danger);
-}
-
-/* COMPROBANTE TICKET FRENCH BAKERY STYLE */
 .receipt-card {
   max-width: 400px;
   background: #FFFFFF;
   border-radius: var(--radius-md);
   padding: 2rem 1.75rem;
-  font-family: monospace, monospace;
-}
-
-.receipt-header {
-  text-align: center;
-  padding-bottom: 1rem;
-  border-bottom: 2px dashed #2C1D11;
-  margin-bottom: 1rem;
-}
-
-.receipt-header h3 {
-  font-family: var(--font-serif);
-  font-size: 1.5rem;
-}
-
-.receipt-items-table {
-  width: 100%;
-  margin-bottom: 1rem;
-  font-size: 0.85rem;
-}
-
-.receipt-items-table td {
-  padding: 0.35rem 0;
-}
-
-.receipt-footer {
-  text-align: center;
-  margin-top: 1.25rem;
-  padding-top: 1rem;
-  border-top: 2px dashed #2C1D11;
-  font-size: 0.8rem;
-}
-
-@keyframes fadeIn {
-  from { opacity: 0; transform: translateY(4px); }
-  to { opacity: 1; transform: translateY(0); }
+  font-family: monospace;
 }
