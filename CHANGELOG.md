@@ -6,6 +6,20 @@ El formato está basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1
 
 ---
 
+## [2.0.1] - 2026-08-11 (Poblado de Base de Datos MySQL y Endpoint de Perfiles PHP)
+
+### 🚀 Añadido (Added)
+- **Script SQL de Datos Semilla ([database/seed_data.sql](file:///C:/Users/juana/.gemini/antigravity-ide/scratch/la-nueva-parisienne/database/seed_data.sql))**:
+  - Sentencias de inserción `INSERT INTO` para poblar la base de datos relacional MySQL `la_nueva_parisienne`.
+  - Inserción de perfiles de empleados: **Carlos Mendoza** (*Maestro Panadero*), **Ana Ramírez** (*Personal de Caja*), junto con Juan (*Gerente*), Enrique (*Chef*), Henry (*Cajero*) y Sebastian (*Contador*), todos con PIN de acceso unificado `1234`.
+  - Inserción de catálogo de insumos, productos de panadería, proveedores homologados, órdenes de compra y plan de cuentas PUC.
+- **API Endpoint de Consulta de Perfiles ([api/auth/get_profiles.php](file:///C:/Users/juana/.gemini/antigravity-ide/scratch/la-nueva-parisienne/api/auth/get_profiles.php))**:
+  - Endpoint PHP que consulta la tabla `usuarios` mediante PDO `JOIN roles` y devuelve un objeto JSON estructurado con la lista de usuarios activos para la pantalla de inicio.
+- **Integración Asíncrona en Frontend ([js/core/session-store.js](file:///C:/Users/juana/.gemini/antigravity-ide/scratch/la-nueva-parisienne/js/core/session-store.js) y [js/modules/auth.js](file:///C:/Users/juana/.gemini/antigravity-ide/scratch/la-nueva-parisienne/js/modules/auth.js))**:
+  - Implementación de `getProfilesAsync()` en `SessionStore` para renderizar dinámicamente las tarjetas de usuario desde MySQL con fallback resiliente.
+
+---
+
 ## [2.0.0] - 2026-08-11 (Migración Arquitectónica a PHP & Base de Datos MySQL)
 
 ### 🚀 Añadido (Added)

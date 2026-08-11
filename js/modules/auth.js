@@ -1,15 +1,15 @@
 /* ==========================================================================
    LA NUEVA PARISIENNE - CONTROLADOR INTERACTIVO DE AUTENTICACIÓN (AUTH.JS)
-   Manejo de selección de perfiles, modal de PIN táctil y validación API/MySQL
+   Manejo de selección de perfiles, modal de PIN táctil y consulta API/MySQL
    ========================================================================== */
 
 import { SessionStore } from '../core/session-store.js';
 
-document.addEventListener('DOMContentLoaded', () => {
+document.addEventListener('DOMContentLoaded', async () => {
   let selectedUserId = null;
   let enteredPin = '';
 
-  const profileGrid = document.getElementById('profileGrid');
+  const profileGrid = document.getElementById('profilesGrid') || document.getElementById('profileGrid');
   const pinModal = document.getElementById('pinModal');
   const closeModalBtn = document.getElementById('closeModalBtn');
   const selectedUserAvatar = document.getElementById('selectedUserAvatar');
@@ -19,12 +19,23 @@ document.addEventListener('DOMContentLoaded', () => {
   const pinKeypad = document.getElementById('pinKeypad');
   const pinErrorAlert = document.getElementById('pinErrorAlert');
 
-  // Renderizar tarjetas de perfiles
-  const profiles = SessionStore.getProfiles();
+  // Cargar perfiles de forma asíncrona desde MySQL o fallback local
+  const profiles = await SessionStore.getProfilesAsync();
   renderProfiles(profiles);
 
   function renderProfiles(profileList) {
+    if (!profileGrid) return;
     profileGrid.innerHTML = '';
+    
+    if (!profileList || profileList.length === 0) {
+      profileGrid.innerHTML = `
+        <div style="grid-column: 1/-1; text-align: center; padding: 2rem; color: var(--color-muted);">
+          No se encontraron perfiles de usuario en la base de datos MySQL.
+        </div>
+      `;
+      return;
+    }
+
     profileList.forEach(profile => {
       const card = document.createElement('article');
       card.className = 'user-card';

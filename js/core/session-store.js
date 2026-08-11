@@ -8,10 +8,43 @@ const STORAGE_KEY = 'LN_PARISIENNE_SESSION';
 // Base de datos simulada de empleados y perfiles (Fallback local)
 const USERS_DATABASE = [
   {
+    id: 'usr_carlos',
+    name: 'Carlos Mendoza',
+    role: 'Maestro Panadero / Chef',
+    roleCode: 'BAKER',
+    icon: '👨‍🍳',
+    pin: '1234',
+    description: 'Gestión de hornos, recetas, orden del día y preparación de masa.',
+    redirectUrl: 'modules/kitchen.html',
+    allowedModules: ['kitchen', 'inventory']
+  },
+  {
+    id: 'usr_ana',
+    name: 'Ana Ramírez',
+    role: 'Personal de Caja / POS',
+    roleCode: 'CASHIER',
+    icon: '👩‍💼',
+    pin: '1234',
+    description: 'Facturación directa a clientes, cobros rápidos y apertura de caja.',
+    redirectUrl: 'modules/pos.html',
+    allowedModules: ['pos']
+  },
+  {
+    id: 'usr_manager',
+    name: 'Juan',
+    role: 'Gerente General',
+    roleCode: 'ADMIN',
+    icon: '👨‍💼',
+    pin: '1234',
+    description: 'Acceso total a KPIs, contabilidad, producción y personal.',
+    redirectUrl: 'modules/dashboard.html',
+    allowedModules: ['all']
+  },
+  {
     id: 'usr_baker',
     name: 'Enrique',
     role: 'Chef de Cuisine / Maestro Panadero',
-    roleCode: 'MAESTRO_PANADERO',
+    roleCode: 'BAKER',
     icon: '👨‍🍳',
     pin: '1234',
     description: 'Gestión de hornos, recetas, orden del día y preparación de masa.',
@@ -22,7 +55,7 @@ const USERS_DATABASE = [
     id: 'usr_cashier',
     name: 'Henry',
     role: 'Cajero Principal / POS',
-    roleCode: 'CAJERO',
+    roleCode: 'CASHIER',
     icon: '👨‍💼',
     pin: '1234',
     description: 'Facturación directa a clientes, cobros rápidos y apertura de caja.',
@@ -30,21 +63,10 @@ const USERS_DATABASE = [
     allowedModules: ['pos']
   },
   {
-    id: 'usr_manager',
-    name: 'Juan',
-    role: 'Gerente General',
-    roleCode: 'GERENTE_GENERAL',
-    icon: '👨‍💼',
-    pin: '1234',
-    description: 'Acceso total a KPIs, contabilidad, producción y personal.',
-    redirectUrl: 'modules/dashboard.html',
-    allowedModules: ['all']
-  },
-  {
     id: 'usr_accountant',
     name: 'Sebastian',
     role: 'Contador & Administrador',
-    roleCode: 'CONTADOR',
+    roleCode: 'ADMIN',
     icon: '📊',
     pin: '1234',
     description: 'Auditoría financiera, margen de ganancias y órdenes de compra.',
@@ -55,7 +77,26 @@ const USERS_DATABASE = [
 
 export const SessionStore = {
   /**
-   * Obtiene la lista de perfiles configurados
+   * Obtiene la lista de perfiles configurados de forma asíncrona desde MySQL
+   * con fallback a los perfiles locales si la API PHP no responde
+   */
+  async getProfilesAsync() {
+    try {
+      const response = await fetch('api/auth/get_profiles.php');
+      if (response.ok) {
+        const result = await response.json();
+        if (result.success && Array.isArray(result.profiles) && result.profiles.length > 0) {
+          return result.profiles;
+        }
+      }
+    } catch (err) {
+      console.warn('API get_profiles.php no disponible en este entorno. Cargando perfiles locales:', err);
+    }
+    return this.getProfiles();
+  },
+
+  /**
+   * Obtiene la lista de perfiles configurados localmente
    */
   getProfiles() {
     return USERS_DATABASE.map(({ pin, ...profile }) => profile);
