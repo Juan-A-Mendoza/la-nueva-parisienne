@@ -117,8 +117,36 @@ CREATE TABLE IF NOT EXISTS `ventas` (
   `metodo_pago` VARCHAR(50) NOT NULL DEFAULT 'Efectivo',
   `monto_pagado` DECIMAL(10,2) NOT NULL DEFAULT 0.00,
   `cambio` DECIMAL(10,2) NOT NULL DEFAULT 0.00,
+  `tipo_pedido` VARCHAR(50) DEFAULT 'Para Llevar',
   PRIMARY KEY (`id`),
   CONSTRAINT `fk_ventas_usuarios` FOREIGN KEY (`usuario_id`) REFERENCES `usuarios` (`id`) ON DELETE CASCADE ON UPDATE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- ----------------------------------------------------------------------------
+-- 7b. TABLA: ventas_detalle / detalles_venta (Renglones de Ítems Vendidos)
+-- ----------------------------------------------------------------------------
+CREATE TABLE IF NOT EXISTS `ventas_detalle` (
+  `id` INT AUTO_INCREMENT NOT NULL,
+  `venta_id` VARCHAR(50) NOT NULL,
+  `producto_id` VARCHAR(50) NOT NULL,
+  `cantidad` INT NOT NULL DEFAULT 1,
+  `precio_unitario` DECIMAL(10,2) NOT NULL DEFAULT 0.00,
+  `subtotal_linea` DECIMAL(10,2) NOT NULL DEFAULT 0.00,
+  PRIMARY KEY (`id`),
+  CONSTRAINT `fk_ventas_detalle_venta` FOREIGN KEY (`venta_id`) REFERENCES `ventas` (`id`) ON DELETE CASCADE ON UPDATE CASCADE,
+  CONSTRAINT `fk_ventas_detalle_producto` FOREIGN KEY (`producto_id`) REFERENCES `productos` (`id`) ON DELETE CASCADE ON UPDATE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS `detalles_venta` (
+  `id` INT AUTO_INCREMENT NOT NULL,
+  `venta_id` VARCHAR(50) NOT NULL,
+  `producto_id` VARCHAR(50) NOT NULL,
+  `cantidad` INT NOT NULL DEFAULT 1,
+  `precio_unitario` DECIMAL(10,2) NOT NULL DEFAULT 0.00,
+  `subtotal_linea` DECIMAL(10,2) NOT NULL DEFAULT 0.00,
+  PRIMARY KEY (`id`),
+  CONSTRAINT `fk_detalles_venta_venta` FOREIGN KEY (`venta_id`) REFERENCES `ventas` (`id`) ON DELETE CASCADE ON UPDATE CASCADE,
+  CONSTRAINT `fk_detalles_venta_producto` FOREIGN KEY (`producto_id`) REFERENCES `productos` (`id`) ON DELETE CASCADE ON UPDATE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- ----------------------------------------------------------------------------

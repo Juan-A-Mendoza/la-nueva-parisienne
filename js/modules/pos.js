@@ -344,14 +344,69 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
   }
 
-  // 6. Finalización de Venta y Generación de Ticket
-  btnCompleteSale.addEventListener('click', () => {
+  // 6. Finalización de Venta y Generación de Ticket con Persistencia MySQL
+  btnCompleteSale.addEventListener('click', async () => {
+    btnCompleteSale.disabled = true;
+    btnCompleteSale.textContent = 'Procesando Venta...';
+
     paymentModal.classList.remove('active');
-    generateReceipt();
+
+    const { rawSubtotal, discountAmount, taxAmount, total } = calculateTotals();
+    const change = Math.max(0, currentTenderAmount - total);
+    const orderNumberStr = `FAC-2026-${orderCounter}`;
+
+    const orderPayload = {
+      orderNumber: orderNumberStr,
+      userId: session.user.id,
+      subtotal: rawSubtotal,
+      tax: taxAmount,
+      discount: discountAmount,
+      total: total,
+      paymentMethod: selectedPaymentMethod,
+      tenderAmount: currentTenderAmount,
+      changeDue: change,
+      orderType: currentOrderType,
+      items: cart.map(item => ({
+        id: item.product.id,
+        name: item.product.name,
+        quantity: item.quantity,
+        price: item.product.price,
+        subtotal: item.product.price * item.quantity
+      }))
+    };
+
+    let dbConfirmed = false;
+    let dbMessage = '';
+
+    try {
+      const response = await fetch('../api/pos/procesar_venta.php', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(orderPayload)
+      });
+
+      if (response.ok) {
+        const result = await response.json();
+        if (result.success) {
+          dbConfirmed = true;
+          dbMessage = result.message || 'Venta registrada y contabilizada exitosamente en MySQL.';
+        } else {
+          dbMessage = result.message || 'No se pudo guardar la venta en la base de datos.';
+        }
+      }
+    } catch (err) {
+      console.warn('API procesar_venta.php no disponible. Guardando en modo local:', err);
+      dbMessage = 'Operación procesada en modo local (Servidor offline).';
+    }
+
+    btnCompleteSale.disabled = false;
+    btnCompleteSale.textContent = '✓ Confirmar y Finalizar Venta';
+
+    generateReceipt(dbConfirmed, dbMessage);
     receiptModal.classList.add('active');
   });
 
-  function generateReceipt() {
+  function generateReceipt(dbConfirmed = false, dbMessage = '') {
     const { rawSubtotal, discountAmount, taxAmount, total } = calculateTotals();
     const change = Math.max(0, currentTenderAmount - total);
     const now = new Date();
@@ -368,7 +423,18 @@ document.addEventListener('DOMContentLoaded', async () => {
       `;
     });
 
+    const statusBannerHtml = dbConfirmed ? `
+      <div style="background: rgba(46, 125, 50, 0.12); border: 1px solid var(--color-success); border-radius: var(--radius-md); padding: 0.5rem; margin-bottom: 0.75rem; text-align: center; color: var(--color-success); font-weight: 700; font-size: 0.8rem;">
+        ✓ REGISTRADO Y CONTABILIZADO EN MYSQL
+      </div>
+    ` : `
+      <div style="background: rgba(212, 155, 84, 0.12); border: 1px solid var(--color-gold); border-radius: var(--radius-md); padding: 0.5rem; margin-bottom: 0.75rem; text-align: center; color: var(--color-gold-dark); font-weight: 600; font-size: 0.8rem;">
+        ● VENTA COMPLETADA (MODO DE SESIÓN LOCAL)
+      </div>
+    `;
+
     receiptContent.innerHTML = `
+      ${statusBannerHtml}
       <div class="receipt-header">
         <h3>🥖 La Nueva Parisienne</h3>
         <p>Panadería & Repostería Fina</p>

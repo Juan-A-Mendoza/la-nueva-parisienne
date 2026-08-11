@@ -4,6 +4,19 @@ Todos los cambios significativos, nuevas funcionalidades y actualizaciones del s
 
 El formato está basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1.0.0/) y este proyecto se adhiere a [Semantic Versioning](https://semver.org/lang/es/).
 
+## [2.3.0] - 2026-08-11 (Procesamiento y Persistencia de Ventas POS en MySQL)
+
+### 🚀 Añadido (Added)
+- **Tablas Relacionales de Ventas ([database/database.sql](file:///C:/Users/juana/.gemini/antigravity-ide/scratch/la-nueva-parisienne/database/database.sql))**:
+  - Definición completa de las tablas `ventas`, `ventas_detalle` y `detalles_venta` con llaves foráneas y tipos de datos para subtotal, IVA (16%), descuentos, total, método de pago, monto pagado y vuelto.
+- **API Endpoint de Procesamiento de Ventas ([api/pos/procesar_venta.php](file:///C:/Users/juana/.gemini/antigravity-ide/scratch/la-nueva-parisienne/api/pos/procesar_venta.php))**:
+  - Endpoint PHP que procesa peticiones JSON POST desde el frontend, ejecuta transacciones atómicas `beginTransaction()`, inserta el encabezado en `ventas` y los renglones en `ventas_detalle` / `detalles_venta`, descuenta automáticamente el stock en `productos` y genera el asiento contable por partida doble en `asientos_contables` y `asientos_detalle`.
+- **Integración Asíncrona y Confirmación Visual ([js/modules/pos.js](file:///C:/Users/juana/.gemini/antigravity-ide/scratch/la-nueva-parisienne/js/modules/pos.js))**:
+  - Modificación del botón *Facturar / Completar Venta* para enviar los datos del pedido a la API PHP mediante `fetch('../api/pos/procesar_venta.php')`.
+  - Incorporación de banner corporativo de confirmación de registro exitoso en MySQL (`✓ REGISTRADO Y CONTABILIZADO EN MYSQL`) dentro del comprobante digital generado.
+
+---
+
 ## [2.2.0] - 2026-08-11 (Integración del Punto de Venta POS con Base de Datos MySQL)
 
 ### 🚀 Añadido (Added)
