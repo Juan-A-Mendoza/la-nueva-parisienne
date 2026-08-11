@@ -696,3 +696,66 @@
   padding: 2rem 1.75rem;
   font-family: monospace;
 }
+
+/* ==========================================================================
+   REGLAS DE IMPRESIÓN EXCLUSIVAS PARA TICKET DE VENTA (@MEDIA PRINT)
+   ========================================================================== */
+@media print {
+  /* Ocultar toda la interfaz visual y la aplicación general */
+  body * {
+    visibility: hidden !important;
+  }
+
+  .pos-layout,
+  .pos-catalog-section,
+  .pos-cart-section,
+  .pos-navbar,
+  .pin-modal-overlay,
+  .modal-close-btn,
+  .payment-modal-card,
+  button,
+  .toast-notification {
+    display: none !important;
+  }
+
+  /* Mostrar únicamente el modal de comprobante y su contenido */
+  #receiptModal,
+  #receiptModal.active {
+    display: block !important;
+    position: absolute !important;
+    top: 0 !important;
+    left: 0 !important;
+    width: 100% !important;
+    height: auto !important;
+    background: #FFFFFF !important;
+    visibility: visible !important;
+    backdrop-filter: none !important;
+    z-index: 99999 !important;
+    margin: 0 !important;
+    padding: 0 !important;
+  }
+
+  #receiptModal .receipt-card {
+    display: block !important;
+    position: static !important;
+    width: 100% !important;
+    max-width: 320px !important;
+    margin: 0 auto !important;
+    padding: 0 !important;
+    box-shadow: none !important;
+    border: none !important;
+    visibility: visible !important;
+    background: #FFFFFF !important;
+  }
+
+  #receiptContent,
+  #receiptContent * {
+    visibility: visible !important;
+    color: #000000 !important;
+  }
+
+  #receiptModal button,
+  #closeReceiptModalBtn {
+    display: none !important;
+  }
+}

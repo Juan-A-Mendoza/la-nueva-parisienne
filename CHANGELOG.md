@@ -4,6 +4,20 @@ Todos los cambios significativos, nuevas funcionalidades y actualizaciones del s
 
 El formato está basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1.0.0/) y este proyecto se adhiere a [Semantic Versioning](https://semver.org/lang/es/).
 
+## [2.3.1] - 2026-08-11 (Corrección de Bugs Críticos en Modal de Pagos, Reset POS e Impresión de Ticket)
+
+### 🛠️ Corregido (Fixed)
+- **Bug de Superposición y Navegación de Métodos de Pago ([modules/pos.html](file:///C:/Users/juana/.gemini/antigravity-ide/scratch/la-nueva-parisienne/modules/pos.html) y [js/modules/pos.js](file:///C:/Users/juana/.gemini/antigravity-ide/scratch/la-nueva-parisienne/js/modules/pos.js))**:
+  - Incorporación del panel de información para tarjeta y transferencia (`cardTransferPanel`) e integración de un botón táctil de cancelación explícito (`← Volver`) en el footer del modal de pago.
+  - Corrección de la lógica de conmutación de métodos de pago (`switchPaymentMethod`), garantizando que la vista del carrito y el catálogo no colapsen y permitiendo cancelar o volver en todo momento.
+- **Bug de Reinicio y Función resetPOS() ([js/modules/pos.js](file:///C:/Users/juana/.gemini/antigravity-ide/scratch/la-nueva-parisienne/js/modules/pos.js))**:
+  - Implementación de la función centralizada `resetPOS()` activada mediante los botones *Nueva Venta*, *Vaciar Carrito* y al cerrar la confirmación del ticket.
+  - Limpieza completa del estado: vaciado de carrito, restablecimiento de totales a cero, reseteo de descuentos, reseteo del método de pago a efectivo, incremento secuencial de correlativo de factura y actualización limpia de la UI.
+- **Bug de Impresión del Ticket (@media print) ([css/modules/pos.css](file:///C:/Users/juana/.gemini/antigravity-ide/scratch/la-nueva-parisienne/css/modules/pos.css))**:
+  - Adición de la regla `@media print` en el CSS para ocultar el 100% de la interfaz gráfica del POS (menús, botones, catálogo, barra lateral, toasts), mostrando únicamente el comprobante fiscal/recibo formateado sobre papel blanco.
+
+---
+
 ## [2.3.0] - 2026-08-11 (Procesamiento y Persistencia de Ventas POS en MySQL)
 
 ### 🚀 Añadido (Added)

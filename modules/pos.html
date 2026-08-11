@@ -168,6 +168,17 @@
         </button>
       </div>
 
+      <!-- Panel de Información para Tarjeta / Transferencia -->
+      <div id="cardTransferPanel" class="cash-calculator-panel" style="display: none; background: rgba(212, 155, 84, 0.08); border: 1px solid rgba(212, 155, 84, 0.3);">
+        <p id="cardTransferMsg" style="font-size: 0.9rem; font-weight: 600; color: var(--color-espresso); margin-bottom: 0.75rem;">
+          💳 Procese la tarjeta en la terminal de punto de venta (POS).
+        </p>
+        <div style="display: flex; flex-direction: column; gap: 0.35rem; text-align: left;">
+          <label for="referenceInput" style="font-size: 0.85rem; font-weight: 700; color: var(--color-espresso);">Nº de Referencia / Válida (Opcional):</label>
+          <input type="text" id="referenceInput" class="tender-input" style="width: 100%; text-align: left; font-size: 0.95rem; font-weight: 500;" placeholder="Ej. REF-982401">
+        </div>
+      </div>
+
       <!-- Calculadora de Vuelto para Efectivo -->
       <div id="cashCalculatorPanel" class="cash-calculator-panel">
         <p style="font-size: 0.8rem; font-weight: 700; color: var(--color-muted); margin-bottom: 0.6rem;">Billetes Rápidos Recibidos:</p>
@@ -190,9 +201,14 @@
         </div>
       </div>
 
-      <button id="btnCompleteSale" class="btn-process-payment">
-        <span>Finalizar Venta e Imprimir Ticket</span>
-      </button>
+      <div class="payment-modal-footer" style="display: flex; gap: 0.75rem; margin-top: 1.25rem;">
+        <button id="btnCancelPayment" type="button" class="btn-process-payment" style="background: var(--bg-main); color: var(--color-espresso); border: 1px solid var(--color-espresso); flex: 0 0 40%; font-size: 0.9rem;">
+          <span>← Volver</span>
+        </button>
+        <button id="btnCompleteSale" type="button" class="btn-process-payment" style="flex: 1; font-size: 0.9rem;">
+          <span>✓ Finalizar Venta</span>
+        </button>
+      </div>
     </div>
   </div>
 

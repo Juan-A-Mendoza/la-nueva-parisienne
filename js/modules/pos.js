@@ -281,32 +281,58 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     paymentTotalBanner.querySelector('h2').textContent = `$${total.toFixed(2)}`;
     currentTenderAmount = Math.ceil(total); // Sugerir entero superior
-    tenderInput.value = currentTenderAmount.toFixed(2);
+    if (tenderInput) tenderInput.value = currentTenderAmount.toFixed(2);
     
-    updateCashChange();
+    // Método por defecto al abrir modal
+    switchPaymentMethod('efectivo');
     paymentModal.classList.add('active');
   });
 
-  closePaymentModalBtn.addEventListener('click', () => {
-    paymentModal.classList.remove('active');
-  });
+  const btnCancelPayment = document.getElementById('btnCancelPayment');
+  const closePaymentModalBtn = document.getElementById('closePaymentModalBtn');
 
-  // Métodos de Pago
+  function closePaymentModal() {
+    if (paymentModal) paymentModal.classList.remove('active');
+  }
+
+  if (closePaymentModalBtn) closePaymentModalBtn.addEventListener('click', closePaymentModal);
+  if (btnCancelPayment) btnCancelPayment.addEventListener('click', closePaymentModal);
+
+  // Conmutador de Métodos de Pago (Efectivo / Tarjeta / Transferencia)
   document.querySelectorAll('.method-btn').forEach(btn => {
     btn.addEventListener('click', () => {
-      document.querySelectorAll('.method-btn').forEach(b => b.classList.remove('active'));
-      btn.classList.add('active');
-      selectedPaymentMethod = btn.dataset.method;
-      
-      const cashPanel = document.getElementById('cashCalculatorPanel');
-      if (selectedPaymentMethod === 'efectivo') {
-        cashPanel.style.display = 'block';
-      } else {
-        cashPanel.style.display = 'none';
-        btnCompleteSale.disabled = false;
-      }
+      const method = btn.dataset.method;
+      switchPaymentMethod(method);
     });
   });
+
+  function switchPaymentMethod(method) {
+    selectedPaymentMethod = method;
+    document.querySelectorAll('.method-btn').forEach(b => {
+      b.classList.toggle('active', b.dataset.method === method);
+    });
+
+    const cashPanel = document.getElementById('cashCalculatorPanel');
+    const cardPanel = document.getElementById('cardTransferPanel');
+    const cardMsg = document.getElementById('cardTransferMsg');
+    const { total } = calculateTotals();
+
+    if (method === 'efectivo') {
+      if (cashPanel) cashPanel.style.display = 'block';
+      if (cardPanel) cardPanel.style.display = 'none';
+      updateCashChange();
+    } else if (method === 'tarjeta') {
+      if (cashPanel) cashPanel.style.display = 'none';
+      if (cardPanel) cardPanel.style.display = 'block';
+      if (cardMsg) cardMsg.textContent = `💳 Procese la tarjeta por $${total.toFixed(2)} en la terminal de punto de venta (POS).`;
+      if (btnCompleteSale) btnCompleteSale.disabled = false;
+    } else if (method === 'transferencia') {
+      if (cashPanel) cashPanel.style.display = 'none';
+      if (cardPanel) cardPanel.style.display = 'block';
+      if (cardMsg) cardMsg.textContent = `📲 Transfiera $${total.toFixed(2)} escaneando el código QR o Pago Móvil.`;
+      if (btnCompleteSale) btnCompleteSale.disabled = false;
+    }
+  }
 
   // Billetes Rápidos de Efectivo
   document.querySelectorAll('.fast-cash-btn').forEach(btn => {
@@ -319,28 +345,39 @@ document.addEventListener('DOMContentLoaded', async () => {
       } else {
         currentTenderAmount = parseFloat(val);
       }
-      tenderInput.value = currentTenderAmount.toFixed(2);
+      if (tenderInput) tenderInput.value = currentTenderAmount.toFixed(2);
       updateCashChange();
     });
   });
 
-  tenderInput.addEventListener('input', (e) => {
-    currentTenderAmount = parseFloat(e.target.value) || 0;
-    updateCashChange();
-  });
+  if (tenderInput) {
+    tenderInput.addEventListener('input', (e) => {
+      currentTenderAmount = parseFloat(e.target.value) || 0;
+      updateCashChange();
+    });
+  }
 
   function updateCashChange() {
+    if (selectedPaymentMethod !== 'efectivo') {
+      if (btnCompleteSale) btnCompleteSale.disabled = false;
+      return;
+    }
+
     const { total } = calculateTotals();
     const change = currentTenderAmount - total;
 
     if (change >= 0) {
-      changeDueVal.textContent = `$${change.toFixed(2)}`;
-      changeDueVal.className = 'change-amount';
-      btnCompleteSale.disabled = false;
+      if (changeDueVal) {
+        changeDueVal.textContent = `$${change.toFixed(2)}`;
+        changeDueVal.className = 'change-amount';
+      }
+      if (btnCompleteSale) btnCompleteSale.disabled = false;
     } else {
-      changeDueVal.textContent = `Faltan $${Math.abs(change).toFixed(2)}`;
-      changeDueVal.className = 'change-amount insufficient';
-      btnCompleteSale.disabled = true;
+      if (changeDueVal) {
+        changeDueVal.textContent = `Faltan $${Math.abs(change).toFixed(2)}`;
+        changeDueVal.className = 'change-amount insufficient';
+      }
+      if (btnCompleteSale) btnCompleteSale.disabled = true;
     }
   }
 
@@ -502,23 +539,48 @@ document.addEventListener('DOMContentLoaded', async () => {
     `;
   }
 
-  // Botones de Nueva Venta e Imprimir
-  btnNewSale.addEventListener('click', () => {
-    receiptModal.classList.remove('active');
+  // 7. FUNCIÓN RESET POS (NUEVA VENTA)
+  function resetPOS() {
     cart = [];
     currentDiscountPercent = 0;
-    discountSelect.value = "0";
+    if (discountSelect) discountSelect.value = "0";
+    currentOrderType = 'Para Llevar';
+    document.querySelectorAll('.order-type-btn').forEach(b => {
+      b.classList.toggle('active', b.dataset.type === 'Para Llevar');
+    });
+
+    selectedPaymentMethod = 'efectivo';
+    currentTenderAmount = 0;
+    if (tenderInput) tenderInput.value = '';
+    const refInput = document.getElementById('referenceInput');
+    if (refInput) refInput.value = '';
+
+    searchQuery = '';
+    if (searchInput) searchInput.value = '';
+    currentCategory = 'todos';
+
     orderCounter++;
     initOrderNumber();
+
+    if (paymentModal) paymentModal.classList.remove('active');
+    if (receiptModal) receiptModal.classList.remove('active');
+
+    renderCategoryTabs();
+    renderProducts();
     updateCartUI();
-  });
+  }
 
-  btnPrintReceipt.addEventListener('click', () => {
-    window.print();
-  });
+  // Botones de Nueva Venta, Imprimir y Vaciar Carrito
+  if (btnNewSale) btnNewSale.addEventListener('click', resetPOS);
+  if (clearCartBtn) clearCartBtn.addEventListener('click', resetPOS);
 
-  closeReceiptModalBtn.addEventListener('click', () => {
-    receiptModal.classList.remove('active');
-    btnNewSale.click();
-  });
+  if (btnPrintReceipt) {
+    btnPrintReceipt.addEventListener('click', () => {
+      window.print();
+    });
+  }
+
+  if (closeReceiptModalBtn) {
+    closeReceiptModalBtn.addEventListener('click', resetPOS);
+  }
 });
