@@ -6,6 +6,22 @@ El formato está basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1
 
 ---
 
+## [1.8.0] - 2026-08-11 (Módulo 8: Gestión de Personal y Permisos por Rol)
+
+### 🚀 Añadido (Added)
+- **Base de Datos de Personal y Matriz de Permisos ([js/data/staff-db.js](file:///C:/Users/juana/.gemini/antigravity-ide/scratch/la-nueva-parisienne/js/data/staff-db.js))**:
+  - Nómina activa con mock data para los perfiles de **Carlos Mendoza** (*Maestro Panadero / Chef*), **Ana Ramírez** (*Personal de Caja / POS*), junto con Juan (*Gerente General*), Enrique (*Chef*), Henry (*Cajero*) y Sebastian (*Contador*).
+  - Matriz de permisos por rol (*ADMIN, BAKER, CASHIER*) cubriendo acceso a POS, KDS, Inventario, Compras, Contabilidad y RRHH.
+- **Interfaz de Personal en HTML5 Estricto ([modules/staff.html](file:///C:/Users/juana/.gemini/antigravity-ide/scratch/la-nueva-parisienne/modules/staff.html))**:
+  - Migas de pan integradas: `🏠 Inicio (Panel Central) / Personal / Empleados y Permisos`.
+  - Fila de KPIs de personal (Total empleados, Roles configurados, Personal en servicio y Estado de seguridad).
+  - Tabla semántica de nómina de empleados con botones táctiles de 48x48px (`✏️ Editar`, `🔑 PIN`).
+  - Matriz interactiva de permisos por rol mediante switches conmutadores táctiles.
+- **Estilos CSS3 e Interactividad ES6 ([css/modules/staff.css](file:///C:/Users/juana/.gemini/antigravity-ide/scratch/la-nueva-parisienne/css/modules/staff.css) y [js/modules/staff.js](file:///C:/Users/juana/.gemini/antigravity-ide/scratch/la-nueva-parisienne/js/modules/staff.js))**:
+  - Modales flotantes para el registro de nuevos trabajadores y reasignación de claves táctiles PIN (4 dígitos).
+
+---
+
 ## [1.7.0] - 2026-08-11 (Módulo 7: Contabilidad y Salud Financiera)
 
 ### 🚀 Añadido (Added)

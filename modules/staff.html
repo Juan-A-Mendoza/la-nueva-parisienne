@@ -1,0 +1,255 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Gestión de Personal y Permisos - La Nueva Parisienne</title>
+  <meta name="description" content="Módulo 8: Registro de Empleados, Asignación de Roles, Matriz de Permisos y PINs de Acceso para La Nueva Parisienne.">
+  
+  <!-- Hojas de Estilos Separadas (CSS3 Estricto) -->
+  <link rel="stylesheet" href="../css/main.css">
+  <link rel="stylesheet" href="../css/modules/staff.css">
+</head>
+<body>
+
+  <!-- LAYOUT PRINCIPAL DE PERSONAL -->
+  <div class="staff-wrapper">
+
+    <!-- NAVBAR SUPERIOR -->
+    <header class="staff-navbar">
+      <div class="staff-brand-group">
+        <div class="staff-brand-icon" aria-hidden="true">👥</div>
+        <div>
+          <h1 class="brand-title" style="font-size: 1.3rem;">La Nueva Parisienne</h1>
+          <span class="sub-title">Módulo 8: Gestión de Personal, Roles & Matriz de Permisos</span>
+        </div>
+      </div>
+
+      <div style="display: flex; align-items: center; gap: 1.25rem;">
+        <div class="cashier-badge">
+          <span id="userAvatar" class="cashier-avatar">👨‍💼</span>
+          <div class="cashier-info">
+            <span id="userName" class="cashier-name">Juan / Sebastian</span>
+            <span class="shift-status" style="color: var(--color-gold-dark);">● Recursos Humanos & Seguridad</span>
+          </div>
+        </div>
+        <!-- Botón Dedicado Exclusivo para Cerrar Sesión -->
+        <button id="logoutBtn" class="btn-pos-logout" title="Cerrar sesión activa y volver al login">Cerrar Sesión</button>
+      </div>
+    </header>
+
+    <!-- NAVEGACIÓN POR MIGAS DE PAN (BREADCRUMBS) -->
+    <nav class="breadcrumbs-container" aria-label="Migas de pan">
+      <ol class="breadcrumbs-list">
+        <li class="breadcrumb-item">
+          <a href="dashboard.html">🏠 Inicio (Panel Central)</a>
+        </li>
+        <li class="breadcrumb-separator">/</li>
+        <li class="breadcrumb-item">Personal</li>
+        <li class="breadcrumb-separator">/</li>
+        <li class="breadcrumb-item active" aria-current="page">Empleados y Permisos</li>
+      </ol>
+    </nav>
+
+    <!-- BARRA DE ACCIONES PRINCIPALES (BOTONES TÁCTILES MIN 48X48PX) -->
+    <section class="staff-action-toolbar" aria-label="Acciones de Personal">
+      <div class="action-buttons-group">
+        <button id="btnOpenNewEmp" type="button" class="btn-staff-action primary">
+          <span>+ Registrar Nuevo Empleado</span>
+        </button>
+
+        <button id="btnOpenPinModal" type="button" class="btn-staff-action secondary">
+          <span>🔑 Cambiar PIN de Acceso</span>
+        </button>
+      </div>
+
+      <div style="font-size: 0.85rem; color: var(--color-muted); font-weight: 600;">
+        <span>Políticas de Seguridad:</span>
+        <strong style="color: var(--color-success);">PINs de 4 Dígitos Activos (1234)</strong>
+      </div>
+    </section>
+
+    <!-- CONTENIDO PRINCIPAL DE PERSONAL -->
+    <main class="staff-content">
+
+      <!-- SECCIÓN DE KPIS RÁPIDOS -->
+      <section class="inventory-kpi-grid" aria-label="Resumen de Personal">
+        <div class="inventory-kpi-card">
+          <div class="kpi-icon-container">👥</div>
+          <div class="kpi-details">
+            <h3>Total Empleados Activos</h3>
+            <div id="kpiTotalStaff" class="kpi-number">6 Empleados</div>
+          </div>
+        </div>
+
+        <div class="inventory-kpi-card">
+          <div class="kpi-icon-container">🛡️</div>
+          <div class="kpi-details">
+            <h3>Roles Configurados</h3>
+            <div class="kpi-number">3 Roles</div>
+          </div>
+        </div>
+
+        <div class="inventory-kpi-card">
+          <div class="kpi-icon-container" style="color: var(--color-gold-dark);">⏰</div>
+          <div class="kpi-details">
+            <h3>Personal en Turno Hoy</h3>
+            <div class="kpi-number" style="color: var(--color-gold-dark);">4 en Servicio</div>
+          </div>
+        </div>
+
+        <div class="inventory-kpi-card">
+          <div class="kpi-icon-container" style="color: var(--color-success);">🔑</div>
+          <div class="kpi-details">
+            <h3>Estado de Seguridad</h3>
+            <div class="kpi-number" style="font-size: 1.1rem; color: var(--color-success);">✓ PINs Autenticados</div>
+          </div>
+        </div>
+      </section>
+
+      <!-- SECCIÓN 1: REGISTRO Y EDICIÓN DE EMPLEADOS (NÓMINA) -->
+      <section class="orders-section-card" aria-labelledby="staffTitle">
+        <div class="table-card-header">
+          <div class="section-title-group">
+            <h2 id="staffTitle">📋 Registro y Edición de Empleados</h2>
+            <p>Nómina activa del personal de La Nueva Parisienne, cargos y asignación de turno.</p>
+          </div>
+        </div>
+
+        <!-- Tabla Semántica HTML5 de Empleados -->
+        <div class="table-responsive-container">
+          <table class="dashboard-table">
+            <thead>
+              <tr>
+                <th>Código</th>
+                <th>Nombre del Empleado</th>
+                <th>Rol / Perfil</th>
+                <th>Departamento</th>
+                <th>Turno Asignado</th>
+                <th>Estado</th>
+                <th>PIN Acceso</th>
+                <th>Acciones Táctiles</th>
+              </tr>
+            </thead>
+            <tbody id="staffBody">
+              <!-- Renderizado dinámico vía js/modules/staff.js -->
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+
+      <!-- SECCIÓN 2: MATRIZ DE CONFIGURACIÓN DE PERMISOS POR ROL -->
+      <section class="matrix-section-card" aria-labelledby="matrixTitle">
+        <div class="section-title-group">
+          <h2 id="matrixTitle">🛡️ Matriz de Configuración de Permisos por Rol</h2>
+          <p>Asignación de privilegios de acceso a módulos por perfil de usuario.</p>
+        </div>
+
+        <!-- Tabla Semántica HTML5 de Matriz de Permisos -->
+        <div class="table-responsive-container">
+          <table class="dashboard-table">
+            <thead>
+              <tr>
+                <th>Permiso / Privilegio de Sistema</th>
+                <th>Módulo</th>
+                <th style="text-align: center;">Administrador</th>
+                <th style="text-align: center;">Maestro Panadero</th>
+                <th style="text-align: center;">Personal de Caja POS</th>
+              </tr>
+            </thead>
+            <tbody id="matrixBody">
+              <!-- Renderizado dinámico vía js/modules/staff.js -->
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+    </main>
+
+  </div>
+
+
+  <!-- MODAL DE NUEVO EMPLEADO -->
+  <div id="newEmpModal" class="pin-modal-overlay" role="dialog" aria-modal="true" aria-labelledby="empModalTitle">
+    <div class="pin-modal-card payment-modal-card">
+      <button id="closeEmpModalBtn" class="modal-close-btn" aria-label="Cerrar modal">&times;</button>
+
+      <div class="selected-user-header" style="margin-bottom: 1.25rem;">
+        <div class="selected-user-avatar">👤</div>
+        <h3 id="empModalTitle" class="selected-user-name">Registro de Nuevo Empleado</h3>
+        <span class="selected-user-role">Alta de Personal en Nómina</span>
+      </div>
+
+      <form id="newEmpForm" style="display: flex; flex-direction: column; gap: 1rem; text-align: left;">
+        <div>
+          <label for="empNameInput" style="font-weight: 700; font-size: 0.85rem; display: block; margin-bottom: 0.3rem;">Nombre Completo:</label>
+          <input type="text" id="empNameInput" class="pos-search-input" placeholder="Ej: Carlos Mendoza" required>
+        </div>
+
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.85rem;">
+          <div>
+            <label for="empRoleSelect" style="font-weight: 700; font-size: 0.85rem; display: block; margin-bottom: 0.3rem;">Rol en Sistema:</label>
+            <select id="empRoleSelect" class="pos-search-input" style="padding: 0.65rem 1rem;">
+              <option value="BAKER">Maestro Panadero / Chef</option>
+              <option value="CASHIER">Personal de Caja / POS</option>
+              <option value="ADMIN">Administrador General</option>
+            </select>
+          </div>
+
+          <div>
+            <label for="empDeptInput" style="font-weight: 700; font-size: 0.85rem; display: block; margin-bottom: 0.3rem;">Departamento:</label>
+            <input type="text" id="empDeptInput" class="pos-search-input" value="Producción & Hornos" required>
+          </div>
+        </div>
+
+        <div>
+          <label for="empShiftInput" style="font-weight: 700; font-size: 0.85rem; display: block; margin-bottom: 0.3rem;">Turno de Trabajo:</label>
+          <input type="text" id="empShiftInput" class="pos-search-input" value="Mañana (05:00 - 13:00)" required>
+        </div>
+
+        <button type="submit" class="btn-process-payment" style="margin-top: 0.5rem;">
+          <span>✓ Guardar Nuevo Empleado</span>
+        </button>
+      </form>
+    </div>
+  </div>
+
+
+  <!-- MODAL DE CAMBIO DE PIN -->
+  <div id="changePinModal" class="pin-modal-overlay" role="dialog" aria-modal="true" aria-labelledby="pinModalTitle">
+    <div class="pin-modal-card payment-modal-card">
+      <button id="closePinModalBtn" class="modal-close-btn" aria-label="Cerrar modal">&times;</button>
+
+      <div class="selected-user-header" style="margin-bottom: 1.25rem;">
+        <div class="selected-user-avatar">🔑</div>
+        <h3 id="pinModalTitle" class="selected-user-name">Restablecimiento de PIN</h3>
+        <span class="selected-user-role">Asignación de Clave Táctil de 4 Dígitos</span>
+      </div>
+
+      <form id="changePinForm" style="display: flex; flex-direction: column; gap: 1.25rem; text-align: left;">
+        <div>
+          <label for="pinEmpSelect" style="font-weight: 700; font-size: 0.9rem; display: block; margin-bottom: 0.4rem;">Seleccionar Empleado:</label>
+          <select id="pinEmpSelect" class="pos-search-input" style="padding: 0.65rem 1rem;">
+            <!-- Opciones dinámicas -->
+          </select>
+        </div>
+
+        <div>
+          <label for="newPinInput" style="font-weight: 700; font-size: 0.85rem; display: block; margin-bottom: 0.4rem;">Nuevo PIN (4 Dígitos):</label>
+          <input type="password" id="newPinInput" class="pos-search-input" value="1234" maxlength="4" pattern="\d{4}" style="text-align: center; font-size: 1.5rem; letter-spacing: 0.3em;" required>
+        </div>
+
+        <button type="submit" class="btn-process-payment" style="margin-top: 0.5rem;">
+          <span>🔑 Confirmar Nuevo PIN</span>
+        </button>
+      </form>
+    </div>
+  </div>
+
+
+  <!-- SCRIPT MODULAR PERSONAL -->
+  <script type="module" src="../js/modules/staff.js"></script>
+
+</body>
+</html>

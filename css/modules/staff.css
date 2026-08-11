@@ -1,0 +1,170 @@
+/* ==========================================================================
+   MÓDULO 8: ESTILOS DE GESTIÓN DE PERSONAL Y PERMISOS (STAFF.CSS)
+   Nómina de empleados, matriz de permisos por rol y conmutadores táctiles (48x48px)
+   ========================================================================== */
+
+.staff-wrapper {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  background-color: var(--bg-main);
+}
+
+/* NAVBAR DE PERSONAL */
+.staff-navbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1.25rem 2.25rem;
+  background: var(--bg-surface);
+  border-bottom: var(--border-subtle);
+  box-shadow: var(--shadow-subtle);
+}
+
+.staff-brand-group {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.staff-brand-icon {
+  width: 48px;
+  height: 48px;
+  background: var(--gradient-espresso);
+  color: var(--color-gold);
+  border-radius: var(--radius-pill);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.5rem;
+  box-shadow: var(--shadow-subtle);
+}
+
+/* BARRA DE ACCIONES PRINCIPALES (TOUCH-FRIENDLY MIN 48X48PX) */
+.staff-action-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 1rem;
+  padding: 1.5rem 2.25rem 0.5rem;
+}
+
+.btn-staff-action {
+  min-height: 48px;
+  padding: 0.75rem 1.35rem;
+  border-radius: var(--radius-md);
+  font-size: 0.95rem;
+  font-weight: 700;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.6rem;
+  box-shadow: var(--shadow-subtle);
+  transition: all var(--transition-fast);
+}
+
+.btn-staff-action.primary {
+  background: var(--gradient-gold);
+  color: var(--color-espresso);
+  box-shadow: var(--shadow-gold);
+}
+
+.btn-staff-action.primary:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 30px rgba(212, 155, 84, 0.4);
+}
+
+.btn-staff-action.secondary {
+  background: var(--gradient-espresso);
+  color: var(--color-gold);
+}
+
+/* CONTENEDOR PRINCIPAL */
+.staff-content {
+  padding: 1.25rem 2.25rem 3rem;
+  display: flex;
+  flex-direction: column;
+  gap: 2.25rem;
+  max-width: 1400px;
+  width: 100%;
+  margin: 0 auto;
+}
+
+/* AVATAR DE EMPLEADO Y BADGES */
+.employee-avatar-badge {
+  width: 42px;
+  height: 42px;
+  border-radius: 50%;
+  background: var(--bg-main);
+  border: 1px solid rgba(212, 155, 84, 0.3);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.3rem;
+}
+
+.role-badge {
+  font-size: 0.78rem;
+  font-weight: 700;
+  padding: 0.25rem 0.65rem;
+  border-radius: var(--radius-pill);
+}
+
+.role-badge.admin { background: rgba(44, 29, 17, 0.1); color: var(--color-espresso); }
+.role-badge.baker { background: rgba(212, 155, 84, 0.18); color: var(--color-gold-dark); }
+.role-badge.cashier { background: rgba(46, 125, 50, 0.14); color: var(--color-success); }
+
+/* MATRIZ DE PERMISOS POR ROL (SWITCHES TÁCTILES) */
+.matrix-section-card {
+  background: #FFFFFF;
+  border-radius: var(--radius-md);
+  padding: 1.75rem;
+  border: var(--border-subtle);
+  box-shadow: var(--shadow-subtle);
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+
+.switch-label {
+  position: relative;
+  display: inline-block;
+  width: 50px;
+  height: 28px;
+}
+
+.switch-label input {
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+.slider-toggle {
+  position: absolute;
+  cursor: pointer;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background-color: #CCC;
+  transition: .3s;
+  border-radius: 34px;
+}
+
+.slider-toggle:before {
+  position: absolute;
+  content: "";
+  height: 20px;
+  width: 20px;
+  left: 4px;
+  bottom: 4px;
+  background-color: white;
+  transition: .3s;
+  border-radius: 50%;
+}
+
+input:checked + .slider-toggle {
+  background-color: var(--color-gold-dark);
+}
+
+input:checked + .slider-toggle:before {
+  transform: translateX(22px);
+}
