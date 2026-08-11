@@ -4,6 +4,22 @@ Todos los cambios significativos, nuevas funcionalidades y actualizaciones del s
 
 El formato está basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1.0.0/) y este proyecto se adhiere a [Semantic Versioning](https://semver.org/lang/es/).
 
+## [2.1.0] - 2026-08-11 (Módulo 9: Configuraciones Generales y Ajustes del Sistema)
+
+### 🚀 Añadido (Added)
+- **Interfaz de Configuraciones Generales ([modules/settings.html](file:///C:/Users/juana/.gemini/antigravity-ide/scratch/la-nueva-parisienne/modules/settings.html))**:
+  - Migas de pan integradas: `🏠 Inicio (Panel Central) / Configuraciones / Ajustes del Sistema`.
+  - Formularios estructurados para **Datos Generales de la Empresa** (Razón social, RIF/NIT, nombre comercial, dirección, contacto, moneda principal y tasa de cambio).
+  - Sección de **Parámetros Fiscales e Impuestos** (Alícuota IVA 16%, exención de impuestos en línea de panadería artesanal básica, registro SENIAT, correlativos de facturación y formato de comprobante).
+  - Panel de **Preferencias del Sistema** (Modo de persistencia MySQL PDO, respaldos automáticos, alertas de stock mínimo y tema visual).
+  - **Zona de Peligro (Danger Zone)** con tarjetas de alta prominencia visual para purgar caché de sesiones, recargar datos semilla e interactivo de reseteo total con confirmación por PIN de Administrador.
+- **Estilos CSS3 de Configuraciones ([css/modules/settings.css](file:///C:/Users/juana/.gemini/antigravity-ide/scratch/la-nueva-parisienne/css/modules/settings.css))**:
+  - Paleta artesanal corporativa, interruptores de conmutación táctil (*toggle switches*), botones táctiles amplios (mínimo 48x48px) y notificaciones emergentes *toast*.
+- **Base de Datos y Controlador ES6 ([js/data/settings-db.js](file:///C:/Users/juana/.gemini/antigravity-ide/scratch/la-nueva-parisienne/js/data/settings-db.js) y [js/modules/settings.js](file:///C:/Users/juana/.gemini/antigravity-ide/scratch/la-nueva-parisienne/js/modules/settings.js))**:
+  - Carga asíncrona de valores, persistencia en `localStorage`, exportación de archivo de configuración en formato JSON y validación de seguridad por PIN para el formateo del sistema.
+
+---
+
 ## [2.0.2] - 2026-08-11 (Corrección de Rutas Relativas e Integración de Vista PHP)
 
 ### 🛠️ Corregido (Fixed)

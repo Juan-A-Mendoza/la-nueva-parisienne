@@ -1,0 +1,388 @@
+/* ==========================================================================
+   MÓDULO 9: ESTILOS DE CONFIGURACIONES GENERALES (SETTINGS.CSS)
+   Ajustes Corporativos, Datos Fiscales, Preferencias y Zona de Peligro
+   ========================================================================== */
+
+/* LAYOUT PRINCIPAL DE CONFIGURACIONES */
+.settings-wrapper {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  background-color: var(--bg-main);
+}
+
+/* NAVBAR SUPERIOR DE CONFIGURACIÓN */
+.settings-navbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1.25rem 2rem;
+  background: var(--bg-surface);
+  border-bottom: var(--border-subtle);
+  box-shadow: var(--shadow-subtle);
+}
+
+.settings-brand-group {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.settings-brand-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 48px;
+  height: 48px;
+  border-radius: var(--radius-md);
+  background: var(--gradient-espresso);
+  color: var(--color-gold);
+  font-size: 1.5rem;
+  box-shadow: var(--shadow-subtle);
+}
+
+/* BARRA DE HERRAMIENTAS Y ACCIONES */
+.settings-action-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 1rem;
+  padding: 1rem 2rem;
+  background: rgba(255, 255, 255, 0.7);
+  backdrop-filter: var(--backdrop-blur);
+  border-bottom: var(--border-subtle);
+}
+
+.settings-toolbar-buttons {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.btn-settings-action {
+  min-height: 48px;
+  min-width: 48px;
+  padding: 0.75rem 1.5rem;
+  border-radius: var(--radius-md);
+  font-size: 0.95rem;
+  font-weight: 600;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  border: none;
+}
+
+.btn-settings-action.primary {
+  background: var(--gradient-gold);
+  color: var(--color-espresso);
+  box-shadow: var(--shadow-subtle);
+}
+
+.btn-settings-action.primary:hover {
+  box-shadow: var(--shadow-medium);
+  transform: translateY(-2px);
+}
+
+.btn-settings-action.secondary {
+  background: var(--bg-surface);
+  color: var(--color-espresso);
+  border: 1px solid var(--color-light-muted);
+}
+
+.btn-settings-action.secondary:hover {
+  background: #EFE8DE;
+  border-color: var(--color-gold);
+}
+
+/* CONTENIDO PRINCIPAL DE CONFIGURACIÓN */
+.settings-content {
+  flex: 1;
+  padding: 2rem;
+  max-width: 1300px;
+  margin: 0 auto;
+  width: 100%;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(360px, 1fr));
+  gap: 2rem;
+}
+
+/* TARJETAS DE PANEL / FORMULARIO */
+.settings-card {
+  background: var(--bg-card);
+  backdrop-filter: var(--backdrop-blur);
+  -webkit-backdrop-filter: var(--backdrop-blur);
+  border: var(--border-subtle);
+  border-radius: var(--radius-lg);
+  padding: 2rem;
+  box-shadow: var(--shadow-subtle);
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+  transition: box-shadow var(--transition-normal);
+}
+
+.settings-card:hover {
+  box-shadow: var(--shadow-medium);
+}
+
+.settings-card-header {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding-bottom: 1rem;
+  border-bottom: 2px solid rgba(212, 155, 84, 0.2);
+}
+
+.settings-card-header .card-icon {
+  font-size: 1.6rem;
+  line-height: 1;
+}
+
+.settings-card-header h2 {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: var(--color-espresso);
+  margin: 0;
+}
+
+.settings-card-header p {
+  font-size: 0.85rem;
+  color: var(--color-muted);
+  margin: 0.2rem 0 0 0;
+}
+
+/* GRUPOS DE FORMULARIO */
+.form-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 1.25rem;
+}
+
+.form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+.form-group label {
+  font-size: 0.88rem;
+  font-weight: 600;
+  color: var(--color-espresso);
+}
+
+.form-control {
+  min-height: 48px;
+  padding: 0.75rem 1rem;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--color-light-muted);
+  background: #FFFFFF;
+  font-size: 0.95rem;
+  color: var(--color-espresso);
+  transition: border-color var(--transition-fast), box-shadow var(--transition-fast);
+}
+
+.form-control:focus {
+  outline: none;
+  border-color: var(--color-gold-dark);
+  box-shadow: 0 0 0 3px rgba(212, 155, 84, 0.25);
+}
+
+textarea.form-control {
+  min-height: 80px;
+  resize: vertical;
+}
+
+/* FILAS DE SWITCH / CONMUTADOR */
+.switch-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.85rem 1rem;
+  border-radius: var(--radius-md);
+  background: rgba(247, 243, 238, 0.6);
+  border: 1px solid rgba(44, 29, 17, 0.05);
+  min-height: 52px;
+}
+
+.switch-label-group {
+  display: flex;
+  flex-direction: column;
+}
+
+.switch-title {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--color-espresso);
+}
+
+.switch-subtitle {
+  font-size: 0.78rem;
+  color: var(--color-muted);
+}
+
+/* TOGGLE SWITCH CUSTÓMICO */
+.toggle-switch {
+  position: relative;
+  display: inline-block;
+  width: 52px;
+  height: 28px;
+  flex-shrink: 0;
+}
+
+.toggle-switch input {
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+.slider {
+  position: absolute;
+  cursor: pointer;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background-color: #D6C8B5;
+  transition: .3s;
+  border-radius: 28px;
+}
+
+.slider:before {
+  position: absolute;
+  content: "";
+  height: 20px;
+  width: 20px;
+  left: 4px;
+  bottom: 4px;
+  background-color: white;
+  transition: .3s;
+  border-radius: 50%;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+}
+
+input:checked + .slider {
+  background-color: var(--color-gold-dark);
+}
+
+input:checked + .slider:before {
+  transform: translateX(24px);
+}
+
+/* SECCIÓN ZONA DE PELIGRO (DANGER ZONE) */
+.settings-card.danger-zone {
+  border: 2px solid rgba(211, 47, 47, 0.4);
+  background: rgba(253, 242, 242, 0.85);
+  grid-column: 1 / -1;
+}
+
+.settings-card.danger-zone .settings-card-header {
+  border-bottom-color: rgba(211, 47, 47, 0.3);
+}
+
+.settings-card.danger-zone .settings-card-header h2 {
+  color: var(--color-danger);
+}
+
+.danger-actions-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 1.25rem;
+}
+
+.danger-action-card {
+  padding: 1.25rem;
+  background: #FFFFFF;
+  border: 1px solid rgba(211, 47, 47, 0.25);
+  border-radius: var(--radius-md);
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.danger-action-info h4 {
+  margin: 0 0 0.3rem 0;
+  font-size: 0.98rem;
+  color: var(--color-espresso);
+}
+
+.danger-action-info p {
+  margin: 0;
+  font-size: 0.82rem;
+  color: var(--color-muted);
+  line-height: 1.35;
+}
+
+.btn-danger-action {
+  min-height: 48px;
+  padding: 0.75rem 1.25rem;
+  border-radius: var(--radius-md);
+  font-size: 0.9rem;
+  font-weight: 700;
+  border: none;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  transition: all var(--transition-fast);
+}
+
+.btn-danger-action.warning {
+  background: #FFF3E0;
+  color: #E65100;
+  border: 1px solid #FFE0B2;
+}
+
+.btn-danger-action.warning:hover {
+  background: #FFE0B2;
+}
+
+.btn-danger-action.critical {
+  background: var(--color-danger);
+  color: #FFFFFF;
+  box-shadow: 0 2px 8px rgba(211, 47, 47, 0.3);
+}
+
+.btn-danger-action.critical:hover {
+  background: #B71C1C;
+  transform: translateY(-2px);
+}
+
+/* NOTIFICACIONES TOAST Y MODALES */
+.toast-notification {
+  position: fixed;
+  bottom: 2rem;
+  right: 2rem;
+  padding: 1rem 1.5rem;
+  border-radius: var(--radius-md);
+  background: var(--color-espresso);
+  color: #FFFFFF;
+  font-size: 0.95rem;
+  font-weight: 600;
+  box-shadow: var(--shadow-floating);
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  z-index: 2000;
+  opacity: 0;
+  transform: translateY(20px);
+  transition: all 0.3s var(--ease-smooth);
+  pointer-events: none;
+}
+
+.toast-notification.active {
+  opacity: 1;
+  transform: translateY(0);
+  pointer-events: auto;
+}
+
+.toast-notification.success {
+  border-left: 4px solid var(--color-success);
+}
+
+.toast-notification.error {
+  border-left: 4px solid var(--color-danger);
+}
