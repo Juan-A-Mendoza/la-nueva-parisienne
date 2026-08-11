@@ -60,6 +60,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   // Modales
   const paymentModal = document.getElementById('paymentModal');
   const closePaymentModalBtn = document.getElementById('closePaymentModalBtn');
+  const btnCancelPayment = document.getElementById('btnCancelPayment');
   const paymentTotalBanner = document.getElementById('paymentTotalBanner');
   const tenderInput = document.getElementById('tenderInput');
   const changeDueVal = document.getElementById('changeDueVal');
@@ -153,14 +154,16 @@ document.addEventListener('DOMContentLoaded', async () => {
   }
 
   // Listener para Búsqueda en tiempo real
-  searchInput.addEventListener('input', (e) => {
-    searchQuery = e.target.value;
-    renderProducts();
-  });
+  if (searchInput) {
+    searchInput.addEventListener('input', (e) => {
+      searchQuery = e.target.value;
+      renderProducts();
+    });
+  }
 
   // Listener para Tipo de Pedido (Para Llevar / Consumo en Local / Delivery)
   document.querySelectorAll('.order-type-btn').forEach(btn => {
-    btn.addEventListener('click', (e) => {
+    btn.addEventListener('click', () => {
       document.querySelectorAll('.order-type-btn').forEach(b => b.classList.remove('active'));
       btn.classList.add('active');
       currentOrderType = btn.dataset.type;
@@ -198,18 +201,22 @@ document.addEventListener('DOMContentLoaded', async () => {
     updateCartUI();
   }
 
-  clearCartBtn.addEventListener('click', () => {
-    if (cart.length === 0) return;
-    if (confirm('¿Desea vaciar todos los productos del pedido actual?')) {
-      cart = [];
-      updateCartUI();
-    }
-  });
+  if (clearCartBtn) {
+    clearCartBtn.addEventListener('click', () => {
+      if (cart.length === 0) return;
+      if (confirm('¿Desea vaciar todos los productos del pedido actual?')) {
+        cart = [];
+        updateCartUI();
+      }
+    });
+  }
 
-  discountSelect.addEventListener('change', (e) => {
-    currentDiscountPercent = parseFloat(e.target.value) || 0;
-    updateCartTotals();
-  });
+  if (discountSelect) {
+    discountSelect.addEventListener('change', (e) => {
+      currentDiscountPercent = parseFloat(e.target.value) || 0;
+      updateCartTotals();
+    });
+  }
 
   // Renderizado del Carrito y Cálculos Financieros
   function updateCartUI() {
@@ -287,9 +294,6 @@ document.addEventListener('DOMContentLoaded', async () => {
     switchPaymentMethod('efectivo');
     paymentModal.classList.add('active');
   });
-
-  const btnCancelPayment = document.getElementById('btnCancelPayment');
-  const closePaymentModalBtn = document.getElementById('closePaymentModalBtn');
 
   function closePaymentModal() {
     if (paymentModal) paymentModal.classList.remove('active');
@@ -570,9 +574,8 @@ document.addEventListener('DOMContentLoaded', async () => {
     updateCartUI();
   }
 
-  // Botones de Nueva Venta, Imprimir y Vaciar Carrito
+  // Botones de Nueva Venta, Imprimir y Cerrar Ticket
   if (btnNewSale) btnNewSale.addEventListener('click', resetPOS);
-  if (clearCartBtn) clearCartBtn.addEventListener('click', resetPOS);
 
   if (btnPrintReceipt) {
     btnPrintReceipt.addEventListener('click', () => {

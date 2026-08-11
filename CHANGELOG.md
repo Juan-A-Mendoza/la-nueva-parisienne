@@ -13,8 +13,8 @@ El formato está basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1
 - **Bug de Reinicio y Función resetPOS() ([js/modules/pos.js](file:///C:/Users/juana/.gemini/antigravity-ide/scratch/la-nueva-parisienne/js/modules/pos.js))**:
   - Implementación de la función centralizada `resetPOS()` activada mediante los botones *Nueva Venta*, *Vaciar Carrito* y al cerrar la confirmación del ticket.
   - Limpieza completa del estado: vaciado de carrito, restablecimiento de totales a cero, reseteo de descuentos, reseteo del método de pago a efectivo, incremento secuencial de correlativo de factura y actualización limpia de la UI.
-- **Bug de Impresión del Ticket (@media print) ([css/modules/pos.css](file:///C:/Users/juana/.gemini/antigravity-ide/scratch/la-nueva-parisienne/css/modules/pos.css))**:
-  - Adición de la regla `@media print` en el CSS para ocultar el 100% de la interfaz gráfica del POS (menús, botones, catálogo, barra lateral, toasts), mostrando únicamente el comprobante fiscal/recibo formateado sobre papel blanco.
+- **Corrección de SyntaxError de JS ([js/modules/pos.js](file:///C:/Users/juana/.gemini/antigravity-ide/scratch/la-nueva-parisienne/js/modules/pos.js))**:
+  - Eliminación de la re-declaración duplicada de la constante `closePaymentModalBtn` en la línea 298, resolviendo el error `Uncaught SyntaxError: Identifier 'closePaymentModalBtn' has already been declared` y permitiendo la ejecución limpia de la lógica de frontend.
 
 ---
 

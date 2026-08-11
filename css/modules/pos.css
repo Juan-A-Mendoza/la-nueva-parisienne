@@ -466,8 +466,10 @@
 }
 
 .qty-btn {
-  min-width: 48px;
-  min-height: 48px;
+  width: 36px;
+  height: 36px;
+  min-width: 36px;
+  min-height: 36px;
   border-radius: 50%;
   background: #FFFFFF;
   color: var(--color-espresso);
@@ -477,6 +479,8 @@
   align-items: center;
   justify-content: center;
   box-shadow: var(--shadow-subtle);
+  border: none;
+  cursor: pointer;
 }
 
 .qty-btn:hover {
@@ -500,10 +504,18 @@
 }
 
 .btn-remove-item {
-  min-width: 48px;
-  min-height: 48px;
+  width: 36px;
+  height: 36px;
+  min-width: 36px;
+  min-height: 36px;
   color: var(--color-light-muted);
   font-size: 1.1rem;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .btn-remove-item:hover {
@@ -567,6 +579,8 @@
   gap: 0.6rem;
   box-shadow: var(--shadow-gold);
   transition: all var(--transition-fast);
+  border: none;
+  cursor: pointer;
 }
 
 .btn-process-payment:hover:not(:disabled) {
@@ -581,10 +595,13 @@
   box-shadow: none;
 }
 
-/* MODAL DE COBRO */
+/* MODAL DE COBRO CON SCROLL AUTÓNOMO */
 .payment-modal-card {
   max-width: 500px;
+  max-height: 90vh;
+  overflow-y: auto;
   padding: 2rem;
+  z-index: 2005;
 }
 
 .payment-total-banner {
