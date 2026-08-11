@@ -4,6 +4,20 @@ Todos los cambios significativos, nuevas funcionalidades y actualizaciones del s
 
 El formato está basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1.0.0/) y este proyecto se adhiere a [Semantic Versioning](https://semver.org/lang/es/).
 
+## [2.2.0] - 2026-08-11 (Integración del Punto de Venta POS con Base de Datos MySQL)
+
+### 🚀 Añadido (Added)
+- **Sentencias SQL de Datos Semilla POS ([database/database.sql](file:///C:/Users/juana/.gemini/antigravity-ide/scratch/la-nueva-parisienne/database/database.sql) y [database/seed_data.sql](file:///C:/Users/juana/.gemini/antigravity-ide/scratch/la-nueva-parisienne/database/seed_data.sql))**:
+  - Incorporación de campos `icono` y `descripcion` en el esquema relacional de la tabla `productos`.
+  - Sentencias de inserción `INSERT INTO` para poblar 15 ítems del catálogo de productos terminados en `productos` y sus correspondientes categorías en `categorias_producto` (*Panadería Artesanal, Pastelería & Repostería, Cafetería & Bebidas, Especialidades & Desayunos*).
+- **API Endpoint de Productos PHP ([api/pos/get_products.php](file:///C:/Users/juana/.gemini/antigravity-ide/scratch/la-nueva-parisienne/api/pos/get_products.php))**:
+  - Endpoint PHP que ejecuta consultas preparadas PDO `JOIN` entre `productos` y `categorias_producto`, estructurando la lista completa de ítems para el Punto de Venta en formato JSON.
+- **Integración Asíncrona en Frontend POS ([js/data/products-db.js](file:///C:/Users/juana/.gemini/antigravity-ide/scratch/la-nueva-parisienne/js/data/products-db.js) y [js/modules/pos.js](file:///C:/Users/juana/.gemini/antigravity-ide/scratch/la-nueva-parisienne/js/modules/pos.js))**:
+  - Implementación de `getProductsCatalogAsync()` en `ProductsStore` para obtener productos y categorías dinámicamente mediante `fetch('../api/pos/get_products.php')` con fallback automático a datos estáticos locales.
+  - Preservación del 100% de la usabilidad, migas de pan y botones táctiles de 48px en la vista [modules/pos.html](file:///C:/Users/juana/.gemini/antigravity-ide/scratch/la-nueva-parisienne/modules/pos.html).
+
+---
+
 ## [2.1.0] - 2026-08-11 (Módulo 9: Configuraciones Generales y Ajustes del Sistema)
 
 ### 🚀 Añadido (Added)

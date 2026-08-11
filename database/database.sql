@@ -61,6 +61,8 @@ CREATE TABLE IF NOT EXISTS `productos` (
   `precio_unitario` DECIMAL(10,2) NOT NULL DEFAULT 0.00,
   `tipo` VARCHAR(50) NOT NULL DEFAULT 'raw_material', -- 'raw_material' | 'finished_product'
   `ubicacion` VARCHAR(100) DEFAULT 'Almacén Central',
+  `icono` VARCHAR(20) DEFAULT '🥖',
+  `descripcion` TEXT,
   PRIMARY KEY (`id`),
   CONSTRAINT `fk_productos_categorias` FOREIGN KEY (`categoria_id`) REFERENCES `categorias_producto` (`id`) ON DELETE CASCADE ON UPDATE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;

@@ -4,9 +4,9 @@
    ========================================================================== */
 
 import { SessionStore } from '../core/session-store.js';
-import { CATEGORIES, PRODUCTS_DATABASE } from '../data/products-db.js';
+import { CATEGORIES, PRODUCTS_DATABASE, ProductsStore } from '../data/products-db.js';
 
-document.addEventListener('DOMContentLoaded', () => {
+document.addEventListener('DOMContentLoaded', async () => {
   // 1. Verificación de Seguridad y Sesión
   const session = SessionStore.getSession();
   if (!session) {
@@ -27,6 +27,8 @@ document.addEventListener('DOMContentLoaded', () => {
   });
 
   // 2. Estado de la Aplicación POS
+  let categoriesList = CATEGORIES;
+  let productsList = PRODUCTS_DATABASE;
   let currentCategory = 'todos';
   let searchQuery = '';
   let cart = []; // Lista de ítems: { product, quantity }
@@ -69,8 +71,18 @@ document.addEventListener('DOMContentLoaded', () => {
   const btnNewSale = document.getElementById('btnNewSale');
   const btnPrintReceipt = document.getElementById('btnPrintReceipt');
 
-  // Inicialización
+  // Inicialización Asíncrona (Consulta API PHP / MySQL)
   initOrderNumber();
+
+  // Cargar catálogo relacional desde MySQL
+  const catalogData = await ProductsStore.getProductsCatalogAsync();
+  if (catalogData && catalogData.products) {
+    productsList = catalogData.products;
+    if (catalogData.categories && catalogData.categories.length > 0) {
+      categoriesList = catalogData.categories;
+    }
+  }
+
   renderCategoryTabs();
   renderProducts();
   updateCartUI();
@@ -83,8 +95,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // Renderizado de Pestañas de Categoría
   function renderCategoryTabs() {
+    if (!categoryTabsContainer) return;
     categoryTabsContainer.innerHTML = '';
-    CATEGORIES.forEach(cat => {
+    categoriesList.forEach(cat => {
       const btn = document.createElement('button');
       btn.type = 'button';
       btn.className = `category-tab-btn ${cat.id === currentCategory ? 'active' : ''}`;
@@ -100,9 +113,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // Filtrado y Renderizado de Tarjetas de Producto
   function renderProducts() {
+    if (!productsGrid) return;
     productsGrid.innerHTML = '';
 
-    const filtered = PRODUCTS_DATABASE.filter(prod => {
+    const filtered = productsList.filter(prod => {
       const matchesCat = currentCategory === 'todos' || prod.category === currentCategory;
       const matchesSearch = prod.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
                             prod.code.toLowerCase().includes(searchQuery.toLowerCase());

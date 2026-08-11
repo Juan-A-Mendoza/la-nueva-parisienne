@@ -163,3 +163,30 @@ export const PRODUCTS_DATABASE = [
     description: 'Tarta salada con tocino ahumado, crema de leche y queso.'
   }
 ];
+
+export const ProductsStore = {
+  /**
+   * Consulta el catálogo de productos y categorías desde la API PHP/MySQL
+   * con fallback automático al catálogo de prueba local si no hay respuesta servidor
+   */
+  async getProductsCatalogAsync() {
+    try {
+      const response = await fetch('../api/pos/get_products.php');
+      if (response.ok) {
+        const result = await response.json();
+        if (result.success && Array.isArray(result.products) && result.products.length > 0) {
+          return {
+            categories: result.categories || CATEGORIES,
+            products: result.products
+          };
+        }
+      }
+    } catch (err) {
+      console.warn('API get_products.php no disponible en este entorno. Cargando catálogo de productos local:', err);
+    }
+    return {
+      categories: CATEGORIES,
+      products: PRODUCTS_DATABASE
+    };
+  }
+};
