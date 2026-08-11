@@ -187,12 +187,27 @@ CREATE TABLE IF NOT EXISTS `asientos_detalle` (
   PRIMARY KEY (`id`),
   CONSTRAINT `fk_asientos_detalle_encabezado` FOREIGN KEY (`asiento_id`) REFERENCES `asientos_contables` (`id`) ON DELETE CASCADE ON UPDATE CASCADE,
   CONSTRAINT `fk_asientos_detalle_cuentas` FOREIGN KEY (`cuenta_codigo`) REFERENCES `plan_cuentas` (`codigo`) ON DELETE CASCADE ON UPDATE CASCADE
+-- ----------------------------------------------------------------------------
+-- 10. TABLA: configuraciones (Ajustes Generales y Parámetros del Sistema)
+-- ----------------------------------------------------------------------------
+CREATE TABLE IF NOT EXISTS `configuraciones` (
+  `clave` VARCHAR(100) NOT NULL,
+  `valor` TEXT NOT NULL,
+  `descripcion` VARCHAR(255),
+  `actualizado_en` TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (`clave`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 
 -- ============================================================================
 -- INSERCIÓN DE DATOS DE SEMILLA (SEED DATA INICIAL)
 -- ============================================================================
+
+-- Inserción de Configuraciones Iniciales de Tasa BCV
+INSERT INTO `configuraciones` (`clave`, `valor`, `descripcion`) VALUES
+('bcv_rate_mode', 'auto', 'Modo de obtención de la tasa BCV: auto o manual'),
+('bcv_manual_rate', '761.21', 'Valor de la tasa de cambio ingresado manualmente')
+ON DUPLICATE KEY UPDATE `valor` = VALUES(`valor`);
 
 -- Inserción de Roles
 INSERT INTO `roles` (`id`, `codigo`, `nombre`, `descripcion`) VALUES

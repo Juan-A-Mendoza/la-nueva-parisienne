@@ -81,16 +81,21 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   async function loadBcvRate() {
     try {
-      const res = await fetch('../api/bcv_rate.php');
+      const res = await fetch('../api/bcv_rate.php', { cache: 'no-store' });
       if (res.ok) {
         const data = await res.json();
         if (data.success && data.rate) {
           bcvRate = data.rate;
-          if (bcvRateValEl) bcvRateValEl.textContent = `Bs. ${bcvRate.toFixed(2)}`;
+          const badgeEl = document.getElementById('bcvRateBadge');
+          if (badgeEl) {
+            const modeLabel = data.mode === 'manual' ? 'Manual' : 'Auto';
+            badgeEl.innerHTML = `<span>🇻🇪 Tasa BCV (${modeLabel}):</span> <strong>Bs. ${bcvRate.toFixed(2)}</strong>`;
+            badgeEl.title = `Fuente: ${data.source} (${data.date})`;
+          }
         }
       }
     } catch (e) {
-      console.warn('Servicio Tasa BCV offline. Utilizando tasa oficial por defecto (36.50):', e);
+      console.warn('Servicio Tasa BCV offline. Utilizando tasa oficial por defecto:', e);
     }
   }
 

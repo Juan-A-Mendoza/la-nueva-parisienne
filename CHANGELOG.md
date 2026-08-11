@@ -4,6 +4,27 @@ Todos los cambios significativos, nuevas funcionalidades y actualizaciones del s
 
 El formato está basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1.0.0/) y este proyecto se adhiere a [Semantic Versioning](https://semver.org/lang/es/).
 
+## [2.5.0] - 2026-08-11 (Gestión Maestra de Tasa BCV: Modos Auto/Manual, Validación de Seguridad y Persistencia MySQL)
+
+### 🚀 Añadido (Added)
+- **Persistencia de Tasa Maestra en MySQL ([database/database.sql](file:///C:/Users/juana/.gemini/antigravity-ide/scratch/la-nueva-parisienne/database/database.sql))**:
+  - Incorporación de la tabla relacional `configuraciones` con semillas para `bcv_rate_mode` (`auto` / `manual`) y `bcv_manual_rate` (`761.21`).
+- **Endpoint de Guardado de Preferencias ([api/save_bcv_settings.php](file:///C:/Users/juana/.gemini/antigravity-ide/scratch/la-nueva-parisienne/api/save_bcv_settings.php))**:
+  - API PHP POST para guardar los modos de tasa y valores manuales ingresados por la administración con soporte `ON DUPLICATE KEY UPDATE`.
+- **Módulo 9: Panel de Gestión Maestra de Tasa BCV ([modules/settings.html](file:///C:/Users/juana/.gemini/antigravity-ide/scratch/la-nueva-parisienne/modules/settings.html) y [js/modules/settings.js](file:///C:/Users/juana/.gemini/antigravity-ide/scratch/la-nueva-parisienne/js/modules/settings.js))**:
+  - Incorporación de un conmutador (Toggle Switch) entre *Modo Automático (API BCV)* y *Modo Manual*, con habilitación dinámica de campo de tasa manual y guardado persistente.
+- **Botón de Actualización Forzada en Dashboard ([modules/dashboard.html](file:///C:/Users/juana/.gemini/antigravity-ide/scratch/la-nueva-parisienne/modules/dashboard.html) y [js/modules/dashboard.js](file:///C:/Users/juana/.gemini/antigravity-ide/scratch/la-nueva-parisienne/js/modules/dashboard.js))**:
+  - Botón *🔄 Actualizar Tasa* que ejecuta peticiones a la API con parámetro anti-caché (`cache: 'no-store'`) y muestra alertas de confirmación al usuario.
+- **Etiquetas de Origen y Distintivos Visuales (POS y Dashboard)**:
+  - Notificación visual clara en la cabecera del POS y tarjetas del Dashboard indicando si la tasa proviene de `● Tasa: Automática` o `● Tasa: Manual (Editada)`.
+
+### 🛠️ Corregido (Fixed)
+- **Validación de Seguridad y Lógica de Tasa Maestra ([api/bcv_rate.php](file:///C:/Users/juana/.gemini/antigravity-ide/scratch/la-nueva-parisienne/api/bcv_rate.php))**:
+  - Implementación de la validación estricta de seguridad: si la tasa devuelta por la API es menor a 100, se rechaza inmediatamente por ser un valor anómalo/erróneo, cayendo en el valor de resguardo/manual configurado.
+  - Supresión absoluta de peticiones a la API externa cuando el modo se encuentra en *Manual*.
+
+---
+
 ## [2.4.0] - 2026-08-11 (Corrección de Layout POS y Funcionalidad Multimoneda Dólar / Bolívares BCV)
 
 ### 🚀 Añadido (Added)

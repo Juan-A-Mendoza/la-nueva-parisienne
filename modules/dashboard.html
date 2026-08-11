@@ -111,13 +111,17 @@
 
         <!-- KPI TASA OFICIAL BANCO CENTRAL DE VENEZUELA (BCV) -->
         <div class="dashboard-kpi-card" style="border: 2px solid rgba(46, 125, 50, 0.3); background: linear-gradient(135deg, rgba(255,255,255,1) 0%, rgba(46, 125, 50, 0.04) 100%);">
-          <div class="kpi-card-header">
-            <span class="kpi-card-label" style="color: var(--color-success); font-weight: 700;">🇻🇪 Tasa Oficial BCV</span>
-            <div class="kpi-card-icon" style="background: rgba(46, 125, 50, 0.12); color: var(--color-success);">🏛️</div>
+          <div class="kpi-card-header" style="display: flex; justify-content: space-between; align-items: flex-start;">
+            <div>
+              <span class="kpi-card-label" style="color: var(--color-success); font-weight: 700;">🇻🇪 Tasa Oficial BCV</span>
+              <div id="kpiBcvRateVal" class="kpi-card-value" style="color: var(--color-success); font-size: 1.8rem; margin-top: 0.25rem;">Bs. 761.21</div>
+            </div>
+            <button id="btnRefreshBcvRate" type="button" class="btn-clear-cart" style="font-size: 0.78rem; padding: 0.35rem 0.65rem; border: 1px solid rgba(46, 125, 50, 0.3); color: var(--color-success); background: #FFFFFF; min-height: 36px; cursor: pointer;" title="Forzar actualización en tiempo real desde la API sin caché">
+              <span>🔄 Actualizar Tasa</span>
+            </button>
           </div>
-          <div id="kpiBcvRateVal" class="kpi-card-value" style="color: var(--color-success);">Bs. 36.50</div>
-          <div class="kpi-card-footer">
-            <span id="kpiBcvSource" class="growth-badge positive">● BCV En Vivo</span>
+          <div class="kpi-card-footer" style="margin-top: 0.85rem;">
+            <span id="kpiBcvSource" class="growth-badge positive">● Tasa: Automática</span>
             <span id="kpiBcvDate" class="growth-subtitle">por $1.00 USD</span>
           </div>
         </div>

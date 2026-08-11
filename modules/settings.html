@@ -137,6 +137,48 @@
         </form>
       </section>
 
+      <!-- SECCIÓN 1.5: GESTIÓN DE TASA DE CAMBIO MAESTRA (BCV & MULTIMONEDA) -->
+      <section class="settings-card" aria-labelledby="headingExchangeRate" style="border: 2px solid rgba(46, 125, 50, 0.3);">
+        <div class="settings-card-header">
+          <span class="card-icon" style="background: rgba(46, 125, 50, 0.12); color: var(--color-success);" aria-hidden="true">🇻🇪</span>
+          <div>
+            <h2 id="headingExchangeRate" style="color: var(--color-success);">Gestión Maestra de Tasa de Cambio BCV</h2>
+            <p>Seleccione el modo de operación para el cálculo de bolívares en el POS y Dashboard (Automático o Manual).</p>
+          </div>
+        </div>
+
+        <form id="formBcvRateSettings" class="form-grid" onsubmit="return false;">
+          <div class="switch-row" style="background: rgba(46, 125, 50, 0.04); padding: 1.25rem; border-radius: var(--radius-md); border: 1px solid rgba(46, 125, 50, 0.2);">
+            <div class="switch-label-group">
+              <span class="switch-title" style="font-size: 1rem; color: var(--color-espresso);">Modo de Tasa de Cambio</span>
+              <span id="bcvModeSubtitle" class="switch-subtitle">● Modo Automático: Consulta en vivo la API del Banco Central de Venezuela.</span>
+            </div>
+            <div style="display: flex; align-items: center; gap: 0.75rem;">
+              <span style="font-size: 0.85rem; font-weight: 700; color: var(--color-muted);">Automático</span>
+              <label class="toggle-switch">
+                <input type="checkbox" id="bcvRateModeToggle">
+                <span class="slider"></span>
+              </label>
+              <span style="font-size: 0.85rem; font-weight: 700; color: var(--color-espresso);">Manual</span>
+            </div>
+          </div>
+
+          <div id="manualRateGroup" class="form-group" style="margin-top: 1rem;">
+            <label for="bcvManualRateInput" style="font-weight: 700;">Tasa de Cambio Manual (Bs. / $1.00 USD):</label>
+            <input type="number" step="0.01" min="1" id="bcvManualRateInput" class="form-control" style="font-size: 1.2rem; font-weight: 800; color: var(--color-success); border-color: var(--color-success);" placeholder="Ej. 761.21" disabled>
+            <p style="font-size: 0.8rem; color: var(--color-muted); margin-top: 0.35rem;">
+              * Esta tasa se aplicará de forma fija en todas las operaciones POS y Reportes cuando el modo sea Manual.
+            </p>
+          </div>
+
+          <div style="margin-top: 1.25rem; display: flex; justify-content: flex-end;">
+            <button id="btnSaveBcvRate" type="button" class="btn-settings-action primary" style="background: var(--color-success); color: #FFFFFF; border: none;">
+              <span>💾 Guardar Configuración de Tasa</span>
+            </button>
+          </div>
+        </form>
+      </section>
+
       <!-- SECCIÓN 2: PARÁMETROS FISCALES E IMPUESTOS -->
       <section class="settings-card" aria-labelledby="headingFiscal">
         <div class="settings-card-header">

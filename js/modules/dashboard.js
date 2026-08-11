@@ -47,24 +47,49 @@ document.addEventListener('DOMContentLoaded', () => {
     if (marginVal) marginVal.textContent = `${DASHBOARD_KPIS.profitMargin}%`;
   }
 
-  async function fetchBcvRate() {
+  async function fetchBcvRate(forceRefresh = false) {
     const rateValEl = document.getElementById('kpiBcvRateVal');
     const sourceEl = document.getElementById('kpiBcvSource');
     const dateEl = document.getElementById('kpiBcvDate');
+    const btnRefresh = document.getElementById('btnRefreshBcvRate');
+
+    if (btnRefresh && forceRefresh) {
+      btnRefresh.disabled = true;
+      btnRefresh.textContent = '⏳ Cargando...';
+    }
 
     try {
-      const res = await fetch('../api/bcv_rate.php');
+      const url = forceRefresh ? `../api/bcv_rate.php?refresh=${Date.now()}` : '../api/bcv_rate.php';
+      const res = await fetch(url, { cache: 'no-store' });
       if (res.ok) {
         const data = await res.json();
         if (data.success && data.rate) {
           if (rateValEl) rateValEl.textContent = `Bs. ${data.rate.toFixed(2)}`;
-          if (sourceEl) sourceEl.textContent = `● BCV Oficial`;
+          if (sourceEl) {
+            const isManual = data.mode === 'manual';
+            sourceEl.textContent = isManual ? `● Tasa: Manual (Editada)` : `● Tasa: Automática`;
+            sourceEl.className = isManual ? 'growth-badge warning' : 'growth-badge positive';
+          }
           if (dateEl) dateEl.textContent = `${data.date} (por $1.00 USD)`;
+          if (forceRefresh) {
+            alert(`✓ Tasa BCV actualizada exitosamente: Bs. ${data.rate.toFixed(2)} (${data.source})`);
+          }
         }
       }
     } catch (e) {
-      console.warn('Servicio Tasa BCV no disponible:', e);
+      console.error('Error al actualizar Tasa BCV:', e);
+      if (forceRefresh) alert('⚠️ Error al conectar con la API de Tasa BCV.');
     }
+
+    if (btnRefresh) {
+      btnRefresh.disabled = false;
+      btnRefresh.textContent = '🔄 Actualizar Tasa';
+    }
+  }
+
+  const btnRefreshBcvRate = document.getElementById('btnRefreshBcvRate');
+  if (btnRefreshBcvRate) {
+    btnRefreshBcvRate.addEventListener('click', () => fetchBcvRate(true));
   }
 
   // 3. Inicialización del Gráfico de Tendencia de Ventas (Chart.js)

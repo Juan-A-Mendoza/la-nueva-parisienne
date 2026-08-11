@@ -27,6 +27,81 @@ document.addEventListener('DOMContentLoaded', () => {
   // 2. Cargar Configuraciones Actuales en Formulario
   const currentSettings = SettingsStore.getSettings();
   loadFormValues(currentSettings);
+  initBcvRateControls();
+
+  // 2.1 Gestión de Tasa Maestra BCV (Auto / Manual)
+  async function initBcvRateControls() {
+    const modeToggle = document.getElementById('bcvRateModeToggle');
+    const manualInput = document.getElementById('bcvManualRateInput');
+    const modeSubtitle = document.getElementById('bcvModeSubtitle');
+    const btnSaveBcv = document.getElementById('btnSaveBcvRate');
+
+    if (!modeToggle || !manualInput) return;
+
+    try {
+      const res = await fetch('../api/bcv_rate.php');
+      if (res.ok) {
+        const data = await res.json();
+        const isManual = data.mode === 'manual';
+        modeToggle.checked = isManual;
+        manualInput.disabled = !isManual;
+        if (data.rate) manualInput.value = data.rate.toFixed(2);
+        
+        updateSubtitleText(isManual);
+      }
+    } catch (e) {
+      console.warn('Error al cargar ajustes de tasa BCV:', e);
+    }
+
+    modeToggle.addEventListener('change', () => {
+      const isManual = modeToggle.checked;
+      manualInput.disabled = !isManual;
+      updateSubtitleText(isManual);
+    });
+
+    function updateSubtitleText(isManual) {
+      if (modeSubtitle) {
+        modeSubtitle.textContent = isManual
+          ? '● Modo Manual: Tasa fija ingresada manualmente por administración (persistida en MySQL).'
+          : '● Modo Automático: Consulta en vivo la API oficial del Banco Central de Venezuela.';
+      }
+    }
+
+    if (btnSaveBcv) {
+      btnSaveBcv.addEventListener('click', async () => {
+        btnSaveBcv.disabled = true;
+        btnSaveBcv.textContent = 'Guardando en MySQL...';
+
+        const isManual = modeToggle.checked;
+        const rateVal = parseFloat(manualInput.value) || 761.21;
+
+        try {
+          const res = await fetch('../api/save_bcv_settings.php', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              mode: isManual ? 'manual' : 'auto',
+              manualRate: rateVal
+            })
+          });
+
+          if (res.ok) {
+            const data = await res.json();
+            if (data.success) {
+              showToast('💾 Configuración de Tasa BCV guardada correctamente en MySQL.', 'success');
+            } else {
+              showToast('⚠️ ' + (data.message || 'Error al guardar tasa'), 'warning');
+            }
+          }
+        } catch (err) {
+          showToast('⚠️ Error de conexión al guardar tasa en MySQL.', 'warning');
+        }
+
+        btnSaveBcv.disabled = false;
+        btnSaveBcv.textContent = '💾 Guardar Configuración de Tasa';
+      });
+    }
+  }
 
   // 3. Manejador del Botón "Guardar Cambios"
   const btnSaveSettings = document.getElementById('btnSaveSettings');
