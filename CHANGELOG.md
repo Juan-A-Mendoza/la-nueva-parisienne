@@ -4,6 +4,17 @@ Todos los cambios significativos, nuevas funcionalidades y actualizaciones del s
 
 El formato está basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1.0.0/) y este proyecto se adhiere a [Semantic Versioning](https://semver.org/lang/es/).
 
+## [2.0.2] - 2026-08-11 (Corrección de Rutas Relativas e Integración de Vista PHP)
+
+### 🛠️ Corregido (Fixed)
+- **Vista de Autenticación PHP ([index.php](file:///C:/Users/juana/.gemini/antigravity-ide/scratch/la-nueva-parisienne/index.php))**:
+  - Corrección de las rutas relativas en las etiquetas `<link>` para importar `css/main.css` y `css/modules/auth.css`, restaurando el diseño visual corporativo.
+  - Corrección de la ruta relativas en la etiqueta `<script>` para apuntar correctamente a `js/modules/auth.js`.
+- **Lógica e Interactividad Frontend ([js/modules/auth.js](file:///C:/Users/juana/.gemini/antigravity-ide/scratch/la-nueva-parisienne/js/modules/auth.js) y [index.html](file:///C:/Users/juana/.gemini/antigravity-ide/scratch/la-nueva-parisienne/index.html))**:
+  - Resiliencia en el enlace de eventos DOM para la selección de perfil de usuario y apertura del modal de PIN.
+  - Sincronización de clases y soporte para el teclado numérico táctil (`keypad-btn` / `key-btn`, `backspace` / `delete`).
+  - Preservación exacta de la estructura HTML original de las tarjetas de perfil.
+
 ---
 
 ## [2.0.1] - 2026-08-11 (Poblado de Base de Datos MySQL y Endpoint de Perfiles PHP)

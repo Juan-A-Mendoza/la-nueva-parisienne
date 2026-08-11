@@ -12,12 +12,12 @@ document.addEventListener('DOMContentLoaded', async () => {
   const profileGrid = document.getElementById('profilesGrid') || document.getElementById('profileGrid');
   const pinModal = document.getElementById('pinModal');
   const closeModalBtn = document.getElementById('closeModalBtn');
-  const selectedUserAvatar = document.getElementById('selectedUserAvatar');
-  const selectedUserName = document.getElementById('selectedUserName');
-  const selectedUserRole = document.getElementById('selectedUserRole');
+  const selectedUserAvatar = document.getElementById('selectedUserAvatar') || document.getElementById('selectedAvatar');
+  const selectedUserName = document.getElementById('selectedUserName') || document.getElementById('selectedName');
+  const selectedUserRole = document.getElementById('selectedUserRole') || document.getElementById('selectedRole');
   const pinDisplayDots = document.querySelectorAll('.pin-dot');
-  const pinKeypad = document.getElementById('pinKeypad');
-  const pinErrorAlert = document.getElementById('pinErrorAlert');
+  const pinKeypad = document.getElementById('pinKeypad') || document.getElementById('keypad');
+  const pinErrorAlert = document.getElementById('pinErrorAlert') || document.getElementById('authMessage');
 
   // Cargar perfiles de forma asíncrona desde MySQL o fallback local
   const profiles = await SessionStore.getProfilesAsync();
@@ -38,25 +38,32 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     profileList.forEach(profile => {
       const card = document.createElement('article');
-      card.className = 'user-card';
+      card.className = 'profile-card user-card';
       card.setAttribute('role', 'button');
       card.setAttribute('tabindex', '0');
       card.setAttribute('aria-label', `Ingresar como ${profile.name}, ${profile.role}`);
 
       card.innerHTML = `
-        <div class="user-avatar">${profile.icon}</div>
-        <h3 class="user-name">${profile.name}</h3>
-        <span class="user-role">${profile.role}</span>
-        <p class="user-desc">${profile.description}</p>
-        <button type="button" class="btn-select-user">Seleccionar Perfil</button>
+        <div class="profile-avatar-wrapper">
+          <div class="profile-avatar user-avatar">${profile.icon}</div>
+          <span class="status-dot"></span>
+        </div>
+        <h3 class="profile-name user-name">${profile.name}</h3>
+        <span class="profile-role user-role">${profile.role}</span>
+        <p class="profile-desc user-desc">${profile.description || ''}</p>
+        <button type="button" class="btn-select-user profile-action-btn">Seleccionar Perfil</button>
       `;
 
-      const selectUser = () => openPinModal(profile);
+      const selectUser = (e) => {
+        if (e) e.preventDefault();
+        openPinModal(profile);
+      };
+
       card.addEventListener('click', selectUser);
       card.addEventListener('keydown', (e) => {
         if (e.key === 'Enter' || e.key === ' ') {
           e.preventDefault();
-          selectUser();
+          selectUser(e);
         }
       });
 
@@ -67,56 +74,60 @@ document.addEventListener('DOMContentLoaded', async () => {
   function openPinModal(profile) {
     selectedUserId = profile.id;
     enteredPin = '';
-    selectedUserAvatar.textContent = profile.icon;
-    selectedUserName.textContent = profile.name;
-    selectedUserRole.textContent = profile.role;
+    if (selectedUserAvatar) selectedUserAvatar.textContent = profile.icon;
+    if (selectedUserName) selectedUserName.textContent = profile.name;
+    if (selectedUserRole) selectedUserRole.textContent = profile.role;
     
     hideError();
     updatePinDots();
-    pinModal.classList.add('active');
+    if (pinModal) pinModal.classList.add('active');
   }
 
   function closePinModal() {
-    pinModal.classList.remove('active');
+    if (pinModal) pinModal.classList.remove('active');
     selectedUserId = null;
     enteredPin = '';
   }
 
-  closeModalBtn.addEventListener('click', closePinModal);
+  if (closeModalBtn) {
+    closeModalBtn.addEventListener('click', closePinModal);
+  }
 
   // Event listener para teclado numérico PIN táctil
-  pinKeypad.addEventListener('click', async (e) => {
-    const btn = e.target.closest('.key-btn');
-    if (!btn) return;
+  if (pinKeypad) {
+    pinKeypad.addEventListener('click', async (e) => {
+      const btn = e.target.closest('.keypad-btn') || e.target.closest('.key-btn');
+      if (!btn) return;
 
-    const val = btn.dataset.value;
-    const action = btn.dataset.action;
+      const val = btn.dataset.value;
+      const action = btn.dataset.action;
 
-    if (val) {
-      if (enteredPin.length < 4) {
-        enteredPin += val;
+      if (val !== undefined && val !== null && val !== '') {
+        if (enteredPin.length < 4) {
+          enteredPin += val;
+          updatePinDots();
+          hideError();
+
+          if (enteredPin.length === 4) {
+            // Autenticación asíncrona apuntando a la API PHP / MySQL
+            await processAuthentication();
+          }
+        }
+      } else if (action === 'clear') {
+        enteredPin = '';
         updatePinDots();
         hideError();
-
-        if (enteredPin.length === 4) {
-          // Autenticación asíncrona apuntando a la API PHP / MySQL
-          await processAuthentication();
-        }
+      } else if (action === 'delete' || action === 'backspace') {
+        enteredPin = enteredPin.slice(0, -1);
+        updatePinDots();
+        hideError();
       }
-    } else if (action === 'clear') {
-      enteredPin = '';
-      updatePinDots();
-      hideError();
-    } else if (action === 'delete') {
-      enteredPin = enteredPin.slice(0, -1);
-      updatePinDots();
-      hideError();
-    }
-  });
+    });
+  }
 
   // Soporte de entrada por teclado físico
   document.addEventListener('keydown', async (e) => {
-    if (!pinModal.classList.contains('active')) return;
+    if (!pinModal || !pinModal.classList.contains('active')) return;
 
     if (/^[0-9]$/.test(e.key)) {
       if (enteredPin.length < 4) {
@@ -163,17 +174,24 @@ document.addEventListener('DOMContentLoaded', async () => {
   }
 
   function showError(msg) {
-    pinErrorAlert.textContent = msg;
-    pinErrorAlert.classList.add('visible');
+    if (pinErrorAlert) {
+      pinErrorAlert.textContent = msg;
+      pinErrorAlert.classList.add('visible', 'error-text');
+    }
   }
 
   function hideError() {
-    pinErrorAlert.classList.remove('visible');
+    if (pinErrorAlert) {
+      pinErrorAlert.classList.remove('visible', 'error-text');
+    }
   }
 
   function shakeModal() {
+    if (!pinModal) return;
     const card = pinModal.querySelector('.pin-modal-card');
-    card.classList.add('shake');
-    setTimeout(() => card.classList.remove('shake'), 500);
+    if (card) {
+      card.classList.add('shake');
+      setTimeout(() => card.classList.remove('shake'), 500);
+    }
   }
 });

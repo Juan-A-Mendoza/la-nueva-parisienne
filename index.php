@@ -6,7 +6,7 @@
   <title>La Nueva Parisienne - Autenticación y Control de Acceso</title>
   <meta name="description" content="Sistema Integral de Gestión Gerencial y Contable para la panadería simulada La Nueva Parisienne. Módulo 1: Autenticación por Perfil y PIN.">
   
-  <!-- Hojas de Estilos Separadas (CSS3 Estricto) -->
+  <!-- Hojas de Estilos Separadas (CSS3 Estricto - Rutas Relativas Corregidas) -->
   <link rel="stylesheet" href="css/main.css">
   <link rel="stylesheet" href="css/modules/auth.css">
 </head>
@@ -29,7 +29,7 @@
         <span>👤</span> Seleccione su Perfil de Usuario para Iniciar Sesión
       </h2>
 
-      <!-- Rejilla Dinámica de Perfiles (Renderizada por JS) -->
+      <!-- Rejilla Dinámica de Perfiles (Renderizada por JS desde MySQL) -->
       <div id="profilesGrid" class="profiles-grid">
         <!-- Renderizado dinámico vía js/modules/auth.js -->
       </div>
@@ -89,7 +89,7 @@
     </div>
   </div>
 
-  <!-- SCRIPT MODULAR PRINCIPAL -->
+  <!-- SCRIPT MODULAR PRINCIPAL (Ruta Relativa Corregida) -->
   <script type="module" src="js/modules/auth.js"></script>
 
 </body>
