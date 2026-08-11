@@ -1,0 +1,263 @@
+/* ==========================================================================
+   MÓDULO 5: ESTILOS DE INVENTARIO Y CONTROL DE STOCK (INVENTORY.CSS)
+   Panel central de existencias, alertas de stock mínimo y acciones táctiles (48x48px)
+   ========================================================================== */
+
+.inventory-wrapper {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  background-color: var(--bg-main);
+}
+
+/* NAVBAR DE INVENTARIO */
+.inventory-navbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1.25rem 2.25rem;
+  background: var(--bg-surface);
+  border-bottom: var(--border-subtle);
+  box-shadow: var(--shadow-subtle);
+}
+
+.inventory-brand-group {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.inventory-brand-icon {
+  width: 48px;
+  height: 48px;
+  background: var(--gradient-espresso);
+  color: var(--color-gold);
+  border-radius: var(--radius-pill);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.5rem;
+  box-shadow: var(--shadow-subtle);
+}
+
+/* BARRA DE BOTONES DE ACCIÓN PRINCIPAL (TOUCH-FRIENDLY MIN 48X48PX) */
+.inventory-action-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 1rem;
+  padding: 1.5rem 2.25rem 0.5rem;
+}
+
+.action-buttons-group {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.btn-inventory-action {
+  min-height: 48px;
+  padding: 0.75rem 1.35rem;
+  border-radius: var(--radius-md);
+  font-size: 0.95rem;
+  font-weight: 700;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.6rem;
+  box-shadow: var(--shadow-subtle);
+  transition: all var(--transition-fast);
+}
+
+.btn-inventory-action.primary {
+  background: var(--gradient-gold);
+  color: var(--color-espresso);
+  box-shadow: var(--shadow-gold);
+}
+
+.btn-inventory-action.primary:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 30px rgba(212, 155, 84, 0.4);
+}
+
+.btn-inventory-action.danger {
+  background: rgba(200, 90, 50, 0.12);
+  color: var(--color-terracotta);
+  border: 1px solid rgba(200, 90, 50, 0.3);
+}
+
+.btn-inventory-action.danger:hover {
+  background: var(--color-terracotta);
+  color: #FFFFFF;
+}
+
+.btn-inventory-action.secondary {
+  background: var(--gradient-espresso);
+  color: var(--color-gold);
+}
+
+/* CONTENEDOR PRINCIPAL */
+.inventory-content {
+  padding: 1.25rem 2.25rem 3rem;
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+  max-width: 1400px;
+  width: 100%;
+  margin: 0 auto;
+}
+
+/* 1. SECCIÓN DE ALERTAS Y KPIS DE STOCK */
+.inventory-kpi-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 1.25rem;
+}
+
+.inventory-kpi-card {
+  background: #FFFFFF;
+  border-radius: var(--radius-md);
+  padding: 1.25rem 1.5rem;
+  border: var(--border-subtle);
+  box-shadow: var(--shadow-subtle);
+  display: flex;
+  align-items: center;
+  gap: 1.25rem;
+}
+
+.inventory-kpi-card.alert-card {
+  border: 2px solid var(--color-terracotta);
+  background: rgba(200, 90, 50, 0.04);
+}
+
+.kpi-icon-container {
+  width: 52px;
+  height: 52px;
+  border-radius: var(--radius-md);
+  background: var(--bg-main);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.6rem;
+  border: var(--border-glass);
+}
+
+.kpi-details h3 {
+  font-size: 0.8rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--color-muted);
+}
+
+.kpi-details .kpi-number {
+  font-size: 1.8rem;
+  font-weight: 800;
+  color: var(--color-espresso);
+  font-family: var(--font-sans);
+}
+
+/* 2. PANEL CENTRAL: TABLA DE STOCK Y MOVIMIENTOS */
+.inventory-table-card {
+  background: #FFFFFF;
+  border-radius: var(--radius-md);
+  padding: 1.75rem;
+  border: var(--border-subtle);
+  box-shadow: var(--shadow-subtle);
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+
+.table-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 1rem;
+}
+
+.inventory-filter-tabs {
+  display: flex;
+  gap: 0.5rem;
+  overflow-x: auto;
+}
+
+.inv-filter-btn {
+  min-height: 48px;
+  padding: 0.5rem 1.15rem;
+  border-radius: var(--radius-pill);
+  background: var(--bg-main);
+  border: var(--border-subtle);
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--color-muted);
+  white-space: nowrap;
+}
+
+.inv-filter-btn.active {
+  background: var(--color-espresso);
+  color: var(--color-gold);
+}
+
+.inv-search-input {
+  height: 48px;
+  width: 280px;
+  padding: 0.5rem 1rem 0.5rem 2.5rem;
+  border-radius: var(--radius-pill);
+  border: var(--border-subtle);
+  font-size: 0.9rem;
+  background: var(--bg-main);
+}
+
+/* BADGES DE ESTADO DE STOCK */
+.stock-status-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.25rem 0.75rem;
+  border-radius: var(--radius-pill);
+  font-size: 0.78rem;
+  font-weight: 700;
+  text-transform: uppercase;
+}
+
+.stock-status-tag.critical {
+  background: rgba(211, 47, 47, 0.15);
+  color: var(--color-danger);
+  border: 1px solid rgba(211, 47, 47, 0.3);
+  animation: pulseRed 2s infinite alternate;
+}
+
+.stock-status-tag.low_stock {
+  background: rgba(212, 155, 84, 0.18);
+  color: var(--color-gold-dark);
+}
+
+.stock-status-tag.optimal {
+  background: rgba(46, 125, 50, 0.14);
+  color: var(--color-success);
+}
+
+@keyframes pulseRed {
+  0% { box-shadow: 0 0 4px rgba(211, 47, 47, 0.2); }
+  100% { box-shadow: 0 0 12px rgba(211, 47, 47, 0.6); }
+}
+
+/* BOTONES TÁCTILES DENTRO DE FILAS */
+.btn-row-touch {
+  min-width: 48px;
+  min-height: 48px;
+  border-radius: var(--radius-sm);
+  background: var(--bg-main);
+  border: var(--border-subtle);
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: var(--color-espresso);
+}
+
+.btn-row-touch:hover {
+  background: var(--color-gold-light);
+  border-color: var(--color-gold);
+}

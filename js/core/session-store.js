@@ -9,7 +9,7 @@ const STORAGE_KEY = 'LN_PARISIENNE_SESSION';
 const USERS_DATABASE = [
   {
     id: 'usr_baker',
-    name: 'Juan',
+    name: 'Enrique',
     role: 'Chef de Cuisine / Maestro Panadero',
     roleCode: 'MAESTRO_PANADERO',
     icon: '👨‍🍳',
@@ -20,10 +20,10 @@ const USERS_DATABASE = [
   },
   {
     id: 'usr_cashier',
-    name: 'Enrique',
-    role: 'Cajera Principal / POS',
+    name: 'Henry',
+    role: 'Cajero Principal / POS',
     roleCode: 'CAJERO',
-    icon: '👩‍💼',
+    icon: '👨‍💼',
     pin: '1234',
     description: 'Facturación directa a clientes, cobros rápidos y apertura de caja.',
     redirectUrl: 'modules/pos.html',
@@ -31,7 +31,7 @@ const USERS_DATABASE = [
   },
   {
     id: 'usr_manager',
-    name: 'Henry',
+    name: 'Juan',
     role: 'Gerente General',
     roleCode: 'GERENTE_GENERAL',
     icon: '👨‍💼',
@@ -43,7 +43,7 @@ const USERS_DATABASE = [
   {
     id: 'usr_accountant',
     name: 'Sebastian',
-    role: 'Contadora & Administradora',
+    role: 'Contador & Administrador',
     roleCode: 'CONTADOR',
     icon: '📊',
     pin: '1234',

@@ -1,0 +1,238 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Inventario y Control de Stock - La Nueva Parisienne</title>
+  <meta name="description" content="Módulo 5: Control de Existencias, Alertas de Stock Mínimo, Ajustes Manuales y Registro de Mermas para La Nueva Parisienne.">
+  
+  <!-- Hojas de Estilos Separadas (CSS3 Estricto) -->
+  <link rel="stylesheet" href="../css/main.css">
+  <link rel="stylesheet" href="../css/modules/inventory.css">
+</head>
+<body>
+
+  <!-- LAYOUT PRINCIPAL DE INVENTARIO -->
+  <div class="inventory-wrapper">
+
+    <!-- NAVBAR SUPERIOR -->
+    <header class="inventory-navbar">
+      <div class="inventory-brand-group">
+        <div class="inventory-brand-icon" aria-hidden="true">📦</div>
+        <div>
+          <h1 class="brand-title" style="font-size: 1.3rem;">La Nueva Parisienne</h1>
+          <span class="sub-title">Módulo 5: Inventario y Control de Stock (Materias Primas & Productos)</span>
+        </div>
+      </div>
+
+      <div style="display: flex; align-items: center; gap: 1.25rem;">
+        <div class="cashier-badge">
+          <span id="userAvatar" class="cashier-avatar">📊</span>
+          <div class="cashier-info">
+            <span id="userName" class="cashier-name">Sophie Laurent</span>
+            <span class="shift-status" style="color: var(--color-gold-dark);">● Control Almacén Central</span>
+          </div>
+        </div>
+        <!-- Botón Dedicado Exclusivo para Cerrar Sesión -->
+        <button id="logoutBtn" class="btn-pos-logout" title="Cerrar sesión activa y volver al login">Cerrar Sesión</button>
+      </div>
+    </header>
+
+    <!-- NAVEGACIÓN POR MIGAS DE PAN (BREADCRUMBS) -->
+    <nav class="breadcrumbs-container" aria-label="Migas de pan">
+      <ol class="breadcrumbs-list">
+        <li class="breadcrumb-item">
+          <a href="dashboard.html">🏠 Inicio (Panel Central)</a>
+        </li>
+        <li class="breadcrumb-separator">/</li>
+        <li class="breadcrumb-item active" aria-current="page">Inventario y Control de Stock</li>
+      </ol>
+    </nav>
+
+    <!-- BARRA DE ACCIONES PRINCIPALES (BOTONES TÁCTILES MIN 48X48PX) -->
+    <section class="inventory-action-toolbar" aria-label="Acciones de Almacén">
+      <div class="action-buttons-group">
+        <button id="btnOpenAdjust" type="button" class="btn-inventory-action primary">
+          <span>+ Realizar Ajuste Manual</span>
+        </button>
+
+        <button id="btnOpenMerma" type="button" class="btn-inventory-action danger">
+          <span>⚠️ Registrar Merma de Almacén</span>
+        </button>
+      </div>
+
+      <div style="font-size: 0.85rem; color: var(--color-muted); font-weight: 600;">
+        <span>Última Auditoría Física:</span>
+        <strong style="color: var(--color-espresso);">Hoy 08:00 AM</strong>
+      </div>
+    </section>
+
+    <!-- CONTENIDO DE INVENTARIO -->
+    <main class="inventory-content">
+
+      <!-- SECCIÓN 1: KPIS Y ALERTAS DE STOCK MÍNIMO -->
+      <section class="inventory-kpi-grid" aria-label="Resumen de Existencias">
+        <div class="inventory-kpi-card">
+          <div class="kpi-icon-container">📦</div>
+          <div class="kpi-details">
+            <h3>Total de Existencias</h3>
+            <div id="kpiTotalItems" class="kpi-number">28 ítems</div>
+          </div>
+        </div>
+
+        <div class="inventory-kpi-card alert-card">
+          <div class="kpi-icon-container" style="background: rgba(200, 90, 50, 0.1); color: var(--color-terracotta);">🚨</div>
+          <div class="kpi-details">
+            <h3>Alertas de Stock Mínimo</h3>
+            <div id="kpiStockAlerts" class="kpi-number" style="color: var(--color-terracotta);">3 Alertas</div>
+          </div>
+        </div>
+
+        <div class="inventory-kpi-card">
+          <div class="kpi-icon-container">💵</div>
+          <div class="kpi-details">
+            <h3>Valor Total Estimado</h3>
+            <div id="kpiTotalValue" class="kpi-number">$12,450.00</div>
+          </div>
+        </div>
+
+        <div class="inventory-kpi-card">
+          <div class="kpi-icon-container">🗑️</div>
+          <div class="kpi-details">
+            <h3>Mermas del Mes</h3>
+            <div id="kpiMonthlyWaste" class="kpi-number" style="color: var(--color-danger);">$145.20</div>
+          </div>
+        </div>
+      </section>
+
+      <!-- SECCIÓN 2: PANEL CENTRAL TABLA DE CONTROL DE STOCK -->
+      <section class="inventory-table-card" aria-label="Tabla de Control de Stock">
+        <div class="table-toolbar">
+          <div class="inventory-filter-tabs">
+            <button type="button" class="inv-filter-btn active" data-filter="todos">Todos los Ítems</button>
+            <button type="button" class="inv-filter-btn" data-filter="raw_material">Materias Primas (Insumos)</button>
+            <button type="button" class="inv-filter-btn" data-filter="finished_product">Productos Terminados</button>
+            <button type="button" class="inv-filter-btn" data-filter="alerts" style="color: var(--color-terracotta);">🚨 Solo Alertas Críticas</button>
+          </div>
+
+          <input type="text" id="inventorySearch" class="inv-search-input" placeholder="Buscar por insumo o código (ej: Harina, MAT-001)...">
+        </div>
+
+        <!-- Tabla Semántica HTML5 -->
+        <div class="table-responsive-container">
+          <table class="dashboard-table">
+            <thead>
+              <tr>
+                <th>Código</th>
+                <th>Nombre del Ítem / Insumo</th>
+                <th>Categoría</th>
+                <th>Stock Actual</th>
+                <th>Stock Mínimo</th>
+                <th>Estado de Existencia</th>
+                <th>Valor Estimado ($)</th>
+                <th>Acciones Táctiles</th>
+              </tr>
+            </thead>
+            <tbody id="inventoryBody">
+              <!-- Renderizado dinámico vía js/modules/inventory.js -->
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+    </main>
+
+  </div>
+
+
+  <!-- MODAL DE AJUSTE MANUAL DE INVENTARIO -->
+  <div id="adjustModal" class="pin-modal-overlay" role="dialog" aria-modal="true" aria-labelledby="adjustModalTitle">
+    <div class="pin-modal-card payment-modal-card">
+      <button id="closeAdjustModalBtn" class="modal-close-btn" aria-label="Cerrar modal">&times;</button>
+
+      <div class="selected-user-header" style="margin-bottom: 1.25rem;">
+        <div class="selected-user-avatar">📝</div>
+        <h3 id="adjustModalTitle" class="selected-user-name">Ajuste Manual de Inventario</h3>
+        <span class="selected-user-role">Recuento Físico / Corrección de Existencias</span>
+      </div>
+
+      <form id="adjustForm" style="display: flex; flex-direction: column; gap: 1.25rem; text-align: left;">
+        <div>
+          <label for="adjustItemSelect" style="font-weight: 700; font-size: 0.9rem; display: block; margin-bottom: 0.4rem;">Seleccionar Ítem de Almacén:</label>
+          <select id="adjustItemSelect" class="pos-search-input" style="padding: 0.65rem 1rem;">
+            <!-- Opciones dinámicas -->
+          </select>
+        </div>
+
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+          <div>
+            <label for="adjustTypeSelect" style="font-weight: 700; font-size: 0.85rem; display: block; margin-bottom: 0.4rem;">Tipo de Ajuste:</label>
+            <select id="adjustTypeSelect" class="pos-search-input" style="padding: 0.65rem 1rem;">
+              <option value="entrada">Entrada (+ Sumar Stock)</option>
+              <option value="salida">Salida (- Restar Stock)</option>
+            </select>
+          </div>
+
+          <div>
+            <label for="adjustQtyInput" style="font-weight: 700; font-size: 0.85rem; display: block; margin-bottom: 0.4rem;">Cantidad a Ajustar:</label>
+            <input type="number" id="adjustQtyInput" class="pos-search-input" value="5" min="0.1" step="0.1">
+          </div>
+        </div>
+
+        <button type="submit" class="btn-process-payment" style="margin-top: 0.5rem;">
+          <span>✓ Guardar Ajuste de Stock</span>
+        </button>
+      </form>
+    </div>
+  </div>
+
+
+  <!-- MODAL DE REGISTRO DE MERMAS DE ALMACÉN -->
+  <div id="mermaModal" class="pin-modal-overlay" role="dialog" aria-modal="true" aria-labelledby="mermaModalTitle">
+    <div class="pin-modal-card payment-modal-card">
+      <button id="closeMermaModalBtn" class="modal-close-btn" aria-label="Cerrar modal">&times;</button>
+
+      <div class="selected-user-header" style="margin-bottom: 1.25rem;">
+        <div class="selected-user-avatar" style="background: rgba(200, 90, 50, 0.15); border-color: var(--color-terracotta);">⚠️</div>
+        <h3 id="mermaModalTitle" class="selected-user-name" style="color: var(--color-terracotta);">Registro de Merma de Almacén</h3>
+        <span class="selected-user-role">Descarte de Insumo o Producto Dañado</span>
+      </div>
+
+      <form id="mermaForm" style="display: flex; flex-direction: column; gap: 1.25rem; text-align: left;">
+        <div>
+          <label for="mermaItemSelect" style="font-weight: 700; font-size: 0.9rem; display: block; margin-bottom: 0.4rem;">Seleccionar Ítem Descartado:</label>
+          <select id="mermaItemSelect" class="pos-search-input" style="padding: 0.65rem 1rem;">
+            <!-- Opciones dinámicas -->
+          </select>
+        </div>
+
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+          <div>
+            <label for="mermaQtyInput" style="font-weight: 700; font-size: 0.85rem; display: block; margin-bottom: 0.4rem;">Cantidad Perdida:</label>
+            <input type="number" id="mermaQtyInput" class="pos-search-input" value="2" min="0.1" step="0.1">
+          </div>
+
+          <div>
+            <label for="mermaReasonSelect" style="font-weight: 700; font-size: 0.85rem; display: block; margin-bottom: 0.4rem;">Causa de la Merma:</label>
+            <select id="mermaReasonSelect" class="pos-search-input" style="padding: 0.65rem 1rem;">
+              <option value="Vencimiento / Caducidad">Vencimiento / Caducidad</option>
+              <option value="Deterioro en Horneado">Deterioro en Horneado</option>
+              <option value="Rotura de Empaque / Manipulación">Rotura de Empaque / Manipulación</option>
+              <option value="Fallo en Refrigeración">Fallo en Refrigeración</option>
+            </select>
+          </div>
+        </div>
+
+        <button type="submit" class="btn-process-payment" style="background: linear-gradient(135deg, #C85A32 0%, #A03D1B 100%); color: white; margin-top: 0.5rem;">
+          <span>⚠️ Confirmar Registro de Merma</span>
+        </button>
+      </form>
+    </div>
+  </div>
+
+
+  <!-- SCRIPT MODULAR INVENTARIO -->
+  <script type="module" src="../js/modules/inventory.js"></script>
+
+</body>
+</html>
