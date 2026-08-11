@@ -3,7 +3,7 @@
    Sistema de Diseño: Parisian Chic & Modern Management Information System
    ========================================================================== */
 
-@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400&family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400&family=Plus+Jakarta Sans:wght@300;400;500;600;700&display=swap');
 
 :root {
   /* Paleta de Colores Curada */
@@ -116,4 +116,58 @@ button:active {
   color: var(--color-muted);
   font-weight: 400;
   font-size: 0.95rem;
+}
+
+/* ==========================================================================
+   COMPONENTE GLOBAL: MIGAS DE PAN (BREADCRUMBS)
+   Navegación jerárquica limpia y profesional para todas las vistas principales
+   ========================================================================== */
+.breadcrumbs-container {
+  display: flex;
+  align-items: center;
+  padding: 0.6rem 2rem;
+  background: var(--bg-surface);
+  border-bottom: 1px dashed rgba(44, 29, 17, 0.08);
+  font-size: 0.85rem;
+  z-index: 8;
+}
+
+.breadcrumbs-list {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  list-style: none;
+}
+
+.breadcrumb-item {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: var(--color-muted);
+}
+
+.breadcrumb-item a {
+  color: var(--color-gold-dark);
+  text-decoration: none;
+  font-weight: 600;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  transition: color var(--transition-fast);
+}
+
+.breadcrumb-item a:hover {
+  color: var(--color-espresso);
+  text-decoration: underline;
+}
+
+.breadcrumb-separator {
+  color: var(--color-light-muted);
+  font-size: 0.75rem;
+  user-select: none;
+}
+
+.breadcrumb-item.active {
+  color: var(--color-espresso);
+  font-weight: 700;
 }

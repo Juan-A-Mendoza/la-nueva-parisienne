@@ -40,6 +40,17 @@
         </div>
       </header>
 
+      <!-- NAVEGACIÓN POR MIGAS DE PAN (BREADCRUMBS) -->
+      <nav class="breadcrumbs-container" aria-label="Migas de pan">
+        <ol class="breadcrumbs-list">
+          <li class="breadcrumb-item">
+            <a href="../index.html">🏠 Inicio</a>
+          </li>
+          <li class="breadcrumb-separator">/</li>
+          <li class="breadcrumb-item active" aria-current="page">Punto de Venta (POS)</li>
+        </ol>
+      </nav>
+
       <!-- BARRA DE FILTRADO Y CATEGORÍAS -->
       <div class="pos-filter-toolbar">
         <!-- Buscador Instantáneo -->
@@ -60,7 +71,6 @@
       </main>
 
     </section>
-
 
     <!-- PANEL DERECHO: CARRITO DE COMPRAS Y FACTURACIÓN -->
     <aside class="pos-cart-section" aria-label="Carrito de compras y facturación">
@@ -131,9 +141,8 @@
 
   </div>
 
-
   <!-- MODAL DE PROCESAMIENTO DE PAGO Y COBRO -->
-  <div id="paymentModal" class="pin-modal-overlay" role="dialog" aria-modal="true" aria-labelledby="paymentTitle">
+  <div id="paymentModal" class="pin-modal-overlay" role="dialog" aria-modal="true" aria-labelledby="paymentTotalBanner">
     <div class="pin-modal-card payment-modal-card">
       <button id="closePaymentModalBtn" class="modal-close-btn" aria-label="Cerrar modal">&times;</button>
 
@@ -186,7 +195,6 @@
     </div>
   </div>
 
-
   <!-- MODAL DE COMPROBANTE DE VENTA (TICKET IMPRESO) -->
   <div id="receiptModal" class="pin-modal-overlay" role="dialog" aria-modal="true">
     <div class="pin-modal-card receipt-card">
@@ -206,7 +214,6 @@
       </div>
     </div>
   </div>
-
 
   <!-- SCRIPT MODULAR POS -->
   <script type="module" src="../js/modules/pos.js"></script>

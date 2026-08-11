@@ -4,121 +4,185 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Dashboard Gerencial - La Nueva Parisienne</title>
+  <meta name="description" content="Panel de Control e Inteligencia de Negocios para La Nueva Parisienne. KPIs financieros, tendencias de ventas y movimientos recientes.">
+  
+  <!-- Hojas de Estilos Separadas (CSS3 Estricto) -->
   <link rel="stylesheet" href="../css/main.css">
-  <style>
-    .module-container {
-      padding: 2.5rem;
-      max-width: 1200px;
-      margin: 0 auto;
-    }
-    .top-bar {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      background: var(--bg-surface);
-      padding: 1.25rem 2rem;
-      border-radius: var(--radius-md);
-      box-shadow: var(--shadow-subtle);
-      margin-bottom: 2rem;
-    }
-    .user-info {
-      display: flex;
-      align-items: center;
-      gap: 1rem;
-    }
-    .user-avatar {
-      font-size: 2rem;
-      background: var(--color-gold-light);
-      width: 50px;
-      height: 50px;
-      border-radius: 50%;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-    }
-    .logout-btn {
-      background: var(--gradient-espresso);
-      color: var(--color-gold);
-      padding: 0.6rem 1.2rem;
-      border-radius: var(--radius-pill);
-      font-weight: 600;
-    }
-    .card-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-      gap: 1.5rem;
-    }
-    .kpi-card {
-      background: var(--bg-surface);
-      padding: 1.75rem;
-      border-radius: var(--radius-md);
-      box-shadow: var(--shadow-subtle);
-      border-left: 5px solid var(--color-gold);
-    }
-    .kpi-value {
-      font-size: 2.2rem;
-      font-weight: 700;
-      color: var(--color-espresso);
-      margin-top: 0.5rem;
-    }
-  </style>
+  <link rel="stylesheet" href="../css/modules/dashboard.css">
 </head>
 <body>
 
-  <div class="module-container">
-    <div class="top-bar">
-      <div>
-        <h1 class="brand-title" style="font-size: 1.8rem;">La Nueva Parisienne</h1>
-        <p class="sub-title">Módulo 4: Dashboard Gerencial</p>
-      </div>
-      <div class="user-info">
-        <div id="userAvatar" class="user-avatar">👨‍💼</div>
-        <div>
-          <h4 id="userName" style="color: var(--color-espresso);">Antoine Moreau</h4>
-          <span id="userRole" style="font-size: 0.85rem; color: var(--color-gold-dark);">Gerente General</span>
-        </div>
-        <button id="logoutBtn" class="logout-btn">Cerrar Sesión</button>
-      </div>
-    </div>
+  <!-- LAYOUT PRINCIPAL DEL DASHBOARD GERENCIAL -->
+  <div class="dashboard-wrapper">
 
-    <div class="card-grid">
-      <div class="kpi-card">
-        <h3>Ventas del Día</h3>
-        <div class="kpi-value">$1,485.50</div>
-        <p style="color: var(--color-success); font-size: 0.9rem; margin-top: 0.4rem;">▲ +12.4% vs ayer</p>
+    <!-- NAVBAR SUPERIOR GERENCIAL -->
+    <header class="dashboard-navbar">
+      <div class="dashboard-brand-group">
+        <div class="dashboard-brand-icon" aria-hidden="true">📊</div>
+        <div>
+          <h1 class="brand-title" style="font-size: 1.3rem;">La Nueva Parisienne</h1>
+          <span class="sub-title">Módulo 4: Dashboard Gerencial & Inteligencia de Negocios</span>
+        </div>
       </div>
-      <div class="kpi-card" style="border-left-color: var(--color-terracotta);">
-        <h3>Hornos Activos</h3>
-        <div class="kpi-value">3 / 4</div>
-        <p style="color: var(--color-muted); font-size: 0.9rem; margin-top: 0.4rem;">Capacidad al 75%</p>
+
+      <div class="dashboard-controls">
+        <div class="cashier-badge">
+          <span id="managerAvatar" class="cashier-avatar">👨‍💼</span>
+          <div class="cashier-info">
+            <span id="managerName" class="cashier-name">Antoine Moreau</span>
+            <span class="shift-status" style="color: var(--color-gold-dark);">● Gerente General</span>
+          </div>
+        </div>
+
+        <button type="button" class="period-select-btn">📅 Este Mes (Agosto 2026)</button>
+        <button id="btnExportReport" type="button" class="btn-export-report">
+          <span>📄 Exportar Reporte</span>
+        </button>
+        <button id="logoutBtn" class="btn-pos-logout">Cerrar Sesión</button>
       </div>
-      <div class="kpi-card" style="border-left-color: #2E7D32;">
-        <h3>Alertas de Inventario</h3>
-        <div class="kpi-value">2 Materias</div>
-        <p style="color: var(--color-danger); font-size: 0.9rem; margin-top: 0.4rem;">Harina Mantequilla reposición</p>
-      </div>
-    </div>
+    </header>
+
+    <!-- NAVEGACIÓN POR MIGAS DE PAN (BREADCRUMBS) -->
+    <nav class="breadcrumbs-container" aria-label="Migas de pan">
+      <ol class="breadcrumbs-list">
+        <li class="breadcrumb-item">
+          <a href="../index.html">🏠 Inicio</a>
+        </li>
+        <li class="breadcrumb-separator">/</li>
+        <li class="breadcrumb-item active" aria-current="page">Dashboard Gerencial</li>
+      </ol>
+    </nav>
+
+
+    <!-- CONTENIDO ANALÍTICO PRINCIPAL -->
+    <main class="dashboard-content">
+
+      <!-- SECCIÓN 1: TARJETAS KPI (INDICADORES CLAVE DE RENDIMIENTO) -->
+      <section class="kpi-cards-grid" aria-label="Indicadores Clave de Rendimiento">
+        
+        <div class="dashboard-kpi-card">
+          <div class="kpi-card-header">
+            <span class="kpi-card-label">Ingresos Totales</span>
+            <div class="kpi-card-icon">💰</div>
+          </div>
+          <div id="kpiRevenueVal" class="kpi-card-value">$4,850.00</div>
+          <div class="kpi-card-footer">
+            <span class="growth-badge positive">▲ +14.8%</span>
+            <span class="growth-subtitle">vs. período anterior</span>
+          </div>
+        </div>
+
+        <div class="dashboard-kpi-card">
+          <div class="kpi-card-header">
+            <span class="kpi-card-label">Órdenes Procesadas</span>
+            <div class="kpi-card-icon">🧾</div>
+          </div>
+          <div id="kpiOrdersVal" class="kpi-card-value">248 órdenes</div>
+          <div class="kpi-card-footer">
+            <span class="growth-badge positive">▲ +8.2%</span>
+            <span class="growth-subtitle">promedio 35/día</span>
+          </div>
+        </div>
+
+        <div class="dashboard-kpi-card">
+          <div class="kpi-card-header">
+            <span class="kpi-card-label">Ticket Promedio</span>
+            <div class="kpi-card-icon">🏷️</div>
+          </div>
+          <div id="kpiTicketVal" class="kpi-card-value">$19.55</div>
+          <div class="kpi-card-footer">
+            <span class="growth-badge warning">▲ +4.1%</span>
+            <span class="growth-subtitle">optimización de venta</span>
+          </div>
+        </div>
+
+        <div class="dashboard-kpi-card">
+          <div class="kpi-card-header">
+            <span class="kpi-card-label">Margen Bruto Ganancia</span>
+            <div class="kpi-card-icon">📈</div>
+          </div>
+          <div id="kpiMarginVal" class="kpi-card-value">38.5%</div>
+          <div class="kpi-card-footer">
+            <span class="growth-badge positive">Salud Excelente</span>
+            <span class="growth-subtitle">costos bajo control</span>
+          </div>
+        </div>
+
+      </section>
+
+
+      <!-- SECCIÓN 2: ÁREA CENTRAL - GRÁFICO DE TENDENCIA DE VENTAS -->
+      <section class="chart-section-card" aria-label="Gráfico de Tendencia de Ventas">
+        <div class="chart-card-header">
+          <div class="chart-title-group">
+            <h2>📈 Tendencia de Ventas y Rendimiento Diario</h2>
+            <p>Comparativa entre ingresos brutos por ventas y costos de materias primas/producción.</p>
+          </div>
+
+          <div class="chart-legend-pills">
+            <div class="legend-pill">
+              <span class="legend-dot sales"></span>
+              <span>Ventas Totales ($)</span>
+            </div>
+            <div class="legend-pill">
+              <span class="legend-dot costs"></span>
+              <span>Costo Producción ($)</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Contenedor del Gráfico de Ventas -->
+        <div class="chart-canvas-wrapper">
+          <canvas id="salesTrendChart"></canvas>
+        </div>
+      </section>
+
+
+      <!-- SECCIÓN 3: TABLA DE MOVIMIENTOS RECIENTES Y AUDITORÍA -->
+      <section class="table-section-card" aria-label="Tabla de Movimientos Recientes">
+        <div class="table-card-header">
+          <div class="chart-title-group">
+            <h2>📜 Movimientos Recientes y Registro de Auditoría</h2>
+            <p>Historial en tiempo real de transacciones de caja, ventas POS y compras a proveedores.</p>
+          </div>
+
+          <div class="table-filter-pills">
+            <button type="button" class="filter-pill-btn active" data-filter="todos">Todos los Movimientos</button>
+            <button type="button" class="filter-pill-btn" data-filter="venta">Solo Ventas</button>
+            <button type="button" class="filter-pill-btn" data-filter="gasto">Solo Gastos</button>
+          </div>
+        </div>
+
+        <!-- Tabla HTML5 Semántica -->
+        <div class="table-responsive-container">
+          <table class="dashboard-table">
+            <thead>
+              <tr>
+                <th>Código Operación</th>
+                <th>Fecha y Hora</th>
+                <th>Tipo de Operación</th>
+                <th>Usuario / Cajero</th>
+                <th>Método de Pago</th>
+                <th>Estado</th>
+                <th>Monto Total ($)</th>
+                <th>Acción</th>
+              </tr>
+            </thead>
+            <tbody id="recentMovementsBody">
+              <!-- Renderizado dinámico vía js/modules/dashboard.js -->
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+    </main>
+
   </div>
 
-  <script type="module">
-    import { SessionStore } from '../js/core/session-store.js';
-    
-    document.addEventListener('DOMContentLoaded', () => {
-      const session = SessionStore.getSession();
-      if (!session) {
-        alert('Sesión no encontrada. Redirigiendo a autenticación...');
-        window.location.href = '../index.html';
-        return;
-      }
-      
-      document.getElementById('userName').textContent = session.user.name;
-      document.getElementById('userRole').textContent = session.user.role;
-      document.getElementById('userAvatar').textContent = session.user.icon;
-      
-      document.getElementById('logoutBtn').addEventListener('click', () => {
-        SessionStore.logout();
-      });
-    });
-  </script>
+
+  <!-- LIBRERÍA CHART.JS CDN Y SCRIPT MODULAR -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script type="module" src="../js/modules/dashboard.js"></script>
+
 </body>
 </html>

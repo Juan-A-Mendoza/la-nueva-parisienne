@@ -1,0 +1,352 @@
+/* ==========================================================================
+   MÓDULO 4: ESTILOS DE DASHBOARD GERENCIAL (DASHBOARD.CSS)
+   Panel analítico, tarjetas KPI, gráfico de tendencia y tabla de movimientos
+   ========================================================================== */
+
+.dashboard-wrapper {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  background-color: var(--bg-main);
+}
+
+/* NAVBAR GERENCIAL */
+.dashboard-navbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1.25rem 2.25rem;
+  background: var(--bg-surface);
+  border-bottom: var(--border-subtle);
+  box-shadow: var(--shadow-subtle);
+}
+
+.dashboard-brand-group {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.dashboard-brand-icon {
+  width: 48px;
+  height: 48px;
+  background: var(--gradient-espresso);
+  color: var(--color-gold);
+  border-radius: var(--radius-pill);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.5rem;
+  box-shadow: var(--shadow-subtle);
+}
+
+.dashboard-controls {
+  display: flex;
+  align-items: center;
+  gap: 1.25rem;
+}
+
+.period-select-btn {
+  padding: 0.5rem 1rem;
+  border-radius: var(--radius-pill);
+  background: var(--bg-main);
+  border: var(--border-subtle);
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--color-espresso);
+  cursor: pointer;
+}
+
+.btn-export-report {
+  padding: 0.55rem 1.15rem;
+  border-radius: var(--radius-pill);
+  background: var(--gradient-gold);
+  color: var(--color-espresso);
+  font-size: 0.85rem;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  box-shadow: var(--shadow-subtle);
+}
+
+.btn-export-report:hover {
+  box-shadow: var(--shadow-gold);
+}
+
+/* CONTENEDOR DE CONTENIDO PRINCIPAL */
+.dashboard-content {
+  padding: 2rem 2.25rem 3rem;
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+  max-width: 1400px;
+  width: 100%;
+  margin: 0 auto;
+}
+
+/* 1. TARJETAS KPI SUPERIORES (KPI CARDS GRID) */
+.kpi-cards-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 1.5rem;
+}
+
+.dashboard-kpi-card {
+  background: #FFFFFF;
+  border-radius: var(--radius-md);
+  padding: 1.5rem;
+  border: var(--border-subtle);
+  box-shadow: var(--shadow-subtle);
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  position: relative;
+  transition: all var(--transition-normal);
+}
+
+.dashboard-kpi-card:hover {
+  transform: translateY(-4px);
+  box-shadow: var(--shadow-medium);
+  border-color: var(--color-gold);
+}
+
+.kpi-card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.kpi-card-label {
+  font-size: 0.82rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--color-muted);
+}
+
+.kpi-card-icon {
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  background: var(--bg-main);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.2rem;
+}
+
+.kpi-card-value {
+  font-size: 2.1rem;
+  font-weight: 800;
+  color: var(--color-espresso);
+  letter-spacing: -0.02em;
+}
+
+.kpi-card-footer {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.82rem;
+}
+
+.growth-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.2rem;
+  padding: 0.2rem 0.55rem;
+  border-radius: var(--radius-pill);
+  font-weight: 700;
+  font-size: 0.78rem;
+}
+
+.growth-badge.positive {
+  background: rgba(46, 125, 50, 0.12);
+  color: var(--color-success);
+}
+
+.growth-badge.warning {
+  background: rgba(212, 155, 84, 0.15);
+  color: var(--color-gold-dark);
+}
+
+.growth-subtitle {
+  color: var(--color-light-muted);
+}
+
+/* 2. ÁREA CENTRAL: GRÁFICO DE TENDENCIA DE VENTAS */
+.chart-section-card {
+  background: #FFFFFF;
+  border-radius: var(--radius-md);
+  padding: 1.75rem;
+  border: var(--border-subtle);
+  box-shadow: var(--shadow-subtle);
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+
+.chart-card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 1rem;
+}
+
+.chart-title-group h2 {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: var(--color-espresso);
+}
+
+.chart-title-group p {
+  font-size: 0.85rem;
+  color: var(--color-muted);
+}
+
+.chart-legend-pills {
+  display: flex;
+  gap: 1rem;
+  align-items: center;
+}
+
+.legend-pill {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--color-espresso);
+}
+
+.legend-dot {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+}
+
+.legend-dot.sales { background: var(--color-gold); }
+.legend-dot.costs { background: var(--color-terracotta); }
+
+.chart-canvas-wrapper {
+  position: relative;
+  height: 320px;
+  width: 100%;
+}
+
+/* 3. SECCIÓN INFERIOR: TABLA DE MOVIMIENTOS RECIENTES */
+.table-section-card {
+  background: #FFFFFF;
+  border-radius: var(--radius-md);
+  padding: 1.75rem;
+  border: var(--border-subtle);
+  box-shadow: var(--shadow-subtle);
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+
+.table-card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 1rem;
+}
+
+.table-filter-pills {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.filter-pill-btn {
+  padding: 0.4rem 0.85rem;
+  border-radius: var(--radius-pill);
+  background: var(--bg-main);
+  border: var(--border-subtle);
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: var(--color-muted);
+  transition: all var(--transition-fast);
+}
+
+.filter-pill-btn.active {
+  background: var(--color-espresso);
+  color: var(--color-gold);
+}
+
+/* TABLA SEMÁNTICA HTML5 */
+.table-responsive-container {
+  overflow-x: auto;
+  width: 100%;
+}
+
+.dashboard-table {
+  width: 100%;
+  border-collapse: collapse;
+  text-align: left;
+  font-size: 0.9rem;
+}
+
+.dashboard-table th {
+  padding: 0.85rem 1rem;
+  background: var(--bg-main);
+  color: var(--color-muted);
+  font-size: 0.78rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  border-bottom: var(--border-subtle);
+}
+
+.dashboard-table td {
+  padding: 1rem;
+  border-bottom: 1px dashed rgba(44, 29, 17, 0.08);
+  color: var(--color-espresso);
+}
+
+.dashboard-table tbody tr:hover {
+  background: rgba(255, 253, 249, 0.8);
+}
+
+.table-code-badge {
+  font-weight: 700;
+  font-family: monospace;
+  color: var(--color-espresso);
+}
+
+.table-status-tag {
+  display: inline-block;
+  padding: 0.2rem 0.6rem;
+  border-radius: var(--radius-pill);
+  font-size: 0.75rem;
+  font-weight: 700;
+}
+
+.table-status-tag.completado {
+  background: rgba(46, 125, 50, 0.12);
+  color: var(--color-success);
+}
+
+.amount-text {
+  font-weight: 800;
+}
+
+.amount-text.positive { color: var(--color-success); }
+.amount-text.negative { color: var(--color-danger); }
+
+.btn-table-action {
+  padding: 0.35rem 0.75rem;
+  border-radius: var(--radius-sm);
+  background: var(--bg-main);
+  border: var(--border-subtle);
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--color-espresso);
+}
+
+.btn-table-action:hover {
+  background: var(--color-gold-light);
+  border-color: var(--color-gold);
+}
