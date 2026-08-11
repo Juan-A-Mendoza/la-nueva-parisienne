@@ -171,7 +171,10 @@ export const ProductsStore = {
    */
   async getProductsCatalogAsync() {
     try {
-      const response = await fetch('../api/pos/get_products.php');
+      let response = await fetch('../api/pos/get_products.php');
+      if (!response.ok) {
+        response = await fetch('../api/get_products.php');
+      }
       if (response.ok) {
         const result = await response.json();
         if (result.success && Array.isArray(result.products) && result.products.length > 0) {

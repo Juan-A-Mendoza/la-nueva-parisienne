@@ -379,11 +379,19 @@ document.addEventListener('DOMContentLoaded', async () => {
     let dbMessage = '';
 
     try {
-      const response = await fetch('../api/pos/procesar_venta.php', {
+      let response = await fetch('../api/pos/procesar_venta.php', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(orderPayload)
       });
+      
+      if (!response.ok) {
+        response = await fetch('../api/procesar_venta.php', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(orderPayload)
+        });
+      }
 
       if (response.ok) {
         const result = await response.json();
