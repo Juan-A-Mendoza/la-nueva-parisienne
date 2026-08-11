@@ -6,7 +6,43 @@ El formato está basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1
 
 ---
 
+## [1.2.0] - 2026-08-11 (Módulo 3: Punto de Venta - POS)
+
+### 🚀 Añadido (Added)
+- **Base de Datos Maestra de Productos ([js/data/products-db.js](file:///C:/Users/juana/.gemini/antigravity-ide/scratch/la-nueva-parisienne/js/data/products-db.js))**:
+  - Catálogo de 15 productos representativos divididos en 4 categorías principales: *Panadería Artesanal*, *Pastelería & Repostería*, *Cafetería & Bebidas* y *Especialidades*.
+  - Códigos correlativos, precios unitarios ($), disponibilidad de stock y descripciones enriquecidas.
+
+- **Interfaz POS Split-Screen en HTML5 Estricto ([modules/pos.html](file:///C:/Users/juana/.gemini/antigravity-ide/scratch/la-nueva-parisienne/modules/pos.html))**:
+  - Separación total de estilos sin inline styling.
+  - Navbar superior con nombre de cajera activa (`Élodie Martin`), badge de caja abierta, indicador de turno y botón de cierre de sesión.
+  - Panel izquierdo de catálogo con barra de búsqueda instantánea y pestañas filtrables por categoría.
+  - Panel derecho de carrito de facturación con selección de tipo de orden (*Para Llevar* / *Consumo Local*), controles de cantidad (`-` `qty` `+`), subtotal por ítem y botón de vaciado.
+
+- **Estilos CSS3 POS ([css/modules/pos.css](file:///C:/Users/juana/.gemini/antigravity-ide/scratch/la-nueva-parisienne/css/modules/pos.css))**:
+  - Maquetación responsiva con CSS Grid y Flexbox.
+  - Tarjetas de producto interactivas con elevación al pasar el cursor (*hover lift*), indicadores de stock y badges dorados.
+  - Diseño de carrito lateral compacto y modales flotantes con efecto *glassmorphism*.
+
+- **Controlador Interactivo POS ([js/modules/pos.js](file:///C:/Users/juana/.gemini/antigravity-ide/scratch/la-nueva-parisienne/js/modules/pos.js))**:
+  - Cálculo automático en tiempo real de Subtotal, Descuentos parametrizables (Sin Descuento, 5%, 10%, Empleado 15%) y tasa fiscal IVA (16%).
+  - Modal de Procesamiento de Cobro con selector de método de pago (*Efectivo*, *Tarjeta*, *Transferencia/QR*).
+  - Calculadora de Vuelto para pagos en efectivo con botones de billetes rápidos ($5, $10, $20, $50, Exacto) y cálculo automático de cambio a entregar.
+  - Modal de Comprobante / Ticket de Venta con formato tradicional de panadería francesa (*"Merci de votre visite"*), desglose detallado, opción de impresión (`window.print()`) y reseteo automático para la siguiente venta.
+
+---
+
 ## [1.0.0] - 2026-08-11 (Iteración Inicial - Módulo de Autenticación & Estructura Base)
+
+> [!IMPORTANT]
+> ### 🔑 CREDENCIALES DE ACCESO POR DEFECTO (USUARIOS Y PIN)
+>
+> | Nombre del Usuario | Rol en el Sistema | PIN de Acceso | Módulo Redirigido |
+> | :--- | :--- | :---: | :--- |
+> | **`Antoine Moreau`** | **Gerente General** | 🔑 **`1234`** | [modules/dashboard.html](file:///C:/Users/juana/.gemini/antigravity-ide/scratch/la-nueva-parisienne/modules/dashboard.html) |
+> | **`Jean-Luc Dubois`** | **Chef de Cuisine / Maestro Panadero** | 🔑 **`4321`** | [modules/kitchen.html](file:///C:/Users/juana/.gemini/antigravity-ide/scratch/la-nueva-parisienne/modules/kitchen.html) |
+> | **`Élodie Martin`** | **Cajera Principal (POS)** | 🔑 **`1111`** | [modules/pos.html](file:///C:/Users/juana/.gemini/antigravity-ide/scratch/la-nueva-parisienne/modules/pos.html) |
+> | **`Sophie Laurent`** | **Contadora & Administradora** | 🔑 **`7777`** | [modules/accounting.html](file:///C:/Users/juana/.gemini/antigravity-ide/scratch/la-nueva-parisienne/modules/accounting.html) |
 
 ### 🚀 Añadido (Added)
 - **Estructura del Proyecto Visual Studio**:
@@ -15,43 +51,21 @@ El formato está basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1
 
 - **Sistema de Diseño "Parisian Chic & Modern MIS"**:
   - Hoja de estilos global ([css/main.css](file:///C:/Users/juana/.gemini/antigravity-ide/scratch/la-nueva-parisienne/css/main.css)) con variables de color curadas (Espresso `#2C1D11`, Trigo Dorado `#D49B54`, Terracota `#C85A32`, Beige Calido `#FAF7F2`).
-  - Integración de fuentes Google Fonts: *Playfair Display* (Serif clásica para la marca) y *Plus Jakarta Sans* (Sansa-serif para la interfaz y números).
-  - Restablecimiento (Reset) CSS3, utilidades tipográficas y componentes globales de botones.
+  - Integración de fuentes Google Fonts: *Playfair Display* y *Plus Jakarta Sans*.
 
 - **Módulo 1: Autenticación por Perfil y PIN**:
-  - Estructura de vista principal semántica en HTML5 puro ([index.html](file:///C:/Users/juana/.gemini/antigravity-ide/scratch/la-nueva-parisienne/index.html)) sin inline styles.
-  - Hoja de estilos dedicada ([css/modules/auth.css](file:///C:/Users/juana/.gemini/antigravity-ide/scratch/la-nueva-parisienne/css/modules/auth.css)) para la selección de usuarios y el modal de PIN.
-  - Rejilla interactivas de tarjetas de perfil con avatares, roles y descripción de funciones.
-  - Modal táctil en pantalla (*Keypad PIN Pad*) con efecto *glassmorphism*, indicadores de dígitos animados, soporte para teclado numérico físico y feedback auditivo/visual de error (animación *shake*).
-
-- **Núcleo de Autenticación y Seguridad (RBAC)**:
-  - Manejador de estado de sesión ([js/core/session-store.js](file:///C:/Users/juana/.gemini/antigravity-ide/scratch/la-nueva-parisienne/js/core/session-store.js)) con almacenamiento en `sessionStorage`.
-  - Base de datos de perfiles y credenciales simuladas con 4 usuarios por rol:
-    - **Antoine Moreau** (Gerente General - PIN: `1234`)
-    - **Jean-Luc Dubois** (Chef de Cuisine / Maestro Panadero - PIN: `4321`)
-    - **Élodie Martin** (Cajera Principal / POS - PIN: `1111`)
-    - **Sophie Laurent** (Contadora - PIN: `7777`)
-  - Controlador interactivo ES6 ([js/modules/auth.js](file:///C:/Users/juana/.gemini/antigravity-ide/scratch/la-nueva-parisienne/js/modules/auth.js)) para procesar ingresos, borrado parcial (`⌫`), borrado completo (`C`) y redirección de módulos.
-
-- **Prototipos de Módulos Destino**:
-  - Vista inicial del Módulo 4: Dashboard Gerencial ([modules/dashboard.html](file:///C:/Users/juana/.gemini/antigravity-ide/scratch/la-nueva-parisienne/modules/dashboard.html)).
-  - Vista inicial del Módulo 2: Producción y Cocina ([modules/kitchen.html](file:///C:/Users/juana/.gemini/antigravity-ide/scratch/la-nueva-parisienne/modules/kitchen.html)).
-  - Vista inicial del Módulo 3: Punto de Venta POS ([modules/pos.html](file:///C:/Users/juana/.gemini/antigravity-ide/scratch/la-nueva-parisienne/modules/pos.html)).
-  - Vista inicial del Módulo 7: Contabilidad y Finanzas ([modules/accounting.html](file:///C:/Users/juana/.gemini/antigravity-ide/scratch/la-nueva-parisienne/modules/accounting.html)).
+  - Vista semántica HTML5 ([index.html](file:///C:/Users/juana/.gemini/antigravity-ide/scratch/la-nueva-parisienne/index.html)) y estilos CSS3 ([css/modules/auth.css](file:///C:/Users/juana/.gemini/antigravity-ide/scratch/la-nueva-parisienne/css/modules/auth.css)).
+  - Teclado numérico PIN en pantalla con animación de error/éxito.
+  - Servicio de sesión ([js/core/session-store.js](file:///C:/Users/juana/.gemini/antigravity-ide/scratch/la-nueva-parisienne/js/core/session-store.js)) con control de acceso por roles (RBAC).
 
 ---
 
 ## Roadmap de Próximas Versiones (Planificado)
 
-### 📌 [1.1.0] - Módulo 2: Producción y Cocina
+### 📌 [1.3.0] - Módulo 2: Producción y Cocina
 - Monitoreo en tiempo real de lotes en hornos activos (temporizadores y alertas).
 - Ajuste de orden diaria de panadería (croissants, baguettes, masa madre).
 - Cola de órdenes en curso y productos listos para horneado.
 
-### 📌 [1.2.0] - Módulo 3: Punto de Venta (POS)
-- Terminal gráfica de facturación táctil por categorías.
-- Cálculo automático de impuestos, totales y vueltos.
-- Integración de ticket digital y arqueo de caja.
-
-### 📌 [1.3.0] - Módulo 4 & 5: Dashboard Gerencial e Inventario
+### 📌 [1.4.0] - Módulo 4 & 5: Dashboard Gerencial e Inventario
 - Indicadores clave de rendimiento (KPIs), gráficas de tendencia y control de stock de materias primas con alertas de reposición (Harina, Mantequilla, Levadura).

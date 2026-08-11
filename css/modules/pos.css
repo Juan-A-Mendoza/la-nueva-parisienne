@@ -1,0 +1,746 @@
+/* ==========================================================================
+   MÓDULO 3: ESTILOS DE PUNTO DE VENTA POS (POS.CSS)
+   Layout dividido, catálogo por categorías, carrito de compras y facturación
+   ========================================================================== */
+
+/* CONTENEDOR PRINCIPAL POS */
+.pos-layout {
+  display: grid;
+  grid-template-columns: 1fr 410px;
+  height: 100vh;
+  width: 100vw;
+  overflow: hidden;
+  background-color: var(--bg-main);
+}
+
+@media (max-width: 1024px) {
+  .pos-layout {
+    grid-template-columns: 1fr;
+    height: auto;
+    min-height: 100vh;
+    overflow-y: auto;
+  }
+}
+
+/* SECCIÓN IZQUIERDA: CATÁLOGO Y CABECERA */
+.pos-catalog-section {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  overflow: hidden;
+  border-right: var(--border-subtle);
+  background: var(--bg-main);
+}
+
+/* NAVBAR SUPERIOR POS */
+.pos-navbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1rem 1.75rem;
+  background: var(--bg-surface);
+  border-bottom: var(--border-subtle);
+  box-shadow: var(--shadow-subtle);
+  z-index: 10;
+}
+
+.pos-brand-group {
+  display: flex;
+  align-items: center;
+  gap: 0.85rem;
+}
+
+.pos-brand-icon {
+  width: 44px;
+  height: 44px;
+  background: var(--gradient-espresso);
+  color: var(--color-gold);
+  border-radius: var(--radius-pill);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.4rem;
+  box-shadow: var(--shadow-subtle);
+}
+
+.pos-title-text h1 {
+  font-size: 1.25rem;
+  font-weight: 700;
+  line-height: 1.2;
+}
+
+.pos-title-text span {
+  font-size: 0.8rem;
+  color: var(--color-muted);
+}
+
+.pos-user-bar {
+  display: flex;
+  align-items: center;
+  gap: 1.25rem;
+}
+
+.cashier-badge {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  background: var(--bg-main);
+  padding: 0.4rem 0.85rem;
+  border-radius: var(--radius-pill);
+  border: var(--border-glass);
+}
+
+.cashier-avatar {
+  font-size: 1.2rem;
+}
+
+.cashier-info {
+  display: flex;
+  flex-direction: column;
+}
+
+.cashier-name {
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: var(--color-espresso);
+}
+
+.shift-status {
+  font-size: 0.72rem;
+  color: var(--color-success);
+  font-weight: 600;
+}
+
+.btn-pos-logout {
+  padding: 0.5rem 1rem;
+  background: rgba(200, 90, 50, 0.1);
+  color: var(--color-terracotta);
+  border-radius: var(--radius-pill);
+  font-size: 0.85rem;
+  font-weight: 600;
+  transition: all var(--transition-fast);
+}
+
+.btn-pos-logout:hover {
+  background: var(--color-terracotta);
+  color: #FFFFFF;
+}
+
+/* BARRA DE BÚSQUEDA Y CATEGORÍAS */
+.pos-filter-toolbar {
+  padding: 1.25rem 1.75rem 0.75rem;
+  background: var(--bg-main);
+}
+
+.search-input-wrapper {
+  position: relative;
+  margin-bottom: 1.25rem;
+}
+
+.search-icon {
+  position: absolute;
+  left: 1.25rem;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--color-muted);
+  font-size: 1.1rem;
+}
+
+.pos-search-input {
+  width: 100%;
+  padding: 0.85rem 1rem 0.85rem 3rem;
+  border-radius: var(--radius-pill);
+  border: var(--border-subtle);
+  background: #FFFFFF;
+  font-size: 0.95rem;
+  color: var(--color-espresso);
+  box-shadow: var(--shadow-subtle);
+  transition: all var(--transition-fast);
+}
+
+.pos-search-input:focus {
+  outline: none;
+  border-color: var(--color-gold);
+  box-shadow: var(--shadow-gold);
+}
+
+/* PESTAÑAS DE CATEGORÍAS */
+.category-tabs-container {
+  display: flex;
+  gap: 0.75rem;
+  overflow-x: auto;
+  padding-bottom: 0.5rem;
+  scrollbar-width: thin;
+}
+
+.category-tab-btn {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.65rem 1.25rem;
+  border-radius: var(--radius-pill);
+  background: #FFFFFF;
+  border: var(--border-subtle);
+  font-size: 0.88rem;
+  font-weight: 600;
+  color: var(--color-muted);
+  white-space: nowrap;
+  box-shadow: var(--shadow-subtle);
+  transition: all var(--transition-fast);
+}
+
+.category-tab-btn:hover {
+  border-color: var(--color-gold);
+  color: var(--color-espresso);
+}
+
+.category-tab-btn.active {
+  background: var(--gradient-espresso);
+  color: var(--color-gold);
+  border-color: var(--color-espresso);
+  box-shadow: var(--shadow-medium);
+}
+
+/* REJILLA DE PRODUCTOS (GRID) */
+.products-scroll-area {
+  flex: 1;
+  padding: 1.25rem 1.75rem 2rem;
+  overflow-y: auto;
+}
+
+.products-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(210px, 1fr));
+  gap: 1.25rem;
+}
+
+.product-card {
+  background: var(--bg-surface);
+  border-radius: var(--radius-md);
+  padding: 1.25rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  position: relative;
+  border: var(--border-subtle);
+  box-shadow: var(--shadow-subtle);
+  cursor: pointer;
+  transition: all var(--transition-normal);
+}
+
+.product-card:hover {
+  transform: translateY(-4px);
+  box-shadow: var(--shadow-medium);
+  border-color: var(--color-gold);
+}
+
+.product-card:active {
+  transform: scale(0.97);
+}
+
+.product-stock-badge {
+  position: absolute;
+  top: 0.75rem;
+  right: 0.75rem;
+  font-size: 0.72rem;
+  font-weight: 700;
+  padding: 0.2rem 0.55rem;
+  border-radius: var(--radius-pill);
+  background: rgba(44, 29, 17, 0.06);
+  color: var(--color-muted);
+}
+
+.product-card-icon {
+  font-size: 2.75rem;
+  margin-bottom: 0.75rem;
+  background: var(--bg-main);
+  width: 76px;
+  height: 76px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid rgba(212, 155, 84, 0.2);
+}
+
+.product-card-title {
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: var(--color-espresso);
+  margin-bottom: 0.35rem;
+  line-height: 1.25;
+}
+
+.product-card-desc {
+  font-size: 0.78rem;
+  color: var(--color-muted);
+  margin-bottom: 0.85rem;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.product-card-footer {
+  margin-top: auto;
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding-top: 0.5rem;
+  border-top: 1px dashed rgba(44, 29, 17, 0.08);
+}
+
+.product-price {
+  font-size: 1.15rem;
+  font-weight: 800;
+  color: var(--color-gold-dark);
+}
+
+.btn-add-product {
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  background: var(--gradient-gold);
+  color: var(--color-espresso);
+  font-size: 1.1rem;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: var(--shadow-subtle);
+}
+
+.product-card:hover .btn-add-product {
+  box-shadow: var(--shadow-gold);
+  transform: scale(1.08);
+}
+
+/* SECCIÓN DERECHA: CARRITO DE COMPRAS / PANEL DE FACTURACIÓN */
+.pos-cart-section {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  background: #FFFFFF;
+  border-left: var(--border-subtle);
+  box-shadow: var(--shadow-floating);
+  z-index: 5;
+}
+
+.cart-header {
+  padding: 1.25rem 1.5rem;
+  border-bottom: var(--border-subtle);
+  background: var(--bg-main);
+}
+
+.cart-header-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 0.85rem;
+}
+
+.cart-order-number {
+  font-size: 1.1rem;
+  font-weight: 800;
+  color: var(--color-espresso);
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.btn-clear-cart {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--color-terracotta);
+  padding: 0.35rem 0.65rem;
+  border-radius: var(--radius-sm);
+}
+
+.btn-clear-cart:hover {
+  background: rgba(200, 90, 50, 0.08);
+}
+
+.order-type-selector {
+  display: flex;
+  background: #FFFFFF;
+  padding: 0.25rem;
+  border-radius: var(--radius-pill);
+  border: var(--border-subtle);
+}
+
+.order-type-btn {
+  flex: 1;
+  padding: 0.4rem 0.6rem;
+  border-radius: var(--radius-pill);
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: var(--color-muted);
+  text-align: center;
+  transition: all var(--transition-fast);
+}
+
+.order-type-btn.active {
+  background: var(--color-espresso);
+  color: var(--color-gold);
+}
+
+/* LISTA DE ÍTEMS EN EL CARRITO */
+.cart-items-list {
+  flex: 1;
+  overflow-y: auto;
+  padding: 1rem 1.25rem;
+}
+
+.empty-cart-view {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  color: var(--color-light-muted);
+  text-align: center;
+  padding: 2rem;
+}
+
+.empty-cart-icon {
+  font-size: 3.5rem;
+  margin-bottom: 1rem;
+  opacity: 0.6;
+}
+
+.cart-item-row {
+  display: flex;
+  align-items: center;
+  gap: 0.85rem;
+  padding: 0.85rem 0;
+  border-bottom: 1px dashed rgba(44, 29, 17, 0.08);
+  animation: fadeIn 0.25s ease;
+}
+
+.cart-item-icon {
+  font-size: 1.5rem;
+  width: 40px;
+  height: 40px;
+  background: var(--bg-main);
+  border-radius: var(--radius-sm);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.cart-item-details {
+  flex: 1;
+  min-width: 0;
+}
+
+.cart-item-title {
+  font-size: 0.88rem;
+  font-weight: 700;
+  color: var(--color-espresso);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.cart-item-price {
+  font-size: 0.78rem;
+  color: var(--color-muted);
+}
+
+.cart-quantity-controls {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  background: var(--bg-main);
+  padding: 0.2rem 0.4rem;
+  border-radius: var(--radius-pill);
+  border: var(--border-subtle);
+}
+
+.qty-btn {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: #FFFFFF;
+  color: var(--color-espresso);
+  font-size: 0.9rem;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: var(--shadow-subtle);
+}
+
+.qty-btn:hover {
+  background: var(--color-gold-light);
+  color: var(--color-gold-dark);
+}
+
+.qty-count {
+  font-size: 0.85rem;
+  font-weight: 700;
+  min-width: 18px;
+  text-align: center;
+}
+
+.cart-item-subtotal {
+  font-size: 0.95rem;
+  font-weight: 800;
+  color: var(--color-espresso);
+  min-width: 55px;
+  text-align: right;
+}
+
+.btn-remove-item {
+  color: var(--color-light-muted);
+  font-size: 0.9rem;
+  padding: 0.25rem;
+}
+
+.btn-remove-item:hover {
+  color: var(--color-danger);
+}
+
+/* PANEL DESGLOSE FINANCIERO Y BOTÓN COBRAR */
+.cart-summary-footer {
+  padding: 1.25rem 1.5rem;
+  background: var(--bg-main);
+  border-top: var(--border-subtle);
+}
+
+.summary-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.6rem;
+  font-size: 0.88rem;
+  color: var(--color-muted);
+}
+
+.summary-row.total-row {
+  margin-top: 0.85rem;
+  padding-top: 0.85rem;
+  border-top: 2px solid var(--color-espresso);
+  font-size: 1.25rem;
+  font-weight: 800;
+  color: var(--color-espresso);
+}
+
+.total-amount-highlight {
+  font-size: 1.6rem;
+  color: var(--color-gold-dark);
+  font-family: var(--font-sans);
+}
+
+.discount-select {
+  padding: 0.25rem 0.5rem;
+  border-radius: var(--radius-sm);
+  border: var(--border-subtle);
+  font-size: 0.8rem;
+  background: #FFFFFF;
+  color: var(--color-espresso);
+}
+
+.btn-process-payment {
+  width: 100%;
+  margin-top: 1rem;
+  padding: 1rem;
+  border-radius: var(--radius-md);
+  background: var(--gradient-gold);
+  color: var(--color-espresso);
+  font-size: 1.1rem;
+  font-weight: 800;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.6rem;
+  box-shadow: var(--shadow-gold);
+  transition: all var(--transition-fast);
+}
+
+.btn-process-payment:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 30px rgba(212, 155, 84, 0.5);
+}
+
+.btn-process-payment:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  filter: grayscale(1);
+  box-shadow: none;
+}
+
+/* MODAL DE COBRO (PAYMENT MODAL) */
+.payment-modal-card {
+  max-width: 500px;
+  padding: 2rem;
+}
+
+.payment-total-banner {
+  background: var(--gradient-espresso);
+  color: var(--color-gold);
+  padding: 1.25rem;
+  border-radius: var(--radius-md);
+  text-align: center;
+  margin-bottom: 1.5rem;
+}
+
+.payment-total-banner span {
+  font-size: 0.85rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  opacity: 0.85;
+}
+
+.payment-total-banner h2 {
+  font-size: 2.2rem;
+  font-weight: 800;
+  margin-top: 0.25rem;
+}
+
+.payment-methods-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 0.75rem;
+  margin-bottom: 1.5rem;
+}
+
+.method-btn {
+  padding: 0.85rem 0.5rem;
+  border-radius: var(--radius-md);
+  border: var(--border-subtle);
+  background: var(--bg-main);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.35rem;
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: var(--color-muted);
+}
+
+.method-btn.active {
+  border-color: var(--color-gold);
+  background: var(--color-gold-light);
+  color: var(--color-espresso);
+}
+
+.cash-calculator-panel {
+  background: var(--bg-main);
+  padding: 1.25rem;
+  border-radius: var(--radius-md);
+  margin-bottom: 1.5rem;
+  border: var(--border-glass);
+}
+
+.fast-cash-buttons {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+}
+
+.fast-cash-btn {
+  padding: 0.5rem;
+  border-radius: var(--radius-sm);
+  background: #FFFFFF;
+  border: var(--border-subtle);
+  font-weight: 700;
+  font-size: 0.85rem;
+  color: var(--color-espresso);
+}
+
+.fast-cash-btn:hover {
+  background: var(--color-gold-light);
+  border-color: var(--color-gold);
+}
+
+.tender-input-group {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 1rem;
+}
+
+.tender-input-group label {
+  font-weight: 700;
+  font-size: 0.9rem;
+}
+
+.tender-input {
+  width: 140px;
+  padding: 0.5rem 0.85rem;
+  border-radius: var(--radius-md);
+  border: 2px solid var(--color-gold);
+  font-size: 1.2rem;
+  font-weight: 800;
+  text-align: right;
+  color: var(--color-espresso);
+}
+
+.change-due-box {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.85rem 1rem;
+  background: #FFFFFF;
+  border-radius: var(--radius-md);
+  border: 1px solid rgba(44, 29, 17, 0.1);
+}
+
+.change-amount {
+  font-size: 1.4rem;
+  font-weight: 800;
+  color: var(--color-success);
+}
+
+.change-amount.insufficient {
+  color: var(--color-danger);
+}
+
+/* COMPROBANTE TICKET FRENCH BAKERY STYLE */
+.receipt-card {
+  max-width: 400px;
+  background: #FFFFFF;
+  border-radius: var(--radius-md);
+  padding: 2rem 1.75rem;
+  font-family: monospace, monospace;
+}
+
+.receipt-header {
+  text-align: center;
+  padding-bottom: 1rem;
+  border-bottom: 2px dashed #2C1D11;
+  margin-bottom: 1rem;
+}
+
+.receipt-header h3 {
+  font-family: var(--font-serif);
+  font-size: 1.5rem;
+}
+
+.receipt-items-table {
+  width: 100%;
+  margin-bottom: 1rem;
+  font-size: 0.85rem;
+}
+
+.receipt-items-table td {
+  padding: 0.35rem 0;
+}
+
+.receipt-footer {
+  text-align: center;
+  margin-top: 1.25rem;
+  padding-top: 1rem;
+  border-top: 2px dashed #2C1D11;
+  font-size: 0.8rem;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(4px); }
+  to { opacity: 1; transform: translateY(0); }
+}
