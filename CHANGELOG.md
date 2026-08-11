@@ -6,6 +6,21 @@ El formato está basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1
 
 ---
 
+## [2.0.0] - 2026-08-11 (Migración Arquitectónica a PHP & Base de Datos MySQL)
+
+### 🚀 Añadido (Added)
+- **Script SQL de Base de Datos Relacional ([database/database.sql](file:///C:/Users/juana/.gemini/antigravity-ide/scratch/la-nueva-parisienne/database/database.sql))**:
+  - Estructura completa de tablas en motor **InnoDB** con codificación `utf8mb4_unicode_ci` y llaves foráneas (*usuarios, roles, productos, categorias_producto, proveedores, ordenes_compra, ventas, ventas_detalle, plan_cuentas, asientos_contables, asientos_detalle*).
+  - Carga inicial de datos de semilla (*Seed Data*) para usuarios (todos con PIN `1234`), catálogo de productos, proveedores y cuentas PUC.
+- **Configuración de Conexión PHP PDO ([api/config/conexion.php](file:///C:/Users/juana/.gemini/antigravity-ide/scratch/la-nueva-parisienne/api/config/conexion.php))**:
+  - Conexión relacional segura utilizando la extensión **PDO** con manejo de excepciones `ERRMODE_EXCEPTION`, consultas preparadas y charset `utf8mb4`.
+- **API Endpoint de Autenticación ([api/auth/login.php](file:///C:/Users/juana/.gemini/antigravity-ide/scratch/la-nueva-parisienne/api/auth/login.php))**:
+  - Servicio API en PHP que procesa peticiones JSON POST desde el frontend, consulta directamente la tabla `usuarios` en MySQL mediante sentencia preparada y valida el PIN de 4 dígitos, respondiendo con tokens de sesión en JSON.
+- **Integración Asíncrona Resiliente ([js/core/session-store.js](file:///C:/Users/juana/.gemini/antigravity-ide/scratch/la-nueva-parisienne/js/core/session-store.js) y [js/modules/auth.js](file:///C:/Users/juana/.gemini/antigravity-ide/scratch/la-nueva-parisienne/js/modules/auth.js))**:
+  - Implementación de `validatePinAsync()` mediante `fetch()` apuntando a la API PHP, manteniendo un fallback transparente en caso de despliegue en servidor web estático.
+
+---
+
 ## [1.8.0] - 2026-08-11 (Módulo 8: Gestión de Personal y Permisos por Rol)
 
 ### 🚀 Añadido (Added)

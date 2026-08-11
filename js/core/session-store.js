@@ -1,11 +1,11 @@
 /* ==========================================================================
    LA NUEVA PARISIENNE - CORE SESSION STORE & AUTHENTICATION SERVICE
-   Manejo de estado de usuario, credenciales simuladas y matriz de acceso
+   Manejo de estado de usuario, integración con API PHP/MySQL y fallback local
    ========================================================================== */
 
 const STORAGE_KEY = 'LN_PARISIENNE_SESSION';
 
-// Base de datos simulada de empleados y perfiles
+// Base de datos simulada de empleados y perfiles (Fallback local)
 const USERS_DATABASE = [
   {
     id: 'usr_baker',
@@ -69,7 +69,41 @@ export const SessionStore = {
   },
 
   /**
-   * Valida el PIN ingresado por el usuario
+   * Valida el PIN ingresado consultando la API PHP / MySQL (asíncrono)
+   * con fallback automático a la base local
+   */
+  async validatePinAsync(userId, inputPin) {
+    try {
+      const response = await fetch('api/auth/login.php', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ userId, inputPin })
+      });
+
+      if (response.ok) {
+        const result = await response.json();
+        if (result.success) {
+          const sessionData = {
+            user: result.user,
+            token: result.token,
+            loginTimestamp: new Date().toISOString()
+          };
+          this.setSession(sessionData);
+          return { success: true, redirectUrl: result.user.redirectUrl, user: result.user };
+        } else {
+          return { success: false, message: result.message };
+        }
+      }
+    } catch (err) {
+      console.warn('API PHP/MySQL no disponible en servidor estático. Ejecutando fallback local:', err);
+    }
+    
+    // Fallback local síncrono
+    return this.validatePin(userId, inputPin);
+  },
+
+  /**
+   * Valida el PIN ingresado de forma síncrona
    */
   validatePin(userId, inputPin) {
     const user = USERS_DATABASE.find(u => u.id === userId);

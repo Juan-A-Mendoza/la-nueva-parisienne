@@ -1,191 +1,168 @@
 /* ==========================================================================
-   MÓDULO 1: CONTROLADOR INTERACTIVO DE AUTENTICACIÓN (AUTH.JS)
-   Gestión del flujo de selección de usuario, teclado PIN y feedback
+   LA NUEVA PARISIENNE - CONTROLADOR INTERACTIVO DE AUTENTICACIÓN (AUTH.JS)
+   Manejo de selección de perfiles, modal de PIN táctil y validación API/MySQL
    ========================================================================== */
 
 import { SessionStore } from '../core/session-store.js';
 
 document.addEventListener('DOMContentLoaded', () => {
   let selectedUserId = null;
-  let currentPin = '';
-  const PIN_LENGTH = 4;
+  let enteredPin = '';
 
-  // Elementos DOM
-  const profilesGrid = document.getElementById('profilesGrid');
+  const profileGrid = document.getElementById('profileGrid');
   const pinModal = document.getElementById('pinModal');
   const closeModalBtn = document.getElementById('closeModalBtn');
-  const selectedAvatar = document.getElementById('selectedAvatar');
-  const selectedName = document.getElementById('selectedName');
-  const selectedRole = document.getElementById('selectedRole');
-  const pinDots = document.querySelectorAll('.pin-dot');
-  const authMessage = document.getElementById('authMessage');
-  const keypad = document.getElementById('keypad');
+  const selectedUserAvatar = document.getElementById('selectedUserAvatar');
+  const selectedUserName = document.getElementById('selectedUserName');
+  const selectedUserRole = document.getElementById('selectedUserRole');
+  const pinDisplayDots = document.querySelectorAll('.pin-dot');
+  const pinKeypad = document.getElementById('pinKeypad');
+  const pinErrorAlert = document.getElementById('pinErrorAlert');
 
-  // Inicializar renderizado de tarjetas de perfil
-  initProfiles();
+  // Renderizar tarjetas de perfiles
+  const profiles = SessionStore.getProfiles();
+  renderProfiles(profiles);
 
-  function initProfiles() {
-    const profiles = SessionStore.getProfiles();
-    profilesGrid.innerHTML = '';
-
-    profiles.forEach(profile => {
-      const card = document.createElement('div');
-      card.className = 'profile-card';
-      card.dataset.userId = profile.id;
+  function renderProfiles(profileList) {
+    profileGrid.innerHTML = '';
+    profileList.forEach(profile => {
+      const card = document.createElement('article');
+      card.className = 'user-card';
+      card.setAttribute('role', 'button');
+      card.setAttribute('tabindex', '0');
+      card.setAttribute('aria-label', `Ingresar como ${profile.name}, ${profile.role}`);
 
       card.innerHTML = `
-        <div class="profile-avatar-wrapper">
-          <div class="profile-avatar">${profile.icon}</div>
-          <span class="status-dot" title="Usuario disponible"></span>
-        </div>
-        <h3 class="profile-name">${profile.name}</h3>
-        <span class="profile-role">${profile.role}</span>
-        <p class="profile-desc">${profile.description}</p>
-        <div class="profile-action-btn">
-          <span>Ingresar PIN</span>
-          <span>→</span>
-        </div>
+        <div class="user-avatar">${profile.icon}</div>
+        <h3 class="user-name">${profile.name}</h3>
+        <span class="user-role">${profile.role}</span>
+        <p class="user-desc">${profile.description}</p>
+        <button type="button" class="btn-select-user">Seleccionar Perfil</button>
       `;
 
-      card.addEventListener('click', () => openPinModal(profile.id));
-      profilesGrid.appendChild(card);
+      const selectUser = () => openPinModal(profile);
+      card.addEventListener('click', selectUser);
+      card.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault();
+          selectUser();
+        }
+      });
+
+      profileGrid.appendChild(card);
     });
   }
 
-  // Abrir Modal de PIN para el perfil seleccionado
-  function openPinModal(userId) {
-    const profile = SessionStore.getProfileById(userId);
-    if (!profile) return;
-
-    selectedUserId = userId;
-    currentPin = '';
-    updatePinDisplay();
-    setMessage('Ingrese su PIN de 4 dígitos para ingresar', false);
-
-    selectedAvatar.textContent = profile.icon;
-    selectedName.textContent = profile.name;
-    selectedRole.textContent = profile.role;
-
+  function openPinModal(profile) {
+    selectedUserId = profile.id;
+    enteredPin = '';
+    selectedUserAvatar.textContent = profile.icon;
+    selectedUserName.textContent = profile.name;
+    selectedUserRole.textContent = profile.role;
+    
+    hideError();
+    updatePinDots();
     pinModal.classList.add('active');
-    document.body.style.overflow = 'hidden';
   }
 
-  // Cerrar Modal
   function closePinModal() {
     pinModal.classList.remove('active');
-    document.body.style.overflow = '';
     selectedUserId = null;
-    currentPin = '';
+    enteredPin = '';
   }
 
-  if (closeModalBtn) {
-    closeModalBtn.addEventListener('click', closePinModal);
-  }
+  closeModalBtn.addEventListener('click', closePinModal);
 
-  pinModal.addEventListener('click', (e) => {
-    if (e.target === pinModal) closePinModal();
-  });
-
-  // Manejo de eventos de Teclado Táctil/Numérico
-  keypad.addEventListener('click', (e) => {
-    const btn = e.target.closest('.keypad-btn');
+  // Event listener para teclado numérico PIN táctil
+  pinKeypad.addEventListener('click', async (e) => {
+    const btn = e.target.closest('.key-btn');
     if (!btn) return;
 
     const val = btn.dataset.value;
     const action = btn.dataset.action;
 
-    if (val !== undefined) {
-      appendDigit(val);
-    } else if (action === 'backspace') {
-      deleteDigit();
+    if (val) {
+      if (enteredPin.length < 4) {
+        enteredPin += val;
+        updatePinDots();
+        hideError();
+
+        if (enteredPin.length === 4) {
+          // Autenticación asíncrona apuntando a la API PHP / MySQL
+          await processAuthentication();
+        }
+      }
     } else if (action === 'clear') {
-      clearPin();
+      enteredPin = '';
+      updatePinDots();
+      hideError();
+    } else if (action === 'delete') {
+      enteredPin = enteredPin.slice(0, -1);
+      updatePinDots();
+      hideError();
     }
   });
 
-  // Escuchar teclado físico
-  document.addEventListener('keydown', (e) => {
+  // Soporte de entrada por teclado físico
+  document.addEventListener('keydown', async (e) => {
     if (!pinModal.classList.contains('active')) return;
 
-    if (e.key >= '0' && e.key <= '9') {
-      appendDigit(e.key);
+    if (/^[0-9]$/.test(e.key)) {
+      if (enteredPin.length < 4) {
+        enteredPin += e.key;
+        updatePinDots();
+        hideError();
+
+        if (enteredPin.length === 4) {
+          await processAuthentication();
+        }
+      }
     } else if (e.key === 'Backspace') {
-      deleteDigit();
+      enteredPin = enteredPin.slice(0, -1);
+      updatePinDots();
+      hideError();
     } else if (e.key === 'Escape') {
       closePinModal();
     }
   });
 
-  function appendDigit(digit) {
-    if (currentPin.length < PIN_LENGTH) {
-      currentPin += digit;
-      updatePinDisplay();
-
-      if (currentPin.length === PIN_LENGTH) {
-        verifyPin();
-      }
-    }
-  }
-
-  function deleteDigit() {
-    if (currentPin.length > 0) {
-      currentPin = currentPin.slice(0, -1);
-      updatePinDisplay();
-      setMessage('', false);
-    }
-  }
-
-  function clearPin() {
-    currentPin = '';
-    updatePinDisplay();
-    setMessage('', false);
-  }
-
-  function updatePinDisplay() {
-    pinDots.forEach((dot, index) => {
-      if (index < currentPin.length) {
+  function updatePinDots() {
+    pinDisplayDots.forEach((dot, idx) => {
+      if (idx < enteredPin.length) {
         dot.classList.add('filled');
-        dot.classList.remove('error');
       } else {
-        dot.classList.remove('filled', 'error');
+        dot.classList.remove('filled');
       }
     });
   }
 
-  function setMessage(msg, isError = false, isSuccess = false) {
-    authMessage.textContent = msg;
-    authMessage.className = 'auth-message';
-    if (isError) authMessage.classList.add('error-text');
-    if (isSuccess) authMessage.classList.add('success-text');
+  async function processAuthentication() {
+    // Intenta autenticar contra api/auth/login.php (MySQL) con fallback local
+    const result = await SessionStore.validatePinAsync(selectedUserId, enteredPin);
+
+    if (result.success) {
+      // Redirección inmediata al módulo asignado
+      window.location.href = result.redirectUrl;
+    } else {
+      showError(result.message || 'PIN de acceso incorrecto.');
+      shakeModal();
+      enteredPin = '';
+      setTimeout(updatePinDots, 400);
+    }
   }
 
-  // Validación de PIN
-  function verifyPin() {
-    setMessage('Verificando credenciales...', false);
-    
-    // Retardo sutil para emular procesamiento seguro
-    setTimeout(() => {
-      const result = SessionStore.validatePin(selectedUserId, currentPin);
+  function showError(msg) {
+    pinErrorAlert.textContent = msg;
+    pinErrorAlert.classList.add('visible');
+  }
 
-      if (result.success) {
-        setMessage(`¡Bienvenido/a, ${result.user.name}! Accediendo al sistema...`, false, true);
-        
-        // Marcar puntos en verde/éxito
-        pinDots.forEach(dot => dot.classList.add('filled'));
+  function hideError() {
+    pinErrorAlert.classList.remove('visible');
+  }
 
-        setTimeout(() => {
-          window.location.href = result.redirectUrl;
-        }, 800);
-      } else {
-        setMessage(result.message, true);
-        
-        // Animación de error en los puntos
-        pinDots.forEach(dot => dot.classList.add('error'));
-        
-        setTimeout(() => {
-          clearPin();
-        }, 900);
-      }
-    }, 350);
+  function shakeModal() {
+    const card = pinModal.querySelector('.pin-modal-card');
+    card.classList.add('shake');
+    setTimeout(() => card.classList.remove('shake'), 500);
   }
 });
