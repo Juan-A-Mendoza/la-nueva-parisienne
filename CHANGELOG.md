@@ -4,6 +4,21 @@ Todos los cambios significativos, nuevas funcionalidades y actualizaciones del s
 
 El formato está basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1.0.0/) y este proyecto se adhiere a [Semantic Versioning](https://semver.org/lang/es/).
 
+## [2.5.1] - 2026-08-11 (Corrección Crítica de Cálculo Multimoneda VES y Optimización de Layout POS a 100% Zoom)
+
+### 🛠️ Corregido (Fixed)
+- **Corrección Crítica en la Fórmula de Conversión a Bolívares ([js/modules/pos.js](file:///C:/Users/juana/.gemini/antigravity-ide/scratch/la-nueva-parisienne/js/modules/pos.js) y [api/bcv_rate.php](file:///C:/Users/juana/.gemini/antigravity-ide/scratch/la-nueva-parisienne/api/bcv_rate.php))**:
+  - Corrección de la variable de tasa base por defecto en `pos.js` y `bcv_rate.php` de `36.50` a `761.21` VES/USD.
+  - Verificación matemática estricta: `Total en Dólares ($) * Tasa BCV Vigente (761.21)`. Un carrito de $109.39 calcula de forma precisa `Bs. 83.268,76` en lugar del valor obsoleto anterior (`Bs. 3.992,66`).
+  - Validación de seguridad que impide utilizar tasas menores a 100 VES/USD.
+- **Optimización de Layout y Zoom Responsivo 100% ([css/modules/pos.css](file:///C:/Users/juana/.gemini/antigravity-ide/scratch/la-nueva-parisienne/css/modules/pos.css))**:
+  - Rediseño de proporciones y paddings de cabeceras, buscadores y tarjetas de productos para encajar perfectamente a una resolución normal (100% de zoom de navegador) sin desbordamientos verticales u horizontales.
+  - Ancho ajustado a `380px` en la barra lateral del carrito y tarjetas de producto de `175px` para desplegar entre 3 y 5 productos por fila manteniendo la usabilidad táctil de botones (mínimo 44-48px).
+- **Desglose Visual de Totales Prominente ([modules/pos.html](file:///C:/Users/juana/.gemini/antigravity-ide/scratch/la-nueva-parisienne/modules/pos.html))**:
+  - Resaltado visual en tipografía de alto contraste del total a cobrar tanto en USD (`$`) como en su equivalente exacto en Bolívares (`Bs.`).
+
+---
+
 ## [2.5.0] - 2026-08-11 (Gestión Maestra de Tasa BCV: Modos Auto/Manual, Validación de Seguridad y Persistencia MySQL)
 
 ### 🚀 Añadido (Added)

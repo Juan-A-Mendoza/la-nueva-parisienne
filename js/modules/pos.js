@@ -37,7 +37,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   let orderCounter = Math.floor(1000 + Math.random() * 9000);
   let selectedPaymentMethod = 'efectivo';
   let currentTenderAmount = 0;
-  let bcvRate = 36.50; // Tasa de resguardo por defecto
+  let bcvRate = 761.21; // Tasa de resguardo oficial por defecto (761.21 VES/USD)
 
   const IVA_RATE = 0.16; // 16% IVA Fiscal
 
@@ -84,7 +84,7 @@ document.addEventListener('DOMContentLoaded', async () => {
       const res = await fetch('../api/bcv_rate.php', { cache: 'no-store' });
       if (res.ok) {
         const data = await res.json();
-        if (data.success && data.rate) {
+        if (data.success && data.rate && data.rate >= 100) {
           bcvRate = data.rate;
           const badgeEl = document.getElementById('bcvRateBadge');
           if (badgeEl) {
@@ -95,8 +95,9 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
       }
     } catch (e) {
-      console.warn('Servicio Tasa BCV offline. Utilizando tasa oficial por defecto:', e);
+      console.warn('Servicio Tasa BCV offline. Utilizando tasa oficial por defecto (761.21):', e);
     }
+    updateCartTotals();
   }
 
   // Cargar catálogo relacional desde MySQL

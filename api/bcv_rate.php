@@ -30,7 +30,10 @@ try {
         $mode = strtolower(trim($config['bcv_rate_mode']));
     }
     if (isset($config['bcv_manual_rate']) && is_numeric($config['bcv_manual_rate'])) {
-        $manualRate = floatval($config['bcv_manual_rate']);
+        $parsedRate = floatval($config['bcv_manual_rate']);
+        if ($parsedRate >= 100) {
+            $manualRate = $parsedRate;
+        }
     }
 } catch (Exception $e) {
     // Si la BD no está lista, mantener valores de resguardo
