@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>La Nueva Parisienne - Autenticación y Control de Acceso</title>
+  <meta name="description" content="Sistema Integral de Gestión Gerencial y Contable para la panadería simulada La Nueva Parisienne. Módulo 1: Autenticación por Perfil y PIN.">
+  
+  <!-- Hojas de Estilos Separadas (CSS3 Estricto) -->
+  <link rel="stylesheet" href="css/main.css">
+  <link rel="stylesheet" href="css/modules/auth.css">
+</head>
+<body>
+
+  <!-- CONTENEDOR PRINCIPAL DE AUTENTICACIÓN -->
+  <main class="auth-wrapper">
+
+    <!-- HEADER / MARCA DE LA PANADERÍA -->
+    <header class="auth-header">
+      <div class="logo-badge" aria-hidden="true">🥖</div>
+      <h1 class="brand-title">La Nueva Parisienne</h1>
+      <p class="sub-title">Sistema de Gestión Gerencial, Contabilidad y Punto de Venta</p>
+      <span class="academic-badge">Proyecto Académico Multidisciplinario</span>
+    </header>
+
+    <!-- SECCIÓN: SELECCIÓN DE PERFIL DE USUARIO -->
+    <section class="profiles-section" aria-labelledby="profilesHeading">
+      <h2 id="profilesHeading" class="profiles-title">
+        <span>👤</span> Seleccione su Perfil de Usuario para Iniciar Sesión
+      </h2>
+
+      <!-- Rejilla Dinámica de Perfiles (Renderizada por JS) -->
+      <div id="profilesGrid" class="profiles-grid">
+        <!-- Renderizado dinámico vía js/modules/auth.js -->
+      </div>
+    </section>
+
+    <!-- PIE DE PÁGINA / NOTA ACADÉMICA -->
+    <footer class="auth-footer">
+      <p>&copy; 2026 La Nueva Parisienne — Sistema Diseñado para Entorno Visual Studio</p>
+    </footer>
+
+  </main>
+
+  <!-- MODAL / OVERLAY DE INGRESO DE PIN -->
+  <div id="pinModal" class="pin-modal-overlay" role="dialog" aria-modal="true" aria-labelledby="selectedName">
+    <div class="pin-modal-card">
+      
+      <!-- Botón de Cierre -->
+      <button id="closeModalBtn" class="modal-close-btn" aria-label="Cerrar modal de PIN">&times;</button>
+
+      <!-- Cabecera del Usuario Seleccionado -->
+      <div class="selected-user-header">
+        <div id="selectedAvatar" class="selected-user-avatar">👨‍🍳</div>
+        <h3 id="selectedName" class="selected-user-name">Cargando...</h3>
+        <span id="selectedRole" class="selected-user-role">Rol</span>
+      </div>
+
+      <!-- Pantalla de Puntos PIN -->
+      <div class="pin-display" aria-live="polite" aria-label="Dígitos ingresados">
+        <div class="pin-dot"></div>
+        <div class="pin-dot"></div>
+        <div class="pin-dot"></div>
+        <div class="pin-dot"></div>
+      </div>
+
+      <!-- Mensaje de Estado / Alerta -->
+      <div id="authMessage" class="auth-message">Ingrese su PIN de 4 dígitos</div>
+
+      <!-- Teclado Numérico Táctil (Keypad) -->
+      <div id="keypad" class="keypad-grid">
+        <button type="button" class="keypad-btn" data-value="1">1</button>
+        <button type="button" class="keypad-btn" data-value="2">2</button>
+        <button type="button" class="keypad-btn" data-value="3">3</button>
+
+        <button type="button" class="keypad-btn" data-value="4">4</button>
+        <button type="button" class="keypad-btn" data-value="5">5</button>
+        <button type="button" class="keypad-btn" data-value="6">6</button>
+
+        <button type="button" class="keypad-btn" data-value="7">7</button>
+        <button type="button" class="keypad-btn" data-value="8">8</button>
+        <button type="button" class="keypad-btn" data-value="9">9</button>
+
+        <button type="button" class="keypad-btn action-btn" data-action="clear" title="Borrar todo">C</button>
+        <button type="button" class="keypad-btn" data-value="0">0</button>
+        <button type="button" class="keypad-btn action-btn delete-btn" data-action="backspace" title="Borrar último dígito">⌫</button>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- SCRIPT MODULAR PRINCIPAL -->
+  <script type="module" src="js/modules/auth.js"></script>
+
+</body>
+</html>

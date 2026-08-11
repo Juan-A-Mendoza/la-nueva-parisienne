@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Punto de Venta (POS) - La Nueva Parisienne</title>
+  <link rel="stylesheet" href="../css/main.css">
+  <style>
+    .module-container { padding: 2.5rem; max-width: 1200px; margin: 0 auto; }
+    .top-bar { display: flex; justify-content: space-between; align-items: center; background: var(--bg-surface); padding: 1.25rem 2rem; border-radius: var(--radius-md); box-shadow: var(--shadow-subtle); margin-bottom: 2rem; }
+    .user-info { display: flex; align-items: center; gap: 1rem; }
+    .user-avatar { font-size: 2rem; background: var(--color-gold-light); width: 50px; height: 50px; border-radius: 50%; display: flex; align-items: center; justify-content: center; }
+    .logout-btn { background: var(--gradient-espresso); color: var(--color-gold); padding: 0.6rem 1.2rem; border-radius: var(--radius-pill); font-weight: 600; }
+  </style>
+</head>
+<body>
+  <div class="module-container">
+    <div class="top-bar">
+      <div>
+        <h1 class="brand-title" style="font-size: 1.8rem;">La Nueva Parisienne</h1>
+        <p class="sub-title">Módulo 3: Punto de Venta (POS)</p>
+      </div>
+      <div class="user-info">
+        <div id="userAvatar" class="user-avatar">👩‍💼</div>
+        <div>
+          <h4 id="userName">Élodie Martin</h4>
+          <span id="userRole" style="font-size: 0.85rem; color: var(--color-gold-dark);">Cajera Principal</span>
+        </div>
+        <button id="logoutBtn" class="logout-btn">Cerrar Sesión</button>
+      </div>
+    </div>
+    <div style="background: white; padding: 2rem; border-radius: 14px; box-shadow: var(--shadow-subtle);">
+      <h2>🛒 Terminal de Facturación Rápida</h2>
+      <p style="margin-top: 0.5rem; color: var(--color-muted);">Interfaz para pedidos en caja, selección de productos y procesamiento de pagos.</p>
+    </div>
+  </div>
+  <script type="module">
+    import { SessionStore } from '../js/core/session-store.js';
+    document.addEventListener('DOMContentLoaded', () => {
+      const session = SessionStore.getSession();
+      if (!session) { window.location.href = '../index.html'; return; }
+      document.getElementById('userName').textContent = session.user.name;
+      document.getElementById('userRole').textContent = session.user.role;
+      document.getElementById('userAvatar').textContent = session.user.icon;
+      document.getElementById('logoutBtn').addEventListener('click', () => SessionStore.logout());
+    });
+  </script>
+</body>
+</html>

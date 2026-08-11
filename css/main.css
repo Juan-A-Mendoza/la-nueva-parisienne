@@ -1,0 +1,119 @@
+/* ==========================================================================
+   LA NUEVA PARISIENNE - HOJA DE ESTILOS PRINCIPAL (MAIN.CSS)
+   Sistema de Diseño: Parisian Chic & Modern Management Information System
+   ========================================================================== */
+
+@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400&family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap');
+
+:root {
+  /* Paleta de Colores Curada */
+  --bg-main: #FAF7F2;
+  --bg-surface: #FFFFFF;
+  --bg-card: rgba(255, 255, 255, 0.88);
+  --bg-glass: rgba(255, 255, 255, 0.75);
+  
+  --color-espresso: #2C1D11;
+  --color-espresso-dark: #1A1009;
+  --color-muted: #7A6B5D;
+  --color-light-muted: #A39587;
+  
+  --color-gold: #D49B54;
+  --color-gold-light: #F3E5D0;
+  --color-gold-dark: #B57B36;
+  --color-terracotta: #C85A32;
+  --color-success: #2E7D32;
+  --color-danger: #D32F2F;
+
+  /* Gradientes de Lujo */
+  --gradient-gold: linear-gradient(135deg, #E6B573 0%, #D49B54 50%, #B57B36 100%);
+  --gradient-espresso: linear-gradient(145deg, #2C1D11 0%, #1A1009 100%);
+  --gradient-bg: radial-gradient(circle at 10% 20%, #FFFDF9 0%, #F5EDE0 90%);
+  
+  /* Sombras y Efectos */
+  --shadow-subtle: 0 4px 20px rgba(44, 29, 17, 0.04);
+  --shadow-medium: 0 12px 32px rgba(44, 29, 17, 0.08);
+  --shadow-floating: 0 24px 48px rgba(44, 29, 17, 0.14);
+  --shadow-gold: 0 8px 25px rgba(212, 155, 84, 0.3);
+
+  /* BORDES Y GLASSMORPHISM */
+  --border-glass: 1px solid rgba(212, 155, 84, 0.22);
+  --border-subtle: 1px solid rgba(44, 29, 17, 0.08);
+  --backdrop-blur: blur(16px);
+
+  /* TIPOGRAFÍA */
+  --font-serif: 'Playfair Display', Georgia, serif;
+  --font-sans: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
+
+  /* RADIO DE BORDES */
+  --radius-sm: 8px;
+  --radius-md: 14px;
+  --radius-lg: 24px;
+  --radius-pill: 999px;
+
+  /* TRANSICIONES */
+  --ease-smooth: cubic-bezier(0.25, 0.8, 0.25, 1);
+  --transition-fast: 0.2s var(--ease-smooth);
+  --transition-normal: 0.35s var(--ease-smooth);
+}
+
+/* RESET GLOBAL Y BASE */
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html, body {
+  width: 100%;
+  height: 100%;
+  font-family: var(--font-sans);
+  background: var(--gradient-bg);
+  color: var(--color-espresso);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  overflow-x: hidden;
+}
+
+body {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+}
+
+/* SELECCIÓN Y FOCUS ACCESIBLE */
+::selection {
+  background-color: var(--color-gold-light);
+  color: var(--color-espresso);
+}
+
+:focus-visible {
+  outline: 2px solid var(--color-gold);
+  outline-offset: 3px;
+}
+
+/* BOTONES GLOBALES BASE */
+button {
+  font-family: var(--font-sans);
+  border: none;
+  cursor: pointer;
+  background: none;
+  transition: transform var(--transition-fast), box-shadow var(--transition-fast), background-color var(--transition-fast);
+}
+
+button:active {
+  transform: scale(0.97);
+}
+
+/* UTILIDADES TIPOGRÁFICAS */
+.brand-title {
+  font-family: var(--font-serif);
+  font-weight: 700;
+  color: var(--color-espresso);
+  letter-spacing: -0.02em;
+}
+
+.sub-title {
+  color: var(--color-muted);
+  font-weight: 400;
+  font-size: 0.95rem;
+}

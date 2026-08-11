@@ -1,0 +1,440 @@
+/* ==========================================================================
+   MÓDULO 1: ESTILOS DE AUTENTICACIÓN (AUTH.CSS)
+   Pantalla de Selección de Perfil y Teclado Numérico PIN
+   ========================================================================== */
+
+/* LAYOUT PRINCIPAL DE AUTENTICACIÓN */
+.auth-wrapper {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 2.5rem 1.5rem;
+  max-width: 1200px;
+  margin: 0 auto;
+  width: 100%;
+}
+
+/* BRAND HEADER DE LA PANADERÍA */
+.auth-header {
+  text-align: center;
+  margin-bottom: 3rem;
+  animation: fadeInDown 0.6s var(--ease-smooth);
+}
+
+.auth-header .logo-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 72px;
+  height: 72px;
+  border-radius: var(--radius-pill);
+  background: var(--gradient-espresso);
+  color: var(--color-gold);
+  box-shadow: var(--shadow-medium);
+  margin-bottom: 1.25rem;
+  font-size: 2rem;
+  border: var(--border-glass);
+}
+
+.auth-header h1 {
+  font-size: 2.75rem;
+  color: var(--color-espresso);
+  margin-bottom: 0.5rem;
+  line-height: 1.15;
+}
+
+.auth-header p {
+  font-size: 1.1rem;
+  color: var(--color-muted);
+  max-width: 520px;
+  margin: 0 auto;
+}
+
+.academic-badge {
+  display: inline-block;
+  margin-top: 0.75rem;
+  padding: 0.35rem 0.9rem;
+  background: rgba(212, 155, 84, 0.12);
+  color: var(--color-gold-dark);
+  font-size: 0.8rem;
+  font-weight: 600;
+  border-radius: var(--radius-pill);
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+/* SECCIÓN SELECCIÓN DE PERFILES */
+.profiles-section {
+  width: 100%;
+  animation: fadeInUp 0.7s var(--ease-smooth);
+}
+
+.profiles-title {
+  text-align: center;
+  font-size: 1.15rem;
+  font-weight: 600;
+  color: var(--color-espresso);
+  margin-bottom: 1.75rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+}
+
+.profiles-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 1.75rem;
+  width: 100%;
+}
+
+/* TARJETA DE PERFIL DE USUARIO */
+.profile-card {
+  background: var(--bg-card);
+  backdrop-filter: var(--backdrop-blur);
+  -webkit-backdrop-filter: var(--backdrop-blur);
+  border: var(--border-subtle);
+  border-radius: var(--radius-lg);
+  padding: 2rem 1.5rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  cursor: pointer;
+  position: relative;
+  overflow: hidden;
+  transition: all var(--transition-normal);
+  box-shadow: var(--shadow-subtle);
+}
+
+.profile-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 4px;
+  background: var(--gradient-gold);
+  opacity: 0;
+  transition: opacity var(--transition-fast);
+}
+
+.profile-card:hover {
+  transform: translateY(-8px);
+  box-shadow: var(--shadow-floating);
+  border-color: rgba(212, 155, 84, 0.4);
+  background: #FFFFFF;
+}
+
+.profile-card:hover::before {
+  opacity: 1;
+}
+
+.profile-avatar-wrapper {
+  position: relative;
+  width: 96px;
+  height: 96px;
+  margin-bottom: 1.25rem;
+}
+
+.profile-avatar {
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 3px solid #FFFFFF;
+  box-shadow: var(--shadow-medium);
+  background: var(--color-gold-light);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 2.5rem;
+  color: var(--color-espresso);
+}
+
+.status-dot {
+  position: absolute;
+  bottom: 2px;
+  right: 4px;
+  width: 16px;
+  height: 16px;
+  background-color: var(--color-success);
+  border: 3px solid #FFFFFF;
+  border-radius: 50%;
+}
+
+.profile-name {
+  font-size: 1.2rem;
+  font-weight: 700;
+  color: var(--color-espresso);
+  margin-bottom: 0.25rem;
+}
+
+.profile-role {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--color-gold-dark);
+  background: rgba(212, 155, 84, 0.12);
+  padding: 0.25rem 0.75rem;
+  border-radius: var(--radius-pill);
+  margin-bottom: 0.75rem;
+}
+
+.profile-desc {
+  font-size: 0.85rem;
+  color: var(--color-muted);
+  line-height: 1.4;
+}
+
+.profile-action-btn {
+  margin-top: 1.25rem;
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--color-espresso);
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  transition: color var(--transition-fast);
+}
+
+.profile-card:hover .profile-action-btn {
+  color: var(--color-gold-dark);
+}
+
+/* MODAL Y OVERLAY DEL TECLADO PIN */
+.pin-modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background: rgba(26, 16, 9, 0.65);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 0.3s var(--ease-smooth), visibility 0.3s var(--ease-smooth);
+}
+
+.pin-modal-overlay.active {
+  opacity: 1;
+  visibility: visible;
+}
+
+.pin-modal-card {
+  background: var(--bg-surface);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-floating);
+  width: 90%;
+  max-width: 420px;
+  padding: 2.25rem 2rem;
+  text-align: center;
+  position: relative;
+  transform: scale(0.9) translateY(20px);
+  transition: transform 0.3s var(--ease-smooth);
+  border: var(--border-glass);
+}
+
+.pin-modal-overlay.active .pin-modal-card {
+  transform: scale(1) translateY(0);
+}
+
+.modal-close-btn {
+  position: absolute;
+  top: 1.25rem;
+  right: 1.25rem;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: var(--bg-main);
+  color: var(--color-muted);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.1rem;
+}
+
+.modal-close-btn:hover {
+  background: #EFE8DE;
+  color: var(--color-espresso);
+}
+
+.selected-user-header {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin-bottom: 1.75rem;
+}
+
+.selected-user-avatar {
+  width: 72px;
+  height: 72px;
+  border-radius: 50%;
+  background: var(--color-gold-light);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 2rem;
+  margin-bottom: 0.75rem;
+  box-shadow: var(--shadow-medium);
+  border: 2px solid var(--color-gold);
+}
+
+.selected-user-name {
+  font-size: 1.3rem;
+  font-weight: 700;
+  color: var(--color-espresso);
+}
+
+.selected-user-role {
+  font-size: 0.85rem;
+  color: var(--color-muted);
+}
+
+/* DISPOSITIVO INDICADOR DE PIN (DÍGITOS) */
+.pin-display {
+  display: flex;
+  justify-content: center;
+  gap: 1.25rem;
+  margin-bottom: 1.75rem;
+}
+
+.pin-dot {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  border: 2px solid var(--color-light-muted);
+  background: transparent;
+  transition: all 0.2s var(--ease-smooth);
+}
+
+.pin-dot.filled {
+  background: var(--gradient-gold);
+  border-color: var(--color-gold-dark);
+  box-shadow: 0 0 12px rgba(212, 155, 84, 0.6);
+  transform: scale(1.15);
+}
+
+.pin-dot.error {
+  background: var(--color-danger);
+  border-color: var(--color-danger);
+  box-shadow: 0 0 12px rgba(211, 47, 47, 0.5);
+}
+
+/* MENSAJE DE ESTADO DE AUTENTICACIÓN */
+.auth-message {
+  min-height: 24px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  margin-bottom: 1.5rem;
+  color: var(--color-muted);
+  transition: color 0.2s ease;
+}
+
+.auth-message.error-text {
+  color: var(--color-danger);
+  animation: shake 0.4s ease-in-out;
+}
+
+.auth-message.success-text {
+  color: var(--color-success);
+}
+
+/* TECLADO NUMÉRICO EN PANTALLA (KEYPAD) */
+.keypad-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1rem;
+  max-width: 320px;
+  margin: 0 auto;
+}
+
+.keypad-btn {
+  height: 64px;
+  border-radius: var(--radius-md);
+  background: var(--bg-main);
+  border: 1px solid rgba(44, 29, 17, 0.06);
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: var(--color-espresso);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: var(--shadow-subtle);
+  transition: all 0.15s var(--ease-smooth);
+  user-select: none;
+}
+
+.keypad-btn:hover {
+  background: #FFFFFF;
+  box-shadow: var(--shadow-medium);
+  border-color: var(--color-gold);
+  color: var(--color-gold-dark);
+}
+
+.keypad-btn:active {
+  background: var(--color-gold-light);
+  transform: scale(0.94);
+}
+
+.keypad-btn.action-btn {
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--color-muted);
+  background: transparent;
+  border: none;
+  box-shadow: none;
+}
+
+.keypad-btn.action-btn:hover {
+  background: rgba(44, 29, 17, 0.05);
+  color: var(--color-espresso);
+}
+
+/* PINTADO DE TECLAS DE ACCIÓN */
+.keypad-btn.delete-btn {
+  color: var(--color-terracotta);
+}
+
+/* ANIMACIONES */
+@keyframes fadeInDown {
+  from {
+    opacity: 0;
+    transform: translateY(-20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes shake {
+  0%, 100% { transform: translateX(0); }
+  20%, 60% { transform: translateX(-8px); }
+  40%, 80% { transform: translateX(8px); }
+}
+
+/* FOOTER DE CRÉDITOS ACADÉMICOS */
+.auth-footer {
+  margin-top: 3rem;
+  text-align: center;
+  font-size: 0.85rem;
+  color: var(--color-light-muted);
+}
