@@ -4,6 +4,23 @@ Todos los cambios significativos, nuevas funcionalidades y actualizaciones del s
 
 El formato está basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1.0.0/) y este proyecto se adhiere a [Semantic Versioning](https://semver.org/lang/es/).
 
+## [2.4.0] - 2026-08-11 (Corrección de Layout POS y Funcionalidad Multimoneda Dólar / Bolívares BCV)
+
+### 🚀 Añadido (Added)
+- **Servicio API de Tasa de Cambio BCV ([api/bcv_rate.php](file:///C:/Users/juana/.gemini/antigravity-ide/scratch/la-nueva-parisienne/api/bcv_rate.php))**:
+  - Endpoint backend PHP que obtiene la tasa oficial en vivo del Banco Central de Venezuela (BCV) en formato JSON, incorporando fallback de resguardo automático ante desconexiones.
+- **Tarjeta KPI en Dashboard Gerencial ([modules/dashboard.html](file:///C:/Users/juana/.gemini/antigravity-ide/scratch/la-nueva-parisienne/modules/dashboard.html) y [js/modules/dashboard.js](file:///C:/Users/juana/.gemini/antigravity-ide/scratch/la-nueva-parisienne/js/modules/dashboard.js))**:
+  - Incorporación de una nueva tarjeta KPI en el Dashboard (`🇻🇪 Tasa Oficial BCV`) para visualización inmediata de la tasa de cambio del día.
+- **Desglose Multimoneda en Carrito, Modal y Ticket ([modules/pos.html](file:///C:/Users/juana/.gemini/antigravity-ide/scratch/la-nueva-parisienne/modules/pos.html) y [js/modules/pos.js](file:///C:/Users/juana/.gemini/antigravity-ide/scratch/la-nueva-parisienne/js/modules/pos.js))**:
+  - Indicador dinámico de tasa BCV en la barra superior del POS (`🇻🇪 Tasa BCV: Bs. XX.XX`).
+  - Cálculo simultáneo del total a pagar en **Dólares ($ USD)** y su equivalente en **Bolívares (Bs. VES)** en el resumen del carrito, modal de cobro y ticket de venta impreso.
+
+### 🛠️ Corregido (Fixed)
+- **Ajuste Estricto de Layout en Dos Columnas ([css/modules/pos.css](file:///C:/Users/juana/.gemini/antigravity-ide/scratch/la-nueva-parisienne/css/modules/pos.css))**:
+  - Corrección de la cuadrícula CSS (`grid-template-columns: 1fr 420px; height: 100vh; overflow: hidden;`), separando de forma fija el área de catálogo scrollable a la izquierda/centro y la barra lateral de facturación a la derecha.
+
+---
+
 ## [2.3.1] - 2026-08-11 (Corrección de Bugs Críticos en Modal de Pagos, Reset POS e Impresión de Ticket)
 
 ### 🛠️ Corregido (Fixed)

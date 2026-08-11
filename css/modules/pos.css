@@ -3,17 +3,25 @@
    Layout dividido, catálogo por categorías, carrito de compras y facturación
    ========================================================================== */
 
-/* CONTENEDOR PRINCIPAL POS */
+/* CONTENEDOR PRINCIPAL POS (GRID DOS COLUMNAS ESTRÍCTO) */
 .pos-layout {
   display: grid;
-  grid-template-columns: 1fr 410px;
+  grid-template-columns: 1fr 420px;
   height: 100vh;
   width: 100vw;
+  max-width: 100%;
   overflow: hidden;
   background-color: var(--bg-main);
 }
 
 @media (max-width: 1024px) {
+  .pos-layout {
+    grid-template-columns: 1fr 380px;
+    height: 100vh;
+  }
+}
+
+@media (max-width: 768px) {
   .pos-layout {
     grid-template-columns: 1fr;
     height: auto;
@@ -30,6 +38,7 @@
   overflow: hidden;
   border-right: var(--border-subtle);
   background: var(--bg-main);
+  min-width: 0;
 }
 
 /* NAVBAR SUPERIOR POS */
@@ -547,10 +556,41 @@
   color: var(--color-espresso);
 }
 
+.total-ves-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 0.4rem;
+  padding-top: 0.4rem;
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: var(--color-success);
+  border-top: 1px dashed rgba(46, 125, 50, 0.25);
+}
+
 .total-amount-highlight {
   font-size: 1.6rem;
   color: var(--color-gold-dark);
   font-family: var(--font-sans);
+}
+
+.total-ves-highlight {
+  font-size: 1.25rem;
+  font-weight: 800;
+  color: var(--color-success);
+}
+
+.bcv-rate-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  background: rgba(46, 125, 50, 0.08);
+  border: 1px solid rgba(46, 125, 50, 0.25);
+  color: var(--color-success);
+  padding: 0.35rem 0.75rem;
+  border-radius: var(--radius-pill);
+  font-size: 0.8rem;
+  font-weight: 700;
 }
 
 .discount-select {

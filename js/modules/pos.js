@@ -37,6 +37,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   let orderCounter = Math.floor(1000 + Math.random() * 9000);
   let selectedPaymentMethod = 'efectivo';
   let currentTenderAmount = 0;
+  let bcvRate = 36.50; // Tasa de resguardo por defecto
 
   const IVA_RATE = 0.16; // 16% IVA Fiscal
 
@@ -55,6 +56,8 @@ document.addEventListener('DOMContentLoaded', async () => {
   const discountSelect = document.getElementById('discountSelect');
   const taxValEl = document.getElementById('taxVal');
   const totalValEl = document.getElementById('totalVal');
+  const totalVesEl = document.getElementById('totalVesVal');
+  const bcvRateValEl = document.getElementById('bcvRateVal');
   const btnProcessPayment = document.getElementById('btnProcessPayment');
   
   // Modales
@@ -72,8 +75,24 @@ document.addEventListener('DOMContentLoaded', async () => {
   const btnNewSale = document.getElementById('btnNewSale');
   const btnPrintReceipt = document.getElementById('btnPrintReceipt');
 
-  // Inicialización Asíncrona (Consulta API PHP / MySQL)
+  // Inicialización Asíncrona (Consulta API BCV / MySQL)
   initOrderNumber();
+  await loadBcvRate();
+
+  async function loadBcvRate() {
+    try {
+      const res = await fetch('../api/bcv_rate.php');
+      if (res.ok) {
+        const data = await res.json();
+        if (data.success && data.rate) {
+          bcvRate = data.rate;
+          if (bcvRateValEl) bcvRateValEl.textContent = `Bs. ${bcvRate.toFixed(2)}`;
+        }
+      }
+    } catch (e) {
+      console.warn('Servicio Tasa BCV offline. Utilizando tasa oficial por defecto (36.50):', e);
+    }
+  }
 
   // Cargar catálogo relacional desde MySQL
   const catalogData = await ProductsStore.getProductsCatalogAsync();
@@ -273,11 +292,17 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   function updateCartTotals() {
     const { rawSubtotal, discountAmount, taxAmount, total } = calculateTotals();
+    const totalVes = total * bcvRate;
 
     subtotalEl.textContent = `$${rawSubtotal.toFixed(2)}`;
     discountValEl.textContent = `-$${discountAmount.toFixed(2)}`;
     taxValEl.textContent = `$${taxAmount.toFixed(2)}`;
     totalValEl.textContent = `$${total.toFixed(2)}`;
+    
+    if (totalVesEl) {
+      totalVesEl.textContent = `Bs. ${totalVes.toLocaleString('es-VE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+    }
+
     btnProcessPayment.textContent = `Procesar Pago ($${total.toFixed(2)})`;
   }
 
@@ -285,8 +310,15 @@ document.addEventListener('DOMContentLoaded', async () => {
   btnProcessPayment.addEventListener('click', () => {
     if (cart.length === 0) return;
     const { total } = calculateTotals();
+    const totalVes = total * bcvRate;
 
-    paymentTotalBanner.querySelector('h2').textContent = `$${total.toFixed(2)}`;
+    const paymentUsdEl = document.getElementById('paymentTotalUsd');
+    const paymentVesEl = document.getElementById('paymentTotalVes');
+    if (paymentUsdEl) paymentUsdEl.textContent = `$${total.toFixed(2)}`;
+    if (paymentVesEl) {
+      paymentVesEl.textContent = `Bs. ${totalVes.toLocaleString('es-VE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} (Tasa BCV: Bs. ${bcvRate.toFixed(2)})`;
+    }
+
     currentTenderAmount = Math.ceil(total); // Sugerir entero superior
     if (tenderInput) tenderInput.value = currentTenderAmount.toFixed(2);
     
@@ -457,6 +489,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   function generateReceipt(dbConfirmed = false, dbMessage = '') {
     const { rawSubtotal, discountAmount, taxAmount, total } = calculateTotals();
+    const totalVes = total * bcvRate;
     const change = Math.max(0, currentTenderAmount - total);
     const now = new Date();
     const formattedDate = now.toLocaleDateString('es-ES') + ' ' + now.toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' });
@@ -513,9 +546,16 @@ document.addEventListener('DOMContentLoaded', async () => {
           <span>IVA (16%):</span>
           <span>$${taxAmount.toFixed(2)}</span>
         </div>
-        <div style="display: flex; justify-content: space-between; font-weight: bold; font-size: 1.1rem; margin-top: 0.5rem; border-top: 2px solid #2C1D11; padding-top: 0.25rem;">
-          <span>TOTAL:</span>
+        <div style="display: flex; justify-content: space-between; font-weight: bold; font-size: 1.05rem; margin-top: 0.5rem; border-top: 2px solid #2C1D11; padding-top: 0.25rem;">
+          <span>TOTAL (USD):</span>
           <span>$${total.toFixed(2)}</span>
+        </div>
+        <div style="display: flex; justify-content: space-between; font-weight: bold; font-size: 1.05rem; color: #2e7d32; margin-top: 0.25rem;">
+          <span>TOTAL (BS):</span>
+          <span>Bs. ${totalVes.toLocaleString('es-VE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+        </div>
+        <div style="font-size: 0.72rem; color: #555; text-align: right; margin-top: 0.2rem;">
+          Tasa Oficial BCV: Bs. ${bcvRate.toFixed(2)} / $1.00 USD
         </div>
       </div>
 

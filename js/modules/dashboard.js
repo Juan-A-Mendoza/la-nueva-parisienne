@@ -30,10 +30,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // Initial render
   renderKPIs();
+  fetchBcvRate();
   initSalesChart();
   renderMovementsTable();
 
-  // 2. Renderizado de Tarjetas KPI
+  // 2. Renderizado de Tarjetas KPI y Tasa BCV
   function renderKPIs() {
     const revenueVal = document.getElementById('kpiRevenueVal');
     const ordersVal = document.getElementById('kpiOrdersVal');
@@ -44,6 +45,26 @@ document.addEventListener('DOMContentLoaded', () => {
     if (ordersVal) ordersVal.textContent = `${DASHBOARD_KPIS.totalOrders} órdenes`;
     if (ticketVal) ticketVal.textContent = `$${DASHBOARD_KPIS.averageTicket.toFixed(2)}`;
     if (marginVal) marginVal.textContent = `${DASHBOARD_KPIS.profitMargin}%`;
+  }
+
+  async function fetchBcvRate() {
+    const rateValEl = document.getElementById('kpiBcvRateVal');
+    const sourceEl = document.getElementById('kpiBcvSource');
+    const dateEl = document.getElementById('kpiBcvDate');
+
+    try {
+      const res = await fetch('../api/bcv_rate.php');
+      if (res.ok) {
+        const data = await res.json();
+        if (data.success && data.rate) {
+          if (rateValEl) rateValEl.textContent = `Bs. ${data.rate.toFixed(2)}`;
+          if (sourceEl) sourceEl.textContent = `● BCV Oficial`;
+          if (dateEl) dateEl.textContent = `${data.date} (por $1.00 USD)`;
+        }
+      }
+    } catch (e) {
+      console.warn('Servicio Tasa BCV no disponible:', e);
+    }
   }
 
   // 3. Inicialización del Gráfico de Tendencia de Ventas (Chart.js)

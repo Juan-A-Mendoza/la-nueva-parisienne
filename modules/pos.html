@@ -29,6 +29,10 @@
         </div>
 
         <div class="pos-user-bar">
+          <div id="bcvRateBadge" class="bcv-rate-badge" title="Tasa Oficial del Banco Central de Venezuela">
+            <span>🇻🇪 Tasa BCV:</span> <strong id="bcvRateVal">Bs. 36.50</strong>
+          </div>
+
           <div class="cashier-badge">
             <span id="cashierAvatar" class="cashier-avatar">👩‍💼</span>
             <div class="cashier-info">
@@ -104,7 +108,7 @@
         <p>Haga clic en cualquier producto del catálogo para comenzar a facturar.</p>
       </div>
 
-      <!-- RESUMEN FINANCIERO Y BOTÓN DE PAGO -->
+      <!-- RESUMEN FINANCIERO Y BOTÓN DE PAGO MULTIMONEDA -->
       <footer class="cart-summary-footer">
         <div class="summary-row">
           <span>Subtotal</span>
@@ -128,8 +132,13 @@
         </div>
 
         <div class="summary-row total-row">
-          <span>TOTAL A PAGAR</span>
+          <span>TOTAL A PAGAR (USD)</span>
           <span id="totalVal" class="total-amount-highlight">$0.00</span>
+        </div>
+
+        <div class="total-ves-row">
+          <span>EQUIVALENTE EN BOLÍVARES (BCV)</span>
+          <span id="totalVesVal" class="total-ves-highlight">Bs. 0,00</span>
         </div>
 
         <button id="btnProcessPayment" class="btn-process-payment" disabled>
@@ -149,7 +158,8 @@
 
       <div id="paymentTotalBanner" class="payment-total-banner">
         <span>Monto Total a Cobrar</span>
-        <h2>$0.00</h2>
+        <h2 id="paymentTotalUsd">$0.00</h2>
+        <p id="paymentTotalVes" style="font-size: 1rem; font-weight: 700; color: var(--color-gold-light); margin-top: 0.35rem;">Bs. 0,00 (Tasa BCV: Bs. 36.50)</p>
       </div>
 
       <!-- Métodos de Pago -->
