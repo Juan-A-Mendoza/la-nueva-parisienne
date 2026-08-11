@@ -3,47 +3,244 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Contabilidad - La Nueva Parisienne</title>
+  <title>Contabilidad y Salud Financiera - La Nueva Parisienne</title>
+  <meta name="description" content="Módulo 7: Asientos Contables Automáticos, Libro Diario y Mayor, y Balance de Comprobación para La Nueva Parisienne.">
+  
+  <!-- Hojas de Estilos Separadas (CSS3 Estricto) -->
   <link rel="stylesheet" href="../css/main.css">
-  <style>
-    .module-container { padding: 2.5rem; max-width: 1200px; margin: 0 auto; }
-    .top-bar { display: flex; justify-content: space-between; align-items: center; background: var(--bg-surface); padding: 1.25rem 2rem; border-radius: var(--radius-md); box-shadow: var(--shadow-subtle); margin-bottom: 2rem; }
-    .user-info { display: flex; align-items: center; gap: 1rem; }
-    .user-avatar { font-size: 2rem; background: var(--color-gold-light); width: 50px; height: 50px; border-radius: 50%; display: flex; align-items: center; justify-content: center; }
-    .logout-btn { background: var(--gradient-espresso); color: var(--color-gold); padding: 0.6rem 1.2rem; border-radius: var(--radius-pill); font-weight: 600; }
-  </style>
+  <link rel="stylesheet" href="../css/modules/accounting.css">
 </head>
 <body>
-  <div class="module-container">
-    <div class="top-bar">
-      <div>
-        <h1 class="brand-title" style="font-size: 1.8rem;">La Nueva Parisienne</h1>
-        <p class="sub-title">Módulo 7: Contabilidad y Salud Financiera</p>
-      </div>
-      <div class="user-info">
-        <div id="userAvatar" class="user-avatar">📊</div>
+
+  <!-- LAYOUT PRINCIPAL DE CONTABILIDAD -->
+  <div class="accounting-wrapper">
+
+    <!-- NAVBAR SUPERIOR -->
+    <header class="accounting-navbar">
+      <div class="accounting-brand-group">
+        <div class="accounting-brand-icon" aria-hidden="true">⚖️</div>
         <div>
-          <h4 id="userName">Sophie Laurent</h4>
-          <span id="userRole" style="font-size: 0.85rem; color: var(--color-gold-dark);">Contadora</span>
+          <h1 class="brand-title" style="font-size: 1.3rem;">La Nueva Parisienne</h1>
+          <span class="sub-title">Módulo 7: Contabilidad, Libro Diario/Mayor & Balance de Comprobación</span>
         </div>
-        <button id="logoutBtn" class="logout-btn">Cerrar Sesión</button>
       </div>
-    </div>
-    <div style="background: white; padding: 2rem; border-radius: 14px; box-shadow: var(--shadow-subtle);">
-      <h2>📈 Salud Financiera y Libro Mayor</h2>
-      <p style="margin-top: 0.5rem; color: var(--color-muted);">Balances de pérdidas y ganancias, costos de materias primas y facturas de proveedores.</p>
+
+      <div style="display: flex; align-items: center; gap: 1.25rem;">
+        <div class="cashier-badge">
+          <span id="userAvatar" class="cashier-avatar">📊</span>
+          <div class="cashier-info">
+            <span id="userName" class="cashier-name">Sebastian / Sophie Laurent</span>
+            <span class="shift-status" style="color: var(--color-gold-dark);">● Contadora & Administradora</span>
+          </div>
+        </div>
+        <!-- Botón Dedicado Exclusivo para Cerrar Sesión -->
+        <button id="logoutBtn" class="btn-pos-logout" title="Cerrar sesión activa y volver al login">Cerrar Sesión</button>
+      </div>
+    </header>
+
+    <!-- NAVEGACIÓN POR MIGAS DE PAN (BREADCRUMBS) -->
+    <nav class="breadcrumbs-container" aria-label="Migas de pan">
+      <ol class="breadcrumbs-list">
+        <li class="breadcrumb-item">
+          <a href="dashboard.html">🏠 Inicio (Panel Central)</a>
+        </li>
+        <li class="breadcrumb-separator">/</li>
+        <li class="breadcrumb-item">Contabilidad</li>
+        <li class="breadcrumb-separator">/</li>
+        <li class="breadcrumb-item active" aria-current="page">Salud Financiera & Balance</li>
+      </ol>
+    </nav>
+
+    <!-- BARRA DE ACCIONES PRINCIPALES (BOTONES TÁCTILES MIN 48X48PX) -->
+    <section class="accounting-action-toolbar" aria-label="Acciones Contables">
+      <div class="action-buttons-group">
+        <button id="btnOpenManualEntry" type="button" class="btn-acc-action primary">
+          <span>+ Registrar Asiento Manual</span>
+        </button>
+
+        <button id="btnPrintBalance" type="button" class="btn-acc-action secondary">
+          <span>📊 Balance de Comprobación</span>
+        </button>
+      </div>
+
+      <div style="font-size: 0.85rem; color: var(--color-muted); font-weight: 600;">
+        <span>Estado Auditoría Contable:</span>
+        <strong style="color: var(--color-success);">✓ Ecuación Patrimonial Verificada</strong>
+      </div>
+    </section>
+
+    <!-- CONTENIDO PRINCIPAL DE CONTABILIDAD -->
+    <main class="accounting-content">
+
+      <!-- SECCIÓN DE KPIS FINANCIEROS -->
+      <section class="inventory-kpi-grid" aria-label="Resumen Financiero">
+        <div class="inventory-kpi-card">
+          <div class="kpi-icon-container">🏦</div>
+          <div class="kpi-details">
+            <h3>Activos Circulantes</h3>
+            <div class="kpi-number">$28,450.00</div>
+          </div>
+        </div>
+
+        <div class="inventory-kpi-card">
+          <div class="kpi-icon-container" style="color: var(--color-success);">💰</div>
+          <div class="kpi-details">
+            <h3>Ventas del Mes (Abono)</h3>
+            <div class="kpi-number" style="color: var(--color-success);">$18,920.00</div>
+          </div>
+        </div>
+
+        <div class="inventory-kpi-card">
+          <div class="kpi-icon-container" style="color: var(--color-terracotta);">📉</div>
+          <div class="kpi-details">
+            <h3>Gastos & Costos (Débito)</h3>
+            <div class="kpi-number" style="color: var(--color-terracotta);">$11,480.00</div>
+          </div>
+        </div>
+
+        <div class="inventory-kpi-card">
+          <div class="kpi-icon-container" style="color: var(--color-gold-dark);">⚖️</div>
+          <div class="kpi-details">
+            <h3>Estado del Balance</h3>
+            <div class="kpi-number" style="font-size: 1.1rem; color: var(--color-success);">✓ Debe = Haber</div>
+          </div>
+        </div>
+      </section>
+
+      <!-- BARRA DE PESTAÑAS DE NAVEGACIÓN CONTABLE -->
+      <div class="accounting-tabs-bar">
+        <button type="button" class="acc-tab-btn active" data-tab="tabVouchers">Asientos Contables Automáticos</button>
+        <button type="button" class="acc-tab-btn" data-tab="tabLedger">Libro Mayor (Cuentas T)</button>
+        <button type="button" class="acc-tab-btn" data-tab="tabBalance">Balance de Comprobación</button>
+      </div>
+
+      <!-- PANEL 1: ASIENTOS CONTABLES AUTOMÁTICOS -->
+      <section id="tabVouchers" class="tab-panel-content">
+        <div class="section-title-group" style="margin-bottom: 1.25rem;">
+          <h2>🧾 Asientos Contables Automáticos (Vouchers de Partida Doble)</h2>
+          <p>Comprobantes generados en tiempo real por transacciones de POS, recepción de insumos y mermas.</p>
+        </div>
+
+        <div id="vouchersListContainer" class="vouchers-list-container">
+          <!-- Renderizado dinámico vía js/modules/accounting.js -->
+        </div>
+      </section>
+
+
+      <!-- PANEL 2: LIBRO MAYOR (CUENTAS T) -->
+      <section id="tabLedger" class="tab-panel-content" style="display: none;">
+        <div class="section-title-group" style="margin-bottom: 1.25rem;">
+          <h2>📚 Libro Mayor General (Esquema de Cuentas T)</h2>
+          <p>Resumen analítico por cuenta PUC mostrando débitos, créditos y saldos netos.</p>
+        </div>
+
+        <div id="tAccountsGridContainer" class="t-accounts-grid">
+          <!-- Renderizado dinámico vía js/modules/accounting.js -->
+        </div>
+      </section>
+
+
+      <!-- PANEL 3: BALANCE DE COMPROBACIÓN -->
+      <section id="tabBalance" class="tab-panel-content" style="display: none;">
+        <div class="orders-section-card">
+          <div class="section-title-group" style="margin-bottom: 1rem;">
+            <h2>📊 Balance de Comprobación de Sumas y Saldos</h2>
+            <p>Verificación matemática del principio de Partida Doble (Total Sumas Debe = Total Sumas Haber).</p>
+          </div>
+
+          <div class="table-responsive-container">
+            <table class="dashboard-table">
+              <thead>
+                <tr>
+                  <th>Código PUC</th>
+                  <th>Nombre de la Cuenta</th>
+                  <th>Sumas Debe ($)</th>
+                  <th>Sumas Haber ($)</th>
+                  <th>Saldo Deudor ($)</th>
+                  <th>Saldo Acreedor ($)</th>
+                </tr>
+              </thead>
+              <tbody id="balanceBody">
+                <!-- Renderizado dinámico vía js/modules/accounting.js -->
+              </tbody>
+            </table>
+          </div>
+
+          <div class="balance-verification-bar" style="margin-top: 1rem;">
+            <span>TOTALES BALANCE DE COMPROBACIÓN:</span>
+            <div>
+              <span style="margin-right: 2rem;">DEBE: <strong id="verificationDebeTotal">$24,850.70</strong></span>
+              <span>HABER: <strong id="verificationHaberTotal">$24,850.70</strong></span>
+            </div>
+          </div>
+        </div>
+      </section>
+
+    </main>
+
+  </div>
+
+
+  <!-- MODAL DE REGISTRO DE ASIENTO MANUAL -->
+  <div id="manualEntryModal" class="pin-modal-overlay" role="dialog" aria-modal="true" aria-labelledby="entryModalTitle">
+    <div class="pin-modal-card payment-modal-card">
+      <button id="closeEntryModalBtn" class="modal-close-btn" aria-label="Cerrar modal">&times;</button>
+
+      <div class="selected-user-header" style="margin-bottom: 1.25rem;">
+        <div class="selected-user-avatar">✍️</div>
+        <h3 id="entryModalTitle" class="selected-user-name">Registro de Asiento Manual</h3>
+        <span class="selected-user-role">Comprobante de Diario / Ajuste de Auditoría</span>
+      </div>
+
+      <form id="manualEntryForm" style="display: flex; flex-direction: column; gap: 1.25rem; text-align: left;">
+        <div>
+          <label for="entryConceptInput" style="font-weight: 700; font-size: 0.9rem; display: block; margin-bottom: 0.4rem;">Concepto de la Transacción:</label>
+          <input type="text" id="entryConceptInput" class="pos-search-input" placeholder="Ej: Pago de Mantenimiento de Hornos Industriales" required>
+        </div>
+
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+          <div>
+            <label for="debeAccountSelect" style="font-weight: 700; font-size: 0.85rem; display: block; margin-bottom: 0.4rem;">Cuenta Débito (Debe):</label>
+            <select id="debeAccountSelect" class="pos-search-input" style="padding: 0.65rem 1rem;">
+              <option value="5105">5105 - Gastos de Personal</option>
+              <option value="5195">5195 - Gastos Mermas y Pérdidas</option>
+              <option value="1435">1435 - Inventario Materia Prima</option>
+              <option value="1105">1105 - Caja General</option>
+            </select>
+          </div>
+
+          <div>
+            <label for="debeAmountInput" style="font-weight: 700; font-size: 0.85rem; display: block; margin-bottom: 0.4rem;">Monto Débito ($):</label>
+            <input type="number" id="debeAmountInput" class="pos-search-input" value="150.00" step="0.01" min="0.01">
+          </div>
+        </div>
+
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+          <div>
+            <label for="haberAccountSelect" style="font-weight: 700; font-size: 0.85rem; display: block; margin-bottom: 0.4rem;">Cuenta Crédito (Haber):</label>
+            <select id="haberAccountSelect" class="pos-search-input" style="padding: 0.65rem 1rem;">
+              <option value="1105">1105 - Caja General</option>
+              <option value="1110">1110 - Bancos Nacionales</option>
+              <option value="2205">2205 - Proveedores Nacionales</option>
+            </select>
+          </div>
+
+          <div>
+            <label for="haberAmountInput" style="font-weight: 700; font-size: 0.85rem; display: block; margin-bottom: 0.4rem;">Monto Crédito ($):</label>
+            <input type="number" id="haberAmountInput" class="pos-search-input" value="150.00" step="0.01" min="0.01">
+          </div>
+        </div>
+
+        <button type="submit" class="btn-process-payment" style="margin-top: 0.5rem;">
+          <span>✓ Registrar Asiento en Diario</span>
+        </button>
+      </form>
     </div>
   </div>
-  <script type="module">
-    import { SessionStore } from '../js/core/session-store.js';
-    document.addEventListener('DOMContentLoaded', () => {
-      const session = SessionStore.getSession();
-      if (!session) { window.location.href = '../index.html'; return; }
-      document.getElementById('userName').textContent = session.user.name;
-      document.getElementById('userRole').textContent = session.user.role;
-      document.getElementById('userAvatar').textContent = session.user.icon;
-      document.getElementById('logoutBtn').addEventListener('click', () => SessionStore.logout());
-    });
-  </script>
+
+
+  <!-- SCRIPT MODULAR CONTABILIDAD -->
+  <script type="module" src="../js/modules/accounting.js"></script>
+
 </body>
 </html>
