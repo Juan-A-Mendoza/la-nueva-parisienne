@@ -1,0 +1,410 @@
+/* ==========================================================================
+   MÓDULO 2: ESTILOS DE PRODUCCIÓN Y COCINA (KITCHEN.CSS)
+   Monitoreo de hornos activos, KDS (Kitchen Display System) y lotes
+   ========================================================================== */
+
+/* LAYOUT PRINCIPAL DE COCINA */
+.kitchen-layout {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  background-color: var(--bg-main);
+}
+
+/* NAVBAR Y BARRA SUPERIOR */
+.kitchen-navbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1rem 2rem;
+  background: var(--bg-surface);
+  border-bottom: var(--border-subtle);
+  box-shadow: var(--shadow-subtle);
+}
+
+.kitchen-brand-group {
+  display: flex;
+  align-items: center;
+  gap: 0.85rem;
+}
+
+.kitchen-brand-icon {
+  width: 44px;
+  height: 44px;
+  background: var(--gradient-espresso);
+  color: var(--color-gold);
+  border-radius: var(--radius-pill);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.4rem;
+  box-shadow: var(--shadow-subtle);
+}
+
+/* BARRA DE MÉTRICAS RÁPIDAS (KDS KPI BAR) */
+.kitchen-kpi-bar {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 1.25rem;
+  padding: 1.25rem 2rem;
+  background: var(--bg-main);
+}
+
+.kpi-card-mini {
+  background: #FFFFFF;
+  padding: 1rem 1.25rem;
+  border-radius: var(--radius-md);
+  border: var(--border-subtle);
+  box-shadow: var(--shadow-subtle);
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.kpi-icon-box {
+  width: 48px;
+  height: 48px;
+  border-radius: var(--radius-md);
+  background: var(--bg-main);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.4rem;
+  border: var(--border-glass);
+}
+
+.kpi-text-box h4 {
+  font-size: 0.78rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--color-muted);
+}
+
+.kpi-text-box .kpi-val {
+  font-size: 1.4rem;
+  font-weight: 800;
+  color: var(--color-espresso);
+}
+
+/* REJILLA EN 3 COLUMNAS DEL DASHBOARD DE COCINA */
+.kitchen-dashboard-grid {
+  display: grid;
+  grid-template-columns: 1.2fr 1fr 0.8fr;
+  gap: 1.5rem;
+  padding: 0 2rem 2.5rem;
+  flex: 1;
+}
+
+@media (max-width: 1200px) {
+  .kitchen-dashboard-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.kitchen-column {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+
+.column-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.6rem 0.85rem;
+  background: rgba(44, 29, 17, 0.04);
+  border-radius: var(--radius-md);
+  border: var(--border-subtle);
+}
+
+.column-title {
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: var(--color-espresso);
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.column-badge {
+  font-size: 0.78rem;
+  font-weight: 700;
+  padding: 0.2rem 0.6rem;
+  border-radius: var(--radius-pill);
+  background: var(--color-espresso);
+  color: var(--color-gold);
+}
+
+/* 1. TARJETAS DE HORNOS INDUSTRIALES */
+.oven-card {
+  background: #FFFFFF;
+  border-radius: var(--radius-md);
+  padding: 1.25rem;
+  border: var(--border-subtle);
+  box-shadow: var(--shadow-subtle);
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  position: relative;
+  transition: all var(--transition-normal);
+}
+
+.oven-card:hover {
+  box-shadow: var(--shadow-medium);
+}
+
+/* Alerta visual de horneado completado */
+.oven-card.ready-alert {
+  border: 2px solid var(--color-gold);
+  box-shadow: var(--shadow-gold);
+  animation: pulseGold 1.5s infinite alternate;
+}
+
+@keyframes pulseGold {
+  0% { box-shadow: 0 0 10px rgba(212, 155, 84, 0.4); }
+  100% { box-shadow: 0 0 25px rgba(212, 155, 84, 0.9); }
+}
+
+.oven-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+}
+
+.oven-title-group h3 {
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: var(--color-espresso);
+}
+
+.oven-title-group p {
+  font-size: 0.8rem;
+  color: var(--color-muted);
+}
+
+.oven-status-badge {
+  font-size: 0.75rem;
+  font-weight: 700;
+  padding: 0.25rem 0.65rem;
+  border-radius: var(--radius-pill);
+  text-transform: uppercase;
+}
+
+.oven-status-badge.baking {
+  background: rgba(200, 90, 50, 0.12);
+  color: var(--color-terracotta);
+}
+
+.oven-status-badge.ready {
+  background: rgba(46, 125, 50, 0.15);
+  color: var(--color-success);
+}
+
+.oven-status-badge.preheating {
+  background: rgba(212, 155, 84, 0.15);
+  color: var(--color-gold-dark);
+}
+
+.oven-status-badge.idle {
+  background: rgba(122, 107, 93, 0.12);
+  color: var(--color-muted);
+}
+
+/* Medidores de Temperatura y Tiempo */
+.oven-metrics-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+  background: var(--bg-main);
+  padding: 0.85rem;
+  border-radius: var(--radius-md);
+  border: 1px solid rgba(44, 29, 17, 0.06);
+}
+
+.metric-box {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+}
+
+.metric-box label {
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  color: var(--color-muted);
+}
+
+.metric-box .metric-value {
+  font-size: 1.35rem;
+  font-weight: 800;
+  color: var(--color-espresso);
+  font-family: var(--font-sans);
+}
+
+/* Barra de Progreso del Horneado */
+.baking-progress-container {
+  width: 100%;
+}
+
+.baking-progress-bar {
+  width: 100%;
+  height: 10px;
+  border-radius: var(--radius-pill);
+  background: rgba(44, 29, 17, 0.08);
+  overflow: hidden;
+  margin-top: 0.35rem;
+}
+
+.baking-progress-fill {
+  height: 100%;
+  border-radius: var(--radius-pill);
+  background: var(--gradient-gold);
+  transition: width 0.5s ease;
+}
+
+.baking-progress-fill.ready-fill {
+  background: linear-gradient(135deg, #4CAF50 0%, #2E7D32 100%);
+}
+
+.btn-oven-action {
+  width: 100%;
+  padding: 0.75rem;
+  border-radius: var(--radius-md);
+  background: var(--gradient-espresso);
+  color: var(--color-gold);
+  font-weight: 700;
+  font-size: 0.9rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  box-shadow: var(--shadow-subtle);
+  transition: all var(--transition-fast);
+}
+
+.btn-oven-action:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-medium);
+}
+
+.btn-oven-action.btn-ready {
+  background: linear-gradient(135deg, #2E7D32 0%, #1B5E20 100%);
+  color: #FFFFFF;
+}
+
+/* 2. TARJETAS DE COMANDAS KDS (POS ORDERS) */
+.kds-order-card {
+  background: #FFFFFF;
+  border-radius: var(--radius-md);
+  padding: 1.25rem;
+  border: var(--border-subtle);
+  box-shadow: var(--shadow-subtle);
+  display: flex;
+  flex-direction: column;
+  gap: 0.85rem;
+  border-left: 5px solid var(--color-gold);
+}
+
+.kds-order-card.status-pending {
+  border-left-color: var(--color-terracotta);
+}
+
+.kds-order-card.status-in_progress {
+  border-left-color: var(--color-gold);
+}
+
+.kds-order-card.status-ready {
+  border-left-color: var(--color-success);
+}
+
+.kds-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.kds-order-code {
+  font-weight: 800;
+  font-size: 1rem;
+  color: var(--color-espresso);
+}
+
+.kds-time-elapsed {
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: var(--color-terracotta);
+  background: rgba(200, 90, 50, 0.1);
+  padding: 0.2rem 0.55rem;
+  border-radius: var(--radius-pill);
+}
+
+.kds-items-list {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+.kds-item-row {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.88rem;
+  color: var(--color-espresso);
+
+}
+
+.kds-item-qty {
+  font-weight: 800;
+  background: var(--bg-main);
+  padding: 0.15rem 0.45rem;
+  border-radius: var(--radius-sm);
+  color: var(--color-gold-dark);
+}
+
+/* 3. COLUMNA DE LOTES LISTOS PARA HORNEADO (STAGING) */
+.staging-card {
+  background: #FFFFFF;
+  border-radius: var(--radius-md);
+  padding: 1.25rem;
+  border: var(--border-subtle);
+  box-shadow: var(--shadow-subtle);
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.staging-title {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  font-weight: 700;
+  font-size: 0.95rem;
+}
+
+.staging-status-badge {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--color-success);
+  background: rgba(46, 125, 50, 0.1);
+  padding: 0.2rem 0.5rem;
+  border-radius: var(--radius-pill);
+}
+
+.btn-load-oven {
+  width: 100%;
+  padding: 0.65rem;
+  border-radius: var(--radius-md);
+  background: var(--bg-main);
+  border: 1px solid var(--color-gold);
+  color: var(--color-gold-dark);
+  font-weight: 700;
+  font-size: 0.85rem;
+  transition: all var(--transition-fast);
+}
+
+.btn-load-oven:hover {
+  background: var(--gradient-gold);
+  color: var(--color-espresso);
+}
