@@ -926,63 +926,9 @@
    ESTILOS EXCLUSIVOS DE IMPRESIÓN PARA IMPRESORAS TÉRMICAS DE 80MM
    ========================================================================== */
 @media print {
-  @page {
-    margin: 0;
-    size: 80mm auto;
-  }
-
-  html, body {
-    background: #FFFFFF !important;
-    color: #000000 !important;
-    margin: 0 !important;
-    padding: 0 !important;
-    width: 80mm !important;
-    height: auto !important;
-    font-family: 'Courier New', Courier, monospace !important;
-    font-size: 10px !important;
-    overflow: visible !important;
-  }
-
-  /* Ocultar toda la interfaz gráfica de la aplicación */
-  .pos-navbar,
-  .wizard-stepper-bar,
-  .pos-step-view,
-  .modal-close-btn,
-  .btn-process-payment,
-  .btn-complete-sale,
-  .pin-modal-overlay > button,
-  .receipt-card > button,
-  .receipt-card > div:last-child {
-    display: none !important;
-  }
-
-  .pin-modal-overlay {
-    position: static !important;
-    background: transparent !important;
-    display: block !important;
-    opacity: 1 !important;
-    visibility: visible !important;
-    padding: 0 !important;
-    margin: 0 !important;
-    box-shadow: none !important;
-  }
-
-  .receipt-card {
-    position: static !important;
-    box-shadow: none !important;
-    border: none !important;
-    width: 80mm !important;
-    max-width: 80mm !important;
-    padding: 2mm 3mm !important;
-    margin: 0 !important;
-    background: #FFFFFF !important;
-    color: #000000 !important;
-    border-radius: 0 !important;
-  }
-
-  #receiptContent {
-    width: 100% !important;
-    font-family: 'Courier New', Courier, monospace !important;
-    font-size: 10px !important;
-  }
+  @page { size: 80mm auto; margin: 0; }
+  body * { visibility: hidden; }
+  #ticket-container, #ticket-container * { visibility: visible; }
+  #ticket-container { position: absolute; left: 0; top: 0; width: 80mm; padding: 5mm; margin: 0; }
+  .no-print { display: none !important; }
 }

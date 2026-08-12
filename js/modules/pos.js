@@ -42,9 +42,20 @@ document.addEventListener('DOMContentLoaded', async () => {
   let bcvRate = 761.21; // Tasa por defecto de resguardo (se actualiza vía API en vivo)
   let currentStep = 1;
 
+  // DATOS FISCALES DINÁMICOS DE LA EMPRESA (MÓDULO 9)
+  let companyInfo = {
+    nombre: 'La Nueva Parisienne Panadería & Pastelería C.A.',
+    rif: 'J-40123456-7',
+    direccion: 'Av. Lara con Calle 8, Barquisimeto, Edo. Lara',
+    telefono: '(0251) 555-1234'
+  };
+
   const IVA_RATE = 0.16; // 16% IVA Fiscal
 
   // 3. Elementos DOM
+  const clientNameInput = document.getElementById('clientNameInput');
+  const clientRifInput = document.getElementById('clientRifInput');
+
   const posStep1 = document.getElementById('posStep1');
   const posStep2 = document.getElementById('posStep2');
   const wizardStepTag1 = document.getElementById('wizardStepTag1');
@@ -98,8 +109,26 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   // Inicialización Asíncrona Inmediata al Cargar Pantalla (DOMContentLoaded)
   initOrderNumber();
+  await loadCompanyData();
   await loadLiveBcvRate();
   await loadProductsCatalog();
+
+  // ==========================================================================
+  // CONSULTA DE DATOS FISCALES DE LA EMPRESA DESDE MYSQL (MÓDULO 9)
+  // ==========================================================================
+  async function loadCompanyData() {
+    try {
+      const res = await fetch(`../api/get_empresa.php?t=${Date.now()}`, { cache: 'no-store' });
+      if (res.ok) {
+        const data = await res.json();
+        if (data.success && data.empresa) {
+          companyInfo = data.empresa;
+        }
+      }
+    } catch (e) {
+      console.warn('Error al cargar los datos fiscales de la empresa:', e);
+    }
+  }
 
   // ==========================================================================
   // CONSULTA DE TASA BCV EN VIVO VIA API PHP (BCV_RATE.PHP / BCMRATE.PHP)
@@ -583,8 +612,13 @@ document.addEventListener('DOMContentLoaded', async () => {
       btnCompleteSale.disabled = true;
       btnCompleteSale.textContent = 'Registrando Venta en MySQL...';
 
+      const clientName = (clientNameInput && clientNameInput.value.trim()) ? clientNameInput.value.trim() : 'Consumidor Final';
+      const clientRif = (clientRifInput && clientRifInput.value.trim()) ? clientRifInput.value.trim() : 'V-00000000-0';
+
       const salePayload = {
         order_number: `FAC-2026-${orderCounter}`,
+        client_name: clientName,
+        client_rif: clientRif,
         order_type: currentOrderType,
         payment_method: selectedPaymentMethod,
         discount_percent: currentDiscountPercent,
@@ -638,25 +672,24 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     receiptContent.innerHTML = `
       <div class="ticket-thermal-container" style="font-family: 'Courier New', Courier, monospace; font-size: 11px; color: #000000; text-align: left; line-height: 1.25;">
-        <!-- CABECERA DE LA EMPRESA -->
+        <!-- CABECERA DINÁMICA DE LA EMPRESA (MÓDULO 9) -->
         <div style="text-align: center; font-weight: bold; margin-bottom: 4px;">
-          <div style="font-size: 14px; text-transform: uppercase;">LA NUEVA PARISIENNE</div>
-          <div>PANADERÍA & PASTELERÍA C.A.</div>
-          <div>RIF: J-40123456-7</div>
-          <div style="font-size: 9px; font-weight: normal;">Av. Lara con Calle 8, Barquisimeto, Edo. Lara</div>
-          <div style="font-size: 9px; font-weight: normal;">Teléfono: (0251) 555-1234</div>
+          <div style="font-size: 13px; text-transform: uppercase;">${companyInfo.nombre || 'LA NUEVA PARISIENNE'}</div>
+          <div>RIF: ${companyInfo.rif || 'J-40123456-7'}</div>
+          <div style="font-size: 9px; font-weight: normal;">${companyInfo.direccion || 'Barquisimeto, Edo. Lara'}</div>
+          <div style="font-size: 9px; font-weight: normal;">Teléfono: ${companyInfo.telefono || '(0251) 555-1234'}</div>
         </div>
 
         <div style="border-top: 1px dashed #000000; margin: 4px 0;"></div>
 
-        <!-- DATOS DEL DOCUMENTO FISCAL Y CLIENTE -->
+        <!-- DATOS DEL DOCUMENTO FISCAL Y CLIENTE DINÁMICOS -->
         <div style="font-size: 10px;">
           <div><strong>FACTURA DE VENTA N°:</strong> ${saleData.order_number}</div>
           <div><strong>FECHA / HORA:</strong> ${formattedDate}</div>
           <div><strong>CONDICIÓN:</strong> ${saleData.order_type || 'Para Llevar'}</div>
           <div style="border-top: 1px dotted #000; margin: 3px 0;"></div>
-          <div><strong>CLIENTE:</strong> Consumidor Final</div>
-          <div><strong>C.I. / RIF:</strong> V-00000000-0</div>
+          <div><strong>CLIENTE:</strong> ${saleData.client_name}</div>
+          <div><strong>C.I. / RIF:</strong> ${saleData.client_rif}</div>
         </div>
 
         <div style="border-top: 1px dashed #000000; margin: 4px 0;"></div>
@@ -735,7 +768,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         <div style="text-align: center; font-size: 10px; font-weight: bold;">
           <div>¡GRACIAS POR SU COMPRA!</div>
           <div style="font-size: 8px; font-weight: normal; margin-top: 2px;">COMPROBANTE DE CONTROL INTERNO</div>
-          <div style="font-size: 8px; font-weight: normal;">LA NUEVA PARISIENNE - BARQUISIMETO</div>
+          <div style="font-size: 8px; font-weight: normal;">${companyInfo.nombre || 'LA NUEVA PARISIENNE'}</div>
         </div>
       </div>
     `;
@@ -777,6 +810,8 @@ document.addEventListener('DOMContentLoaded', async () => {
     currentCategory = 'todos';
     if (tenderInput) tenderInput.value = '0.00';
     if (referenceInput) referenceInput.value = '';
+    if (clientNameInput) clientNameInput.value = '';
+    if (clientRifInput) clientRifInput.value = '';
     if (discountSelect) discountSelect.value = '0';
     orderCounter++;
     initOrderNumber();

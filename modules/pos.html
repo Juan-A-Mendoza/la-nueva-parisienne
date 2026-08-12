@@ -297,6 +297,21 @@
               </div>
             </div>
 
+            <!-- CAMPOS DATOS DEL CLIENTE PARA FACTURACIÓN -->
+            <div class="client-info-card" style="background: var(--bg-main); padding: 0.6rem; border-radius: var(--radius-sm); border: 1px solid var(--border-subtle); margin-bottom: 0.65rem;">
+              <h4 style="font-size: 0.82rem; font-weight: 700; color: var(--color-espresso); margin-bottom: 0.35rem;">👤 Datos del Cliente (Opcional):</h4>
+              <div style="display: flex; gap: 0.4rem;">
+                <div style="flex: 1;">
+                  <label for="clientNameInput" style="font-size: 0.7rem; font-weight: 700; color: var(--color-muted); display: block; margin-bottom: 0.1rem;">Nombre / Razón Social:</label>
+                  <input type="text" id="clientNameInput" class="tender-input" style="width: 100%; height: 34px; font-size: 0.85rem; text-align: left; background: #FFFFFF;" placeholder="Consumidor Final">
+                </div>
+                <div style="width: 125px;">
+                  <label for="clientRifInput" style="font-size: 0.7rem; font-weight: 700; color: var(--color-muted); display: block; margin-bottom: 0.1rem;">Cédula / RIF:</label>
+                  <input type="text" id="clientRifInput" class="tender-input" style="width: 100%; height: 34px; font-size: 0.85rem; text-align: left; background: #FFFFFF;" placeholder="V-00000000-0">
+                </div>
+              </div>
+            </div>
+
             <!-- BOTÓN FINAL DE REGISTRO -->
             <button id="btnCompleteSale" type="button" class="btn-complete-sale" disabled>
               <span>✓ Finalizar Venta e Imprimir Ticket</span>
@@ -315,17 +330,19 @@
        ==================================================================== -->
   <div id="receiptModal" class="pin-modal-overlay" role="dialog" aria-modal="true">
     <div class="pin-modal-card receipt-card">
-      <button id="closeReceiptModalBtn" class="modal-close-btn" aria-label="Cerrar ticket y reiniciar POS">&times;</button>
+      <button id="closeReceiptModalBtn" class="modal-close-btn no-print" aria-label="Cerrar ticket y reiniciar POS">&times;</button>
 
-      <div id="receiptContent">
-        <!-- Renderizado dinámico del comprobante -->
+      <div id="ticket-container">
+        <div id="receiptContent">
+          <!-- Renderizado dinámico del comprobante -->
+        </div>
       </div>
 
-      <div style="display: flex; gap: 0.75rem; margin-top: 1.25rem;">
-        <button id="btnPrintReceipt" type="button" class="btn-process-payment" style="background: var(--bg-main); color: var(--color-espresso); border: 1px solid var(--color-espresso); font-size: 0.9rem;">
+      <div class="no-print" style="display: flex; gap: 0.75rem; margin-top: 1.25rem;">
+        <button id="btnPrintReceipt" type="button" class="btn-process-payment no-print" style="background: var(--bg-main); color: var(--color-espresso); border: 1px solid var(--color-espresso); font-size: 0.9rem;">
           <span>🖨️ Imprimir Ticket</span>
         </button>
-        <button id="btnNewSale" type="button" class="btn-process-payment" style="font-size: 0.9rem;">
+        <button id="btnNewSale" type="button" class="btn-process-payment no-print" style="font-size: 0.9rem;">
           <span>✨ Nueva Venta</span>
         </button>
       </div>

@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Configuraciones del Sistema - La Nueva Parisienne</title>
+  <meta name="description" content="Módulo 9: Ajustes Generales, Datos Fiscales de la Empresa y Parámetros del Sistema para La Nueva Parisienne.">
+  
+  <!-- Hojas de Estilos Separadas (CSS3 Estricto) -->
+  <link rel="stylesheet" href="../css/main.css">
+  <link rel="stylesheet" href="../css/modules/dashboard.css">
+  <style>
+    .config-card {
+      background: #FFFFFF;
+      border-radius: var(--radius-md);
+      padding: 1.5rem;
+      border: var(--border-subtle);
+      box-shadow: var(--shadow-subtle);
+      margin-bottom: 1.5rem;
+    }
+    .config-form-group {
+      display: flex;
+      flex-direction: column;
+      gap: 0.35rem;
+      margin-bottom: 1rem;
+    }
+    .config-form-group label {
+      font-size: 0.85rem;
+      font-weight: 700;
+      color: var(--color-espresso);
+    }
+    .config-input {
+      height: 42px;
+      padding: 0.5rem 0.85rem;
+      border-radius: var(--radius-sm);
+      border: 1px solid var(--border-subtle);
+      font-size: 0.95rem;
+      font-family: inherit;
+    }
+    .config-input:focus {
+      border-color: var(--color-gold);
+      outline: none;
+      box-shadow: 0 0 0 3px rgba(212, 155, 84, 0.2);
+    }
+    .btn-save-config {
+      min-height: 44px;
+      padding: 0.65rem 1.5rem;
+      border-radius: var(--radius-pill);
+      background: var(--gradient-gold);
+      color: var(--color-espresso);
+      font-weight: 800;
+      font-size: 0.95rem;
+      border: none;
+      cursor: pointer;
+      box-shadow: var(--shadow-medium);
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+    .btn-save-config:hover {
+      transform: translateY(-2px);
+      box-shadow: var(--shadow-large);
+    }
+    .alert-banner {
+      padding: 0.75rem 1rem;
+      border-radius: var(--radius-sm);
+      margin-bottom: 1rem;
+      font-size: 0.88rem;
+      font-weight: 700;
+      display: none;
+    }
+    .alert-banner.success {
+      background: rgba(46, 125, 50, 0.1);
+      color: var(--color-success);
+      border: 1px solid rgba(46, 125, 50, 0.3);
+      display: block;
+    }
+    .alert-banner.error {
+      background: rgba(200, 90, 50, 0.1);
+      color: var(--color-terracotta);
+      border: 1px solid rgba(200, 90, 50, 0.3);
+      display: block;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="dashboard-wrapper">
+
+    <!-- NAVBAR SUPERIOR GERENCIAL -->
+    <header class="dashboard-navbar">
+      <div class="dashboard-brand-group">
+        <div class="dashboard-brand-icon" aria-hidden="true">⚙️</div>
+        <div>
+          <h1 class="brand-title" style="font-size: 1.3rem;">La Nueva Parisienne</h1>
+          <span class="sub-title">Módulo 9: Configuraciones & Datos Fiscales de la Empresa</span>
+        </div>
+      </div>
+
+      <div class="dashboard-controls">
+        <div class="cashier-badge">
+          <span id="managerAvatar" class="cashier-avatar">👨‍💼</span>
+          <div class="cashier-info">
+            <span id="managerName" class="cashier-name">Administrador</span>
+            <span class="shift-status" style="color: var(--color-gold-dark);">● Gerente General</span>
+          </div>
+        </div>
+        <button id="logoutBtn" class="btn-pos-logout" title="Cerrar sesión activa">Cerrar Sesión</button>
+      </div>
+    </header>
+
+    <!-- MIGAS DE PAN -->
+    <nav class="breadcrumbs-container" aria-label="Migas de pan">
+      <ol class="breadcrumbs-list">
+        <li class="breadcrumb-item"><a href="dashboard.html">🏠 Inicio</a></li>
+        <li class="breadcrumb-separator">/</li>
+        <li class="breadcrumb-item active" aria-current="page">Configuraciones del Sistema</li>
+      </ol>
+    </nav>
+
+    <!-- CONTENIDO PRINCIPAL DE CONFIGURACIÓN -->
+    <main class="dashboard-content" style="max-width: 900px; margin: 0 auto; width: 100%;">
+
+      <div id="statusBanner" class="alert-banner"></div>
+
+      <!-- TARJETA 1: DATOS FISCALES DE LA EMPRESA -->
+      <section class="config-card">
+        <h2 style="font-size: 1.15rem; font-weight: 800; color: var(--color-espresso); margin-bottom: 0.5rem; padding-bottom: 0.4rem; border-bottom: 2px solid var(--color-gold);">
+          🏢 Datos Fiscales de la Empresa (Cabecera de Facturas & Tickets)
+        </h2>
+        <p style="font-size: 0.85rem; color: var(--color-muted); margin-bottom: 1.25rem;">
+          Estos datos se inyectarán de forma dinámica en todos los tickets fiscales generados por el Punto de Venta (POS) para impresoras térmicas de 80mm.
+        </p>
+
+        <form id="empresaForm">
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+            <div class="config-form-group">
+              <label for="empresaNombre">Nombre / Razón Social:</label>
+              <input type="text" id="empresaNombre" class="config-input" placeholder="Ej. La Nueva Parisienne C.A." required>
+            </div>
+
+            <div class="config-form-group">
+              <label for="empresaRif">RIF Fiscal:</label>
+              <input type="text" id="empresaRif" class="config-input" placeholder="Ej. J-40123456-7" required>
+            </div>
+          </div>
+
+          <div class="config-form-group">
+            <label for="empresaDireccion">Dirección Fiscal Completa:</label>
+            <input type="text" id="empresaDireccion" class="config-input" placeholder="Ej. Av. Lara con Calle 8, Barquisimeto, Edo. Lara" required>
+          </div>
+
+          <div class="config-form-group">
+            <label for="empresaTelefono">Teléfono de Contacto:</label>
+            <input type="text" id="empresaTelefono" class="config-input" placeholder="Ej. (0251) 555-1234" required>
+          </div>
+
+          <div style="margin-top: 1rem; text-align: right;">
+            <button type="submit" class="btn-save-config">
+              <span>💾 Guardar Datos Fiscales</span>
+            </button>
+          </div>
+        </form>
+      </section>
+
+    </main>
+
+  </div>
+
+  <script type="module" src="../js/modules/configuraciones.js"></script>
+
+</body>
+</html>

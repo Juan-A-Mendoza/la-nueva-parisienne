@@ -202,9 +202,27 @@ CREATE TABLE IF NOT EXISTS `configuraciones` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 
+-- ----------------------------------------------------------------------------
+-- 11. TABLA: configuracion_empresa (Datos Fiscales de la Empresa)
+-- ----------------------------------------------------------------------------
+CREATE TABLE IF NOT EXISTS `configuracion_empresa` (
+  `id` INT AUTO_INCREMENT PRIMARY KEY,
+  `nombre` VARCHAR(150) NOT NULL,
+  `rif` VARCHAR(30) NOT NULL,
+  `direccion` VARCHAR(255) NOT NULL,
+  `telefono` VARCHAR(50) NOT NULL,
+  `actualizado_en` TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+
 -- ============================================================================
 -- INSERCIÓN DE DATOS DE SEMILLA (SEED DATA INICIAL)
 -- ============================================================================
+
+-- Inserción de Datos Iniciales de la Empresa
+INSERT INTO `configuracion_empresa` (`id`, `nombre`, `rif`, `direccion`, `telefono`) VALUES
+(1, 'La Nueva Parisienne Panadería & Pastelería C.A.', 'J-40123456-7', 'Av. Lara con Calle 8, Barquisimeto, Edo. Lara', '(0251) 555-1234')
+ON DUPLICATE KEY UPDATE `nombre` = VALUES(`nombre`), `rif` = VALUES(`rif`), `direccion` = VALUES(`direccion`), `telefono` = VALUES(`telefono`);
 
 -- Inserción de Configuraciones Iniciales de Tasa BCV
 INSERT INTO `configuraciones` (`clave`, `valor`, `descripcion`) VALUES

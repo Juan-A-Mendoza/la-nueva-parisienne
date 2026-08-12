@@ -4,6 +4,22 @@ Todos los cambios significativos, nuevas funcionalidades y actualizaciones del s
 
 El formato está basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1.0.0/) y este proyecto se adhiere a [Semantic Versioning](https://semver.org/lang/es/).
 
+## [3.1.0] - 2026-08-12 (Módulo 9 Configuraciones, Impresión Estricta Térmica 80mm y Cabecera Dinámica de Empresa)
+
+### 🚀 Añadido (Added)
+- **Módulo 9 de Configuraciones ([modules/configuraciones.html](file:///C:/Users/juana/.gemini/antigravity-ide/scratch/la-nueva-parisienne/modules/configuraciones.html) y [js/modules/configuraciones.js](file:///C:/Users/juana/.gemini/antigravity-ide/scratch/la-nueva-parisienne/js/modules/configuraciones.js))**:
+  - Creación del formulario de administración de datos fiscales de la empresa (Nombre, RIF, Dirección y Teléfono) con persistencia en MySQL vía `api/update_empresa.php`.
+- **Backend API de Empresa ([api/get_empresa.php](file:///C:/Users/juana/.gemini/antigravity-ide/scratch/la-nueva-parisienne/api/get_empresa.php) y [api/update_empresa.php](file:///C:/Users/juana/.gemini/antigravity-ide/scratch/la-nueva-parisienne/api/update_empresa.php))**:
+  - Integración con la tabla `configuracion_empresa` en MySQL para consulta y actualización dinámica de la cabecera fiscal.
+- **Campos del Cliente en POS ([modules/pos.html](file:///C:/Users/juana/.gemini/antigravity-ide/scratch/la-nueva-parisienne/modules/pos.html) y [js/modules/pos.js](file:///C:/Users/juana/.gemini/antigravity-ide/scratch/la-nueva-parisienne/js/modules/pos.js))**:
+  - Incorporación de inputs para "Nombre / Razón Social" y "Cédula / RIF" en el Paso 2 de cobro. Si el cajero los omite, el sistema inyecta automáticamente `"Consumidor Final"` y `"V-00000000-0"`.
+
+### 🛠️ Corregido (Fixed)
+- **Regla Estricta de Impresión Térmica 80mm ([css/modules/pos.css](file:///C:/Users/juana/.gemini/antigravity-ide/scratch/la-nueva-parisienne/css/modules/pos.css))**:
+  - Aplicación exacta del bloque de visibilidad CSS especificado (`#ticket-container` visible a `80mm` en posición absoluta `top:0, left:0` con `body * { visibility: hidden; }` y supresión de botones con `.no-print`).
+
+---
+
 ## [3.0.0] - 2026-08-12 (Rediseño de Ticket Fiscal para Impresoras Térmicas 80mm y Cumplimiento Cambiario BCV Venezuela)
 
 ### 🚀 Añadido (Added)
