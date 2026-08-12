@@ -1,6 +1,7 @@
 /* ==========================================================================
-   MÓDULO 3: ESTILOS DE PUNTO DE VENTA POS (POS.CSS) - FLUJO EN 2 PASOS
-   Diseño responsivo optimizado para 100% zoom del navegador y pantallas táctiles
+   MÓDULO 3: ESTILOS DE PUNTO DE VENTA POS (POS.CSS) - WIZARD EN PASOS
+   Diseño de Asistente por Pasos, carrito interactivo con [+] y [-],
+   resalto multimoneda y reinicio automático para 100% zoom de pantalla.
    ========================================================================== */
 
 /* CONTENEDOR PRINCIPAL POS */
@@ -21,7 +22,7 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 0.5rem 1.25rem;
+  padding: 0.45rem 1.25rem;
   background: var(--bg-surface);
   border-bottom: var(--border-subtle);
   box-shadow: var(--shadow-subtle);
@@ -36,59 +37,59 @@
 }
 
 .pos-brand-icon {
-  width: 40px;
-  height: 40px;
+  width: 38px;
+  height: 38px;
   background: var(--gradient-espresso);
   color: var(--color-gold);
   border-radius: var(--radius-pill);
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 1.2rem;
+  font-size: 1.15rem;
   box-shadow: var(--shadow-subtle);
 }
 
 .pos-title-text h1 {
-  font-size: 1.1rem;
+  font-size: 1.05rem;
   font-weight: 700;
   line-height: 1.2;
 }
 
 .pos-title-text span {
-  font-size: 0.75rem;
+  font-size: 0.72rem;
   color: var(--color-muted);
 }
 
 .pos-user-bar {
   display: flex;
   align-items: center;
-  gap: 1rem;
+  gap: 0.85rem;
 }
 
 .bcv-rate-badge {
   display: flex;
   align-items: center;
-  gap: 0.4rem;
+  gap: 0.35rem;
   background: rgba(46, 125, 50, 0.08);
   border: 1px solid rgba(46, 125, 50, 0.25);
   color: var(--color-success);
-  padding: 0.35rem 0.75rem;
+  padding: 0.3rem 0.75rem;
   border-radius: var(--radius-pill);
-  font-size: 0.82rem;
+  font-size: 0.8rem;
 }
 
 .cashier-badge {
   display: flex;
   align-items: center;
-  gap: 0.5rem;
+  gap: 0.45rem;
   background: var(--bg-main);
-  padding: 0.3rem 0.75rem;
+  padding: 0.25rem 0.65rem;
   border-radius: var(--radius-pill);
   border: var(--border-glass);
 }
 
 .cashier-avatar {
-  font-size: 1.1rem;
+  font-size: 1rem;
 }
 
 .cashier-info {
@@ -97,24 +98,24 @@
 }
 
 .cashier-name {
-  font-size: 0.8rem;
+  font-size: 0.78rem;
   font-weight: 700;
   color: var(--color-espresso);
 }
 
 .shift-status {
-  font-size: 0.68rem;
+  font-size: 0.65rem;
   color: var(--color-success);
   font-weight: 600;
 }
 
 .btn-pos-logout {
-  min-height: 38px;
-  padding: 0.35rem 0.85rem;
+  min-height: 36px;
+  padding: 0.3rem 0.75rem;
   background: rgba(200, 90, 50, 0.1);
   color: var(--color-terracotta);
   border-radius: var(--radius-pill);
-  font-size: 0.78rem;
+  font-size: 0.75rem;
   font-weight: 600;
   border: none;
   cursor: pointer;
@@ -126,12 +127,70 @@
   color: #FFFFFF;
 }
 
-/* ESTADOS DE LOS PASOS DEL POS (PASO 1 VS PASO 2) */
+/* WIZARD STEPPER BAR (INDICADOR DE PASOS Y BREADCRUMBS) */
+.wizard-stepper-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.35rem 1.25rem;
+  background: var(--bg-main);
+  border-bottom: var(--border-subtle);
+  flex-shrink: 0;
+}
+
+.wizard-steps-indicator {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.wizard-tag {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.25rem 0.65rem;
+  border-radius: var(--radius-pill);
+  background: #FFFFFF;
+  border: 1px solid var(--border-subtle);
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: var(--color-muted);
+}
+
+.wizard-tag.active {
+  background: var(--gradient-espresso);
+  color: var(--color-gold);
+  border-color: var(--color-espresso);
+  box-shadow: var(--shadow-subtle);
+}
+
+.wizard-tag .tag-number {
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: rgba(212, 155, 84, 0.2);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.7rem;
+}
+
+.wizard-tag.active .tag-number {
+  background: var(--color-gold);
+  color: var(--color-espresso);
+}
+
+.tag-arrow {
+  font-size: 0.75rem;
+  color: var(--color-muted);
+}
+
+/* CONTENEDOR DE PASOS DE VISTA */
 .pos-step-view {
   display: none;
   flex: 1;
   flex-direction: column;
-  height: calc(100vh - 55px);
+  height: calc(100vh - 90px);
   overflow: hidden;
 }
 
@@ -140,104 +199,108 @@
 }
 
 /* ==========================================================================
-   PASO 1: VISTA DE CATÁLOGO A PANTALLA COMPLETA
+   PASO 1: ARMAR PEDIDO (CATÁLOGO IZQUIERDA + CARRITO DERECHA)
    ========================================================================== */
+.step1-workspace {
+  display: grid;
+  grid-template-columns: 1fr 380px;
+  height: 100%;
+  overflow: hidden;
+}
+
+@media (max-width: 1024px) {
+  .step1-workspace {
+    grid-template-columns: 1fr 340px;
+  }
+}
+
+.step1-catalog-panel {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  overflow: hidden;
+  border-right: var(--border-subtle);
+}
+
 .pos-filter-toolbar {
-  padding: 0.65rem 1.25rem 0.35rem;
+  padding: 0.5rem 1rem 0.25rem;
   background: var(--bg-main);
   flex-shrink: 0;
 }
 
 .search-input-wrapper {
   position: relative;
-  margin-bottom: 0.5rem;
+  margin-bottom: 0.4rem;
 }
 
 .search-icon {
   position: absolute;
-  left: 1rem;
+  left: 0.85rem;
   top: 50%;
   transform: translateY(-50%);
   color: var(--color-muted);
-  font-size: 1rem;
+  font-size: 0.95rem;
 }
 
 .pos-search-input {
   width: 100%;
-  height: 42px;
-  padding: 0.5rem 1rem 0.5rem 2.6rem;
+  height: 38px;
+  padding: 0.4rem 0.85rem 0.4rem 2.4rem;
   border-radius: var(--radius-pill);
   border: var(--border-subtle);
   background: #FFFFFF;
-  font-size: 0.9rem;
+  font-size: 0.85rem;
   color: var(--color-espresso);
   box-shadow: var(--shadow-subtle);
-  transition: all var(--transition-fast);
 }
 
-.pos-search-input:focus {
-  outline: none;
-  border-color: var(--color-gold);
-  box-shadow: var(--shadow-gold);
-}
-
-/* PESTAÑAS DE CATEGORÍA */
 .category-tabs-container {
   display: flex;
-  gap: 0.5rem;
+  gap: 0.4rem;
   overflow-x: auto;
-  padding-bottom: 0.35rem;
+  padding-bottom: 0.25rem;
   scrollbar-width: thin;
 }
 
 .category-tab-btn {
-  min-height: 42px;
-  min-width: 105px;
+  min-height: 38px;
+  min-width: 95px;
   display: flex;
   align-items: center;
-  gap: 0.4rem;
-  padding: 0.4rem 0.85rem;
+  gap: 0.35rem;
+  padding: 0.35rem 0.75rem;
   border-radius: var(--radius-pill);
   background: #FFFFFF;
   border: var(--border-subtle);
-  font-size: 0.82rem;
+  font-size: 0.78rem;
   font-weight: 600;
   color: var(--color-muted);
   white-space: nowrap;
-  box-shadow: var(--shadow-subtle);
   cursor: pointer;
-  transition: all var(--transition-fast);
-}
-
-.category-tab-btn:hover {
-  border-color: var(--color-gold);
-  color: var(--color-espresso);
 }
 
 .category-tab-btn.active {
   background: var(--gradient-espresso);
   color: var(--color-gold);
   border-color: var(--color-espresso);
-  box-shadow: var(--shadow-medium);
 }
 
-/* CATÁLOGO DE PRODUCTOS (GRID RESPONSIVO) */
 .products-scroll-area {
   flex: 1;
-  padding: 0.75rem 1.25rem;
+  padding: 0.65rem 1rem;
   overflow-y: auto;
 }
 
 .products-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(170px, 1fr));
-  gap: 0.85rem;
+  grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+  gap: 0.75rem;
 }
 
 .product-card {
   background: var(--bg-surface);
   border-radius: var(--radius-md);
-  padding: 0.85rem 0.75rem;
+  padding: 0.75rem 0.65rem;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -250,33 +313,28 @@
 }
 
 .product-card:hover {
-  transform: translateY(-3px);
-  box-shadow: var(--shadow-medium);
+  transform: translateY(-2px);
   border-color: var(--color-gold);
-}
-
-.product-card:active {
-  transform: scale(0.97);
 }
 
 .product-stock-badge {
   position: absolute;
-  top: 0.5rem;
-  right: 0.5rem;
-  font-size: 0.68rem;
+  top: 0.4rem;
+  right: 0.4rem;
+  font-size: 0.65rem;
   font-weight: 700;
-  padding: 0.15rem 0.45rem;
+  padding: 0.1rem 0.4rem;
   border-radius: var(--radius-pill);
   background: rgba(44, 29, 17, 0.06);
   color: var(--color-muted);
 }
 
 .product-card-icon {
-  font-size: 2rem;
-  margin-bottom: 0.35rem;
+  font-size: 1.8rem;
+  margin-bottom: 0.3rem;
   background: var(--bg-main);
-  width: 54px;
-  height: 54px;
+  width: 50px;
+  height: 50px;
   border-radius: 50%;
   display: flex;
   align-items: center;
@@ -285,17 +343,17 @@
 }
 
 .product-card-title {
-  font-size: 0.88rem;
+  font-size: 0.82rem;
   font-weight: 700;
   color: var(--color-espresso);
-  margin-bottom: 0.2rem;
+  margin-bottom: 0.15rem;
   line-height: 1.2;
 }
 
 .product-card-desc {
-  font-size: 0.75rem;
+  font-size: 0.7rem;
   color: var(--color-muted);
-  margin-bottom: 0.5rem;
+  margin-bottom: 0.4rem;
   display: -webkit-box;
   -webkit-line-clamp: 2;
   -webkit-box-orient: vertical;
@@ -308,119 +366,229 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding-top: 0.4rem;
+  padding-top: 0.35rem;
   border-top: 1px dashed rgba(44, 29, 17, 0.08);
 }
 
 .product-price {
-  font-size: 1.05rem;
+  font-size: 0.98rem;
   font-weight: 800;
   color: var(--color-gold-dark);
 }
 
 .btn-add-product {
-  width: 38px;
-  height: 38px;
-  min-width: 38px;
-  min-height: 38px;
+  width: 34px;
+  height: 34px;
+  min-width: 34px;
+  min-height: 34px;
   border-radius: 50%;
   background: var(--gradient-gold);
   color: var(--color-espresso);
-  font-size: 1.1rem;
+  font-size: 1rem;
   font-weight: 700;
   display: flex;
   align-items: center;
   justify-content: center;
-  box-shadow: var(--shadow-subtle);
   border: none;
+  box-shadow: var(--shadow-subtle);
 }
 
-/* BARRA INFERIOR DE RESUMEN Y ACCIÓN DE COBRO (PASO 1) */
-.step1-cart-bar {
+/* PANEL DERECHO DE CARRITO INTERACTIVO EN PASO 1 */
+.step1-cart-panel {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  background: #FFFFFF;
+  border-left: var(--border-subtle);
+  overflow: hidden;
+}
+
+.cart-header {
+  padding: 0.65rem 0.85rem;
+  background: var(--bg-main);
+  border-bottom: var(--border-subtle);
+}
+
+.cart-header-top {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 0.75rem 1.5rem;
-  background: #FFFFFF;
-  border-top: 2px solid var(--color-gold);
-  box-shadow: 0 -4px 12px rgba(0, 0, 0, 0.08);
-  flex-shrink: 0;
-  z-index: 10;
 }
 
-.step1-cart-info {
-  display: flex;
-  align-items: center;
-  gap: 1rem;
-}
-
-.step1-items-count {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  font-size: 1rem;
+.cart-order-number {
+  font-size: 0.85rem;
   font-weight: 700;
   color: var(--color-espresso);
 }
 
 .btn-clear-cart {
   background: none;
-  border: 1px solid var(--color-muted);
-  color: var(--color-muted);
-  padding: 0.25rem 0.65rem;
+  border: 1px solid var(--color-terracotta);
+  color: var(--color-terracotta);
+  padding: 0.2rem 0.55rem;
   border-radius: var(--radius-pill);
-  font-size: 0.78rem;
-  font-weight: 600;
+  font-size: 0.72rem;
+  font-weight: 700;
   cursor: pointer;
 }
 
-.btn-clear-cart:hover {
-  background: rgba(200, 90, 50, 0.1);
-  color: var(--color-terracotta);
-  border-color: var(--color-terracotta);
+.cart-items-list {
+  flex: 1;
+  overflow-y: auto;
+  padding: 0.5rem;
 }
 
-.step1-totals-preview {
+.empty-cart-view {
   display: flex;
   flex-direction: column;
-  align-items: flex-end;
+  align-items: center;
+  justify-content: center;
+  padding: 2.5rem 1rem;
+  text-align: center;
+  color: var(--color-muted);
 }
 
-.preview-usd {
-  font-size: 1.1rem;
+.empty-cart-icon {
+  font-size: 2.5rem;
+  margin-bottom: 0.5rem;
+}
+
+/* ÍTEM DE CARRITO INTERACTIVO CON BOTONES [+] Y [-] */
+.cart-item-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.55rem 0.65rem;
+  margin-bottom: 0.4rem;
+  background: var(--bg-main);
+  border-radius: var(--radius-sm);
+  border: 1px solid rgba(44, 29, 17, 0.08);
+}
+
+.cart-item-info {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+}
+
+.cart-item-name {
+  font-size: 0.82rem;
   font-weight: 700;
   color: var(--color-espresso);
 }
 
-.preview-ves {
+.cart-item-unit-price {
+  font-size: 0.72rem;
+  color: var(--color-muted);
+}
+
+.cart-item-controls {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+.btn-cart-qty {
+  width: 32px;
+  height: 32px;
+  min-width: 32px;
+  min-height: 32px;
+  border-radius: 50%;
+  border: 1px solid var(--color-gold);
+  background: #FFFFFF;
+  color: var(--color-espresso);
+  font-weight: 800;
+  font-size: 0.95rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+
+.btn-cart-qty:hover {
+  background: var(--color-gold);
+  color: var(--color-espresso);
+}
+
+.cart-qty-val {
   font-size: 0.85rem;
-  font-weight: 600;
+  font-weight: 800;
+  min-width: 22px;
+  text-align: center;
+}
+
+.cart-item-total {
+  font-size: 0.85rem;
+  font-weight: 800;
+  color: var(--color-gold-dark);
+  margin-left: 0.5rem;
+}
+
+/* FOOTER RESUMEN CARRITO PASO 1 */
+.cart-summary-footer {
+  padding: 0.75rem 0.85rem;
+  background: #FFFFFF;
+  border-top: 2px solid var(--color-gold);
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+.summary-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 0.82rem;
+  color: var(--color-espresso);
+}
+
+.total-row {
+  font-size: 0.95rem;
+  font-weight: 800;
+  padding-top: 0.35rem;
+  border-top: 1px solid var(--border-subtle);
+}
+
+.total-amount-highlight {
+  font-size: 1.25rem;
+  color: var(--color-gold-dark);
+}
+
+.total-ves-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.5rem 0.65rem;
+  background: rgba(46, 125, 50, 0.08);
+  border: 1px solid rgba(46, 125, 50, 0.25);
+  border-radius: var(--radius-sm);
   color: var(--color-success);
 }
 
-.btn-step-action {
-  min-height: 48px;
-  padding: 0.65rem 1.5rem;
+.total-ves-highlight {
+  font-size: 1.15rem;
+  font-weight: 800;
+}
+
+.btn-process-payment {
+  min-height: 46px;
+  width: 100%;
   border-radius: var(--radius-pill);
   background: var(--gradient-gold);
   color: var(--color-espresso);
-  font-size: 1rem;
   font-weight: 800;
+  font-size: 0.92rem;
   border: none;
   cursor: pointer;
   display: flex;
   align-items: center;
-  gap: 0.75rem;
+  justify-content: space-between;
+  padding: 0.6rem 1.25rem;
   box-shadow: var(--shadow-medium);
-  transition: all var(--transition-fast);
+  margin-top: 0.25rem;
 }
 
-.btn-step-action:hover:not(:disabled) {
-  transform: translateY(-2px);
-  box-shadow: var(--shadow-gold);
-}
-
-.btn-step-action:disabled {
+.btn-process-payment:disabled {
   opacity: 0.5;
   cursor: not-allowed;
   background: var(--bg-main);
@@ -435,52 +603,53 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 0.65rem 1.25rem;
+  padding: 0.55rem 1.25rem;
   background: var(--bg-surface);
   border-bottom: var(--border-subtle);
   flex-shrink: 0;
 }
 
 .btn-back-step {
-  min-height: 40px;
-  padding: 0.4rem 1rem;
+  min-height: 38px;
+  padding: 0.35rem 0.85rem;
   border-radius: var(--radius-pill);
   background: var(--bg-main);
   border: 1px solid var(--color-espresso);
   color: var(--color-espresso);
-  font-size: 0.88rem;
+  font-size: 0.82rem;
   font-weight: 700;
   cursor: pointer;
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  transition: all var(--transition-fast);
 }
 
-.btn-back-step:hover {
-  background: var(--color-espresso);
-  color: var(--color-gold);
+.btn-back-step.danger {
+  border-color: var(--color-terracotta);
+  color: var(--color-terracotta);
+}
+
+.btn-back-step.danger:hover {
+  background: var(--color-terracotta);
+  color: #FFFFFF;
 }
 
 .step2-order-title {
-  font-size: 1.1rem;
+  font-size: 1rem;
   color: var(--color-espresso);
 }
 
 .order-type-selector {
   display: flex;
   background: var(--bg-main);
-  padding: 0.2rem;
+  padding: 0.15rem;
   border-radius: var(--radius-pill);
   border: var(--border-subtle);
 }
 
 .order-type-btn {
-  padding: 0.35rem 0.85rem;
+  padding: 0.3rem 0.75rem;
   border-radius: var(--radius-pill);
   border: none;
   background: none;
-  font-size: 0.78rem;
+  font-size: 0.75rem;
   font-weight: 700;
   color: var(--color-muted);
   cursor: pointer;
@@ -492,30 +661,17 @@
   box-shadow: var(--shadow-subtle);
 }
 
-/* WORKSPACE DE COBRO (2 COLUMNAS COMPACTAS) */
+/* WORKSPACE PASO 2 EN 2 COLUMNAS */
 .step2-workspace {
   display: grid;
-  grid-template-columns: 1fr 420px;
+  grid-template-columns: 1fr 400px;
   gap: 1rem;
-  padding: 1rem 1.25rem;
+  padding: 0.85rem 1.25rem;
   flex: 1;
   overflow-y: auto;
   box-sizing: border-box;
 }
 
-@media (max-width: 1024px) {
-  .step2-workspace {
-    grid-template-columns: 1fr 380px;
-  }
-}
-
-@media (max-width: 768px) {
-  .step2-workspace {
-    grid-template-columns: 1fr;
-  }
-}
-
-/* COLUMNA IZQUIERDA DE COBRO (DETALLE Y TOTALES) */
 .step2-left-column, .step2-right-column {
   display: flex;
   flex-direction: column;
@@ -524,7 +680,7 @@
 .checkout-table-card, .payment-box-card {
   background: #FFFFFF;
   border-radius: var(--radius-md);
-  padding: 1.25rem;
+  padding: 1rem;
   border: var(--border-subtle);
   box-shadow: var(--shadow-subtle);
   display: flex;
@@ -533,128 +689,70 @@
 }
 
 .card-title {
-  font-size: 1.1rem;
+  font-size: 1rem;
   font-weight: 700;
   color: var(--color-espresso);
-  margin-bottom: 0.85rem;
-  padding-bottom: 0.5rem;
+  margin-bottom: 0.65rem;
+  padding-bottom: 0.4rem;
   border-bottom: 2px solid var(--color-gold);
 }
 
 .checkout-items-scroll {
   flex: 1;
-  max-height: 320px;
+  max-height: 280px;
   overflow-y: auto;
-  margin-bottom: 1rem;
+  margin-bottom: 0.75rem;
   border: 1px solid var(--bg-main);
   border-radius: var(--radius-sm);
 }
 
-/* TABLA DE ÍTEMS EN CHECKOUT */
-.cart-item {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 0.65rem 0.85rem;
-  border-bottom: 1px solid rgba(44, 29, 17, 0.06);
-}
-
-.cart-item-details {
-  display: flex;
-  flex-direction: column;
-}
-
-.cart-item-title {
-  font-size: 0.88rem;
-  font-weight: 700;
-  color: var(--color-espresso);
-}
-
-.cart-item-price {
-  font-size: 0.78rem;
-  color: var(--color-muted);
-}
-
-.cart-item-actions {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-}
-
-.qty-btn {
-  width: 32px;
-  height: 32px;
-  border-radius: 50%;
-  border: 1px solid var(--color-muted);
-  background: #FFFFFF;
-  font-weight: 700;
-  cursor: pointer;
-}
-
-.qty-val {
-  font-size: 0.9rem;
-  font-weight: 700;
-  min-width: 20px;
-  text-align: center;
-}
-
-/* DESGLOSE FINANCIERO Y TOTALES */
 .checkout-financial-summary {
   display: flex;
   flex-direction: column;
-  gap: 0.5rem;
-  padding-top: 0.75rem;
+  gap: 0.4rem;
+  padding-top: 0.65rem;
   border-top: 1px dashed var(--color-muted);
 }
 
-.summary-row {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  font-size: 0.9rem;
-  color: var(--color-espresso);
-}
-
 .discount-select {
-  padding: 0.3rem 0.5rem;
+  padding: 0.25rem 0.45rem;
   border-radius: var(--radius-sm);
   border: var(--border-subtle);
-  font-size: 0.82rem;
+  font-size: 0.8rem;
 }
 
 .total-row-main {
-  font-size: 1.15rem;
+  font-size: 1.05rem;
   font-weight: 800;
   color: var(--color-espresso);
-  padding-top: 0.5rem;
+  padding-top: 0.4rem;
   border-top: 2px solid var(--color-espresso);
 }
 
 .total-amount-usd {
-  font-size: 1.4rem;
+  font-size: 1.3rem;
   color: var(--color-gold-dark);
 }
 
 .total-row-ves {
   background: rgba(46, 125, 50, 0.08);
-  padding: 0.65rem 0.85rem;
+  padding: 0.55rem 0.75rem;
   border-radius: var(--radius-sm);
   border: 1px solid rgba(46, 125, 50, 0.25);
-  margin-top: 0.35rem;
 }
 
 .total-amount-ves {
-  font-size: 1.35rem;
+  font-size: 1.25rem;
   font-weight: 800;
   color: var(--color-success);
 }
 
-/* COLUMNA DERECHA (PAGO Y CALCULADORA DE VUELTO) */
+/* MEDIOS DE PAGO Y CALCULADORA */
 .payment-methods-grid {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
-  gap: 0.5rem;
-  margin-bottom: 1rem;
+  gap: 0.4rem;
+  margin-bottom: 0.85rem;
 }
 
 .method-btn {
@@ -662,65 +760,63 @@
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  padding: 0.65rem 0.35rem;
+  padding: 0.55rem 0.25rem;
   border-radius: var(--radius-md);
   border: 1px solid var(--border-subtle);
   background: var(--bg-main);
   cursor: pointer;
-  font-size: 0.8rem;
+  font-size: 0.75rem;
   font-weight: 700;
   color: var(--color-espresso);
-  transition: all var(--transition-fast);
 }
 
 .method-btn.active {
   background: var(--gradient-espresso);
   color: var(--color-gold);
   border-color: var(--color-espresso);
-  box-shadow: var(--shadow-medium);
 }
 
 .method-icon {
-  font-size: 1.4rem;
-  margin-bottom: 0.2rem;
+  font-size: 1.25rem;
+  margin-bottom: 0.15rem;
 }
 
 .cash-calculator-panel {
   background: var(--bg-main);
   border-radius: var(--radius-md);
-  padding: 0.85rem;
-  margin-bottom: 1rem;
+  padding: 0.75rem;
+  margin-bottom: 0.85rem;
 }
 
 .fast-cash-buttons {
   display: flex;
-  gap: 0.4rem;
-  margin-bottom: 0.75rem;
+  gap: 0.35rem;
+  margin-bottom: 0.65rem;
 }
 
 .fast-cash-btn {
   flex: 1;
-  padding: 0.4rem 0.2rem;
+  padding: 0.35rem 0.2rem;
   border-radius: var(--radius-sm);
   border: 1px solid var(--color-gold);
   background: #FFFFFF;
   color: var(--color-espresso);
   font-weight: 700;
-  font-size: 0.82rem;
+  font-size: 0.78rem;
   cursor: pointer;
 }
 
 .tender-input-group {
   display: flex;
   flex-direction: column;
-  gap: 0.25rem;
-  margin-bottom: 0.75rem;
+  gap: 0.2rem;
+  margin-bottom: 0.65rem;
 }
 
 .tender-input {
-  height: 44px;
-  padding: 0.5rem 0.85rem;
-  font-size: 1.1rem;
+  height: 40px;
+  padding: 0.4rem 0.75rem;
+  font-size: 1.05rem;
   font-weight: 800;
   border-radius: var(--radius-sm);
   border: 1px solid var(--color-gold);
@@ -731,22 +827,22 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 0.5rem 0.75rem;
+  padding: 0.45rem 0.65rem;
   background: rgba(46, 125, 50, 0.1);
   border-radius: var(--radius-sm);
   color: var(--color-success);
-  font-size: 0.95rem;
+  font-size: 0.88rem;
 }
 
 .btn-complete-sale {
   margin-top: auto;
-  min-height: 50px;
+  min-height: 48px;
   width: 100%;
   border-radius: var(--radius-pill);
   background: var(--gradient-gold);
   color: var(--color-espresso);
   font-weight: 800;
-  font-size: 1rem;
+  font-size: 0.95rem;
   border: none;
   cursor: pointer;
   box-shadow: var(--shadow-medium);
@@ -757,7 +853,7 @@
   cursor: not-allowed;
 }
 
-/* MODALES DE IMPRESIÓN Y CONFIRMACIÓN */
+/* MODALES DE IMPRESIÓN Y REINICIO */
 .pin-modal-overlay {
   position: fixed;
   inset: 0;
@@ -778,9 +874,9 @@
 
 .receipt-card {
   background: #FFFFFF;
-  padding: 1.5rem;
+  padding: 1.25rem;
   border-radius: var(--radius-md);
-  max-width: 420px;
+  max-width: 400px;
   width: 90%;
   max-height: 90vh;
   overflow-y: auto;

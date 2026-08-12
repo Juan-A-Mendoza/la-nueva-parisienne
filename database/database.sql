@@ -187,6 +187,9 @@ CREATE TABLE IF NOT EXISTS `asientos_detalle` (
   PRIMARY KEY (`id`),
   CONSTRAINT `fk_asientos_detalle_encabezado` FOREIGN KEY (`asiento_id`) REFERENCES `asientos_contables` (`id`) ON DELETE CASCADE ON UPDATE CASCADE,
   CONSTRAINT `fk_asientos_detalle_cuentas` FOREIGN KEY (`cuenta_codigo`) REFERENCES `plan_cuentas` (`codigo`) ON DELETE CASCADE ON UPDATE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+
 -- ----------------------------------------------------------------------------
 -- 10. TABLA: configuraciones (Ajustes Generales y Parámetros del Sistema)
 -- ----------------------------------------------------------------------------

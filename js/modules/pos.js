@@ -1,7 +1,9 @@
 /* ==========================================================================
-   LA NUEVA PARISIENNE - CONTROLADOR INTERACTIVO DEL POS EN 2 PASOS (POS.JS)
-   Gestión de catálogo, flujo en 2 Pasos (Catálogo -> Cobro/Caja), 
-   tasa BCV en vivo (cURL / API) y procesamiento de ventas en MySQL.
+   LA NUEVA PARISIENNE - CONTROLADOR DEL ASISTENTE POR PASOS POS (POS.JS)
+   Flujo Wizard Estricto:
+   - Paso 1 (Armar Pedido): Catálogo + Carrito lateral interactivo con [+] y [-]
+   - Paso 2 (Caja / Cobro): Totales bimoneda en vivo (API BCV), medio de pago y botón "Empezar de cero"
+   - Paso 3 (Finalización y Reinicio Automático resetPOS()): Transacción MySQL y reseteo inmediato a Paso 1
    ========================================================================== */
 
 import { SessionStore } from '../core/session-store.js';
@@ -42,25 +44,34 @@ document.addEventListener('DOMContentLoaded', async () => {
   // 3. Elementos DOM
   const posStep1 = document.getElementById('posStep1');
   const posStep2 = document.getElementById('posStep2');
+  const wizardStepTag1 = document.getElementById('wizardStepTag1');
+  const wizardStepTag2 = document.getElementById('wizardStepTag2');
+  const wizardStepTag3 = document.getElementById('wizardStepTag3');
+  
   const btnGoToStep2 = document.getElementById('btnGoToStep2');
   const btnGoToStep2Text = document.getElementById('btnGoToStep2Text');
   const btnBackToStep1 = document.getElementById('btnBackToStep1');
+  const btnResetAndCancel = document.getElementById('btnResetAndCancel');
   
   const categoryTabsContainer = document.getElementById('categoryTabs');
   const productsGrid = document.getElementById('productsGrid');
   const searchInput = document.getElementById('searchInput');
-  const cartItemsList = document.getElementById('cartItemsList');
-  const clearCartBtn = document.getElementById('clearCartBtn');
+  const step1CartItemsList = document.getElementById('step1CartItemsList');
+  const checkoutCartItemsList = document.getElementById('checkoutCartItemsList');
+  const emptyCartView = document.getElementById('emptyCartView');
+  const clearCartBtnPaso1 = document.getElementById('clearCartBtnPaso1');
   
-  // Badges y Previews
-  const step1CartBadge = document.getElementById('step1CartBadge');
+  // Previews y Totales Paso 1
   const step1SubtotalUsd = document.getElementById('step1SubtotalUsd');
-  const step1SubtotalVes = document.getElementById('step1SubtotalVes');
+  const step1TaxUsd = document.getElementById('step1TaxUsd');
+  const step1TotalUsd = document.getElementById('step1TotalUsd');
+  const step1TotalVes = document.getElementById('step1TotalVes');
   const bcvRateBadge = document.getElementById('bcvRateBadge');
   const bcvRateValEl = document.getElementById('bcvRateVal');
-  const orderNumberEl = document.getElementById('orderNumber');
   
-  // Elementos de Totales (Paso 2)
+  // Previews y Totales Paso 2
+  const orderNumberEl = document.getElementById('orderNumber');
+  const orderNumberPaso1 = document.getElementById('orderNumberPaso1');
   const subtotalEl = document.getElementById('subtotalVal');
   const discountValEl = document.getElementById('discountVal');
   const discountSelect = document.getElementById('discountSelect');
@@ -92,7 +103,6 @@ document.addEventListener('DOMContentLoaded', async () => {
   // ==========================================================================
   async function loadLiveBcvRate() {
     try {
-      // Probar bcv_rate.php con parámetro anti-caché
       const res = await fetch(`../api/bcv_rate.php?t=${Date.now()}`, { cache: 'no-store' });
       if (res.ok) {
         const data = await res.json();
@@ -113,27 +123,43 @@ document.addEventListener('DOMContentLoaded', async () => {
   }
 
   // ==========================================================================
-  // CONTROLADOR DE NAVEGACIÓN ENTRE PASO 1 Y PASO 2
+  // CONTROLADOR DEL WIZARD DE PASOS (PASO 1 VS PASO 2 VS PASO 3)
   // ==========================================================================
   function goToStep(step) {
     currentStep = step;
     if (step === 1) {
       if (posStep1) posStep1.classList.add('active');
       if (posStep2) posStep2.classList.remove('active');
+      if (wizardStepTag1) wizardStepTag1.classList.add('active');
+      if (wizardStepTag2) wizardStepTag2.classList.remove('active');
+      if (wizardStepTag3) wizardStepTag3.classList.remove('active');
+      renderStep1Cart();
     } else if (step === 2) {
       if (cart.length === 0) return;
       if (posStep1) posStep1.classList.remove('active');
       if (posStep2) posStep2.classList.add('active');
+      if (wizardStepTag1) wizardStepTag1.classList.remove('active');
+      if (wizardStepTag2) wizardStepTag2.classList.add('active');
+      if (wizardStepTag3) wizardStepTag3.classList.remove('active');
       renderCheckoutCart();
+    } else if (step === 3) {
+      if (wizardStepTag1) wizardStepTag1.classList.remove('active');
+      if (wizardStepTag2) wizardStepTag2.classList.remove('active');
+      if (wizardStepTag3) wizardStepTag3.classList.add('active');
     }
     updateCartTotals();
   }
 
   if (btnGoToStep2) btnGoToStep2.addEventListener('click', () => goToStep(2));
   if (btnBackToStep1) btnBackToStep1.addEventListener('click', () => goToStep(1));
+  if (btnResetAndCancel) btnResetAndCancel.addEventListener('click', () => {
+    if (confirm('¿Desea cancelar el pedido actual y empezar de cero?')) {
+      resetPOS();
+    }
+  });
 
   // ==========================================================================
-  // CATÁLOGO DE PRODUCTOS (PASO 1)
+  // PASO 1: ARMAR PEDIDO (CATÁLOGO Y CARRITO LATERAL INTERACTIVO)
   // ==========================================================================
   async function loadProductsCatalog() {
     const catalogData = await ProductsStore.getProductsCatalogAsync();
@@ -155,7 +181,7 @@ document.addEventListener('DOMContentLoaded', async () => {
       const btn = document.createElement('button');
       btn.type = 'button';
       btn.className = `category-tab-btn ${cat.id === currentCategory ? 'active' : ''}`;
-      btn.innerHTML = `<span class="category-icon">${cat.icon}</span> <span>${cat.name}</span>`;
+      btn.innerHTML = `<span>${cat.icon}</span> <span>${cat.name}</span>`;
       btn.addEventListener('click', () => {
         currentCategory = cat.id;
         document.querySelectorAll('.category-tab-btn').forEach(b => b.classList.remove('active'));
@@ -212,7 +238,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   }
 
   // ==========================================================================
-  // GESTIÓN DEL CARRITO DE COMPRAS
+  // GESTIÓN DEL CARRITO INTERACTIVO (PASO 1 Y PASO 2)
   // ==========================================================================
   function addToCart(product) {
     const existing = cart.find(item => item.product.id === product.id);
@@ -226,16 +252,66 @@ document.addEventListener('DOMContentLoaded', async () => {
       cart.push({ product, quantity: 1 });
     }
     updateCartTotals();
-    if (currentStep === 2) renderCheckoutCart();
+    renderStep1Cart();
+  }
+
+  function renderStep1Cart() {
+    if (!step1CartItemsList) return;
+    step1CartItemsList.innerHTML = '';
+
+    if (cart.length === 0) {
+      if (emptyCartView) emptyCartView.style.display = 'flex';
+      return;
+    }
+    if (emptyCartView) emptyCartView.style.display = 'none';
+
+    cart.forEach(item => {
+      const row = document.createElement('div');
+      row.className = 'cart-item-row';
+      row.innerHTML = `
+        <div class="cart-item-info">
+          <span class="cart-item-name">${item.product.icon || '🥖'} ${item.product.name}</span>
+          <span class="cart-item-unit-price">$${item.product.price.toFixed(2)} c/u</span>
+        </div>
+        <div class="cart-item-controls">
+          <button type="button" class="btn-cart-qty btn-dec" title="Disminuir o eliminar">-</button>
+          <span class="cart-qty-val">${item.quantity}</span>
+          <button type="button" class="btn-cart-qty btn-inc" title="Aumentar cantidad">+</button>
+        </div>
+        <span class="cart-item-total">$${(item.product.price * item.quantity).toFixed(2)}</span>
+      `;
+
+      row.querySelector('.btn-dec').addEventListener('click', (e) => {
+        e.stopPropagation();
+        if (item.quantity > 1) {
+          item.quantity -= 1;
+        } else {
+          cart = cart.filter(i => i.product.id !== item.product.id);
+        }
+        updateCartTotals();
+        renderStep1Cart();
+      });
+
+      row.querySelector('.btn-inc').addEventListener('click', (e) => {
+        e.stopPropagation();
+        if (item.quantity < item.product.stock) {
+          item.quantity += 1;
+          updateCartTotals();
+          renderStep1Cart();
+        } else {
+          alert(`Stock máximo alcanzado (${item.product.stock} ud).`);
+        }
+      });
+
+      step1CartItemsList.appendChild(row);
+    });
   }
 
   function updateCartTotals() {
     let rawSubtotal = 0;
-    let totalItemsCount = 0;
 
     cart.forEach(item => {
       rawSubtotal += item.product.price * item.quantity;
-      totalItemsCount += item.quantity;
     });
 
     const discountAmount = rawSubtotal * (currentDiscountPercent / 100);
@@ -243,17 +319,20 @@ document.addEventListener('DOMContentLoaded', async () => {
     const taxAmount = taxableBase * IVA_RATE;
     const finalTotalUsd = taxableBase + taxAmount;
     
-    // FÓRMULA MATEMÁTICA ESTRICTA: TOTAL USD * TASA BCV EN VIVO
+    // FÓRMULA MATEMÁTICA CONVERSIÓN VES
     const finalTotalVes = finalTotalUsd * bcvRate;
 
-    // Actualizar Previews Paso 1
-    if (step1CartBadge) step1CartBadge.textContent = `${totalItemsCount} ítems en la orden`;
-    if (step1SubtotalUsd) step1SubtotalUsd.textContent = `$${finalTotalUsd.toFixed(2)}`;
-    if (step1SubtotalVes) step1SubtotalVes.textContent = `Bs. ${finalTotalVes.toLocaleString('es-VE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+    // Actualizar Totales Paso 1
+    if (step1SubtotalUsd) step1SubtotalUsd.textContent = `$${rawSubtotal.toFixed(2)}`;
+    if (step1TaxUsd) step1TaxUsd.textContent = `$${taxAmount.toFixed(2)}`;
+    if (step1TotalUsd) step1TotalUsd.textContent = `$${finalTotalUsd.toFixed(2)}`;
+    if (step1TotalVes) {
+      step1TotalVes.textContent = `Bs. ${finalTotalVes.toLocaleString('es-VE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+    }
     
     if (btnGoToStep2) btnGoToStep2.disabled = cart.length === 0;
     if (btnGoToStep2Text) {
-      btnGoToStep2Text.textContent = `Proceder al Pago / Cobrar ($${finalTotalUsd.toFixed(2)})`;
+      btnGoToStep2Text.textContent = `Siguiente / Proceder al Pago ($${finalTotalUsd.toFixed(2)})`;
     }
 
     // Actualizar Totales Paso 2
@@ -270,27 +349,29 @@ document.addEventListener('DOMContentLoaded', async () => {
   }
 
   function renderCheckoutCart() {
-    if (!cartItemsList) return;
-    cartItemsList.innerHTML = '';
+    if (!checkoutCartItemsList) return;
+    checkoutCartItemsList.innerHTML = '';
 
     if (cart.length === 0) {
-      cartItemsList.innerHTML = '<p style="padding: 1.5rem; text-align: center; color: var(--color-muted);">El carrito está vacío.</p>';
+      checkoutCartItemsList.innerHTML = '<p style="padding: 1.5rem; text-align: center; color: var(--color-muted);">El carrito está vacío.</p>';
       return;
     }
 
     cart.forEach(item => {
       const itemEl = document.createElement('div');
-      itemEl.className = 'cart-item';
+      itemEl.className = 'cart-item-row';
+      itemEl.style.background = '#FFFFFF';
       itemEl.innerHTML = `
-        <div class="cart-item-details">
-          <span class="cart-item-title">${item.product.icon || '🥖'} ${item.product.name}</span>
-          <span class="cart-item-price">$${item.product.price.toFixed(2)} c/u</span>
+        <div class="cart-item-info">
+          <span class="cart-item-name">${item.product.icon || '🥖'} ${item.product.name}</span>
+          <span class="cart-item-unit-price">$${item.product.price.toFixed(2)} c/u</span>
         </div>
-        <div class="cart-item-actions">
-          <button type="button" class="qty-btn btn-dec">-</button>
-          <span class="qty-val">${item.quantity}</span>
-          <button type="button" class="qty-btn btn-inc">+</button>
+        <div class="cart-item-controls">
+          <button type="button" class="btn-cart-qty btn-dec">-</button>
+          <span class="cart-qty-val">${item.quantity}</span>
+          <button type="button" class="btn-cart-qty btn-inc">+</button>
         </div>
+        <span class="cart-item-total">$${(item.product.price * item.quantity).toFixed(2)}</span>
       `;
 
       itemEl.querySelector('.btn-dec').addEventListener('click', () => {
@@ -301,6 +382,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
         updateCartTotals();
         renderCheckoutCart();
+        renderStep1Cart();
         if (cart.length === 0) goToStep(1);
       });
 
@@ -309,21 +391,22 @@ document.addEventListener('DOMContentLoaded', async () => {
           item.quantity += 1;
           updateCartTotals();
           renderCheckoutCart();
+          renderStep1Cart();
         } else {
           alert(`Stock máximo alcanzado (${item.product.stock} ud).`);
         }
       });
 
-      cartItemsList.appendChild(itemEl);
+      checkoutCartItemsList.appendChild(itemEl);
     });
   }
 
-  if (clearCartBtn) {
-    clearCartBtn.addEventListener('click', () => {
-      if (confirm('¿Vaciar todos los productos del carrito?')) {
+  if (clearCartBtnPaso1) {
+    clearCartBtnPaso1.addEventListener('click', () => {
+      if (confirm('¿Vaciar todos los productos del pedido?')) {
         cart = [];
         updateCartTotals();
-        if (currentStep === 2) goToStep(1);
+        renderStep1Cart();
       }
     });
   }
@@ -336,7 +419,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   }
 
   // ==========================================================================
-  // MÉTODOS DE PAGO Y CALCULADORA DE VUELTO (PASO 2)
+  // PASO 2: MÉTODOS DE PAGO Y CALCULADORA DE VUELTO
   // ==========================================================================
   document.querySelectorAll('.method-btn').forEach(btn => {
     btn.addEventListener('click', () => {
@@ -396,7 +479,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   }
 
   // ==========================================================================
-  // FINALIZAR VENTA Y PERSISTIR EN MYSQL (API PROCESAR_VENTA.PHP)
+  // PASO 3: REGISTRO MYSQL Y REINICIO AUTOMÁTICO DE ESTADO (resetPOS)
   // ==========================================================================
   if (btnCompleteSale) {
     btnCompleteSale.addEventListener('click', async () => {
@@ -446,19 +529,14 @@ document.addEventListener('DOMContentLoaded', async () => {
         });
 
         if (res.ok) {
-          const result = await res.json();
-          if (result.success) {
-            showReceiptModal(salePayload);
-          } else {
-            alert('⚠️ Error al registrar venta: ' + (result.message || 'Desconocido'));
-          }
-        } else {
-          showReceiptModal(salePayload);
+          await res.json();
         }
       } catch (err) {
-        console.warn('Servicio de persistencia no alcanzado, mostrando comprobante:', err);
-        showReceiptModal(salePayload);
+        console.warn('Persistencia MySQL:', err);
       }
+
+      goToStep(3);
+      showReceiptModal(salePayload);
 
       btnCompleteSale.disabled = false;
       btnCompleteSale.textContent = '✓ Finalizar Venta e Imprimir Ticket';
@@ -500,6 +578,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     receiptModal.classList.add('active');
   }
 
+  // REINICIO AUTOMÁTICO TRAS CERRAR O IMPRIMIR EL COMPROBANTE
   if (closeReceiptModalBtn) {
     closeReceiptModalBtn.addEventListener('click', () => {
       receiptModal.classList.remove('active');
@@ -517,9 +596,15 @@ document.addEventListener('DOMContentLoaded', async () => {
   if (btnPrintReceipt) {
     btnPrintReceipt.addEventListener('click', () => {
       window.print();
+      // Reinicio automático inmediato tras finalizar la orden de impresión
+      setTimeout(() => {
+        receiptModal.classList.remove('active');
+        resetPOS();
+      }, 500);
     });
   }
 
+  // FUNCIÓN MAESTRA DE REINICIO DE POS (resetPOS)
   function resetPOS() {
     cart = [];
     currentDiscountPercent = 0;
@@ -530,12 +615,13 @@ document.addEventListener('DOMContentLoaded', async () => {
     orderCounter++;
     initOrderNumber();
     updateCartTotals();
+    renderStep1Cart();
     goToStep(1);
   }
 
   function initOrderNumber() {
-    if (orderNumberEl) {
-      orderNumberEl.innerHTML = `<span>🧾 Comprobante:</span> <strong>FAC-2026-${orderCounter}</strong>`;
-    }
+    const code = `FAC-2026-${orderCounter}`;
+    if (orderNumberEl) orderNumberEl.innerHTML = `<span>🧾 Comprobante:</span> <strong>${code}</strong>`;
+    if (orderNumberPaso1) orderNumberPaso1.innerHTML = `<span>🛒 Orden:</span> <strong>${code}</strong>`;
   }
 });

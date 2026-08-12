@@ -4,6 +4,16 @@ Todos los cambios significativos, nuevas funcionalidades y actualizaciones del s
 
 El formato está basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1.0.0/) y este proyecto se adhiere a [Semantic Versioning](https://semver.org/lang/es/).
 
+## [2.7.0] - 2026-08-11 (Experiencia UX POS: Asistente por Pasos Wizard y Reinicio Automático resetPOS)
+
+### 🚀 Añadido (Added)
+- **Flujo Estricto de Asistente por Pasos (Wizard UX) ([modules/pos.html](file:///C:/Users/juana/.gemini/antigravity-ide/scratch/la-nueva-parisienne/modules/pos.html), [css/modules/pos.css](file:///C:/Users/juana/.gemini/antigravity-ide/scratch/la-nueva-parisienne/css/modules/pos.css) y [js/modules/pos.js](file:///C:/Users/juana/.gemini/antigravity-ide/scratch/la-nueva-parisienne/js/modules/pos.js))**:
+  - **Paso 1 (Armar Pedido)**: Integración del panel lateral de carrito donde cada ítem cuenta con botones táctiles interactivos `[+]` y `[-]` para ajustar cantidades o eliminar productos. Botón principal: **"Siguiente / Proceder al Pago →"**.
+  - **Paso 2 (Caja / Cobro)**: Módulo de cobranza bimoneda (Dólares $ USD y Bolívares Bs. VES via API BCV en vivo), métodos de pago (Efectivo/Tarjeta/Pago Móvil), vuelto y botón de cancelación **"Empezar de cero / Cancelar"** que invoca `resetPOS()`.
+  - **Paso 3 (Finalización y Reinicio Automático `resetPOS()`)**: Integración de la función `resetPOS()` que vacía automáticamente el carrito, reinicia el correlativo de orden `FAC-2026-XXXX`, limpia los campos de pago y devuelve la pantalla al Paso 1 tras finalizar/imprimir la venta.
+
+---
+
 ## [2.6.0] - 2026-08-11 (Rediseño POS en Flujo de 2 Pasos y API Dinámica BCV cURL)
 
 ### 🚀 Añadido (Added)

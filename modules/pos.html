@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Punto de Venta (POS) - La Nueva Parisienne</title>
-  <meta name="description" content="Módulo de Punto de Venta y Facturación en 2 Pasos para La Nueva Parisienne. Procesamiento de pedidos en mostrador, tasa BCV en vivo y cobranza.">
+  <meta name="description" content="Módulo de Punto de Venta en Asistente por Pasos para La Nueva Parisienne. Facturación táctil, conversión BCV en vivo y reinicio automático.">
   
   <!-- Hojas de Estilos Separadas (CSS3 Estricto) -->
   <link rel="stylesheet" href="../css/main.css">
@@ -15,107 +15,163 @@
   <!-- CONTENEDOR PRINCIPAL POS -->
   <div class="pos-app-container">
 
-    <!-- NAVBAR SUPERIOR COMPARTIDA -->
+    <!-- NAVBAR SUPERIOR COMPARTIDA DE CAJA -->
     <header class="pos-navbar">
       <div class="pos-brand-group">
         <div class="pos-brand-icon" aria-hidden="true">🥖</div>
         <div class="pos-title-text">
           <h1 class="brand-title">La Nueva Parisienne</h1>
-          <span>Módulo 3: Punto de Venta (POS)</span>
+          <span>Módulo 3: Asistente de Punto de Venta (POS)</span>
         </div>
       </div>
 
       <div class="pos-user-bar">
-        <div id="bcvRateBadge" class="bcv-rate-badge" title="Tasa Oficial en Vivo del Banco Central de Venezuela">
+        <div id="bcvRateBadge" class="bcv-rate-badge" title="Tasa Oficial del Banco Central de Venezuela en Vivo">
           <span>🇻🇪 Tasa BCV:</span> <strong id="bcvRateVal">Cargando...</strong>
         </div>
 
         <div class="cashier-badge">
           <span id="cashierAvatar" class="cashier-avatar">👩‍💼</span>
           <div class="cashier-info">
-            <span id="cashierName" class="cashier-name">Élodie Martin</span>
-            <span class="shift-status">● Caja Abierta</span>
+            <span id="cashierName" class="cashier-name">Personal de Caja</span>
+            <span class="shift-status">● Caja Activa</span>
           </div>
         </div>
         
-        <button id="logoutBtn" class="btn-pos-logout" title="Cerrar sesión activa y volver al login">Cerrar Sesión</button>
+        <button id="logoutBtn" type="button" class="btn-pos-logout" title="Cerrar sesión activa">Cerrar Sesión</button>
       </div>
     </header>
 
-    <!-- MIGAS DE PAN -->
-    <nav class="breadcrumbs-container" aria-label="Migas de pan">
-      <ol class="breadcrumbs-list">
-        <li class="breadcrumb-item">
-          <a href="dashboard.html">🏠 Inicio (Panel Central)</a>
-        </li>
-        <li class="breadcrumb-separator">/</li>
-        <li class="breadcrumb-item active" aria-current="page">Punto de Venta (POS)</li>
-      </ol>
-    </nav>
+    <!-- NAVEGACIÓN Y INDICADOR DE PASOS (WIZARD HEADER) -->
+    <div class="wizard-stepper-bar">
+      <nav class="breadcrumbs-container" aria-label="Migas de pan">
+        <ol class="breadcrumbs-list">
+          <li class="breadcrumb-item"><a href="dashboard.html">🏠 Inicio</a></li>
+          <li class="breadcrumb-separator">/</li>
+          <li class="breadcrumb-item active" aria-current="page">Punto de Venta (POS)</li>
+        </ol>
+      </nav>
 
-    <!-- ====================================================================
-         PASO 1: VISTA DE CATÁLOGO Y SELECCIÓN DE PRODUCTOS (FULLSCREEN)
-         ==================================================================== -->
-    <div id="posStep1" class="pos-step-view active">
-      
-      <!-- BARRA DE FILTRADO Y CATEGORÍAS -->
-      <div class="pos-filter-toolbar">
-        <!-- Buscador Instantáneo -->
-        <div class="search-input-wrapper">
-          <span class="search-icon" aria-hidden="true">🔍</span>
-          <input type="text" id="searchInput" class="pos-search-input" placeholder="Buscar por producto o código (ej: Baguette, Croissant, PAN-001)...">
+      <!-- PESTAÑAS VISUALES DEL ASISTENTE DE PASOS -->
+      <div class="wizard-steps-indicator">
+        <div id="wizardStepTag1" class="wizard-tag active">
+          <span class="tag-number">1</span>
+          <span class="tag-label">Armar Pedido</span>
         </div>
-
-        <!-- Pestañas de Categoría (Renderizado Dinámico) -->
-        <div id="categoryTabs" class="category-tabs-container"></div>
+        <span class="tag-arrow">→</span>
+        <div id="wizardStepTag2" class="wizard-tag">
+          <span class="tag-number">2</span>
+          <span class="tag-label">Caja & Cobro</span>
+        </div>
+        <span class="tag-arrow">→</span>
+        <div id="wizardStepTag3" class="wizard-tag">
+          <span class="tag-number">3</span>
+          <span class="tag-label">Ticket & Ticketera</span>
+        </div>
       </div>
-
-      <!-- ÁREA DE CATÁLOGO DE PRODUCTOS (GRID TÁCTIL) -->
-      <main class="products-scroll-area">
-        <div id="productsGrid" class="products-grid">
-          <!-- Renderizado dinámico vía pos.js -->
-        </div>
-      </main>
-
-      <!-- BARRA INFERIOR DE RESUMEN Y ACCIÓN DE COBRO (PASO 1) -->
-      <footer class="step1-cart-bar">
-        <div class="step1-cart-info">
-          <div class="step1-items-count">
-            <span class="cart-icon">🛒</span>
-            <span id="step1CartBadge">0 ítems en la orden</span>
-          </div>
-          <button id="clearCartBtn" type="button" class="btn-clear-cart" title="Vaciar todos los productos">Vaciar</button>
-        </div>
-
-        <div class="step1-totals-preview">
-          <div class="preview-usd">Subtotal: <strong id="step1SubtotalUsd">$0.00</strong></div>
-          <div class="preview-ves">Tasa BCV: <span id="step1SubtotalVes">Bs. 0,00</span></div>
-        </div>
-
-        <button id="btnGoToStep2" type="button" class="btn-step-action primary" disabled>
-          <span id="btnGoToStep2Text">Proceder al Pago / Cobrar ($0.00)</span>
-          <span class="arrow-icon">→</span>
-        </button>
-      </footer>
-
     </div>
 
     <!-- ====================================================================
-         PASO 2: VISTA DE CAJA Y COBRO / FACTURACIÓN (FULLSCREEN)
+         PASO 1: ARMAR PEDIDO (CATÁLOGO A LA IZQUIERDA + CARRITO A LA DERECHA)
+         ==================================================================== -->
+    <div id="posStep1" class="pos-step-view active">
+      <div class="step1-workspace">
+
+        <!-- SECCIÓN IZQUIERDA: CATÁLOGO DE PRODUCTOS Y BÚSQUEDA -->
+        <main class="step1-catalog-panel">
+          <!-- BARRA DE FILTRADO -->
+          <div class="pos-filter-toolbar">
+            <div class="search-input-wrapper">
+              <span class="search-icon" aria-hidden="true">🔍</span>
+              <input type="text" id="searchInput" class="pos-search-input" placeholder="Buscar producto o código (ej: Baguette, Croissant, PAN-001)...">
+            </div>
+            <div id="categoryTabs" class="category-tabs-container"></div>
+          </div>
+
+          <!-- REJILLA SCROLLABLE DE PRODUCTOS -->
+          <div class="products-scroll-area">
+            <div id="productsGrid" class="products-grid">
+              <!-- Renderizado dinámico vía pos.js -->
+            </div>
+          </div>
+        </main>
+
+        <!-- SECCIÓN DERECHA: PANEL LATERAL DE CARRITO INTERACTIVO (PASO 1) -->
+        <aside class="step1-cart-panel" aria-label="Carrito de compra actual">
+          <header class="cart-header">
+            <div class="cart-header-top">
+              <div id="orderNumberPaso1" class="cart-order-number">
+                <span>🛒 Order:</span> <strong>FAC-2026-1001</strong>
+              </div>
+              <button id="clearCartBtnPaso1" type="button" class="btn-clear-cart" title="Vaciar todos los productos">Vaciar</button>
+            </div>
+          </header>
+
+          <!-- LISTA DINÁMICA DE ÍTEMS EN EL CARRITO CON BOTONES [+] Y [-] -->
+          <div id="step1CartItemsList" class="cart-items-list">
+            <!-- Renderizado dinámico con botones interactivos [+] y [-] -->
+          </div>
+
+          <!-- PLACEHOLDER VISTA CARRITO VACÍO -->
+          <div id="emptyCartView" class="empty-cart-view">
+            <div class="empty-cart-icon">🥐</div>
+            <h3>Carrito Vacío</h3>
+            <p>Seleccione productos del catálogo para agregarlos al pedido.</p>
+          </div>
+
+          <!-- FOOTER CON TOTALES Y BOTÓN DE AVANCE AL PASO 2 -->
+          <footer class="cart-summary-footer">
+            <div class="summary-row">
+              <span>Subtotal Neto</span>
+              <span id="step1SubtotalUsd">$0.00</span>
+            </div>
+
+            <div class="summary-row">
+              <span>IVA Fiscal (16%)</span>
+              <span id="step1TaxUsd">$0.00</span>
+            </div>
+
+            <div class="summary-row total-row">
+              <span>TOTAL (USD)</span>
+              <span id="step1TotalUsd" class="total-amount-highlight">$0.00</span>
+            </div>
+
+            <div class="total-ves-row">
+              <span>EQUIVALENTE BCV (VES)</span>
+              <span id="step1TotalVes" class="total-ves-highlight">Bs. 0,00</span>
+            </div>
+
+            <!-- BOTÓN PRINCIPAL DE AVANCE "SIGUIENTE / PROCEDER AL PAGO" -->
+            <button id="btnGoToStep2" type="button" class="btn-process-payment" disabled>
+              <span id="btnGoToStep2Text">Siguiente / Proceder al Pago ($0.00)</span>
+              <span>→</span>
+            </button>
+          </footer>
+        </aside>
+
+      </div>
+    </div>
+
+    <!-- ====================================================================
+         PASO 2: CAJA / COBRO (FACTURACIÓN, TOTALES, MÉTODOS DE PAGO Y VUELTO)
          ==================================================================== -->
     <div id="posStep2" class="pos-step-view">
       
-      <!-- CABECERA DEL PASO 2: NAVEGACIÓN DE REGRESO Y DATOS DE FACTURA -->
+      <!-- BARRA SUPERIOR DE ACCIONES PASO 2 -->
       <div class="step2-header">
-        <button id="btnBackToStep1" type="button" class="btn-back-step">
-          <span>← Volver al Catálogo</span>
-        </button>
+        <div style="display: flex; gap: 0.75rem;">
+          <button id="btnBackToStep1" type="button" class="btn-back-step">
+            <span>← Modificar Pedido</span>
+          </button>
+          <button id="btnResetAndCancel" type="button" class="btn-back-step danger" title="Vaciar todo el pedido y empezar de cero">
+            <span>🚫 Empezar de cero / Cancelar</span>
+          </button>
+        </div>
 
         <div id="orderNumber" class="step2-order-title">
           <span>🧾 Comprobante:</span> <strong>FAC-2026-1001</strong>
         </div>
 
-        <!-- Selector Tipo de Pedido -->
         <div class="order-type-selector">
           <button type="button" class="order-type-btn active" data-type="Para Llevar">Para Llevar</button>
           <button type="button" class="order-type-btn" data-type="Consumo Local">Consumo Local</button>
@@ -125,56 +181,56 @@
       <!-- WORKSPACE DE COBRO EN 2 COLUMNAS -->
       <div class="step2-workspace">
 
-        <!-- COLUMNA IZQUIERDA: TABLA DE PRODUCTOS Y DESGLOSE FINANCIERO -->
+        <!-- COLUMNA IZQUIERDA: RESUMEN DE LA ORDEN Y DESGLOSE COMPLETO -->
         <div class="step2-left-column">
           <div class="checkout-table-card">
-            <h3 class="card-title">Detalle de la Orden</h3>
-            <div id="cartItemsList" class="checkout-items-scroll">
-              <!-- Renderizado dinámico de la lista editable de productos -->
+            <h3 class="card-title">Resumen Final de la Orden</h3>
+            <div id="checkoutCartItemsList" class="checkout-items-scroll">
+              <!-- Renderizado dinámico del desglose -->
             </div>
 
-            <!-- DESGLOSE CONTABLE Y TOTALES BI-MONEDA -->
+            <!-- DESGLOSE FINANCIERO Y TOTALES BI-MONEDA -->
             <div class="checkout-financial-summary">
               <div class="summary-row">
-                <span>Subtotal Neto:</span>
+                <span>Subtotal Bruto:</span>
                 <span id="subtotalVal">$0.00</span>
               </div>
 
               <div class="summary-row">
-                <label for="discountSelect">Descuento Promocional:</label>
+                <label for="discountSelect">Descuento Especial:</label>
                 <select id="discountSelect" class="discount-select">
                   <option value="0">Sin Descuento (0%)</option>
                   <option value="5">Cliente Frecuente (5%)</option>
                   <option value="10">Promoción del Día (10%)</option>
-                  <option value="15">Descuento Personal (15%)</option>
+                  <option value="15">Descuento Empleado (15%)</option>
                 </select>
                 <span id="discountVal">-$0.00</span>
               </div>
 
               <div class="summary-row">
-                <span>Impuesto IVA (16% Fiscal):</span>
+                <span>IVA (16% Fiscal):</span>
                 <span id="taxVal">$0.00</span>
               </div>
 
               <div class="summary-row total-row-main">
-                <span>TOTAL A COBRAR (USD):</span>
+                <span>TOTAL A PAGAR (USD):</span>
                 <span id="totalVal" class="total-amount-usd">$0.00</span>
               </div>
 
               <div class="summary-row total-row-ves">
-                <span>EQUIVALENTE BCV (VES):</span>
+                <span>EQUIVALENTE EN BOLÍVARES (BCV):</span>
                 <span id="totalVesVal" class="total-amount-ves">Bs. 0,00</span>
               </div>
             </div>
           </div>
         </div>
 
-        <!-- COLUMNA DERECHA: SELECCIÓN DE MÉTODO DE PAGO Y REGISTRO -->
+        <!-- COLUMNA DERECHA: SELECCIÓN DE PAGO Y CALCULADORA DE VUELTO -->
         <div class="step2-right-column">
           <div class="payment-box-card">
-            <h3 class="card-title">Forma de Pago</h3>
+            <h3 class="card-title">Medio de Pago</h3>
 
-            <!-- Selector de Métodos de Pago -->
+            <!-- Métodos de Pago -->
             <div class="payment-methods-grid">
               <button type="button" class="method-btn active" data-method="efectivo">
                 <span class="method-icon">💵</span>
@@ -182,7 +238,7 @@
               </button>
               <button type="button" class="method-btn" data-method="tarjeta">
                 <span class="method-icon">💳</span>
-                <span>Tarjeta (Puntos)</span>
+                <span>Tarjeta</span>
               </button>
               <button type="button" class="method-btn" data-method="transferencia">
                 <span class="method-icon">📲</span>
@@ -192,7 +248,7 @@
 
             <!-- Panel Efectivo (Calculadora de Vuelto) -->
             <div id="cashCalculatorPanel" class="cash-calculator-panel">
-              <label class="input-label">Billetes Rápidos Recibidos ($ USD):</label>
+              <label class="input-label">Billetes Rápidos Recibidos ($):</label>
               <div class="fast-cash-buttons">
                 <button type="button" class="fast-cash-btn" data-val="5">$5</button>
                 <button type="button" class="fast-cash-btn" data-val="10">$10</button>
@@ -202,7 +258,7 @@
               </div>
 
               <div class="tender-input-group">
-                <label for="tenderInput">Monto Entregado por Cliente ($):</label>
+                <label for="tenderInput">Monto Entregado ($ USD):</label>
                 <input type="number" id="tenderInput" class="tender-input" step="0.01" min="0" placeholder="0.00">
               </div>
 
@@ -215,15 +271,15 @@
             <!-- Panel Tarjeta / Pago Móvil -->
             <div id="cardTransferPanel" class="cash-calculator-panel" style="display: none; background: rgba(212, 155, 84, 0.08); border: 1px solid rgba(212, 155, 84, 0.3);">
               <p id="cardTransferMsg" style="font-size: 0.85rem; font-weight: 600; color: var(--color-espresso); margin-bottom: 0.75rem;">
-                💳 Procese la tarjeta en el punto de venta o confirme la transferencia.
+                💳 Inserte la tarjeta en el terminal de punto de venta o escanee el código QR.
               </p>
               <div style="display: flex; flex-direction: column; gap: 0.35rem; text-align: left;">
-                <label for="referenceInput" style="font-size: 0.85rem; font-weight: 700; color: var(--color-espresso);">Código de Referencia / Aprobación:</label>
+                <label for="referenceInput" style="font-size: 0.85rem; font-weight: 700; color: var(--color-espresso);">Número de Referencia / Aprobación:</label>
                 <input type="text" id="referenceInput" class="tender-input" style="width: 100%; text-align: left; font-size: 0.95rem;" placeholder="Ej. REF-982401">
               </div>
             </div>
 
-            <!-- Botón Final de Venta -->
+            <!-- BOTÓN FINAL DE REGISTRO -->
             <button id="btnCompleteSale" type="button" class="btn-complete-sale" disabled>
               <span>✓ Finalizar Venta e Imprimir Ticket</span>
             </button>
@@ -236,13 +292,15 @@
 
   </div>
 
-  <!-- MODAL DE COMPROBANTE DE VENTA (TICKET IMPRESO) -->
+  <!-- ====================================================================
+       PASO 3: MODAL DE COMPROBANTE DE VENTA Y REINICIO AUTOMÁTICO (resetPOS)
+       ==================================================================== -->
   <div id="receiptModal" class="pin-modal-overlay" role="dialog" aria-modal="true">
     <div class="pin-modal-card receipt-card">
-      <button id="closeReceiptModalBtn" class="modal-close-btn" aria-label="Cerrar ticket">&times;</button>
+      <button id="closeReceiptModalBtn" class="modal-close-btn" aria-label="Cerrar ticket y reiniciar POS">&times;</button>
 
       <div id="receiptContent">
-        <!-- Renderizado dinámico del ticket -->
+        <!-- Renderizado dinámico del comprobante -->
       </div>
 
       <div style="display: flex; gap: 0.75rem; margin-top: 1.25rem;">
