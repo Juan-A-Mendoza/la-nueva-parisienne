@@ -17,17 +17,20 @@ $defaultEmpresa = [
     'nombre' => 'La Nueva Parisienne Panadería & Pastelería C.A.',
     'rif' => 'J-40123456-7',
     'direccion' => 'Av. Lara con Calle 8, Barquisimeto, Edo. Lara',
-    'telefono' => '(0251) 555-1234'
+    'telefono' => '(0251) 555-1234',
+    'modo_tasa' => 'auto',
+    'tasa_manual' => 761.21
 ];
 
 try {
     require_once __DIR__ . '/config/conexion.php';
     $pdo = getDbConnection();
 
-    $stmt = $pdo->query("SELECT nombre, rif, direccion, telefono FROM configuracion_empresa WHERE id = 1 LIMIT 1");
+    $stmt = $pdo->query("SELECT nombre, rif, direccion, telefono, modo_tasa, tasa_manual FROM configuracion_empresa WHERE id = 1 LIMIT 1");
     $empresa = $stmt->fetch();
 
     if ($empresa && !empty($empresa['nombre'])) {
+        $empresa['tasa_manual'] = floatval($empresa['tasa_manual'] ?? 761.21);
         echo json_encode([
             'success' => true,
             'empresa' => $empresa

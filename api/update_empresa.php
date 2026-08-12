@@ -29,6 +29,8 @@ $nombre = isset($data['nombre']) ? trim($data['nombre']) : '';
 $rif = isset($data['rif']) ? trim($data['rif']) : '';
 $direccion = isset($data['direccion']) ? trim($data['direccion']) : '';
 $telefono = isset($data['telefono']) ? trim($data['telefono']) : '';
+$modoTasa = isset($data['modo_tasa']) ? strtolower(trim($data['modo_tasa'])) : 'auto';
+$tasaManual = isset($data['tasa_manual']) && is_numeric($data['tasa_manual']) ? floatval($data['tasa_manual']) : 761.21;
 
 if (empty($nombre) || empty($rif)) {
     http_response_code(422);
@@ -44,31 +46,42 @@ try {
     $pdo = getDbConnection();
 
     // Intentar actualizar la fila con ID 1 o insertarla si no existe
-    $sql = "INSERT INTO configuracion_empresa (id, nombre, rif, direccion, telefono) 
-            VALUES (1, :nombre, :rif, :direccion, :telefono)
+    $sql = "INSERT INTO configuracion_empresa (id, nombre, rif, direccion, telefono, modo_tasa, tasa_manual) 
+            VALUES (1, :nombre, :rif, :direccion, :telefono, :modo_tasa, :tasa_manual)
             ON DUPLICATE KEY UPDATE 
                 nombre = VALUES(nombre),
                 rif = VALUES(rif),
                 direccion = VALUES(direccion),
-                telefono = VALUES(telefono)";
+                telefono = VALUES(telefono),
+                modo_tasa = VALUES(modo_tasa),
+                tasa_manual = VALUES(tasa_manual)";
     
     $stmt = $pdo->prepare($sql);
     $stmt->execute([
         ':nombre' => $nombre,
         ':rif' => $rif,
         ':direccion' => $direccion,
-        ':telefono' => $telefono
+        ':telefono' => $telefono,
+        ':modo_tasa' => $modoTasa,
+        ':tasa_manual' => $tasaManual
     ]);
+
+    // También actualizar tabla auxiliar de configuraciones si existe
+    try {
+        $pdo->exec("INSERT INTO configuraciones (clave, valor) VALUES ('bcv_rate_mode', '$modoTasa'), ('bcv_manual_rate', '$tasaManual') ON DUPLICATE KEY UPDATE valor = VALUES(valor)");
+    } catch (Exception $ex) {}
 
     http_response_code(200);
     echo json_encode([
         'success' => true,
-        'message' => 'Datos fiscales de la empresa actualizados correctamente en MySQL.',
+        'message' => 'Datos fiscales y configuración de tasa cambiaria actualizados en MySQL.',
         'empresa' => [
             'nombre' => $nombre,
             'rif' => $rif,
             'direccion' => $direccion,
-            'telefono' => $telefono
+            'telefono' => $telefono,
+            'modo_tasa' => $modoTasa,
+            'tasa_manual' => $tasaManual
         ]
     ], JSON_UNESCAPED_UNICODE);
 

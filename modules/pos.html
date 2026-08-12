@@ -288,12 +288,24 @@
 
             <!-- Panel Tarjeta / Pago Móvil -->
             <div id="cardTransferPanel" class="cash-calculator-panel" style="display: none; background: rgba(212, 155, 84, 0.08); border: 1px solid rgba(212, 155, 84, 0.3);">
-              <p id="cardTransferMsg" style="font-size: 0.85rem; font-weight: 600; color: var(--color-espresso); margin-bottom: 0.75rem;">
-                💳 Inserte la tarjeta en el terminal de punto de venta o escanee el código QR.
+              <!-- TOTALES PROMINENTES DE COBRO TARJETA / PAGO MÓVIL -->
+              <div class="card-pay-total-summary" style="display: flex; justify-content: space-between; align-items: center; padding: 0.5rem 0.75rem; background: #FFFFFF; border: 1px solid var(--color-gold); border-radius: var(--radius-sm); margin-bottom: 0.65rem;">
+                <div>
+                  <span style="font-size: 0.72rem; color: var(--color-muted); font-weight: 700; display: block;">Monto a Cobrar ($ USD):</span>
+                  <strong id="cardTotalUsdVal" style="font-size: 1.15rem; color: var(--color-gold-dark);">$0.00</strong>
+                </div>
+                <div style="text-align: right;">
+                  <span style="font-size: 0.72rem; color: var(--color-muted); font-weight: 700; display: block;">Monto en Bolívares (BCV):</span>
+                  <strong id="cardTotalVesVal" style="font-size: 1.05rem; color: var(--color-success);">Bs. 0,00</strong>
+                </div>
+              </div>
+
+              <p id="cardTransferMsg" style="font-size: 0.85rem; font-weight: 600; color: var(--color-espresso); margin-bottom: 0.65rem;">
+                💳 Pase o inserte la tarjeta en el terminal de punto de venta por el monto exacto.
               </p>
               <div style="display: flex; flex-direction: column; gap: 0.35rem; text-align: left;">
-                <label for="referenceInput" style="font-size: 0.85rem; font-weight: 700; color: var(--color-espresso);">Número de Referencia / Aprobación:</label>
-                <input type="text" id="referenceInput" class="tender-input" style="width: 100%; text-align: left; font-size: 0.95rem;" placeholder="Ej. REF-982401">
+                <label for="referenceInput" style="font-size: 0.82rem; font-weight: 700; color: var(--color-espresso);">Número de Referencia / Aprobación:</label>
+                <input type="text" id="referenceInput" class="tender-input" style="width: 100%; text-align: left; font-size: 0.95rem; background: #FFFFFF;" placeholder="Ej. REF-982401" autocomplete="off">
               </div>
             </div>
 
@@ -345,6 +357,20 @@
         <button id="btnNewSale" type="button" class="btn-process-payment no-print" style="font-size: 0.9rem;">
           <span>✨ Nueva Venta</span>
         </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL DE CONFIRMACIÓN PERSONALIZADO (NO BROWSER POPUPS) -->
+  <div id="customConfirmModal" class="pin-modal-overlay no-print" role="dialog" aria-modal="true">
+    <div class="pin-modal-card" style="max-width: 400px; width: 90%; text-align: center; padding: 1.5rem; background: #FFFFFF; border-radius: var(--radius-md); box-shadow: var(--shadow-large);">
+      <div id="confirmModalIcon" style="font-size: 2.8rem; margin-bottom: 0.5rem;">⚠️</div>
+      <h3 id="confirmModalTitle" style="font-size: 1.15rem; font-weight: 800; color: var(--color-espresso); margin-bottom: 0.5rem;">¿Confirmar Acción?</h3>
+      <p id="confirmModalText" style="font-size: 0.88rem; color: var(--color-muted); margin-bottom: 1.25rem; line-height: 1.4;">¿Está seguro de realizar esta acción?</p>
+      
+      <div style="display: flex; gap: 0.75rem; justify-content: center;">
+        <button id="btnConfirmCancel" type="button" class="btn-back-step" style="flex: 1; min-height: 42px;">Cancelar</button>
+        <button id="btnConfirmAccept" type="button" class="btn-back-step danger" style="flex: 1; min-height: 42px; background: var(--color-terracotta); color: #FFFFFF;">Sí, Confirmar</button>
       </div>
     </div>
   </div>

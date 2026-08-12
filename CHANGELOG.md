@@ -4,6 +4,59 @@ Todos los cambios significativos, nuevas funcionalidades y actualizaciones del s
 
 El formato está basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1.0.0/) y este proyecto se adhiere a [Semantic Versioning](https://semver.org/lang/es/).
 
+## [3.5.0] - 2026-08-12 (Integración cURL ve.dolarapi.com, Interfaz Módulo 9 Tasa Manual/Auto y Persistencia MySQL)
+
+### 🚀 Añadido (Added)
+- **Interfaz de Tasa BCV / Multimoneda en Módulo 9 ([modules/configuraciones.html](file:///C:/Users/juana/.gemini/antigravity-ide/scratch/la-nueva-parisienne/modules/configuraciones.html) y [js/modules/configuraciones.js](file:///C:/Users/juana/.gemini/antigravity-ide/scratch/la-nueva-parisienne/js/modules/configuraciones.js))**:
+  - Incorporación del bloque visual dedicado a la administración de la tasa cambiaria ($ USD ➔ Bs. VES).
+  - Integración del Toggle Switch con etiquetas **"Modo Automático (API BCV en Vivo)"** y **"Modo Manual"**.
+  - Adición del campo numérico **"Tasa Manual (Bs.)"** habilitado dinámicamente al seleccionar el modo manual.
+
+### 🛠️ Corregido (Fixed)
+- **Reescritura Backend cURL (`api/bcv_rate.php` y `api/bcmrate.php`)**:
+  - Conexión mediante `cURL` directo a `https://ve.dolarapi.com/v1/dolares/oficial` con lectura del campo `promedio`.
+  - Captura estructurada de errores para prevenir fallos de interfaz cuando la red esté offline o la API rechace la petición.
+- **Persistencia Global en MySQL (`database/database.sql`, `api/get_empresa.php` y `api/update_empresa.php`)**:
+  - Adición de las columnas `modo_tasa` y `tasa_manual` en la tabla `configuracion_empresa` para sincronizar los cálculos del POS (Módulo 3) y Dashboard (Módulo 4).
+
+---
+
+## [3.4.0] - 2026-08-12 (Modal Personalizado de Monto Insuficiente y Confirmación de Vuelto Superior en Efectivo)
+
+### 🛠️ Corregido (Fixed)
+- **Modal de Monto Recibido Insuficiente ([js/modules/pos.js](file:///C:/Users/juana/.gemini/antigravity-ide/scratch/la-nueva-parisienne/js/modules/pos.js))**:
+  - Reemplazo del diálogo nativo `alert()` por un modal personalizado (`#customConfirmModal`) cuando el monto recibido en efectivo es menor al total a pagar. Muestra la diferencia faltante en **$ USD** y **Bs. VES** con botón único de acción.
+- **Confirmación de Vuelto Superior ([js/modules/pos.js](file:///C:/Users/juana/.gemini/antigravity-ide/scratch/la-nueva-parisienne/js/modules/pos.js))**:
+  - Incorporación de una verificación previa al procesar ventas en efectivo cuando el monto recibido es superior al total a pagar. Muestra en pantalla el desglose bimoneda del vuelto a entregar y solicita confirmación explícita antes de guardar en MySQL e imprimir la factura.
+
+---
+
+## [3.3.0] - 2026-08-12 (Modales de Confirmación Personalizados POS y Selector Para Llevar / Consumo Local)
+
+### 🚀 Añadido (Added)
+- **Modales de Confirmación Personalizados ([modules/pos.html](file:///C:/Users/juana/.gemini/antigravity-ide/scratch/la-nueva-parisienne/modules/pos.html) y [js/modules/pos.js](file:///C:/Users/juana/.gemini/antigravity-ide/scratch/la-nueva-parisienne/js/modules/pos.js))**:
+  - Eliminación total de ventanas emergentes nativas del navegador (`confirm()`) para las acciones de **"Vaciar"** y **"Empezar de cero / Cancelar"**.
+  - Creación del modal nativo `#customConfirmModal` con diseño acorde a la identidad visual de la marca, iconos explicativos (`🗑️` y `🚫`) y botones de confirmación estilizados.
+
+### 🛠️ Corregido (Fixed)
+- **Activación del Selector "Para Llevar / Consumo Local" ([js/modules/pos.js](file:///C:/Users/juana/.gemini/antigravity-ide/scratch/la-nueva-parisienne/js/modules/pos.js))**:
+  - Incorporación de manejadores de eventos en `.order-type-btn` para permitir la conmutación activa de la condición del pedido (`Para Llevar` vs `Consumo Local`), actualizando dinámicamente la variable `currentOrderType` y su reflejo en la factura fiscal.
+
+---
+
+## [3.2.0] - 2026-08-12 (Corrección de Keystroke Stealing, Unificación de Vistas de Cobro Tarjeta/Pago Móvil y Teclado Táctil Nativo)
+
+### 🛠️ Corregido (Fixed)
+- **Solución al 'Keystroke Stealing' ([js/modules/pos.js](file:///C:/Users/juana/.gemini/antigravity-ide/scratch/la-nueva-parisienne/js/modules/pos.js))**:
+  - El listener global `keydown` verifica el elemento enfocado (`document.activeElement`). Si el cajero está tipeando en los campos de "Nombre / Razón Social", "Cédula / RIF" o "Referencia", el escuchador del Numpad de efectivo se detiene (`return;`), permitiendo el ingreso limpio de caracteres alfanuméricos sin alterar el monto de efectivo.
+- **Unificación de Vistas de Cobro ([modules/pos.html](file:///C:/Users/juana/.gemini/antigravity-ide/scratch/la-nueva-parisienne/modules/pos.html) y [js/modules/pos.js](file:///C:/Users/juana/.gemini/antigravity-ide/scratch/la-nueva-parisienne/js/modules/pos.js))**:
+  - Incorporación de una tarjeta de resumen prominente dentro del panel de **Tarjeta** y **Pago Móvil / QR** con el **Monto a Cobrar ($ USD)** y el **Monto en Bolívares (Bs. VES)** sincronizado en tiempo real.
+  - Estandarización de los campos de cliente (Nombre y Cédula/RIF) manteniéndolos siempre visibles para todos los medios de pago.
+- **Soporte de Teclado Táctil Nativo**:
+  - Verificación de que los inputs de cliente y referencia posean atributos HTML5 estándar sin atributos `readonly` ni bloqueos `preventDefault()`, permitiendo que el sistema operativo (Windows/Android) despliegue el teclado táctil en pantalla nativo al tocarlos.
+
+---
+
 ## [3.1.0] - 2026-08-12 (Módulo 9 Configuraciones, Impresión Estricta Térmica 80mm y Cabecera Dinámica de Empresa)
 
 ### 🚀 Añadido (Added)

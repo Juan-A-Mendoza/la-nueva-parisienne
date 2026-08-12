@@ -211,6 +211,8 @@ CREATE TABLE IF NOT EXISTS `configuracion_empresa` (
   `rif` VARCHAR(30) NOT NULL,
   `direccion` VARCHAR(255) NOT NULL,
   `telefono` VARCHAR(50) NOT NULL,
+  `modo_tasa` VARCHAR(10) NOT NULL DEFAULT 'auto',
+  `tasa_manual` DECIMAL(10,4) NOT NULL DEFAULT 761.21,
   `actualizado_en` TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
@@ -220,9 +222,15 @@ CREATE TABLE IF NOT EXISTS `configuracion_empresa` (
 -- ============================================================================
 
 -- Inserción de Datos Iniciales de la Empresa
-INSERT INTO `configuracion_empresa` (`id`, `nombre`, `rif`, `direccion`, `telefono`) VALUES
-(1, 'La Nueva Parisienne Panadería & Pastelería C.A.', 'J-40123456-7', 'Av. Lara con Calle 8, Barquisimeto, Edo. Lara', '(0251) 555-1234')
-ON DUPLICATE KEY UPDATE `nombre` = VALUES(`nombre`), `rif` = VALUES(`rif`), `direccion` = VALUES(`direccion`), `telefono` = VALUES(`telefono`);
+INSERT INTO `configuracion_empresa` (`id`, `nombre`, `rif`, `direccion`, `telefono`, `modo_tasa`, `tasa_manual`) VALUES
+(1, 'La Nueva Parisienne Panadería & Pastelería C.A.', 'J-40123456-7', 'Av. Lara con Calle 8, Barquisimeto, Edo. Lara', '(0251) 555-1234', 'auto', 761.21)
+ON DUPLICATE KEY UPDATE 
+    `nombre` = VALUES(`nombre`), 
+    `rif` = VALUES(`rif`), 
+    `direccion` = VALUES(`direccion`), 
+    `telefono` = VALUES(`telefono`),
+    `modo_tasa` = VALUES(`modo_tasa`),
+    `tasa_manual` = VALUES(`tasa_manual`);
 
 -- Inserción de Configuraciones Iniciales de Tasa BCV
 INSERT INTO `configuraciones` (`clave`, `valor`, `descripcion`) VALUES

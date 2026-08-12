@@ -96,6 +96,9 @@ document.addEventListener('DOMContentLoaded', async () => {
   const tenderInput = document.getElementById('tenderInput');
   const changeDueValUsd = document.getElementById('changeDueValUsd');
   const changeDueValVes = document.getElementById('changeDueValVes');
+  const cardTotalUsdVal = document.getElementById('cardTotalUsdVal');
+  const cardTotalVesVal = document.getElementById('cardTotalVesVal');
+  const cardTransferMsg = document.getElementById('cardTransferMsg');
   const referenceInput = document.getElementById('referenceInput');
   const btnCompleteSale = document.getElementById('btnCompleteSale');
   const cashCalculatorPanel = document.getElementById('cashCalculatorPanel');
@@ -106,6 +109,44 @@ document.addEventListener('DOMContentLoaded', async () => {
   const receiptContent = document.getElementById('receiptContent');
   const btnNewSale = document.getElementById('btnNewSale');
   const btnPrintReceipt = document.getElementById('btnPrintReceipt');
+
+  // Modal de Confirmación Personalizado (Sin emergentes nativos)
+  const customConfirmModal = document.getElementById('customConfirmModal');
+  const confirmModalIcon = document.getElementById('confirmModalIcon');
+  const confirmModalTitle = document.getElementById('confirmModalTitle');
+  const confirmModalText = document.getElementById('confirmModalText');
+  const btnConfirmCancel = document.getElementById('btnConfirmCancel');
+  const btnConfirmAccept = document.getElementById('btnConfirmAccept');
+
+  function showCustomConfirm({ icon = '⚠️', title = '¿Confirmar Acción?', text = '', acceptText = 'Sí, Confirmar', singleAction = false, onAccept }) {
+    if (!customConfirmModal) return;
+    if (confirmModalIcon) confirmModalIcon.textContent = icon;
+    if (confirmModalTitle) confirmModalTitle.textContent = title;
+    if (confirmModalText) confirmModalText.innerHTML = text.replace(/\n/g, '<br>');
+    if (btnConfirmAccept) btnConfirmAccept.textContent = acceptText;
+
+    if (btnConfirmCancel) {
+      btnConfirmCancel.style.display = singleAction ? 'none' : 'block';
+    }
+
+    customConfirmModal.classList.add('active');
+
+    const handleAccept = () => {
+      customConfirmModal.classList.remove('active');
+      btnConfirmAccept.removeEventListener('click', handleAccept);
+      btnConfirmCancel.removeEventListener('click', handleCancel);
+      if (onAccept) onAccept();
+    };
+
+    const handleCancel = () => {
+      customConfirmModal.classList.remove('active');
+      btnConfirmAccept.removeEventListener('click', handleAccept);
+      btnConfirmCancel.removeEventListener('click', handleCancel);
+    };
+
+    btnConfirmAccept.addEventListener('click', handleAccept);
+    btnConfirmCancel.addEventListener('click', handleCancel);
+  }
 
   // Inicialización Asíncrona Inmediata al Cargar Pantalla (DOMContentLoaded)
   initOrderNumber();
@@ -145,16 +186,21 @@ document.addEventListener('DOMContentLoaded', async () => {
           bcvRate = data.rate;
           if (bcvRateValEl) bcvRateValEl.textContent = `Bs. ${bcvRate.toFixed(2)}`;
           if (bcvRateBadge) {
-            const modeLabel = data.mode === 'manual' ? 'Manual' : 'En Vivo';
+            const modeLabel = data.mode === 'manual' ? 'Manual' : (data.mode === 'auto' ? 'En Vivo' : 'Resguardo');
             bcvRateBadge.innerHTML = `<span>🇻🇪 Tasa BCV (${modeLabel}):</span> <strong>Bs. ${bcvRate.toFixed(2)}</strong>`;
-            bcvRateBadge.title = `Fuente: ${data.source} (${data.date})`;
           }
+          updateCartTotals();
+          return;
         }
       }
-    } catch (e) {
-      console.warn('Error al obtener la tasa en vivo de la API BCV:', e);
+    } catch (err) {
+      console.warn('Error al obtener la tasa en vivo de la API BCV:', err);
     }
     
+    const cachedRate = parseFloat(localStorage.getItem('bcv_manual_rate')) || (companyInfo && companyInfo.tasa_manual) || 761.21;
+    if (cachedRate >= 100) {
+      bcvRate = cachedRate;
+    }
     if (bcvRateValEl && (!bcvRateValEl.textContent || bcvRateValEl.textContent.includes('Cargando'))) {
       bcvRateValEl.textContent = `Bs. ${bcvRate.toFixed(2)}`;
     }
@@ -195,9 +241,24 @@ document.addEventListener('DOMContentLoaded', async () => {
   if (btnGoToStep2) btnGoToStep2.addEventListener('click', () => goToStep(2));
   if (btnBackToStep1) btnBackToStep1.addEventListener('click', () => goToStep(1));
   if (btnResetAndCancel) btnResetAndCancel.addEventListener('click', () => {
-    if (confirm('¿Desea cancelar el pedido actual y empezar de cero?')) {
-      resetPOS();
-    }
+    showCustomConfirm({
+      icon: '🚫',
+      title: '¿Empezar de Cero?',
+      text: '¿Desea cancelar el pedido actual y reiniciar el punto de venta a su estado original?',
+      acceptText: 'Sí, Cancelar Todo',
+      onAccept: () => {
+        resetPOS();
+      }
+    });
+  });
+
+  // Selector "Para Llevar" vs "Consumo Local" (Paso 2)
+  document.querySelectorAll('.order-type-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('.order-type-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      currentOrderType = btn.dataset.type || 'Para Llevar';
+    });
   });
 
   // ==========================================================================
@@ -383,6 +444,13 @@ document.addEventListener('DOMContentLoaded', async () => {
     if (totalVesEl) {
       totalVesEl.textContent = `Bs. ${finalTotalVes.toLocaleString('es-VE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
     }
+
+    // Actualizar Totales Prominentes Panel Tarjeta / Pago Móvil
+    if (cardTotalUsdVal) cardTotalUsdVal.textContent = `$${finalTotalUsd.toFixed(2)}`;
+    if (cardTotalVesVal) {
+      cardTotalVesVal.textContent = `Bs. ${finalTotalVes.toLocaleString('es-VE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+    }
+
     if (btnCompleteSale) btnCompleteSale.disabled = cart.length === 0;
 
     calculateChange(finalTotalUsd);
@@ -443,11 +511,18 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   if (clearCartBtnPaso1) {
     clearCartBtnPaso1.addEventListener('click', () => {
-      if (confirm('¿Vaciar todos los productos del pedido?')) {
-        cart = [];
-        updateCartTotals();
-        renderStep1Cart();
-      }
+      if (cart.length === 0) return;
+      showCustomConfirm({
+        icon: '🗑️',
+        title: '¿Vaciar Pedido?',
+        text: '¿Está seguro de que desea eliminar todos los productos del carrito actual?',
+        acceptText: 'Sí, Vaciar Carrito',
+        onAccept: () => {
+          cart = [];
+          updateCartTotals();
+          renderStep1Cart();
+        }
+      });
     });
   }
 
@@ -475,6 +550,13 @@ document.addEventListener('DOMContentLoaded', async () => {
       } else {
         if (cashCalculatorPanel) cashCalculatorPanel.style.display = 'none';
         if (cardTransferPanel) cardTransferPanel.style.display = 'block';
+        if (cardTransferMsg) {
+          if (selectedPaymentMethod === 'tarjeta') {
+            cardTransferMsg.textContent = '💳 Pase o inserte la tarjeta en el terminal de punto de venta por el monto exacto.';
+          } else {
+            cardTransferMsg.textContent = '📲 Escanee el código QR o realice el pago móvil por el monto exacto en Bolívares.';
+          }
+        }
       }
     });
   });
@@ -533,6 +615,14 @@ document.addEventListener('DOMContentLoaded', async () => {
   // 2. Escuchar teclado físico (Event keydown en la ventana) cuando está en Paso 2 y Efectivo
   window.addEventListener('keydown', (e) => {
     if (currentStep !== 2 || selectedPaymentMethod !== 'efectivo') return;
+
+    // PREVENIR KEYSTROKE STEALING: Si el foco está en un campo de texto o selección de la interfaz
+    const activeTag = document.activeElement ? document.activeElement.tagName.toUpperCase() : '';
+    if (activeTag === 'INPUT' || activeTag === 'TEXTAREA' || activeTag === 'SELECT') {
+      if (document.activeElement !== tenderInput) {
+        return; // Permitir tipeo libre en clientNameInput, clientRifInput, referenceInput, etc.
+      }
+    }
 
     // Si el usuario presiona números 0-9
     if (/^[0-9]$/.test(e.key)) {
@@ -604,14 +694,6 @@ document.addEventListener('DOMContentLoaded', async () => {
       let totalUsd = (rawSubtotal - discountVal) * (1 + IVA_RATE);
       let totalVes = totalUsd * bcvRate;
 
-      if (selectedPaymentMethod === 'efectivo' && currentTenderAmount < totalUsd) {
-        alert(`⚠️ El monto recibido ($${currentTenderAmount.toFixed(2)}) es menor al total ($${totalUsd.toFixed(2)}).`);
-        return;
-      }
-
-      btnCompleteSale.disabled = true;
-      btnCompleteSale.textContent = 'Registrando Venta en MySQL...';
-
       const clientName = (clientNameInput && clientNameInput.value.trim()) ? clientNameInput.value.trim() : 'Consumidor Final';
       const clientRif = (clientRifInput && clientRifInput.value.trim()) ? clientRifInput.value.trim() : 'V-00000000-0';
 
@@ -640,26 +722,67 @@ document.addEventListener('DOMContentLoaded', async () => {
         }))
       };
 
-      try {
-        const res = await fetch('../api/procesar_venta.php', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(salePayload)
-        });
+      // 1. VALIDACIÓN: MONTO ENTREGADO INSUFICIENTE EN EFECTIVO
+      if (selectedPaymentMethod === 'efectivo' && currentTenderAmount < totalUsd) {
+        const missingUsd = totalUsd - currentTenderAmount;
+        const missingVes = missingUsd * bcvRate;
 
-        if (res.ok) {
-          await res.json();
-        }
-      } catch (err) {
-        console.warn('Persistencia MySQL:', err);
+        showCustomConfirm({
+          icon: '⚠️',
+          title: 'Monto Recibido Insuficiente',
+          text: `El monto entregado ($${currentTenderAmount.toFixed(2)}) es menor al total de la venta ($${totalUsd.toFixed(2)}).\n\nFalta por recibir: $${missingUsd.toFixed(2)} USD (Bs. ${missingVes.toLocaleString('es-VE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} VES).`,
+          acceptText: 'Entendido / Ajustar Monto',
+          singleAction: true
+        });
+        return;
       }
 
-      goToStep(3);
-      showReceiptModal(salePayload);
+      // 2. VALIDACIÓN: MONTO ENTREGADO SUPERIOR (CONFIRMACIÓN DE VUELTO)
+      if (selectedPaymentMethod === 'efectivo' && currentTenderAmount > totalUsd) {
+        const changeUsd = currentTenderAmount - totalUsd;
+        const changeVes = changeUsd * bcvRate;
 
-      btnCompleteSale.disabled = false;
-      btnCompleteSale.textContent = '✓ Finalizar Venta e Imprimir Ticket';
+        showCustomConfirm({
+          icon: '💵',
+          title: '¿Confirmar Cobro y Vuelto?',
+          text: `Monto Recibido: $${currentTenderAmount.toFixed(2)} USD\nTotal de Venta: $${totalUsd.toFixed(2)} USD\n\nVuelto a Entregar: $${changeUsd.toFixed(2)} USD (Bs. ${changeVes.toLocaleString('es-VE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} VES).\n\n¿Desea procesar la venta y emitir la factura?`,
+          acceptText: 'Sí, Procesar Venta',
+          singleAction: false,
+          onAccept: () => {
+            executeSaleProcess(salePayload);
+          }
+        });
+        return;
+      }
+
+      // 3. PAGO EXACTO O TARJETA / PAGO MÓVIL
+      await executeSaleProcess(salePayload);
     });
+  }
+
+  async function executeSaleProcess(salePayload) {
+    btnCompleteSale.disabled = true;
+    btnCompleteSale.textContent = 'Registrando Venta en MySQL...';
+
+    try {
+      const res = await fetch('../api/procesar_venta.php', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(salePayload)
+      });
+
+      if (res.ok) {
+        await res.json();
+      }
+    } catch (err) {
+      console.warn('Persistencia MySQL:', err);
+    }
+
+    goToStep(3);
+    showReceiptModal(salePayload);
+
+    btnCompleteSale.disabled = false;
+    btnCompleteSale.textContent = '✓ Finalizar Venta e Imprimir Ticket';
   }
 
   function showReceiptModal(saleData) {

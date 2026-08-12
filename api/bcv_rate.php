@@ -1,8 +1,8 @@
 <?php
 /* ==========================================================================
-   LA NUEVA PARISIENNE - SERVICIO API EN VIVO DE TASA BCV (BCV_RATE.PHP)
-   Consulta en tiempo real la API oficial ve.dolarapi.com via cURL / stream
-   para extraer la propiedad 'promedio' sin valores fijos ni duros.
+   LA NUEVA PARISIENNE - SERVICIO API EN VIVO DE TASA BCV (BCV_RATE.PHP / BCMRATE.PHP)
+   Consulta en tiempo real la API oficial ve.dolarapi.com via cURL estricto
+   y valida la lectura del campo 'promedio' con fallback a Tasa Manual persisitida.
    ========================================================================== */
 
 header('Content-Type: application/json; charset=utf-8');
@@ -11,60 +11,75 @@ header('Cache-Control: no-cache, no-store, must-revalidate');
 
 require_once __DIR__ . '/config/conexion.php';
 
-// Valores por defecto en caso de desconexión offline total
 $mode = 'auto';
 $manualRate = 761.21;
 $currentRate = null;
 $source = "BCV Oficial (API en vivo)";
-$fecha = date('d/m/Y');
+$fecha = date('d/m/Y H:i');
 $warning = null;
 
+// 1. Obtener Configuración Persistida desde MySQL (configuracion_empresa / configuraciones)
 try {
     $pdo = getDbConnection();
-    $stmt = $pdo->query("SELECT clave, valor FROM configuraciones WHERE clave IN ('bcv_rate_mode', 'bcv_manual_rate')");
-    $config = $stmt->fetchAll(PDO::FETCH_KEY_PAIR);
+    $stmt = $pdo->query("SELECT modo_tasa, tasa_manual FROM configuracion_empresa WHERE id = 1 LIMIT 1");
+    $empresaConfig = $stmt->fetch();
     
-    if (isset($config['bcv_rate_mode'])) {
-        $mode = strtolower(trim($config['bcv_rate_mode']));
-    }
-    if (isset($config['bcv_manual_rate']) && is_numeric($config['bcv_manual_rate']) && floatval($config['bcv_manual_rate']) >= 100) {
-        $manualRate = floatval($config['bcv_manual_rate']);
+    if ($empresaConfig) {
+        if (!empty($empresaConfig['modo_tasa'])) {
+            $mode = strtolower(trim($empresaConfig['modo_tasa']));
+        }
+        if (isset($empresaConfig['tasa_manual']) && is_numeric($empresaConfig['tasa_manual']) && floatval($empresaConfig['tasa_manual']) >= 100) {
+            $manualRate = floatval($empresaConfig['tasa_manual']);
+        }
+    } else {
+        // Fallback a tabla auxiliares configuraciones
+        $stmtAux = $pdo->query("SELECT clave, valor FROM configuraciones WHERE clave IN ('bcv_rate_mode', 'bcv_manual_rate')");
+        $aux = $stmtAux->fetchAll(PDO::FETCH_KEY_PAIR);
+        if (isset($aux['bcv_rate_mode'])) $mode = strtolower(trim($aux['bcv_rate_mode']));
+        if (isset($aux['bcv_manual_rate']) && is_numeric($aux['bcv_manual_rate'])) $manualRate = floatval($aux['bcv_manual_rate']);
     }
 } catch (Exception $e) {
-    // Si la BD no está disponible, continuar con la consulta cURL a la API
+    // Si falla la conexión a MySQL, se procede con valores seguros
 }
 
+// 2. Lógica de Selección de Tasa (Manual vs Automática via cURL)
 if ($mode === 'manual') {
     $currentRate = $manualRate;
-    $source = "Manual (Persistido en MySQL)";
+    $source = "Tasa Manual (Persistida en MySQL)";
 } else {
-    // MODO AUTOMÁTICO: CONSULTA EN VIVO A HTTPS://VE.DOLARAPI.COM/V1/DOLARES/OFICIAL
-    $apiRate = fetchLiveBcvRateApi();
+    // MODO AUTOMÁTICO: CONSULTA cURL A HTTPS://VE.DOLARAPI.COM/V1/DOLARES/OFICIAL
+    $apiRate = fetchLiveBcvRateViaCurl();
     
     if ($apiRate !== null && $apiRate >= 100) {
         $currentRate = $apiRate;
         $source = "BCV Oficial (ve.dolarapi.com - En Vivo)";
     } else {
         $currentRate = $manualRate;
+        $mode = 'auto_fallback';
         $source = "Resguardo BCV (Offline / Fallback)";
-        $warning = "No se pudo obtener la tasa en vivo de la API o la tasa fue rechazada por ser < 100.";
+        $warning = "La API de ve.dolarapi.com no respondió o devolvió una tasa inválida (< 100). Usando tasa de resguardo.";
     }
 }
 
 /**
- * Función que realiza la petición cURL / file_get_contents a la API oficial de DolarAPI
+ * Consulta cURL robusta a https://ve.dolarapi.com/v1/dolares/oficial
  */
-function fetchLiveBcvRateApi() {
+function fetchLiveBcvRateViaCurl() {
     $url = 'https://ve.dolarapi.com/v1/dolares/oficial';
     
-    // 1. Intentar peticion con cURL
     if (function_exists('curl_init')) {
         $ch = curl_init();
         curl_setopt($ch, CURLOPT_URL, $url);
         curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-        curl_setopt($ch, CURLOPT_TIMEOUT, 4);
+        curl_setopt($ch, CURLOPT_TIMEOUT, 6);
+        curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, 4);
         curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
-        curl_setopt($ch, CURLOPT_USERAGENT, 'LaNuevaParisienne/1.0 (POS System)');
+        curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, false);
+        curl_setopt($ch, CURLOPT_USERAGENT, 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) LaNuevaParisienne/1.0');
+        curl_setopt($ch, CURLOPT_HTTPHEADER, [
+            'Accept: application/json',
+            'Cache-Control: no-cache'
+        ]);
         
         $response = curl_exec($ch);
         $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
@@ -78,11 +93,11 @@ function fetchLiveBcvRateApi() {
         }
     }
     
-    // 2. Fallback a stream context con file_get_contents
+    // Fallback secundario vía file_get_contents con stream context
     $opts = [
         'http' => [
             'method' => 'GET',
-            'timeout' => 4,
+            'timeout' => 5,
             'header' => "User-Agent: LaNuevaParisienne/1.0\r\nAccept: application/json\r\n"
         ],
         'ssl' => [
