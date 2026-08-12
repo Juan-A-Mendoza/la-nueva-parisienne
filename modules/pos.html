@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Punto de Venta (POS) - La Nueva Parisienne</title>
-  <meta name="description" content="Módulo de Punto de Venta en Asistente por Pasos para La Nueva Parisienne. Facturación táctil, conversión BCV en vivo y reinicio automático.">
+  <meta name="description" content="Módulo de Punto de Venta en Asistente por Pasos para La Nueva Parisienne. Facturación táctil, conversión BCV en vivo y Numpad de caja.">
   
   <!-- Hojas de Estilos Separadas (CSS3 Estricto) -->
   <link rel="stylesheet" href="../css/main.css">
@@ -72,7 +72,7 @@
     </div>
 
     <!-- ====================================================================
-         PASO 1: ARMAR PEDIDO (CATÁLOGO DIRECTO A LA IZQUIERDA + CARRITO A LA DERECHA)
+         PASO 1: ARMAR PEDIDO (CATÁLOGO DIRECTO IZQUIERDA + CARRITO DERECHA)
          ==================================================================== -->
     <div id="posStep1" class="pos-step-view active">
       <div class="step1-workspace">
@@ -81,11 +81,10 @@
         <main class="step1-catalog-panel">
           <!-- BARRA DE FILTRADO POR CATEGORÍAS -->
           <div class="pos-filter-toolbar">
-            <!-- Pestañas de Categoría (Renderizado Dinámico: Todos, Panadería, Pastelería, etc.) -->
             <div id="categoryTabs" class="category-tabs-container"></div>
           </div>
 
-          <!-- REJILLA TÁCTIL AMPIA SCROLLABLE DE PRODUCTOS (CARGA AUTOMÁTICA DE TODOS LOS PRODUCTOS) -->
+          <!-- REJILLA TÁCTIL AMPLIA SCROLLABLE DE PRODUCTOS -->
           <div class="products-scroll-area">
             <div id="productsGrid" class="products-grid">
               <!-- Renderizado dinámico automático de todos los productos vía pos.js -->
@@ -150,7 +149,7 @@
     </div>
 
     <!-- ====================================================================
-         PASO 2: CAJA / COBRO (FACTURACIÓN, TOTALES, MÉTODOS DE PAGO Y VUELTO)
+         PASO 2: CAJA / COBRO (FACTURACIÓN, TOTALES, MÉTODOS DE PAGO Y NUMPAD)
          ==================================================================== -->
     <div id="posStep2" class="pos-step-view">
       
@@ -222,7 +221,7 @@
           </div>
         </div>
 
-        <!-- COLUMNA DERECHA: SELECCIÓN DE PAGO Y CALCULADORA DE VUELTO -->
+        <!-- COLUMNA DERECHA: SELECCIÓN DE PAGO, NUMPAD TÁCTIL Y CALCULADORA -->
         <div class="step2-right-column">
           <div class="payment-box-card">
             <h3 class="card-title">Medio de Pago</h3>
@@ -243,9 +242,10 @@
               </button>
             </div>
 
-            <!-- Panel Efectivo (Calculadora de Vuelto) -->
+            <!-- PANEL EFECTIVO: MONTO ENTREGADO + NUMPAD TÁCTIL + CALCULADORA -->
             <div id="cashCalculatorPanel" class="cash-calculator-panel">
-              <label class="input-label">Billetes Rápidos Recibidos ($):</label>
+              <!-- Billetes Rápidos -->
+              <label class="input-label">Billetes Rápidos ($ USD):</label>
               <div class="fast-cash-buttons">
                 <button type="button" class="fast-cash-btn" data-val="5">$5</button>
                 <button type="button" class="fast-cash-btn" data-val="10">$10</button>
@@ -254,14 +254,35 @@
                 <button type="button" class="fast-cash-btn" data-val="exact">Exacto</button>
               </div>
 
+              <!-- Campo de Texto (Monto Entregado) -->
               <div class="tender-input-group">
                 <label for="tenderInput">Monto Entregado ($ USD):</label>
-                <input type="number" id="tenderInput" class="tender-input" step="0.01" min="0" placeholder="0.00">
+                <input type="text" id="tenderInput" class="tender-input" readonly value="0.00" title="Para ingresar use el teclado numérico de la pantalla o de su computador">
               </div>
 
-              <div class="change-due-box">
-                <span>Vuelto a Entregar:</span>
-                <strong id="changeDueVal">$0.00</strong>
+              <!-- TECLADO NUMÉRICO TÁCTIL EN PANTALLA (NUMPAD 3x4 GRID MIN 60x60PX) -->
+              <div class="pos-numpad-grid">
+                <button type="button" class="numpad-btn" data-key="1">1</button>
+                <button type="button" class="numpad-btn" data-key="2">2</button>
+                <button type="button" class="numpad-btn" data-key="3">3</button>
+                <button type="button" class="numpad-btn" data-key="4">4</button>
+                <button type="button" class="numpad-btn" data-key="5">5</button>
+                <button type="button" class="numpad-btn" data-key="6">6</button>
+                <button type="button" class="numpad-btn" data-key="7">7</button>
+                <button type="button" class="numpad-btn" data-key="8">8</button>
+                <button type="button" class="numpad-btn" data-key="9">9</button>
+                <button type="button" class="numpad-btn" data-key="00">00</button>
+                <button type="button" class="numpad-btn" data-key="0">0</button>
+                <button type="button" class="numpad-btn numpad-delete" data-key="backspace" title="Borrar último dígito">⌫</button>
+              </div>
+
+              <!-- VUELTO A ENTREGAR BI-MONEDA (USD Y VES) -->
+              <div id="changeDueBox" class="change-due-box">
+                <div class="change-due-label">Vuelto a Entregar:</div>
+                <div class="change-due-values">
+                  <div id="changeDueValUsd" class="change-usd">$0.00 USD</div>
+                  <div id="changeDueValVes" class="change-ves">Bs. 0,00 VES</div>
+                </div>
               </div>
             </div>
 

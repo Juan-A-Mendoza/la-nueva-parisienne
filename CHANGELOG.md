@@ -4,6 +4,21 @@ Todos los cambios significativos, nuevas funcionalidades y actualizaciones del s
 
 El formato está basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1.0.0/) y este proyecto se adhiere a [Semantic Versioning](https://semver.org/lang/es/).
 
+## [2.9.0] - 2026-08-11 (Numpad Táctil 60x60px, Entrada Decimal ATM Style y Vuelto Bimoneda USD/VES en POS)
+
+### 🚀 Añadido (Added)
+- **Teclado Numérico Táctil Numpad 3x4 ([modules/pos.html](file:///C:/Users/juana/.gemini/antigravity-ide/scratch/la-nueva-parisienne/modules/pos.html) y [css/modules/pos.css](file:///C:/Users/juana/.gemini/antigravity-ide/scratch/la-nueva-parisienne/css/modules/pos.css))**:
+  - Incorporación de una cuadrícula táctil de alta velocidad con botones amplios (mínimo 60x60px) para los dígitos `1-9`, `00`, `0` y `⌫ Borrar`.
+- **Lógica de Entrada Decimal Implícita ATM/POS Style ([js/modules/pos.js](file:///C:/Users/juana/.gemini/antigravity-ide/scratch/la-nueva-parisienne/js/modules/pos.js))**:
+  - Algoritmo de desplazamiento de decimales de derecha a izquierda: inicia en `0.00`, digitar `1` -> `0.01`, digitar `5` -> `0.15`, digitar `0` -> `1.50`, digitar `0` -> `15.00`.
+  - El botón `⌫ Borrar` desplaza los dígitos hacia la derecha descolando el último número.
+- **Compatibilidad Dual Táctil y Teclado Físico `keydown`**:
+  - Escuchador de teclado en vivo que captura la pulsación física de números `0-9`, `Backspace` y `Delete` cuando el cajero está en el Paso 2 con método de pago **Efectivo**.
+- **Calculadora de Vuelto Bimoneda Desglosado ($ USD y Bs. VES)**:
+  - Cálculo automático en tiempo real del vuelto a entregar al cliente tanto en **Dólares ($ USD)** como en **Bolívares (Bs. VES)** según la tasa BCV activa.
+
+---
+
 ## [2.8.1] - 2026-08-11 (Corrección Crítica de Importación de Módulos y Resguardo 100% Garantizado de Productos y Tasa BCV)
 
 ### 🛠️ Corregido (Fixed)

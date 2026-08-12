@@ -1,10 +1,10 @@
 /* ==========================================================================
    LA NUEVA PARISIENNE - CONTROLADOR DEL ASISTENTE POR PASOS POS (POS.JS)
-   Flujo Wizard Estricto sin Buscador:
-   - Carga automática instantánea de TODOS los productos desde MySQL al abrir.
-   - Paso 1 (Armar Pedido): Cuadrícula táctil amplia de productos + Carrito lateral interactivo con [+] y [-].
-   - Paso 2 (Caja / Cobro): Totales bimoneda en vivo (API BCV), medio de pago y botón "Empezar de cero".
-   - Paso 3 (Finalización y Reinicio Automático resetPOS()): Transacción MySQL y reseteo inmediato a Paso 1.
+   - Flujo Wizard Estricto sin Buscador
+   - Numpad Táctil 60x60px con Lógica ATM Style (Desplazamiento Decimales Der -> Izq)
+   - Escuchador Físico 'keydown' (Teclas 0-9, Backspace, Delete)
+   - Cálculo Automático de Vuelto Bimoneda ($ USD y Bs. VES via API BCV)
+   - Reinicio Automático `resetPOS()` tras impresión de comprobante
    ========================================================================== */
 
 import { SessionStore } from '../core/session-store.js';
@@ -34,7 +34,11 @@ document.addEventListener('DOMContentLoaded', async () => {
   let currentOrderType = 'Para Llevar';
   let orderCounter = Math.floor(1000 + Math.random() * 9000);
   let selectedPaymentMethod = 'efectivo';
-  let currentTenderAmount = 0;
+  
+  // LÓGICA DE DÍGITOS DERECHA A IZQUIERDA (ATM / POS STYLE)
+  let tenderCentsString = ''; // Cadena de centavos ingresada
+  let currentTenderAmount = 0.00;
+  
   let bcvRate = 761.21; // Tasa por defecto de resguardo (se actualiza vía API en vivo)
   let currentStep = 1;
 
@@ -77,9 +81,10 @@ document.addEventListener('DOMContentLoaded', async () => {
   const totalValEl = document.getElementById('totalVal');
   const totalVesEl = document.getElementById('totalVesVal');
   
-  // Paneles de Pago y Modales
+  // Paneles de Pago, Numpad y Modales
   const tenderInput = document.getElementById('tenderInput');
-  const changeDueVal = document.getElementById('changeDueVal');
+  const changeDueValUsd = document.getElementById('changeDueValUsd');
+  const changeDueValVes = document.getElementById('changeDueValVes');
   const referenceInput = document.getElementById('referenceInput');
   const btnCompleteSale = document.getElementById('btnCompleteSale');
   const cashCalculatorPanel = document.getElementById('cashCalculatorPanel');
@@ -214,7 +219,6 @@ document.addEventListener('DOMContentLoaded', async () => {
     if (!productsGrid) return;
     productsGrid.innerHTML = '';
 
-    // Filtrado por categoría ("todos" muestra automáticamente todos los productos de la tienda)
     const filtered = productsList.filter(prod => {
       return currentCategory === 'todos' || prod.category === currentCategory;
     });
@@ -239,7 +243,6 @@ document.addEventListener('DOMContentLoaded', async () => {
           <span class="product-price">$${prod.price.toFixed(2)}</span>
         </div>
       `;
-      // Interacción directa: Al hacer clic en la tarjeta se agrega de inmediato al carrito
       card.addEventListener('click', () => addToCart(prod));
       productsGrid.appendChild(card);
     });
@@ -427,8 +430,10 @@ document.addEventListener('DOMContentLoaded', async () => {
   }
 
   // ==========================================================================
-  // PASO 2: MÉTODOS DE PAGO Y CALCULADORA DE VUELTO
+  // PASO 2: LÓGICA NUMPAD TÁCTIL Y DESPLAZAMIENTO DECIMAL DER -> IZQ (ATM STYLE)
   // ==========================================================================
+
+  // Manejador del cambio de método de pago
   document.querySelectorAll('.method-btn').forEach(btn => {
     btn.addEventListener('click', () => {
       document.querySelectorAll('.method-btn').forEach(b => b.classList.remove('active'));
@@ -445,15 +450,72 @@ document.addEventListener('DOMContentLoaded', async () => {
     });
   });
 
-  if (tenderInput) {
-    tenderInput.addEventListener('input', (e) => {
-      currentTenderAmount = parseFloat(e.target.value) || 0;
-      let rawSubtotal = cart.reduce((acc, i) => acc + (i.product.price * i.quantity), 0);
-      let totalUsd = (rawSubtotal * (1 - currentDiscountPercent / 100)) * (1 + IVA_RATE);
-      calculateChange(totalUsd);
-    });
+  // ALGORITMO MAESTRO: ENTRADA DECIMAL IMPLÍCITA DE DERECHA A IZQUIERDA (CENTAVOS)
+  function handleNumpadInput(key) {
+    if (selectedPaymentMethod !== 'efectivo') return;
+
+    if (key === 'backspace' || key === 'delete') {
+      if (tenderCentsString.length > 0) {
+        tenderCentsString = tenderCentsString.slice(0, -1);
+      }
+    } else if (key === '00') {
+      if (tenderCentsString.length > 0 && tenderCentsString.length <= 6) {
+        tenderCentsString += '00';
+      }
+    } else if (/^[0-9]$/.test(key)) {
+      if (tenderCentsString.length === 0 && key === '0') {
+        // Ignorar ceros iniciales
+        return;
+      }
+      if (tenderCentsString.length < 7) { // Máximo $99,999.99
+        tenderCentsString += key;
+      }
+    }
+
+    updateTenderFromCentsString();
   }
 
+  function updateTenderFromCentsString() {
+    if (tenderCentsString.length === 0) {
+      currentTenderAmount = 0.00;
+    } else {
+      const centsVal = parseInt(tenderCentsString, 10);
+      currentTenderAmount = centsVal / 100;
+    }
+
+    if (tenderInput) {
+      tenderInput.value = currentTenderAmount.toFixed(2);
+    }
+
+    let rawSubtotal = cart.reduce((acc, i) => acc + (i.product.price * i.quantity), 0);
+    let totalUsd = (rawSubtotal * (1 - currentDiscountPercent / 100)) * (1 + IVA_RATE);
+    calculateChange(totalUsd);
+  }
+
+  // 1. Escuchar clics en los botones del Numpad Táctil (0-9, 00, ⌫)
+  document.querySelectorAll('.numpad-btn').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      e.preventDefault();
+      const key = btn.dataset.key;
+      handleNumpadInput(key);
+    });
+  });
+
+  // 2. Escuchar teclado físico (Event keydown en la ventana) cuando está en Paso 2 y Efectivo
+  window.addEventListener('keydown', (e) => {
+    if (currentStep !== 2 || selectedPaymentMethod !== 'efectivo') return;
+
+    // Si el usuario presiona números 0-9
+    if (/^[0-9]$/.test(e.key)) {
+      e.preventDefault();
+      handleNumpadInput(e.key);
+    } else if (e.key === 'Backspace' || e.key === 'Delete') {
+      e.preventDefault();
+      handleNumpadInput('backspace');
+    }
+  });
+
+  // Billetes Rápidos ($5, $10, $20, $50, Exacto)
   document.querySelectorAll('.fast-cash-btn').forEach(btn => {
     btn.addEventListener('click', () => {
       let rawSubtotal = cart.reduce((acc, i) => acc + (i.product.price * i.quantity), 0);
@@ -464,25 +526,40 @@ document.addEventListener('DOMContentLoaded', async () => {
       } else {
         currentTenderAmount = parseFloat(btn.dataset.val) || 0;
       }
+
+      // Convertir el monto a centavos para sincronizar la cadena
+      tenderCentsString = Math.round(currentTenderAmount * 100).toString();
       if (tenderInput) tenderInput.value = currentTenderAmount.toFixed(2);
       calculateChange(totalUsd);
     });
   });
 
+  // CÁLCULO DE VUELTO BI-MONEDA ($ USD Y Bs. VES VIA API BCV)
   function calculateChange(totalUsd) {
-    if (!changeDueVal) return;
+    if (!changeDueValUsd || !changeDueValVes) return;
+
     if (selectedPaymentMethod !== 'efectivo') {
-      changeDueVal.textContent = '$0.00';
+      changeDueValUsd.textContent = '$0.00 USD';
+      changeDueValVes.textContent = 'Bs. 0,00 VES';
+      changeDueValUsd.style.color = 'var(--color-success)';
       return;
     }
 
-    const change = currentTenderAmount - totalUsd;
-    if (change >= 0) {
-      changeDueVal.textContent = `$${change.toFixed(2)}`;
-      changeDueVal.style.color = 'var(--color-success)';
+    const changeUsd = currentTenderAmount - totalUsd;
+    const changeVes = changeUsd * bcvRate;
+
+    if (changeUsd >= 0) {
+      changeDueValUsd.textContent = `$${changeUsd.toFixed(2)} USD`;
+      changeDueValVes.textContent = `Bs. ${changeVes.toLocaleString('es-VE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} VES`;
+      changeDueValUsd.style.color = 'var(--color-success)';
+      changeDueValVes.style.color = 'var(--color-success)';
     } else {
-      changeDueVal.textContent = `Faltan $${Math.abs(change).toFixed(2)}`;
-      changeDueVal.style.color = 'var(--color-terracotta)';
+      const missingUsd = Math.abs(changeUsd);
+      const missingVes = Math.abs(changeVes);
+      changeDueValUsd.textContent = `Faltan $${missingUsd.toFixed(2)}`;
+      changeDueValVes.textContent = `Faltan Bs. ${missingVes.toLocaleString('es-VE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+      changeDueValUsd.style.color = 'var(--color-terracotta)';
+      changeDueValVes.style.color = 'var(--color-terracotta)';
     }
   }
 
@@ -615,9 +692,10 @@ document.addEventListener('DOMContentLoaded', async () => {
   function resetPOS() {
     cart = [];
     currentDiscountPercent = 0;
-    currentTenderAmount = 0;
+    currentTenderAmount = 0.00;
+    tenderCentsString = '';
     currentCategory = 'todos';
-    if (tenderInput) tenderInput.value = '';
+    if (tenderInput) tenderInput.value = '0.00';
     if (referenceInput) referenceInput.value = '';
     if (discountSelect) discountSelect.value = '0';
     orderCounter++;
