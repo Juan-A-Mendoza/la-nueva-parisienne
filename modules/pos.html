@@ -72,26 +72,23 @@
     </div>
 
     <!-- ====================================================================
-         PASO 1: ARMAR PEDIDO (CATÁLOGO A LA IZQUIERDA + CARRITO A LA DERECHA)
+         PASO 1: ARMAR PEDIDO (CATÁLOGO DIRECTO A LA IZQUIERDA + CARRITO A LA DERECHA)
          ==================================================================== -->
     <div id="posStep1" class="pos-step-view active">
       <div class="step1-workspace">
 
-        <!-- SECCIÓN IZQUIERDA: CATÁLOGO DE PRODUCTOS Y BÚSQUEDA -->
+        <!-- SECCIÓN IZQUIERDA: CATÁLOGO DIRECTO DE PRODUCTOS -->
         <main class="step1-catalog-panel">
-          <!-- BARRA DE FILTRADO -->
+          <!-- BARRA DE FILTRADO POR CATEGORÍAS -->
           <div class="pos-filter-toolbar">
-            <div class="search-input-wrapper">
-              <span class="search-icon" aria-hidden="true">🔍</span>
-              <input type="text" id="searchInput" class="pos-search-input" placeholder="Buscar producto o código (ej: Baguette, Croissant, PAN-001)...">
-            </div>
+            <!-- Pestañas de Categoría (Renderizado Dinámico: Todos, Panadería, Pastelería, etc.) -->
             <div id="categoryTabs" class="category-tabs-container"></div>
           </div>
 
-          <!-- REJILLA SCROLLABLE DE PRODUCTOS -->
+          <!-- REJILLA TÁCTIL AMPIA SCROLLABLE DE PRODUCTOS (CARGA AUTOMÁTICA DE TODOS LOS PRODUCTOS) -->
           <div class="products-scroll-area">
             <div id="productsGrid" class="products-grid">
-              <!-- Renderizado dinámico vía pos.js -->
+              <!-- Renderizado dinámico automático de todos los productos vía pos.js -->
             </div>
           </div>
         </main>
@@ -101,7 +98,7 @@
           <header class="cart-header">
             <div class="cart-header-top">
               <div id="orderNumberPaso1" class="cart-order-number">
-                <span>🛒 Order:</span> <strong>FAC-2026-1001</strong>
+                <span>🛒 Orden:</span> <strong>FAC-2026-1001</strong>
               </div>
               <button id="clearCartBtnPaso1" type="button" class="btn-clear-cart" title="Vaciar todos los productos">Vaciar</button>
             </div>
@@ -116,7 +113,7 @@
           <div id="emptyCartView" class="empty-cart-view">
             <div class="empty-cart-icon">🥐</div>
             <h3>Carrito Vacío</h3>
-            <p>Seleccione productos del catálogo para agregarlos al pedido.</p>
+            <p>Seleccione cualquier producto de la cuadrícula para agregarlo al pedido.</p>
           </div>
 
           <!-- FOOTER CON TOTALES Y BOTÓN DE AVANCE AL PASO 2 -->

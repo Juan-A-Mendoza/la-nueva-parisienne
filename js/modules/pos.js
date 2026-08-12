@@ -1,14 +1,14 @@
 /* ==========================================================================
    LA NUEVA PARISIENNE - CONTROLADOR DEL ASISTENTE POR PASOS POS (POS.JS)
-   Flujo Wizard Estricto:
-   - Paso 1 (Armar Pedido): Catálogo + Carrito lateral interactivo con [+] y [-]
-   - Paso 2 (Caja / Cobro): Totales bimoneda en vivo (API BCV), medio de pago y botón "Empezar de cero"
-   - Paso 3 (Finalización y Reinicio Automático resetPOS()): Transacción MySQL y reseteo inmediato a Paso 1
+   Flujo Wizard Estricto sin Buscador:
+   - Carga automática instantánea de TODOS los productos desde MySQL al abrir.
+   - Paso 1 (Armar Pedido): Cuadrícula táctil amplia de productos + Carrito lateral interactivo con [+] y [-].
+   - Paso 2 (Caja / Cobro): Totales bimoneda en vivo (API BCV), medio de pago y botón "Empezar de cero".
+   - Paso 3 (Finalización y Reinicio Automático resetPOS()): Transacción MySQL y reseteo inmediato a Paso 1.
    ========================================================================== */
 
 import { SessionStore } from '../core/session-store.js';
-import { CATEGORIES, PRODUCTS_DATABASE } from '../data/mock-products.js';
-import { ProductsStore } from '../data/products-db.js';
+import { CATEGORIES, PRODUCTS_DATABASE, ProductsStore } from '../data/products-db.js';
 
 document.addEventListener('DOMContentLoaded', async () => {
   // 1. Verificación de Sesión Activa
@@ -29,7 +29,6 @@ document.addEventListener('DOMContentLoaded', async () => {
   let categoriesList = CATEGORIES;
   let productsList = PRODUCTS_DATABASE;
   let currentCategory = 'todos';
-  let searchQuery = '';
   let cart = []; // Array de ítems: { product, quantity }
   let currentDiscountPercent = 0;
   let currentOrderType = 'Para Llevar';
@@ -55,7 +54,6 @@ document.addEventListener('DOMContentLoaded', async () => {
   
   const categoryTabsContainer = document.getElementById('categoryTabs');
   const productsGrid = document.getElementById('productsGrid');
-  const searchInput = document.getElementById('searchInput');
   const step1CartItemsList = document.getElementById('step1CartItemsList');
   const checkoutCartItemsList = document.getElementById('checkoutCartItemsList');
   const emptyCartView = document.getElementById('emptyCartView');
@@ -93,7 +91,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   const btnNewSale = document.getElementById('btnNewSale');
   const btnPrintReceipt = document.getElementById('btnPrintReceipt');
 
-  // Inicialización Asíncrona
+  // Inicialización Asíncrona Inmediata al Cargar Pantalla (DOMContentLoaded)
   initOrderNumber();
   await loadLiveBcvRate();
   await loadProductsCatalog();
@@ -103,7 +101,10 @@ document.addEventListener('DOMContentLoaded', async () => {
   // ==========================================================================
   async function loadLiveBcvRate() {
     try {
-      const res = await fetch(`../api/bcv_rate.php?t=${Date.now()}`, { cache: 'no-store' });
+      let res = await fetch(`../api/bcv_rate.php?t=${Date.now()}`, { cache: 'no-store' });
+      if (!res.ok) {
+        res = await fetch(`../api/bcmrate.php?t=${Date.now()}`, { cache: 'no-store' });
+      }
       if (res.ok) {
         const data = await res.json();
         if (data.success && data.rate && data.rate >= 100) {
@@ -118,6 +119,13 @@ document.addEventListener('DOMContentLoaded', async () => {
       }
     } catch (e) {
       console.warn('Error al obtener la tasa en vivo de la API BCV:', e);
+    }
+    
+    if (bcvRateValEl && (!bcvRateValEl.textContent || bcvRateValEl.textContent.includes('Cargando'))) {
+      bcvRateValEl.textContent = `Bs. ${bcvRate.toFixed(2)}`;
+    }
+    if (bcvRateBadge && bcvRateBadge.innerHTML.includes('Cargando')) {
+      bcvRateBadge.innerHTML = `<span>🇻🇪 Tasa BCV (Resguardo):</span> <strong>Bs. ${bcvRate.toFixed(2)}</strong>`;
     }
     updateCartTotals();
   }
@@ -159,15 +167,25 @@ document.addEventListener('DOMContentLoaded', async () => {
   });
 
   // ==========================================================================
-  // PASO 1: ARMAR PEDIDO (CATÁLOGO Y CARRITO LATERAL INTERACTIVO)
+  // PASO 1: CARGA AUTOMÁTICA DE PRODUCTOS DE LA BD (SIN BUSCADOR)
   // ==========================================================================
   async function loadProductsCatalog() {
-    const catalogData = await ProductsStore.getProductsCatalogAsync();
-    if (catalogData && catalogData.products) {
-      productsList = catalogData.products;
-    }
-    if (catalogData && catalogData.categories) {
-      categoriesList = catalogData.categories;
+    try {
+      const catalogData = await ProductsStore.getProductsCatalogAsync();
+      if (catalogData && catalogData.products && catalogData.products.length > 0) {
+        productsList = catalogData.products;
+      } else {
+        productsList = PRODUCTS_DATABASE;
+      }
+      if (catalogData && catalogData.categories && catalogData.categories.length > 0) {
+        categoriesList = catalogData.categories;
+      } else {
+        categoriesList = CATEGORIES;
+      }
+    } catch (err) {
+      console.warn('Error al cargar catálogo remoto:', err);
+      productsList = PRODUCTS_DATABASE;
+      categoriesList = CATEGORIES;
     }
     renderCategoryTabs();
     renderProducts();
@@ -196,18 +214,16 @@ document.addEventListener('DOMContentLoaded', async () => {
     if (!productsGrid) return;
     productsGrid.innerHTML = '';
 
+    // Filtrado por categoría ("todos" muestra automáticamente todos los productos de la tienda)
     const filtered = productsList.filter(prod => {
-      const matchCategory = currentCategory === 'todos' || prod.category === currentCategory;
-      const matchSearch = prod.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                          prod.code.toLowerCase().includes(searchQuery.toLowerCase());
-      return matchCategory && matchSearch;
+      return currentCategory === 'todos' || prod.category === currentCategory;
     });
 
     if (filtered.length === 0) {
       productsGrid.innerHTML = `
         <div style="grid-column: 1 / -1; text-align: center; padding: 3rem 1rem; color: var(--color-muted);">
-          <div style="font-size: 2.5rem; margin-bottom: 0.5rem;">🔍</div>
-          <p>No se encontraron productos que coincidan con la búsqueda.</p>
+          <div style="font-size: 2.5rem; margin-bottom: 0.5rem;">🥖</div>
+          <p>No hay productos disponibles en esta categoría.</p>
         </div>`;
       return;
     }
@@ -219,21 +235,13 @@ document.addEventListener('DOMContentLoaded', async () => {
         <span class="product-stock-badge">${prod.stock} ud.</span>
         <div class="product-card-icon">${prod.icon || '🥖'}</div>
         <h3 class="product-card-title">${prod.name}</h3>
-        <p class="product-card-desc">${prod.description || ''}</p>
         <div class="product-card-footer">
           <span class="product-price">$${prod.price.toFixed(2)}</span>
-          <button type="button" class="btn-add-product" aria-label="Agregar ${prod.name}">+</button>
         </div>
       `;
+      // Interacción directa: Al hacer clic en la tarjeta se agrega de inmediato al carrito
       card.addEventListener('click', () => addToCart(prod));
       productsGrid.appendChild(card);
-    });
-  }
-
-  if (searchInput) {
-    searchInput.addEventListener('input', (e) => {
-      searchQuery = e.target.value.trim();
-      renderProducts();
     });
   }
 
@@ -596,7 +604,6 @@ document.addEventListener('DOMContentLoaded', async () => {
   if (btnPrintReceipt) {
     btnPrintReceipt.addEventListener('click', () => {
       window.print();
-      // Reinicio automático inmediato tras finalizar la orden de impresión
       setTimeout(() => {
         receiptModal.classList.remove('active');
         resetPOS();
@@ -609,6 +616,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     cart = [];
     currentDiscountPercent = 0;
     currentTenderAmount = 0;
+    currentCategory = 'todos';
     if (tenderInput) tenderInput.value = '';
     if (referenceInput) referenceInput.value = '';
     if (discountSelect) discountSelect.value = '0';
@@ -616,6 +624,8 @@ document.addEventListener('DOMContentLoaded', async () => {
     initOrderNumber();
     updateCartTotals();
     renderStep1Cart();
+    renderCategoryTabs();
+    renderProducts();
     goToStep(1);
   }
 

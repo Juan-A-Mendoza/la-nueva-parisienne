@@ -4,6 +4,31 @@ Todos los cambios significativos, nuevas funcionalidades y actualizaciones del s
 
 El formato está basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1.0.0/) y este proyecto se adhiere a [Semantic Versioning](https://semver.org/lang/es/).
 
+## [2.8.1] - 2026-08-11 (Corrección Crítica de Importación de Módulos y Resguardo 100% Garantizado de Productos y Tasa BCV)
+
+### 🛠️ Corregido (Fixed)
+- **Corrección de la Importación de Módulos ES6 ([js/modules/pos.js](file:///C:/Users/juana/.gemini/antigravity-ide/scratch/la-nueva-parisienne/js/modules/pos.js))**:
+  - Corrección de la ruta de importación de `CATEGORIES` y `PRODUCTS_DATABASE` de `../data/mock-products.js` (archivo inexistente) a `../data/products-db.js`.
+  - La falla previa impedía la ejecución del script JS en el navegador, provocando que los productos y la tasa BCV no se mostraran en pantalla.
+- **Resguardo 100% Garantizado de Catálogo y Tasa BCV**:
+  - Incorporación de bloques `try/catch` con resguardo automático al catálogo de productos (`PRODUCTS_DATABASE`) y tasa oficial por defecto (`761.21 VES/USD`) si la conexión con MySQL o la API es lenta o está offline.
+
+---
+
+## [2.8.0] - 2026-08-11 (Optimización UX POS: Carga Automática de Productos y Cuadrícula Táctil Amplia Sin Buscador)
+
+### 🚀 Añadido (Added)
+- **Carga Automática Instantánea de Productos ([js/modules/pos.js](file:///C:/Users/juana/.gemini/antigravity-ide/scratch/la-nueva-parisienne/js/modules/pos.js))**:
+  - Al abrir la pantalla del POS (`DOMContentLoaded`), se realiza automáticamente la consulta a MySQL (`api/get_products.php`) y se despliegan **todos los productos de la tienda** por defecto (`currentCategory = 'todos'`) sin requerir acciones o búsquedas por parte del cajero.
+- **Cuadrícula Táctil Amplia ([css/modules/pos.css](file:///C:/Users/juana/.gemini/antigravity-ide/scratch/la-nueva-parisienne/css/modules/pos.css))**:
+  - Rejilla CSS Grid táctil con tarjetas de productos de dimensiones amplias (mínimo 140px x 125px) que muestran el icono, título y precio en USD con toque directo para agregar al carrito.
+
+### 🛠️ Corregido (Fixed)
+- **Eliminación del Buscador ([modules/pos.html](file:///C:/Users/juana/.gemini/antigravity-ide/scratch/la-nueva-parisienne/modules/pos.html))**:
+  - Remoción completa del campo de texto de búsqueda (`searchInput`). Operación en caja 100% táctil e inmediata.
+
+---
+
 ## [2.7.0] - 2026-08-11 (Experiencia UX POS: Asistente por Pasos Wizard y Reinicio Automático resetPOS)
 
 ### 🚀 Añadido (Added)
