@@ -4,6 +4,22 @@ Todos los cambios significativos, nuevas funcionalidades y actualizaciones del s
 
 El formato está basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1.0.0/) y este proyecto se adhiere a [Semantic Versioning](https://semver.org/lang/es/).
 
+## [3.0.0] - 2026-08-12 (Rediseño de Ticket Fiscal para Impresoras Térmicas 80mm y Cumplimiento Cambiario BCV Venezuela)
+
+### 🚀 Añadido (Added)
+- **Formato Estándar de Rollo Térmico 80mm ([css/modules/pos.css](file:///C:/Users/juana/.gemini/antigravity-ide/scratch/la-nueva-parisienne/css/modules/pos.css))**:
+  - Regla `@page { margin: 0; size: 80mm auto; }` que fuerza el tamaño de rollo de 80mm en impresoras térmicas de tickets y elimina automáticamente cabeceras, pies de página y URLs generados por el navegador.
+  - Ocultamiento estricto (`display: none !important;`) de la interfaz gráfica web, menús, botones de pago y los botones de acción del modal ("Imprimir Ticket", "Nueva Venta") durante el evento de impresión (`@media print`).
+- **Estructura de Ticket Fiscal Venezolano ([js/modules/pos.js](file:///C:/Users/juana/.gemini/antigravity-ide/scratch/la-nueva-parisienne/js/modules/pos.js))**:
+  - Reestructuración de la función `showReceiptModal(saleData)` desplegando una plantilla fiscal centrada en fuente monoespaciada (`Courier New`):
+    - **Cabecera**: "LA NUEVA PARISIENNE PANADERÍA & PASTELERÍA C.A.", RIF `J-40123456-7`, Dirección Fiscal en Barquisimeto y Teléfono.
+    - **Datos del Documento**: N° Factura (`FAC-2026-XXXX`), Fecha/Hora y datos del cliente ("Consumidor Final", "RIF: V-00000000-0").
+    - **Tabla 80mm**: Columnas `Cant | Descripción | P.U ($) | Total($)`.
+    - **Bloque Cambiario BCV (CRÍTICO SENIAT)**: Caja destacada con la tasa aplicada (`TASA BCV: Bs. [Monto]`) y el **Total a Pagar en Bolívares** (`TOTAL EN BS: Bs. [Monto]`).
+    - **Pie de Página**: "¡GRACIAS POR SU COMPRA!" y comprobante de control interno.
+
+---
+
 ## [2.9.0] - 2026-08-11 (Numpad Táctil 60x60px, Entrada Decimal ATM Style y Vuelto Bimoneda USD/VES en POS)
 
 ### 🚀 Añadido (Added)

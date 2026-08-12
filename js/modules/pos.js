@@ -631,31 +631,111 @@ document.addEventListener('DOMContentLoaded', async () => {
   function showReceiptModal(saleData) {
     if (!receiptContent || !receiptModal) return;
 
+    const formattedDate = new Date().toLocaleString('es-VE', {
+      year: 'numeric', month: '2-digit', day: '2-digit',
+      hour: '2-digit', minute: '2-digit', second: '2-digit'
+    });
+
     receiptContent.innerHTML = `
-      <div style="text-align: center; border-bottom: 1px dashed var(--color-muted); padding-bottom: 0.85rem; margin-bottom: 0.85rem;">
-        <h2 style="font-size: 1.25rem; font-weight: 800; color: var(--color-espresso);">🥖 La Nueva Parisienne</h2>
-        <p style="font-size: 0.8rem; color: var(--color-muted);">Panadería & Pastelería Artesanal</p>
-        <p style="font-size: 0.8rem; font-weight: 700; margin-top: 0.35rem;">Comprobante Nº: ${saleData.order_number}</p>
-        <p style="font-size: 0.75rem; color: var(--color-muted);">${new Date().toLocaleString('es-VE')}</p>
-      </div>
-
-      <div style="margin-bottom: 0.85rem;">
-        ${saleData.items.map(item => `
-          <div style="display: flex; justify-content: space-between; font-size: 0.85rem; margin-bottom: 0.25rem;">
-            <span>${item.quantity}x ${item.product_name}</span>
-            <strong>$${item.subtotal.toFixed(2)}</strong>
-          </div>
-        `).join('')}
-      </div>
-
-      <div style="border-top: 1px dashed var(--color-muted); padding-top: 0.65rem; font-size: 0.9rem;">
-        <div style="display: flex; justify-content: space-between;">
-          <span>Total en Dólares ($):</span>
-          <strong>$${saleData.total_usd.toFixed(2)}</strong>
+      <div class="ticket-thermal-container" style="font-family: 'Courier New', Courier, monospace; font-size: 11px; color: #000000; text-align: left; line-height: 1.25;">
+        <!-- CABECERA DE LA EMPRESA -->
+        <div style="text-align: center; font-weight: bold; margin-bottom: 4px;">
+          <div style="font-size: 14px; text-transform: uppercase;">LA NUEVA PARISIENNE</div>
+          <div>PANADERÍA & PASTELERÍA C.A.</div>
+          <div>RIF: J-40123456-7</div>
+          <div style="font-size: 9px; font-weight: normal;">Av. Lara con Calle 8, Barquisimeto, Edo. Lara</div>
+          <div style="font-size: 9px; font-weight: normal;">Teléfono: (0251) 555-1234</div>
         </div>
-        <div style="display: flex; justify-content: space-between; color: var(--color-success); font-weight: 800; font-size: 1.05rem; margin-top: 0.25rem;">
-          <span>Total en Bolívares (BCV):</span>
-          <span>Bs. ${saleData.total_ves.toLocaleString('es-VE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+
+        <div style="border-top: 1px dashed #000000; margin: 4px 0;"></div>
+
+        <!-- DATOS DEL DOCUMENTO FISCAL Y CLIENTE -->
+        <div style="font-size: 10px;">
+          <div><strong>FACTURA DE VENTA N°:</strong> ${saleData.order_number}</div>
+          <div><strong>FECHA / HORA:</strong> ${formattedDate}</div>
+          <div><strong>CONDICIÓN:</strong> ${saleData.order_type || 'Para Llevar'}</div>
+          <div style="border-top: 1px dotted #000; margin: 3px 0;"></div>
+          <div><strong>CLIENTE:</strong> Consumidor Final</div>
+          <div><strong>C.I. / RIF:</strong> V-00000000-0</div>
+        </div>
+
+        <div style="border-top: 1px dashed #000000; margin: 4px 0;"></div>
+
+        <!-- TABLA DETALLE DE COMPRA -->
+        <table style="width: 100%; font-size: 10px; border-collapse: collapse; text-align: left;">
+          <thead>
+            <tr style="border-bottom: 1px solid #000;">
+              <th style="width: 12%;">Cant</th>
+              <th style="width: 48%;">Descripción</th>
+              <th style="width: 20%; text-align: right;">P.U ($)</th>
+              <th style="width: 20%; text-align: right;">Total($)</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${saleData.items.map(item => `
+              <tr>
+                <td style="vertical-align: top;">${item.quantity}</td>
+                <td style="vertical-align: top;">${item.product_name}</td>
+                <td style="vertical-align: top; text-align: right;">$${item.unit_price.toFixed(2)}</td>
+                <td style="vertical-align: top; text-align: right;">$${item.subtotal.toFixed(2)}</td>
+              </tr>
+            `).join('')}
+          </tbody>
+        </table>
+
+        <div style="border-top: 1px dashed #000000; margin: 4px 0;"></div>
+
+        <!-- DESGLOSE DE TOTALES EN DÓLARES ($) -->
+        <div style="font-size: 10px; line-height: 1.3;">
+          <div style="display: flex; justify-content: space-between;">
+            <span>SUBTOTAL NETO:</span>
+            <span>$${saleData.subtotal.toFixed(2)}</span>
+          </div>
+          ${saleData.discount > 0 ? `
+            <div style="display: flex; justify-content: space-between;">
+              <span>DESCUENTO (${saleData.discount_percent}%):</span>
+              <span>-$${saleData.discount.toFixed(2)}</span>
+            </div>
+          ` : ''}
+          <div style="display: flex; justify-content: space-between;">
+            <span>IVA FISCAL (16%):</span>
+            <span>$${saleData.tax.toFixed(2)}</span>
+          </div>
+          <div style="display: flex; justify-content: space-between; font-weight: bold; font-size: 12px; margin-top: 2px;">
+            <span>TOTAL PAGADO ($):</span>
+            <span>$${saleData.total_usd.toFixed(2)}</span>
+          </div>
+        </div>
+
+        <div style="border-top: 2px double #000000; margin: 5px 0;"></div>
+
+        <!-- INFORMACIÓN CAMBIARIA BCV (CRÍTICO SENIAT / VENEZUELA) -->
+        <div style="text-align: center; margin: 4px 0; padding: 4px 0; border: 1px solid #000; border-radius: 2px;">
+          <div style="font-size: 9px; font-weight: bold;">CONVERSIÓN TASA OFICIAL BCV</div>
+          <div style="font-size: 10px; font-weight: bold;">TASA BCV: Bs. ${saleData.bcv_rate.toFixed(2)} / USD</div>
+          <div style="font-size: 13px; font-weight: bold; margin-top: 2px;">
+            TOTAL EN BS: Bs. ${saleData.total_ves.toLocaleString('es-VE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+          </div>
+        </div>
+
+        <!-- INFORMACIÓN DE PAGO Y VUELTO -->
+        <div style="font-size: 9px; margin-top: 3px;">
+          <div><strong>MEDIO DE PAGO:</strong> ${(saleData.payment_method || 'EFECTIVO').toUpperCase()}</div>
+          ${saleData.payment_method === 'efectivo' ? `
+            <div>Monto Recibido ($): $${saleData.tender_amount.toFixed(2)}</div>
+            <div>Vuelto Entregado ($): $${saleData.change_due.toFixed(2)} (Bs. ${(saleData.change_due * saleData.bcv_rate).toLocaleString('es-VE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })})</div>
+          ` : `
+            <div>Ref. Operación: ${saleData.reference_code || 'N/A'}</div>
+          `}
+        </div>
+
+        <div style="border-top: 1px dashed #000000; margin: 6px 0 4px 0;"></div>
+
+        <!-- PIE DE PÁGINA DE FACTURA -->
+        <div style="text-align: center; font-size: 10px; font-weight: bold;">
+          <div>¡GRACIAS POR SU COMPRA!</div>
+          <div style="font-size: 8px; font-weight: normal; margin-top: 2px;">COMPROBANTE DE CONTROL INTERNO</div>
+          <div style="font-size: 8px; font-weight: normal;">LA NUEVA PARISIENNE - BARQUISIMETO</div>
         </div>
       </div>
     `;
