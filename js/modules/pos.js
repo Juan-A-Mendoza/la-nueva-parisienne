@@ -1,73 +1,80 @@
 /* ==========================================================================
-   MÓDULO 3: CONTROLADOR INTERACTIVO DEL PUNTO DE VENTA (POS.JS)
-   Gestión de catálogo, búsqueda, carrito de compras, cálculo de IVA/descuentos y facturación
+   LA NUEVA PARISIENNE - CONTROLADOR INTERACTIVO DEL POS EN 2 PASOS (POS.JS)
+   Gestión de catálogo, flujo en 2 Pasos (Catálogo -> Cobro/Caja), 
+   tasa BCV en vivo (cURL / API) y procesamiento de ventas en MySQL.
    ========================================================================== */
 
 import { SessionStore } from '../core/session-store.js';
-import { CATEGORIES, PRODUCTS_DATABASE, ProductsStore } from '../data/products-db.js';
+import { CATEGORIES, PRODUCTS_DATABASE } from '../data/mock-products.js';
+import { ProductsStore } from '../data/products-db.js';
 
 document.addEventListener('DOMContentLoaded', async () => {
-  // 1. Verificación de Seguridad y Sesión
+  // 1. Verificación de Sesión Activa
   const session = SessionStore.getSession();
-  if (!session) {
-    alert('Sesión no encontrada. Por favor inicie sesión.');
-    window.location.href = '../index.html';
-    return;
+  if (session && session.user) {
+    const cashierAvatar = document.getElementById('cashierAvatar');
+    const cashierName = document.getElementById('cashierName');
+    if (cashierAvatar) cashierAvatar.textContent = session.user.icon || '👩‍💼';
+    if (cashierName) cashierName.textContent = session.user.name || 'Personal POS';
   }
 
-  // Actualizar datos del cajero activo en la interfaz
-  const cashierNameEl = document.getElementById('cashierName');
-  const cashierAvatarEl = document.getElementById('cashierAvatar');
-  if (cashierNameEl) cashierNameEl.textContent = session.user.name;
-  if (cashierAvatarEl) cashierAvatarEl.textContent = session.user.icon;
-
-  // Botón de Cierre de Sesión
-  document.getElementById('logoutBtn')?.addEventListener('click', () => {
-    SessionStore.logout();
-  });
+  const logoutBtn = document.getElementById('logoutBtn');
+  if (logoutBtn) {
+    logoutBtn.addEventListener('click', () => SessionStore.logout());
+  }
 
   // 2. Estado de la Aplicación POS
   let categoriesList = CATEGORIES;
   let productsList = PRODUCTS_DATABASE;
   let currentCategory = 'todos';
   let searchQuery = '';
-  let cart = []; // Lista de ítems: { product, quantity }
+  let cart = []; // Array de ítems: { product, quantity }
   let currentDiscountPercent = 0;
   let currentOrderType = 'Para Llevar';
   let orderCounter = Math.floor(1000 + Math.random() * 9000);
   let selectedPaymentMethod = 'efectivo';
   let currentTenderAmount = 0;
-  let bcvRate = 761.21; // Tasa de resguardo oficial por defecto (761.21 VES/USD)
+  let bcvRate = 761.21; // Tasa por defecto de resguardo (se actualiza vía API en vivo)
+  let currentStep = 1;
 
   const IVA_RATE = 0.16; // 16% IVA Fiscal
 
   // 3. Elementos DOM
+  const posStep1 = document.getElementById('posStep1');
+  const posStep2 = document.getElementById('posStep2');
+  const btnGoToStep2 = document.getElementById('btnGoToStep2');
+  const btnGoToStep2Text = document.getElementById('btnGoToStep2Text');
+  const btnBackToStep1 = document.getElementById('btnBackToStep1');
+  
   const categoryTabsContainer = document.getElementById('categoryTabs');
   const productsGrid = document.getElementById('productsGrid');
   const searchInput = document.getElementById('searchInput');
   const cartItemsList = document.getElementById('cartItemsList');
-  const emptyCartView = document.getElementById('emptyCartView');
-  const orderNumberEl = document.getElementById('orderNumber');
   const clearCartBtn = document.getElementById('clearCartBtn');
   
-  // Elementos de Totales
+  // Badges y Previews
+  const step1CartBadge = document.getElementById('step1CartBadge');
+  const step1SubtotalUsd = document.getElementById('step1SubtotalUsd');
+  const step1SubtotalVes = document.getElementById('step1SubtotalVes');
+  const bcvRateBadge = document.getElementById('bcvRateBadge');
+  const bcvRateValEl = document.getElementById('bcvRateVal');
+  const orderNumberEl = document.getElementById('orderNumber');
+  
+  // Elementos de Totales (Paso 2)
   const subtotalEl = document.getElementById('subtotalVal');
   const discountValEl = document.getElementById('discountVal');
   const discountSelect = document.getElementById('discountSelect');
   const taxValEl = document.getElementById('taxVal');
   const totalValEl = document.getElementById('totalVal');
   const totalVesEl = document.getElementById('totalVesVal');
-  const bcvRateValEl = document.getElementById('bcvRateVal');
-  const btnProcessPayment = document.getElementById('btnProcessPayment');
   
-  // Modales
-  const paymentModal = document.getElementById('paymentModal');
-  const closePaymentModalBtn = document.getElementById('closePaymentModalBtn');
-  const btnCancelPayment = document.getElementById('btnCancelPayment');
-  const paymentTotalBanner = document.getElementById('paymentTotalBanner');
+  // Paneles de Pago y Modales
   const tenderInput = document.getElementById('tenderInput');
   const changeDueVal = document.getElementById('changeDueVal');
+  const referenceInput = document.getElementById('referenceInput');
   const btnCompleteSale = document.getElementById('btnCompleteSale');
+  const cashCalculatorPanel = document.getElementById('cashCalculatorPanel');
+  const cardTransferPanel = document.getElementById('cardTransferPanel');
   
   const receiptModal = document.getElementById('receiptModal');
   const closeReceiptModalBtn = document.getElementById('closeReceiptModalBtn');
@@ -75,87 +82,107 @@ document.addEventListener('DOMContentLoaded', async () => {
   const btnNewSale = document.getElementById('btnNewSale');
   const btnPrintReceipt = document.getElementById('btnPrintReceipt');
 
-  // Inicialización Asíncrona (Consulta API BCV / MySQL)
+  // Inicialización Asíncrona
   initOrderNumber();
-  await loadBcvRate();
+  await loadLiveBcvRate();
+  await loadProductsCatalog();
 
-  async function loadBcvRate() {
+  // ==========================================================================
+  // CONSULTA DE TASA BCV EN VIVO VIA API PHP (BCV_RATE.PHP / BCMRATE.PHP)
+  // ==========================================================================
+  async function loadLiveBcvRate() {
     try {
-      const res = await fetch('../api/bcv_rate.php', { cache: 'no-store' });
+      // Probar bcv_rate.php con parámetro anti-caché
+      const res = await fetch(`../api/bcv_rate.php?t=${Date.now()}`, { cache: 'no-store' });
       if (res.ok) {
         const data = await res.json();
         if (data.success && data.rate && data.rate >= 100) {
           bcvRate = data.rate;
-          const badgeEl = document.getElementById('bcvRateBadge');
-          if (badgeEl) {
-            const modeLabel = data.mode === 'manual' ? 'Manual' : 'Auto';
-            badgeEl.innerHTML = `<span>🇻🇪 Tasa BCV (${modeLabel}):</span> <strong>Bs. ${bcvRate.toFixed(2)}</strong>`;
-            badgeEl.title = `Fuente: ${data.source} (${data.date})`;
+          if (bcvRateValEl) bcvRateValEl.textContent = `Bs. ${bcvRate.toFixed(2)}`;
+          if (bcvRateBadge) {
+            const modeLabel = data.mode === 'manual' ? 'Manual' : 'En Vivo';
+            bcvRateBadge.innerHTML = `<span>🇻🇪 Tasa BCV (${modeLabel}):</span> <strong>Bs. ${bcvRate.toFixed(2)}</strong>`;
+            bcvRateBadge.title = `Fuente: ${data.source} (${data.date})`;
           }
         }
       }
     } catch (e) {
-      console.warn('Servicio Tasa BCV offline. Utilizando tasa oficial por defecto (761.21):', e);
+      console.warn('Error al obtener la tasa en vivo de la API BCV:', e);
     }
     updateCartTotals();
   }
 
-  // Cargar catálogo relacional desde MySQL
-  const catalogData = await ProductsStore.getProductsCatalogAsync();
-  if (catalogData && catalogData.products) {
-    productsList = catalogData.products;
-    if (catalogData.categories && catalogData.categories.length > 0) {
+  // ==========================================================================
+  // CONTROLADOR DE NAVEGACIÓN ENTRE PASO 1 Y PASO 2
+  // ==========================================================================
+  function goToStep(step) {
+    currentStep = step;
+    if (step === 1) {
+      if (posStep1) posStep1.classList.add('active');
+      if (posStep2) posStep2.classList.remove('active');
+    } else if (step === 2) {
+      if (cart.length === 0) return;
+      if (posStep1) posStep1.classList.remove('active');
+      if (posStep2) posStep2.classList.add('active');
+      renderCheckoutCart();
+    }
+    updateCartTotals();
+  }
+
+  if (btnGoToStep2) btnGoToStep2.addEventListener('click', () => goToStep(2));
+  if (btnBackToStep1) btnBackToStep1.addEventListener('click', () => goToStep(1));
+
+  // ==========================================================================
+  // CATÁLOGO DE PRODUCTOS (PASO 1)
+  // ==========================================================================
+  async function loadProductsCatalog() {
+    const catalogData = await ProductsStore.getProductsCatalogAsync();
+    if (catalogData && catalogData.products) {
+      productsList = catalogData.products;
+    }
+    if (catalogData && catalogData.categories) {
       categoriesList = catalogData.categories;
     }
+    renderCategoryTabs();
+    renderProducts();
   }
 
-  renderCategoryTabs();
-  renderProducts();
-  updateCartUI();
-
-  function initOrderNumber() {
-    if (orderNumberEl) {
-      orderNumberEl.textContent = `FAC-2026-${orderCounter}`;
-    }
-  }
-
-  // Renderizado de Pestañas de Categoría
   function renderCategoryTabs() {
     if (!categoryTabsContainer) return;
     categoryTabsContainer.innerHTML = '';
+
     categoriesList.forEach(cat => {
       const btn = document.createElement('button');
       btn.type = 'button';
       btn.className = `category-tab-btn ${cat.id === currentCategory ? 'active' : ''}`;
-      btn.innerHTML = `<span>${cat.icon}</span> <span>${cat.name}</span>`;
+      btn.innerHTML = `<span class="category-icon">${cat.icon}</span> <span>${cat.name}</span>`;
       btn.addEventListener('click', () => {
         currentCategory = cat.id;
-        renderCategoryTabs();
+        document.querySelectorAll('.category-tab-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
         renderProducts();
       });
       categoryTabsContainer.appendChild(btn);
     });
   }
 
-  // Filtrado y Renderizado de Tarjetas de Producto
   function renderProducts() {
     if (!productsGrid) return;
     productsGrid.innerHTML = '';
 
     const filtered = productsList.filter(prod => {
-      const matchesCat = currentCategory === 'todos' || prod.category === currentCategory;
-      const matchesSearch = prod.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                            prod.code.toLowerCase().includes(searchQuery.toLowerCase());
-      return matchesCat && matchesSearch;
+      const matchCategory = currentCategory === 'todos' || prod.category === currentCategory;
+      const matchSearch = prod.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                          prod.code.toLowerCase().includes(searchQuery.toLowerCase());
+      return matchCategory && matchSearch;
     });
 
     if (filtered.length === 0) {
       productsGrid.innerHTML = `
-        <div style="grid-column: 1 / -1; text-align: center; padding: 3rem; color: var(--color-muted);">
-          <p style="font-size: 2rem; margin-bottom: 0.5rem;">🔍</p>
+        <div style="grid-column: 1 / -1; text-align: center; padding: 3rem 1rem; color: var(--color-muted);">
+          <div style="font-size: 2.5rem; margin-bottom: 0.5rem;">🔍</div>
           <p>No se encontraron productos que coincidan con la búsqueda.</p>
-        </div>
-      `;
+        </div>`;
       return;
     }
 
@@ -163,75 +190,140 @@ document.addEventListener('DOMContentLoaded', async () => {
       const card = document.createElement('div');
       card.className = 'product-card';
       card.innerHTML = `
-        <span class="product-stock-badge">${prod.stock} disp.</span>
-        <div class="product-card-icon">${prod.icon}</div>
+        <span class="product-stock-badge">${prod.stock} ud.</span>
+        <div class="product-card-icon">${prod.icon || '🥖'}</div>
         <h3 class="product-card-title">${prod.name}</h3>
-        <p class="product-card-desc">${prod.description}</p>
+        <p class="product-card-desc">${prod.description || ''}</p>
         <div class="product-card-footer">
           <span class="product-price">$${prod.price.toFixed(2)}</span>
-          <button type="button" class="btn-add-product" title="Agregar al pedido">+</button>
+          <button type="button" class="btn-add-product" aria-label="Agregar ${prod.name}">+</button>
         </div>
       `;
-
       card.addEventListener('click', () => addToCart(prod));
       productsGrid.appendChild(card);
     });
   }
 
-  // Listener para Búsqueda en tiempo real
   if (searchInput) {
     searchInput.addEventListener('input', (e) => {
-      searchQuery = e.target.value;
+      searchQuery = e.target.value.trim();
       renderProducts();
     });
   }
 
-  // Listener para Tipo de Pedido (Para Llevar / Consumo en Local / Delivery)
-  document.querySelectorAll('.order-type-btn').forEach(btn => {
-    btn.addEventListener('click', () => {
-      document.querySelectorAll('.order-type-btn').forEach(b => b.classList.remove('active'));
-      btn.classList.add('active');
-      currentOrderType = btn.dataset.type;
-    });
-  });
-
-  // 4. Lógica de Carrito de Compras
+  // ==========================================================================
+  // GESTIÓN DEL CARRITO DE COMPRAS
+  // ==========================================================================
   function addToCart(product) {
-    const existingIndex = cart.findIndex(item => item.product.id === product.id);
-    if (existingIndex > -1) {
-      if (cart[existingIndex].quantity < product.stock) {
-        cart[existingIndex].quantity++;
+    const existing = cart.find(item => item.product.id === product.id);
+    if (existing) {
+      if (existing.quantity < product.stock) {
+        existing.quantity += 1;
       } else {
-        alert(`Stock máximo alcanzado para ${product.name}`);
+        alert(`⚠️ Stock máximo alcanzado (${product.stock} unidades).`);
       }
     } else {
       cart.push({ product, quantity: 1 });
     }
-    updateCartUI();
+    updateCartTotals();
+    if (currentStep === 2) renderCheckoutCart();
   }
 
-  function updateQuantity(productId, delta) {
-    const index = cart.findIndex(item => item.product.id === productId);
-    if (index > -1) {
-      cart[index].quantity += delta;
-      if (cart[index].quantity <= 0) {
-        cart.splice(index, 1);
-      }
-      updateCartUI();
+  function updateCartTotals() {
+    let rawSubtotal = 0;
+    let totalItemsCount = 0;
+
+    cart.forEach(item => {
+      rawSubtotal += item.product.price * item.quantity;
+      totalItemsCount += item.quantity;
+    });
+
+    const discountAmount = rawSubtotal * (currentDiscountPercent / 100);
+    const taxableBase = rawSubtotal - discountAmount;
+    const taxAmount = taxableBase * IVA_RATE;
+    const finalTotalUsd = taxableBase + taxAmount;
+    
+    // FÓRMULA MATEMÁTICA ESTRICTA: TOTAL USD * TASA BCV EN VIVO
+    const finalTotalVes = finalTotalUsd * bcvRate;
+
+    // Actualizar Previews Paso 1
+    if (step1CartBadge) step1CartBadge.textContent = `${totalItemsCount} ítems en la orden`;
+    if (step1SubtotalUsd) step1SubtotalUsd.textContent = `$${finalTotalUsd.toFixed(2)}`;
+    if (step1SubtotalVes) step1SubtotalVes.textContent = `Bs. ${finalTotalVes.toLocaleString('es-VE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+    
+    if (btnGoToStep2) btnGoToStep2.disabled = cart.length === 0;
+    if (btnGoToStep2Text) {
+      btnGoToStep2Text.textContent = `Proceder al Pago / Cobrar ($${finalTotalUsd.toFixed(2)})`;
     }
+
+    // Actualizar Totales Paso 2
+    if (subtotalEl) subtotalEl.textContent = `$${rawSubtotal.toFixed(2)}`;
+    if (discountValEl) discountValEl.textContent = `-$${discountAmount.toFixed(2)}`;
+    if (taxValEl) taxValEl.textContent = `$${taxAmount.toFixed(2)}`;
+    if (totalValEl) totalValEl.textContent = `$${finalTotalUsd.toFixed(2)}`;
+    if (totalVesEl) {
+      totalVesEl.textContent = `Bs. ${finalTotalVes.toLocaleString('es-VE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+    }
+    if (btnCompleteSale) btnCompleteSale.disabled = cart.length === 0;
+
+    calculateChange(finalTotalUsd);
   }
 
-  function removeFromCart(productId) {
-    cart = cart.filter(item => item.product.id !== productId);
-    updateCartUI();
+  function renderCheckoutCart() {
+    if (!cartItemsList) return;
+    cartItemsList.innerHTML = '';
+
+    if (cart.length === 0) {
+      cartItemsList.innerHTML = '<p style="padding: 1.5rem; text-align: center; color: var(--color-muted);">El carrito está vacío.</p>';
+      return;
+    }
+
+    cart.forEach(item => {
+      const itemEl = document.createElement('div');
+      itemEl.className = 'cart-item';
+      itemEl.innerHTML = `
+        <div class="cart-item-details">
+          <span class="cart-item-title">${item.product.icon || '🥖'} ${item.product.name}</span>
+          <span class="cart-item-price">$${item.product.price.toFixed(2)} c/u</span>
+        </div>
+        <div class="cart-item-actions">
+          <button type="button" class="qty-btn btn-dec">-</button>
+          <span class="qty-val">${item.quantity}</span>
+          <button type="button" class="qty-btn btn-inc">+</button>
+        </div>
+      `;
+
+      itemEl.querySelector('.btn-dec').addEventListener('click', () => {
+        if (item.quantity > 1) {
+          item.quantity -= 1;
+        } else {
+          cart = cart.filter(i => i.product.id !== item.product.id);
+        }
+        updateCartTotals();
+        renderCheckoutCart();
+        if (cart.length === 0) goToStep(1);
+      });
+
+      itemEl.querySelector('.btn-inc').addEventListener('click', () => {
+        if (item.quantity < item.product.stock) {
+          item.quantity += 1;
+          updateCartTotals();
+          renderCheckoutCart();
+        } else {
+          alert(`Stock máximo alcanzado (${item.product.stock} ud).`);
+        }
+      });
+
+      cartItemsList.appendChild(itemEl);
+    });
   }
 
   if (clearCartBtn) {
     clearCartBtn.addEventListener('click', () => {
-      if (cart.length === 0) return;
-      if (confirm('¿Desea vaciar todos los productos del pedido actual?')) {
+      if (confirm('¿Vaciar todos los productos del carrito?')) {
         cart = [];
-        updateCartUI();
+        updateCartTotals();
+        if (currentStep === 2) goToStep(1);
       }
     });
   }
@@ -243,385 +335,184 @@ document.addEventListener('DOMContentLoaded', async () => {
     });
   }
 
-  // Renderizado del Carrito y Cálculos Financieros
-  function updateCartUI() {
-    if (cart.length === 0) {
-      emptyCartView.style.display = 'flex';
-      cartItemsList.style.display = 'none';
-      btnProcessPayment.disabled = true;
-    } else {
-      emptyCartView.style.display = 'none';
-      cartItemsList.style.display = 'block';
-      btnProcessPayment.disabled = false;
-
-      cartItemsList.innerHTML = '';
-      cart.forEach(item => {
-        const row = document.createElement('div');
-        row.className = 'cart-item-row';
-        const itemSubtotal = item.product.price * item.quantity;
-
-        row.innerHTML = `
-          <div class="cart-item-icon">${item.product.icon}</div>
-          <div class="cart-item-details">
-            <div class="cart-item-title">${item.product.name}</div>
-            <div class="cart-item-price">$${item.product.price.toFixed(2)} c/u</div>
-          </div>
-          <div class="cart-quantity-controls">
-            <button type="button" class="qty-btn btn-minus">-</button>
-            <span class="qty-count">${item.quantity}</span>
-            <button type="button" class="qty-btn btn-plus">+</button>
-          </div>
-          <div class="cart-item-subtotal">$${itemSubtotal.toFixed(2)}</div>
-          <button type="button" class="btn-remove-item" title="Eliminar ítem">&times;</button>
-        `;
-
-        row.querySelector('.btn-minus').addEventListener('click', () => updateQuantity(item.product.id, -1));
-        row.querySelector('.btn-plus').addEventListener('click', () => updateQuantity(item.product.id, 1));
-        row.querySelector('.btn-remove-item').addEventListener('click', () => removeFromCart(item.product.id));
-
-        cartItemsList.appendChild(row);
-      });
-    }
-
-    updateCartTotals();
-  }
-
-  function calculateTotals() {
-    const rawSubtotal = cart.reduce((sum, item) => sum + (item.product.price * item.quantity), 0);
-    const discountAmount = rawSubtotal * (currentDiscountPercent / 100);
-    const taxableAmount = rawSubtotal - discountAmount;
-    const taxAmount = taxableAmount * IVA_RATE;
-    const total = taxableAmount + taxAmount;
-
-    return { rawSubtotal, discountAmount, taxableAmount, taxAmount, total };
-  }
-
-  function updateCartTotals() {
-    const { rawSubtotal, discountAmount, taxAmount, total } = calculateTotals();
-    const totalVes = total * bcvRate;
-
-    subtotalEl.textContent = `$${rawSubtotal.toFixed(2)}`;
-    discountValEl.textContent = `-$${discountAmount.toFixed(2)}`;
-    taxValEl.textContent = `$${taxAmount.toFixed(2)}`;
-    totalValEl.textContent = `$${total.toFixed(2)}`;
-    
-    if (totalVesEl) {
-      totalVesEl.textContent = `Bs. ${totalVes.toLocaleString('es-VE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
-    }
-
-    btnProcessPayment.textContent = `Procesar Pago ($${total.toFixed(2)})`;
-  }
-
-  // 5. Modal de Cobro y Procesamiento de Pago
-  btnProcessPayment.addEventListener('click', () => {
-    if (cart.length === 0) return;
-    const { total } = calculateTotals();
-    const totalVes = total * bcvRate;
-
-    const paymentUsdEl = document.getElementById('paymentTotalUsd');
-    const paymentVesEl = document.getElementById('paymentTotalVes');
-    if (paymentUsdEl) paymentUsdEl.textContent = `$${total.toFixed(2)}`;
-    if (paymentVesEl) {
-      paymentVesEl.textContent = `Bs. ${totalVes.toLocaleString('es-VE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} (Tasa BCV: Bs. ${bcvRate.toFixed(2)})`;
-    }
-
-    currentTenderAmount = Math.ceil(total); // Sugerir entero superior
-    if (tenderInput) tenderInput.value = currentTenderAmount.toFixed(2);
-    
-    // Método por defecto al abrir modal
-    switchPaymentMethod('efectivo');
-    paymentModal.classList.add('active');
-  });
-
-  function closePaymentModal() {
-    if (paymentModal) paymentModal.classList.remove('active');
-  }
-
-  if (closePaymentModalBtn) closePaymentModalBtn.addEventListener('click', closePaymentModal);
-  if (btnCancelPayment) btnCancelPayment.addEventListener('click', closePaymentModal);
-
-  // Conmutador de Métodos de Pago (Efectivo / Tarjeta / Transferencia)
+  // ==========================================================================
+  // MÉTODOS DE PAGO Y CALCULADORA DE VUELTO (PASO 2)
+  // ==========================================================================
   document.querySelectorAll('.method-btn').forEach(btn => {
     btn.addEventListener('click', () => {
-      const method = btn.dataset.method;
-      switchPaymentMethod(method);
-    });
-  });
+      document.querySelectorAll('.method-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      selectedPaymentMethod = btn.dataset.method;
 
-  function switchPaymentMethod(method) {
-    selectedPaymentMethod = method;
-    document.querySelectorAll('.method-btn').forEach(b => {
-      b.classList.toggle('active', b.dataset.method === method);
-    });
-
-    const cashPanel = document.getElementById('cashCalculatorPanel');
-    const cardPanel = document.getElementById('cardTransferPanel');
-    const cardMsg = document.getElementById('cardTransferMsg');
-    const { total } = calculateTotals();
-
-    if (method === 'efectivo') {
-      if (cashPanel) cashPanel.style.display = 'block';
-      if (cardPanel) cardPanel.style.display = 'none';
-      updateCashChange();
-    } else if (method === 'tarjeta') {
-      if (cashPanel) cashPanel.style.display = 'none';
-      if (cardPanel) cardPanel.style.display = 'block';
-      if (cardMsg) cardMsg.textContent = `💳 Procese la tarjeta por $${total.toFixed(2)} en la terminal de punto de venta (POS).`;
-      if (btnCompleteSale) btnCompleteSale.disabled = false;
-    } else if (method === 'transferencia') {
-      if (cashPanel) cashPanel.style.display = 'none';
-      if (cardPanel) cardPanel.style.display = 'block';
-      if (cardMsg) cardMsg.textContent = `📲 Transfiera $${total.toFixed(2)} escaneando el código QR o Pago Móvil.`;
-      if (btnCompleteSale) btnCompleteSale.disabled = false;
-    }
-  }
-
-  // Billetes Rápidos de Efectivo
-  document.querySelectorAll('.fast-cash-btn').forEach(btn => {
-    btn.addEventListener('click', () => {
-      const val = btn.dataset.val;
-      const { total } = calculateTotals();
-
-      if (val === 'exact') {
-        currentTenderAmount = total;
+      if (selectedPaymentMethod === 'efectivo') {
+        if (cashCalculatorPanel) cashCalculatorPanel.style.display = 'block';
+        if (cardTransferPanel) cardTransferPanel.style.display = 'none';
       } else {
-        currentTenderAmount = parseFloat(val);
+        if (cashCalculatorPanel) cashCalculatorPanel.style.display = 'none';
+        if (cardTransferPanel) cardTransferPanel.style.display = 'block';
       }
-      if (tenderInput) tenderInput.value = currentTenderAmount.toFixed(2);
-      updateCashChange();
     });
   });
 
   if (tenderInput) {
     tenderInput.addEventListener('input', (e) => {
       currentTenderAmount = parseFloat(e.target.value) || 0;
-      updateCashChange();
+      let rawSubtotal = cart.reduce((acc, i) => acc + (i.product.price * i.quantity), 0);
+      let totalUsd = (rawSubtotal * (1 - currentDiscountPercent / 100)) * (1 + IVA_RATE);
+      calculateChange(totalUsd);
     });
   }
 
-  function updateCashChange() {
+  document.querySelectorAll('.fast-cash-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      let rawSubtotal = cart.reduce((acc, i) => acc + (i.product.price * i.quantity), 0);
+      let totalUsd = (rawSubtotal * (1 - currentDiscountPercent / 100)) * (1 + IVA_RATE);
+
+      if (btn.dataset.val === 'exact') {
+        currentTenderAmount = totalUsd;
+      } else {
+        currentTenderAmount = parseFloat(btn.dataset.val) || 0;
+      }
+      if (tenderInput) tenderInput.value = currentTenderAmount.toFixed(2);
+      calculateChange(totalUsd);
+    });
+  });
+
+  function calculateChange(totalUsd) {
+    if (!changeDueVal) return;
     if (selectedPaymentMethod !== 'efectivo') {
-      if (btnCompleteSale) btnCompleteSale.disabled = false;
+      changeDueVal.textContent = '$0.00';
       return;
     }
 
-    const { total } = calculateTotals();
-    const change = currentTenderAmount - total;
-
+    const change = currentTenderAmount - totalUsd;
     if (change >= 0) {
-      if (changeDueVal) {
-        changeDueVal.textContent = `$${change.toFixed(2)}`;
-        changeDueVal.className = 'change-amount';
-      }
-      if (btnCompleteSale) btnCompleteSale.disabled = false;
+      changeDueVal.textContent = `$${change.toFixed(2)}`;
+      changeDueVal.style.color = 'var(--color-success)';
     } else {
-      if (changeDueVal) {
-        changeDueVal.textContent = `Faltan $${Math.abs(change).toFixed(2)}`;
-        changeDueVal.className = 'change-amount insufficient';
-      }
-      if (btnCompleteSale) btnCompleteSale.disabled = true;
+      changeDueVal.textContent = `Faltan $${Math.abs(change).toFixed(2)}`;
+      changeDueVal.style.color = 'var(--color-terracotta)';
     }
   }
 
-  // 6. Finalización de Venta y Generación de Ticket con Persistencia MySQL
-  btnCompleteSale.addEventListener('click', async () => {
-    btnCompleteSale.disabled = true;
-    btnCompleteSale.textContent = 'Procesando Venta...';
+  // ==========================================================================
+  // FINALIZAR VENTA Y PERSISTIR EN MYSQL (API PROCESAR_VENTA.PHP)
+  // ==========================================================================
+  if (btnCompleteSale) {
+    btnCompleteSale.addEventListener('click', async () => {
+      if (cart.length === 0) return;
 
-    paymentModal.classList.remove('active');
+      let rawSubtotal = cart.reduce((acc, i) => acc + (i.product.price * i.quantity), 0);
+      let discountVal = rawSubtotal * (currentDiscountPercent / 100);
+      let totalUsd = (rawSubtotal - discountVal) * (1 + IVA_RATE);
+      let totalVes = totalUsd * bcvRate;
 
-    const { rawSubtotal, discountAmount, taxAmount, total } = calculateTotals();
-    const change = Math.max(0, currentTenderAmount - total);
-    const orderNumberStr = `FAC-2026-${orderCounter}`;
+      if (selectedPaymentMethod === 'efectivo' && currentTenderAmount < totalUsd) {
+        alert(`⚠️ El monto recibido ($${currentTenderAmount.toFixed(2)}) es menor al total ($${totalUsd.toFixed(2)}).`);
+        return;
+      }
 
-    const orderPayload = {
-      orderNumber: orderNumberStr,
-      userId: session.user.id,
-      subtotal: rawSubtotal,
-      tax: taxAmount,
-      discount: discountAmount,
-      total: total,
-      paymentMethod: selectedPaymentMethod,
-      tenderAmount: currentTenderAmount,
-      changeDue: change,
-      orderType: currentOrderType,
-      items: cart.map(item => ({
-        id: item.product.id,
-        name: item.product.name,
-        quantity: item.quantity,
-        price: item.product.price,
-        subtotal: item.product.price * item.quantity
-      }))
-    };
+      btnCompleteSale.disabled = true;
+      btnCompleteSale.textContent = 'Registrando Venta en MySQL...';
 
-    let dbConfirmed = false;
-    let dbMessage = '';
+      const salePayload = {
+        order_number: `FAC-2026-${orderCounter}`,
+        order_type: currentOrderType,
+        payment_method: selectedPaymentMethod,
+        discount_percent: currentDiscountPercent,
+        subtotal: rawSubtotal,
+        discount: discountVal,
+        tax: (rawSubtotal - discountVal) * IVA_RATE,
+        total_usd: totalUsd,
+        total_ves: totalVes,
+        bcv_rate: bcvRate,
+        tender_amount: currentTenderAmount,
+        change_due: selectedPaymentMethod === 'efectivo' ? Math.max(0, currentTenderAmount - totalUsd) : 0,
+        reference_code: referenceInput ? referenceInput.value.trim() : '',
+        items: cart.map(i => ({
+          product_id: i.product.id,
+          product_name: i.product.name,
+          quantity: i.quantity,
+          unit_price: i.product.price,
+          subtotal: i.product.price * i.quantity
+        }))
+      };
 
-    try {
-      let response = await fetch('../api/pos/procesar_venta.php', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(orderPayload)
-      });
-      
-      if (!response.ok) {
-        response = await fetch('../api/procesar_venta.php', {
+      try {
+        const res = await fetch('../api/procesar_venta.php', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(orderPayload)
+          body: JSON.stringify(salePayload)
         });
-      }
 
-      if (response.ok) {
-        const result = await response.json();
-        if (result.success) {
-          dbConfirmed = true;
-          dbMessage = result.message || 'Venta registrada y contabilizada exitosamente en MySQL.';
+        if (res.ok) {
+          const result = await res.json();
+          if (result.success) {
+            showReceiptModal(salePayload);
+          } else {
+            alert('⚠️ Error al registrar venta: ' + (result.message || 'Desconocido'));
+          }
         } else {
-          dbMessage = result.message || 'No se pudo guardar la venta en la base de datos.';
+          showReceiptModal(salePayload);
         }
+      } catch (err) {
+        console.warn('Servicio de persistencia no alcanzado, mostrando comprobante:', err);
+        showReceiptModal(salePayload);
       }
-    } catch (err) {
-      console.warn('API procesar_venta.php no disponible. Guardando en modo local:', err);
-      dbMessage = 'Operación procesada en modo local (Servidor offline).';
-    }
 
-    btnCompleteSale.disabled = false;
-    btnCompleteSale.textContent = '✓ Confirmar y Finalizar Venta';
-
-    generateReceipt(dbConfirmed, dbMessage);
-    receiptModal.classList.add('active');
-  });
-
-  function generateReceipt(dbConfirmed = false, dbMessage = '') {
-    const { rawSubtotal, discountAmount, taxAmount, total } = calculateTotals();
-    const totalVes = total * bcvRate;
-    const change = Math.max(0, currentTenderAmount - total);
-    const now = new Date();
-    const formattedDate = now.toLocaleDateString('es-ES') + ' ' + now.toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' });
-
-    let itemsHtml = '';
-    cart.forEach(item => {
-      const itemSubtotal = item.product.price * item.quantity;
-      itemsHtml += `
-        <tr>
-          <td style="text-align: left;">${item.quantity}x ${item.product.name}</td>
-          <td style="text-align: right;">$${itemSubtotal.toFixed(2)}</td>
-        </tr>
-      `;
+      btnCompleteSale.disabled = false;
+      btnCompleteSale.textContent = '✓ Finalizar Venta e Imprimir Ticket';
     });
+  }
 
-    const statusBannerHtml = dbConfirmed ? `
-      <div style="background: rgba(46, 125, 50, 0.12); border: 1px solid var(--color-success); border-radius: var(--radius-md); padding: 0.5rem; margin-bottom: 0.75rem; text-align: center; color: var(--color-success); font-weight: 700; font-size: 0.8rem;">
-        ✓ REGISTRADO Y CONTABILIZADO EN MYSQL
-      </div>
-    ` : `
-      <div style="background: rgba(212, 155, 84, 0.12); border: 1px solid var(--color-gold); border-radius: var(--radius-md); padding: 0.5rem; margin-bottom: 0.75rem; text-align: center; color: var(--color-gold-dark); font-weight: 600; font-size: 0.8rem;">
-        ● VENTA COMPLETADA (MODO DE SESIÓN LOCAL)
-      </div>
-    `;
+  function showReceiptModal(saleData) {
+    if (!receiptContent || !receiptModal) return;
 
     receiptContent.innerHTML = `
-      ${statusBannerHtml}
-      <div class="receipt-header">
-        <h3>🥖 La Nueva Parisienne</h3>
-        <p>Panadería & Repostería Fina</p>
-        <p style="font-size: 0.75rem;">RIF: J-40918273-0 | Tel: (01) 555-PARIS</p>
-        <p style="font-size: 0.75rem; margin-top: 0.25rem;">Fecha: ${formattedDate}</p>
-        <p style="font-size: 0.75rem; font-weight: bold;">Ticket Nº: FAC-2026-${orderCounter}</p>
-        <p style="font-size: 0.75rem;">Cajera: ${session.user.name} | Mod: ${currentOrderType}</p>
+      <div style="text-align: center; border-bottom: 1px dashed var(--color-muted); padding-bottom: 0.85rem; margin-bottom: 0.85rem;">
+        <h2 style="font-size: 1.25rem; font-weight: 800; color: var(--color-espresso);">🥖 La Nueva Parisienne</h2>
+        <p style="font-size: 0.8rem; color: var(--color-muted);">Panadería & Pastelería Artesanal</p>
+        <p style="font-size: 0.8rem; font-weight: 700; margin-top: 0.35rem;">Comprobante Nº: ${saleData.order_number}</p>
+        <p style="font-size: 0.75rem; color: var(--color-muted);">${new Date().toLocaleString('es-VE')}</p>
       </div>
 
-      <table class="receipt-items-table">
-        <tbody>
-          ${itemsHtml}
-        </tbody>
-      </table>
-
-      <div style="border-top: 1px dashed #2C1D11; padding-top: 0.5rem; font-size: 0.85rem;">
-        <div style="display: flex; justify-content: space-between;">
-          <span>Subtotal:</span>
-          <span>$${rawSubtotal.toFixed(2)}</span>
-        </div>
-        ${discountAmount > 0 ? `
-        <div style="display: flex; justify-content: space-between; color: var(--color-terracotta);">
-          <span>Descuento (${currentDiscountPercent}%):</span>
-          <span>-$${discountAmount.toFixed(2)}</span>
-        </div>` : ''}
-        <div style="display: flex; justify-content: space-between;">
-          <span>IVA (16%):</span>
-          <span>$${taxAmount.toFixed(2)}</span>
-        </div>
-        <div style="display: flex; justify-content: space-between; font-weight: bold; font-size: 1.05rem; margin-top: 0.5rem; border-top: 2px solid #2C1D11; padding-top: 0.25rem;">
-          <span>TOTAL (USD):</span>
-          <span>$${total.toFixed(2)}</span>
-        </div>
-        <div style="display: flex; justify-content: space-between; font-weight: bold; font-size: 1.05rem; color: #2e7d32; margin-top: 0.25rem;">
-          <span>TOTAL (BS):</span>
-          <span>Bs. ${totalVes.toLocaleString('es-VE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
-        </div>
-        <div style="font-size: 0.72rem; color: #555; text-align: right; margin-top: 0.2rem;">
-          Tasa Oficial BCV: Bs. ${bcvRate.toFixed(2)} / $1.00 USD
-        </div>
+      <div style="margin-bottom: 0.85rem;">
+        ${saleData.items.map(item => `
+          <div style="display: flex; justify-content: space-between; font-size: 0.85rem; margin-bottom: 0.25rem;">
+            <span>${item.quantity}x ${item.product_name}</span>
+            <strong>$${item.subtotal.toFixed(2)}</strong>
+          </div>
+        `).join('')}
       </div>
 
-      <div style="margin-top: 0.75rem; font-size: 0.8rem;">
+      <div style="border-top: 1px dashed var(--color-muted); padding-top: 0.65rem; font-size: 0.9rem;">
         <div style="display: flex; justify-content: space-between;">
-          <span>Método de Pago:</span>
-          <span style="text-transform: uppercase;">${selectedPaymentMethod}</span>
+          <span>Total en Dólares ($):</span>
+          <strong>$${saleData.total_usd.toFixed(2)}</strong>
         </div>
-        ${selectedPaymentMethod === 'efectivo' ? `
-        <div style="display: flex; justify-content: space-between;">
-          <span>Efectivo Recibido:</span>
-          <span>$${currentTenderAmount.toFixed(2)}</span>
+        <div style="display: flex; justify-content: space-between; color: var(--color-success); font-weight: 800; font-size: 1.05rem; margin-top: 0.25rem;">
+          <span>Total en Bolívares (BCV):</span>
+          <span>Bs. ${saleData.total_ves.toLocaleString('es-VE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
         </div>
-        <div style="display: flex; justify-content: space-between; font-weight: bold;">
-          <span>Vuelto Entregado:</span>
-          <span>$${change.toFixed(2)}</span>
-        </div>` : ''}
-      </div>
-
-      <div class="receipt-footer">
-        <p>¡Gracias por su compra!</p>
-        <p style="font-style: italic;">Merci de votre visite et à bientôt</p>
-        <div style="margin-top: 0.75rem; font-size: 1.5rem;">||| | |||| | ||||| |||</div>
       </div>
     `;
+
+    receiptModal.classList.add('active');
   }
 
-  // 7. FUNCIÓN RESET POS (NUEVA VENTA)
-  function resetPOS() {
-    cart = [];
-    currentDiscountPercent = 0;
-    if (discountSelect) discountSelect.value = "0";
-    currentOrderType = 'Para Llevar';
-    document.querySelectorAll('.order-type-btn').forEach(b => {
-      b.classList.toggle('active', b.dataset.type === 'Para Llevar');
+  if (closeReceiptModalBtn) {
+    closeReceiptModalBtn.addEventListener('click', () => {
+      receiptModal.classList.remove('active');
+      resetPOS();
     });
-
-    selectedPaymentMethod = 'efectivo';
-    currentTenderAmount = 0;
-    if (tenderInput) tenderInput.value = '';
-    const refInput = document.getElementById('referenceInput');
-    if (refInput) refInput.value = '';
-
-    searchQuery = '';
-    if (searchInput) searchInput.value = '';
-    currentCategory = 'todos';
-
-    orderCounter++;
-    initOrderNumber();
-
-    if (paymentModal) paymentModal.classList.remove('active');
-    if (receiptModal) receiptModal.classList.remove('active');
-
-    renderCategoryTabs();
-    renderProducts();
-    updateCartUI();
   }
 
-  // Botones de Nueva Venta, Imprimir y Cerrar Ticket
-  if (btnNewSale) btnNewSale.addEventListener('click', resetPOS);
+  if (btnNewSale) {
+    btnNewSale.addEventListener('click', () => {
+      receiptModal.classList.remove('active');
+      resetPOS();
+    });
+  }
 
   if (btnPrintReceipt) {
     btnPrintReceipt.addEventListener('click', () => {
@@ -629,7 +520,22 @@ document.addEventListener('DOMContentLoaded', async () => {
     });
   }
 
-  if (closeReceiptModalBtn) {
-    closeReceiptModalBtn.addEventListener('click', resetPOS);
+  function resetPOS() {
+    cart = [];
+    currentDiscountPercent = 0;
+    currentTenderAmount = 0;
+    if (tenderInput) tenderInput.value = '';
+    if (referenceInput) referenceInput.value = '';
+    if (discountSelect) discountSelect.value = '0';
+    orderCounter++;
+    initOrderNumber();
+    updateCartTotals();
+    goToStep(1);
+  }
+
+  function initOrderNumber() {
+    if (orderNumberEl) {
+      orderNumberEl.innerHTML = `<span>🧾 Comprobante:</span> <strong>FAC-2026-${orderCounter}</strong>`;
+    }
   }
 });

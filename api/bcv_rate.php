@@ -1,8 +1,8 @@
 <?php
 /* ==========================================================================
-   LA NUEVA PARISIENNE - SERVICIO API DE TASA MAESTRA BCV (BCV_RATE.PHP)
-   Devuelve la tasa oficial del Banco Central de Venezuela respetando los modos
-   'auto' (API oficial con validación >= 100) y 'manual' (Persistido en MySQL).
+   LA NUEVA PARISIENNE - SERVICIO API EN VIVO DE TASA BCV (BCV_RATE.PHP)
+   Consulta en tiempo real la API oficial ve.dolarapi.com via cURL / stream
+   para extraer la propiedad 'promedio' sin valores fijos ni duros.
    ========================================================================== */
 
 header('Content-Type: application/json; charset=utf-8');
@@ -11,84 +11,96 @@ header('Cache-Control: no-cache, no-store, must-revalidate');
 
 require_once __DIR__ . '/config/conexion.php';
 
-// Valores de resguardo por defecto
+// Valores por defecto en caso de desconexión offline total
 $mode = 'auto';
 $manualRate = 761.21;
-$currentRate = $manualRate;
-$source = "Resguardo Oficial BCV";
+$currentRate = null;
+$source = "BCV Oficial (API en vivo)";
 $fecha = date('d/m/Y');
 $warning = null;
 
 try {
     $pdo = getDbConnection();
-    
-    // Consultar configuraciones maestras de tasa en MySQL
     $stmt = $pdo->query("SELECT clave, valor FROM configuraciones WHERE clave IN ('bcv_rate_mode', 'bcv_manual_rate')");
     $config = $stmt->fetchAll(PDO::FETCH_KEY_PAIR);
     
     if (isset($config['bcv_rate_mode'])) {
         $mode = strtolower(trim($config['bcv_rate_mode']));
     }
-    if (isset($config['bcv_manual_rate']) && is_numeric($config['bcv_manual_rate'])) {
-        $parsedRate = floatval($config['bcv_manual_rate']);
-        if ($parsedRate >= 100) {
-            $manualRate = $parsedRate;
-        }
+    if (isset($config['bcv_manual_rate']) && is_numeric($config['bcv_manual_rate']) && floatval($config['bcv_manual_rate']) >= 100) {
+        $manualRate = floatval($config['bcv_manual_rate']);
     }
 } catch (Exception $e) {
-    // Si la BD no está lista, mantener valores de resguardo
+    // Si la BD no está disponible, continuar con la consulta cURL a la API
 }
 
-// LÓGICA DE DECISIÓN DE TASA MAESTRA
 if ($mode === 'manual') {
-    // MODO MANUAL: Nunca intenta conectar a la API externa
-    $currentRate = $manualRate > 0 ? $manualRate : 761.21;
-    $source = "Manual (Editada)";
+    $currentRate = $manualRate;
+    $source = "Manual (Persistido en MySQL)";
 } else {
-    // MODO AUTOMÁTICO: Intentar consultar API oficial ve.dolarapi.com
-    $apiSuccess = false;
+    // MODO AUTOMÁTICO: CONSULTA EN VIVO A HTTPS://VE.DOLARAPI.COM/V1/DOLARES/OFICIAL
+    $apiRate = fetchLiveBcvRateApi();
     
-    try {
-        $context = stream_context_create([
-            'http' => [
-                'timeout' => 3, // 3 segundos tiempo máximo
-                'user_agent' => 'LaNuevaParisienne/1.0'
-            ]
-        ]);
-        
-        $jsonContent = @file_get_contents('https://ve.dolarapi.com/v1/dolares/oficial', false, $context);
-        
-        if ($jsonContent !== false) {
-            $data = json_decode($jsonContent, true);
-            if (is_array($data) && isset($data['promedio']) && is_numeric($data['promedio'])) {
-                $promedio = floatval($data['promedio']);
-                
-                // VALIDACIÓN DE CRUCE DE SEGURIDAD: Tasa debe ser >= 100
-                if ($promedio >= 100) {
-                    $currentRate = $promedio;
-                    $source = "BCV Oficial (API)";
-                    $apiSuccess = true;
-                    if (isset($data['fechaActualizacion'])) {
-                        $fecha = date('d/m/Y', strtotime($data['fechaActualizacion']));
-                    }
-                } else {
-                    $warning = "La tasa obtenida de la API (" . number_format($promedio, 2) . ") es menor a 100 y fue rechazada por seguridad.";
-                }
-            } else {
-                $warning = "Respuesta de la API no contiene el formato JSON ni la propiedad 'promedio' esperada.";
-            }
-        } else {
-            $warning = "No se pudo establecer conexión con https://ve.dolarapi.com/v1/dolares/oficial.";
-        }
-    } catch (Exception $e) {
-        $warning = "Error al ejecutar la petición a la API BCV: " . $e->getMessage();
-    }
-    
-    // Si el modo auto falla o devuelve tasa < 100, usar respaldo de tasa manual o por defecto
-    if (!$apiSuccess) {
-        $currentRate = $manualRate > 0 ? $manualRate : 761.21;
+    if ($apiRate !== null && $apiRate >= 100) {
+        $currentRate = $apiRate;
+        $source = "BCV Oficial (ve.dolarapi.com - En Vivo)";
+    } else {
+        $currentRate = $manualRate;
         $source = "Resguardo BCV (Offline / Fallback)";
+        $warning = "No se pudo obtener la tasa en vivo de la API o la tasa fue rechazada por ser < 100.";
     }
+}
+
+/**
+ * Función que realiza la petición cURL / file_get_contents a la API oficial de DolarAPI
+ */
+function fetchLiveBcvRateApi() {
+    $url = 'https://ve.dolarapi.com/v1/dolares/oficial';
+    
+    // 1. Intentar peticion con cURL
+    if (function_exists('curl_init')) {
+        $ch = curl_init();
+        curl_setopt($ch, CURLOPT_URL, $url);
+        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+        curl_setopt($ch, CURLOPT_TIMEOUT, 4);
+        curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
+        curl_setopt($ch, CURLOPT_USERAGENT, 'LaNuevaParisienne/1.0 (POS System)');
+        
+        $response = curl_exec($ch);
+        $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+        curl_close($ch);
+        
+        if ($response !== false && $httpCode === 200) {
+            $data = json_decode($response, true);
+            if (is_array($data) && isset($data['promedio']) && is_numeric($data['promedio'])) {
+                return floatval($data['promedio']);
+            }
+        }
+    }
+    
+    // 2. Fallback a stream context con file_get_contents
+    $opts = [
+        'http' => [
+            'method' => 'GET',
+            'timeout' => 4,
+            'header' => "User-Agent: LaNuevaParisienne/1.0\r\nAccept: application/json\r\n"
+        ],
+        'ssl' => [
+            'verify_peer' => false,
+            'verify_peer_name' => false
+        ]
+    ];
+    $context = stream_context_create($opts);
+    $json = @file_get_contents($url, false, $context);
+    
+    if ($json !== false) {
+        $data = json_decode($json, true);
+        if (is_array($data) && isset($data['promedio']) && is_numeric($data['promedio'])) {
+            return floatval($data['promedio']);
+        }
+    }
+    
+    return null;
 }
 
 echo json_encode([

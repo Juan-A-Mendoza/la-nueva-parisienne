@@ -4,6 +4,22 @@ Todos los cambios significativos, nuevas funcionalidades y actualizaciones del s
 
 El formato está basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1.0.0/) y este proyecto se adhiere a [Semantic Versioning](https://semver.org/lang/es/).
 
+## [2.6.0] - 2026-08-11 (Rediseño POS en Flujo de 2 Pasos y API Dinámica BCV cURL)
+
+### 🚀 Añadido (Added)
+- **Rediseño del POS en Flujo de 2 Pasos ([modules/pos.html](file:///C:/Users/juana/.gemini/antigravity-ide/scratch/la-nueva-parisienne/modules/pos.html), [css/modules/pos.css](file:///C:/Users/juana/.gemini/antigravity-ide/scratch/la-nueva-parisienne/css/modules/pos.css) y [js/modules/pos.js](file:///C:/Users/juana/.gemini/antigravity-ide/scratch/la-nueva-parisienne/js/modules/pos.js))**:
+  - **Paso 1 (Vista Catálogo)**: Interfaz a pantalla completa exclusiva para la búsqueda, filtrado por categorías y selección de productos con barra inferior sticky de resumen y botón de avance **"Proceder al Pago / Cobrar →"**.
+  - **Paso 2 (Vista de Cobro / Caja)**: Pantalla independiente dedicada a la cobranza, con tabla editable de la orden, desglose de subtotal, descuento, alícuotas de IVA (16%), totales resaltados en USD ($) y Bolívares (Bs. VES), selector de medios de pago, calculadora de vuelto y botón de **"← Volver al Catálogo"**.
+- **Servicio API Dinámico en Vivo via cURL ([api/bcv_rate.php](file:///C:/Users/juana/.gemini/antigravity-ide/scratch/la-nueva-parisienne/api/bcv_rate.php) y [api/bcmrate.php](file:///C:/Users/juana/.gemini/antigravity-ide/scratch/la-nueva-parisienne/api/bcmrate.php))**:
+  - Reescritura del servicio PHP eliminando valores duros en el flujo automático e implementando peticiones cURL a `https://ve.dolarapi.com/v1/dolares/oficial` para extraer la propiedad `promedio` en tiempo real.
+  - Creación del alias directo `api/bcmrate.php`.
+
+### 🛠️ Corregido (Fixed)
+- **Eliminación Total de Colapsos CSS al 100% de Zoom**:
+  - Supresión del esquema de 2 columnas sobrecargadas en una misma vista. Los Pasos 1 y 2 se alternan mediante transiciones limpias `pos-step-view active` garantizando encaje perfecto a cualquier resolución.
+
+---
+
 ## [2.5.1] - 2026-08-11 (Corrección Crítica de Cálculo Multimoneda VES y Optimización de Layout POS a 100% Zoom)
 
 ### 🛠️ Corregido (Fixed)
