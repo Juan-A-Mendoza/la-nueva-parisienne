@@ -53,72 +53,95 @@ document.addEventListener('DOMContentLoaded', () => {
     if (marginVal) marginVal.textContent = `${DASHBOARD_KPIS.profitMargin}%`;
   }
 
-  // ==========================================================================
-  // REQUERIMIENTOS 1 Y 2: CONTROL DE TASA CAMBIARIA CON LOCALSTORAGE (MÓDULO 4)
-  // ==========================================================================
-  const dashModoAuto = document.getElementById('dashModoAuto');
-  const dashModoManual = document.getElementById('dashModoManual');
-  const dashLblAuto = document.getElementById('dashLblAuto');
-  const dashLblManual = document.getElementById('dashLblManual');
-  const dashTasaGroup = document.getElementById('dashTasaGroup');
-  const dashTasaInput = document.getElementById('dashTasaInput');
-  const dashLockTag = document.getElementById('dashLockTag');
-  const btnSaveDashRate = document.getElementById('btnSaveDashRate');
-  const kpiBcvRateVal = document.getElementById('kpiBcvRateVal');
-  const kpiBcvSource = document.getElementById('kpiBcvSource');
-
-  // 1. Desbloqueo del Input (Módulo 4)
-  function applyTasaModeUI(modo) {
-    const isManual = (modo === 'manual');
-
-    if (dashLblAuto) dashLblAuto.style.borderColor = isManual ? 'var(--border-subtle)' : 'var(--color-success)';
-    if (dashLblManual) dashLblManual.style.borderColor = isManual ? 'var(--color-success)' : 'var(--border-subtle)';
-
-    if (dashTasaInput) {
-      if (isManual) {
-        dashTasaInput.disabled = false;
-        dashTasaInput.style.background = '#FFFFFF';
-        dashTasaInput.style.opacity = '1';
-        dashTasaInput.style.cursor = 'text';
-        if (dashTasaGroup) dashTasaGroup.style.opacity = '1';
-        if (dashLockTag) {
-          dashLockTag.textContent = '🔓 (Desbloqueado para Edición)';
-          dashLockTag.style.color = 'var(--color-success)';
-        }
-        try { dashTasaInput.focus(); } catch (e) {}
-      } else {
-        dashTasaInput.disabled = true;
-        dashTasaInput.style.background = '#F5F5F5';
-        dashTasaInput.style.opacity = '0.6';
-        dashTasaInput.style.cursor = 'not-allowed';
-        if (dashTasaGroup) dashTasaGroup.style.opacity = '0.6';
-        if (dashLockTag) {
-          dashLockTag.textContent = '🔒 (Bloqueado en Modo Auto)';
-          dashLockTag.style.color = 'var(--color-muted)';
-        }
+  function updateBcvKpiUI(data) {
+    if (!data) return;
+    if (kpiBcvRateVal && data.rate) {
+      kpiBcvRateVal.textContent = `Bs. ${parseFloat(data.rate).toFixed(2)}`;
+    }
+    // Solo sincronizar estado inicial si el usuario no ha seleccionado manual en la sesión actual
+    if (!radioManual?.checked) {
+      const isManualLocal = localStorage.getItem('modoTasa') === 'manual';
+      if (isManualLocal && radioManual) {
+        radioManual.checked = true;
+        actualizarVistaTasa();
       }
     }
   }
 
-  // EventListener para Radio Buttons (Automático / Manual)
-  document.querySelectorAll('input[name="dashModoTasaRadio"]').forEach(radio => {
-    radio.addEventListener('change', (e) => {
-      const modo = e.target.value;
-      if (modo === 'manual') {
-        applyTasaModeUI('manual');
-      } else {
-        applyTasaModeUI('auto');
-        fetchLiveApiRate();
-      }
-    });
-  });
+  // ==========================================================================
+  // BLOQUE DE REESCRITURA CON IDs EXACTOS REQUERIDOS
+  // ==========================================================================
+  const radioAuto = document.getElementById('radio_auto');
+  const radioManual = document.getElementById('radio_manual');
+  const inputTasa = document.getElementById('input_tasa_manual');
+  const labelCandado = document.getElementById('label_candado');
+  const textoEstado = document.getElementById('texto_estado_tasa');
+  const btnSaveDashRate = document.getElementById('btnSaveDashRate');
+  const kpiBcvRateVal = document.getElementById('kpiBcvRateVal');
 
-  // 2. Guardado Global (Botón Aplicar)
+  function actualizarVistaTasa() {
+    const dashLblAuto = document.getElementById('dashLblAuto');
+    const dashLblManual = document.getElementById('dashLblManual');
+
+    if (radioManual && radioManual.checked) {
+      if (dashLblAuto) dashLblAuto.style.borderColor = 'var(--border-subtle)';
+      if (dashLblManual) dashLblManual.style.borderColor = 'var(--color-success)';
+
+      if (inputTasa) {
+        inputTasa.removeAttribute('disabled');
+        inputTasa.removeAttribute('readonly');
+        inputTasa.style.pointerEvents = 'auto';
+        inputTasa.style.opacity = '1';
+        inputTasa.style.cursor = 'text';
+        inputTasa.style.background = '#FFFFFF';
+        try { inputTasa.focus(); inputTasa.select(); } catch (e) {}
+      }
+      if (labelCandado) labelCandado.innerHTML = '✏️ (Modo Edición)';
+      if (textoEstado) textoEstado.innerHTML = '• Tasa: Manual (Editada)';
+    } else {
+      if (dashLblAuto) dashLblAuto.style.borderColor = 'var(--color-success)';
+      if (dashLblManual) dashLblManual.style.borderColor = 'var(--border-subtle)';
+
+      if (inputTasa) {
+        inputTasa.setAttribute('disabled', 'true');
+        inputTasa.style.opacity = '0.5';
+        inputTasa.style.cursor = 'not-allowed';
+        inputTasa.style.background = '#F5F5F5';
+      }
+      if (labelCandado) labelCandado.innerHTML = '🔒 (Bloqueado en Modo Auto)';
+      if (textoEstado) textoEstado.innerHTML = '• Tasa: Automática (En Vivo)';
+      fetchLiveApiRate();
+    }
+  }
+
+  // Escuchar los clics
+  if (radioAuto && radioManual) {
+    radioAuto.addEventListener('change', actualizarVistaTasa);
+    radioManual.addEventListener('change', actualizarVistaTasa);
+  }
+
+  // También escuchar clics en las etiquetas contenedoras de los radios
+  const dashLblAuto = document.getElementById('dashLblAuto');
+  const dashLblManual = document.getElementById('dashLblManual');
+  if (dashLblAuto) {
+    dashLblAuto.addEventListener('click', () => {
+      if (radioAuto) radioAuto.checked = true;
+      actualizarVistaTasa();
+    });
+  }
+  if (dashLblManual) {
+    dashLblManual.addEventListener('click', () => {
+      if (radioManual) radioManual.checked = true;
+      actualizarVistaTasa();
+    });
+  }
+
+  // Guardado Global (Botón Aplicar)
   if (btnSaveDashRate) {
     btnSaveDashRate.addEventListener('click', async () => {
-      const isManual = dashModoManual && dashModoManual.checked;
+      const isManual = radioManual && radioManual.checked;
       const modoSeleccionado = isManual ? 'manual' : 'auto';
-      const valorIngresado = dashTasaInput ? parseFloat(dashTasaInput.value) || 0 : 0;
+      const valorIngresado = inputTasa ? parseFloat(inputTasa.value) || 0 : 0;
 
       if (isManual && valorIngresado <= 0) {
         alert('⚠️ Por favor ingrese un monto en Bolívares válido mayor a 0.00.');
@@ -129,14 +152,14 @@ document.addEventListener('DOMContentLoaded', () => {
       btnSaveDashRate.textContent = '⏳ Aplicando...';
 
       let rateToApply = valorIngresado;
-      let sourceLabel = "Tasa: Manual (Editada)";
+      let sourceLabel = "• Tasa: Manual (Editada)";
 
       if (modoSeleccionado === 'auto') {
         rateToApply = await fetchLiveApiRate();
-        sourceLabel = "Tasa: Automática (En Vivo)";
+        sourceLabel = "• Tasa: Automática (En Vivo)";
       }
 
-      // Guardar en localStorage
+      // Guardar dos variables en el navegador (localStorage)
       localStorage.setItem('modoTasa', modoSeleccionado);
       localStorage.setItem('tasaManual', rateToApply.toString());
 
@@ -156,9 +179,8 @@ document.addEventListener('DOMContentLoaded', () => {
       if (kpiBcvRateVal) {
         kpiBcvRateVal.textContent = `Bs. ${rateToApply.toFixed(2)}`;
       }
-      if (kpiBcvSource) {
-        kpiBcvSource.textContent = `● ${sourceLabel}`;
-        kpiBcvSource.className = isManual ? 'growth-badge warning' : 'growth-badge positive';
+      if (textoEstado) {
+        textoEstado.innerHTML = sourceLabel;
       }
 
       // Sincronizar en tiempo real con Módulo 3 POS y otras pestañas
@@ -182,8 +204,8 @@ document.addEventListener('DOMContentLoaded', () => {
         if (apiRate && parseFloat(apiRate) > 0) {
           const val = parseFloat(apiRate);
           if (kpiBcvRateVal) kpiBcvRateVal.textContent = `Bs. ${val.toFixed(2)}`;
-          if (!dashModoManual?.checked && dashTasaInput) {
-            dashTasaInput.value = val.toFixed(2);
+          if (!radioManual?.checked && inputTasa) {
+            inputTasa.value = val.toFixed(2);
           }
           return val;
         }
@@ -192,24 +214,20 @@ document.addEventListener('DOMContentLoaded', () => {
     return parseFloat(localStorage.getItem('tasaManual')) || 761.21;
   }
 
-  // Inicializar estado guardado en Módulo 4
+  // Inicializar estado guardado al cargar
   function initDashboardRateState() {
     const modoGuardado = localStorage.getItem('modoTasa') || 'auto';
     const tasaGuardada = parseFloat(localStorage.getItem('tasaManual')) || 761.21;
 
-    if (dashTasaInput) dashTasaInput.value = tasaGuardada.toFixed(2);
+    if (inputTasa) inputTasa.value = tasaGuardada.toFixed(2);
 
     if (modoGuardado === 'manual') {
-      if (dashModoManual) dashModoManual.checked = true;
-      applyTasaModeUI('manual');
+      if (radioManual) radioManual.checked = true;
+      actualizarVistaTasa();
       if (kpiBcvRateVal) kpiBcvRateVal.textContent = `Bs. ${tasaGuardada.toFixed(2)}`;
-      if (kpiBcvSource) {
-        kpiBcvSource.textContent = '● Tasa: Manual (Editada)';
-        kpiBcvSource.className = 'growth-badge warning';
-      }
     } else {
-      if (dashModoAuto) dashModoAuto.checked = true;
-      applyTasaModeUI('auto');
+      if (radioAuto) radioAuto.checked = true;
+      actualizarVistaTasa();
       fetchLiveApiRate();
     }
   }

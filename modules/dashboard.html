@@ -124,31 +124,31 @@
           <!-- CONTROLES GERENCIALES INTERACTIVOS AUTO VS MANUAL -->
           <div style="margin-top: 0.75rem; padding-top: 0.65rem; border-top: 1px dashed rgba(46, 125, 50, 0.25);">
             <div style="display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 0.65rem;">
-              <!-- SELECTOR MODO -->
+              <!-- SELECTOR MODO CON INLINE ONCLICK EVENTS -->
               <div>
                 <label style="font-size: 0.72rem; font-weight: 800; color: var(--color-espresso); display: block; margin-bottom: 0.2rem;">
                   Modo Cambiario Gerencial:
                 </label>
                 <div style="display: flex; gap: 0.35rem;">
-                  <label id="dashLblAuto" style="display: flex; align-items: center; gap: 0.3rem; font-size: 0.78rem; font-weight: 700; cursor: pointer; padding: 0.3rem 0.65rem; background: #FFFFFF; border: 2px solid var(--color-success); border-radius: var(--radius-pill);">
-                    <input type="radio" name="dashModoTasaRadio" value="auto" id="dashModoAuto" checked>
+                  <label id="dashLblAuto" style="display: flex; align-items: center; gap: 0.3rem; font-size: 0.78rem; font-weight: 700; cursor: pointer; padding: 0.3rem 0.65rem; background: #FFFFFF; border: 2px solid var(--color-success); border-radius: var(--radius-pill);" onclick="document.getElementById('radio_auto').checked = true; document.getElementById('input_tasa_manual').disabled = true; document.getElementById('input_tasa_manual').style.opacity = '0.5'; document.getElementById('label_candado').innerText = '🔒 (Bloqueado)';">
+                    <input type="radio" id="radio_auto" name="modo_tasa" value="auto" onclick="document.getElementById('input_tasa_manual').disabled = true; document.getElementById('input_tasa_manual').style.opacity = '0.5'; document.getElementById('label_candado').innerText = '🔒 (Bloqueado)';" checked>
                     <span>🌐 Automático (API)</span>
                   </label>
-                  <label id="dashLblManual" style="display: flex; align-items: center; gap: 0.3rem; font-size: 0.78rem; font-weight: 700; cursor: pointer; padding: 0.3rem 0.65rem; background: #FFFFFF; border: 2px solid var(--border-subtle); border-radius: var(--radius-pill);">
-                    <input type="radio" name="dashModoTasaRadio" value="manual" id="dashModoManual">
+                  <label id="dashLblManual" style="display: flex; align-items: center; gap: 0.3rem; font-size: 0.78rem; font-weight: 700; cursor: pointer; padding: 0.3rem 0.65rem; background: #FFFFFF; border: 2px solid var(--border-subtle); border-radius: var(--radius-pill);" onclick="document.getElementById('radio_manual').checked = true; document.getElementById('input_tasa_manual').disabled = false; document.getElementById('input_tasa_manual').style.opacity = '1'; document.getElementById('label_candado').innerText = '✏️ (Modo Edición)'; document.getElementById('input_tasa_manual').focus();">
+                    <input type="radio" id="radio_manual" name="modo_tasa" value="manual" onclick="document.getElementById('input_tasa_manual').disabled = false; document.getElementById('input_tasa_manual').style.opacity = '1'; document.getElementById('label_candado').innerText = '✏️ (Modo Edición)'; document.getElementById('input_tasa_manual').focus();">
                     <span>✍️ Manual</span>
                   </label>
                 </div>
               </div>
 
               <!-- CAMPO NUMÉRICO TASA MANUAL Y BOTÓN APLICAR -->
-              <div id="dashTasaGroup" style="flex: 1; min-width: 180px; opacity: 0.6; transition: all 0.2s ease;">
-                <label for="dashTasaInput" style="font-size: 0.72rem; font-weight: 800; color: var(--color-espresso); display: block; margin-bottom: 0.2rem;">
+              <div id="dashTasaGroup" style="flex: 1; min-width: 180px; transition: all 0.2s ease;">
+                <label for="input_tasa_manual" style="font-size: 0.72rem; font-weight: 800; color: var(--color-espresso); display: block; margin-bottom: 0.2rem;">
                   Tasa Manual (Bs. / $1 USD):
-                  <span id="dashLockTag" style="font-size: 0.68rem; font-weight: 600; color: var(--color-muted);">🔒 (Bloqueado en Modo Auto)</span>
+                  <span id="label_candado" style="font-size: 0.68rem; font-weight: 600; color: var(--color-muted);">🔒 (Bloqueado en Modo Auto)</span>
                 </label>
                 <div style="display: flex; gap: 0.35rem;">
-                  <input type="number" step="0.01" min="0.01" id="dashTasaInput" class="config-input" style="height: 34px; font-size: 0.95rem; font-weight: 800; color: var(--color-gold-dark); background: #F5F5F5; text-align: left; padding: 0.3rem 0.5rem; cursor: not-allowed;" placeholder="Ej. 766.86" disabled>
+                  <input type="number" step="0.01" min="0.01" id="input_tasa_manual" class="config-input" style="height: 34px; font-size: 0.95rem; font-weight: 800; color: var(--color-gold-dark); background: #FFFFFF; text-align: left; padding: 0.3rem 0.5rem;" placeholder="Ej. 766.86" disabled>
                   <button id="btnSaveDashRate" type="button" class="btn-save-config" style="height: 34px; padding: 0 0.75rem; font-size: 0.78rem; border-radius: var(--radius-sm); white-space: nowrap; cursor: pointer;">
                     <span>💾 Aplicar</span>
                   </button>
@@ -158,7 +158,7 @@
           </div>
 
           <div class="kpi-card-footer" style="margin-top: 0.65rem; padding-top: 0.4rem; border-top: 1px dotted rgba(46, 125, 50, 0.2);">
-            <span id="kpiBcvSource" class="growth-badge positive">● Tasa: Automática (En Vivo)</span>
+            <span id="texto_estado_tasa" class="growth-badge positive">• Tasa: Automática (En Vivo)</span>
             <span id="kpiBcvDate" class="growth-subtitle">Afecta a POS, Inventario y RRHH (Contabilidad congelada en fecha)</span>
           </div>
         </div>

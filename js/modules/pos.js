@@ -178,17 +178,16 @@ document.addEventListener('DOMContentLoaded', async () => {
   // REQUERIMIENTO 3: SINCRONIZACIÓN DE TASA CON CAJA USANDO LOCALSTORAGE (MÓDULO 3)
   // ==========================================================================
   async function resolveBcvRate() {
-    const modoTasa = localStorage.getItem('modoTasa');
-    const tasaManualStr = localStorage.getItem('tasaManual');
-
-    // 1. Si modoTasa es 'manual', usa el número guardado en localStorage.getItem('tasaManual')
-    if (modoTasa === 'manual' && tasaManualStr && parseFloat(tasaManualStr) > 0) {
-      const activeRate = parseFloat(tasaManualStr);
-      updatePosRateBadge(activeRate, 'Tasa: Manual (Editada)', true);
-      return activeRate;
+    // 1. Al cargar la página o calcular totales, primero pregunta si modoTasa es manual
+    if (localStorage.getItem('modoTasa') === 'manual') {
+      const tasaManualVal = parseFloat(localStorage.getItem('tasaManual'));
+      if (tasaManualVal && tasaManualVal > 0) {
+        updatePosRateBadge(tasaManualVal, 'Tasa: Manual (Editada)', true);
+        return tasaManualVal;
+      }
     }
 
-    // 2. Solo si es falso ('auto'), intenta conectarse a bcmrate.php o a la API oficial
+    // 2. Solo si es falso (auto), intenta conectarse a bcmrate.php o a la API oficial
     try {
       const res = await fetch('../api/bcmrate.php?t=' + Date.now());
       if (res.ok) {
@@ -215,7 +214,7 @@ document.addEventListener('DOMContentLoaded', async () => {
       }
     } catch (e) {}
 
-    const fallbackRate = parseFloat(tasaManualStr) || 761.21;
+    const fallbackRate = parseFloat(localStorage.getItem('tasaManual')) || 761.21;
     updatePosRateBadge(fallbackRate, 'Tasa: Resguardo', true);
     return fallbackRate;
   }

@@ -1,40 +1,33 @@
 /* ==========================================================================
    LA NUEVA PARISIENNE - CENTRAL BCV RATE STORE (BCV-RATE-STORE.JS)
    Gestor centralizado de la Tasa Oficial BCV / Multimoneda para todos los módulos.
-   Sincronización en tiempo real, difusión entre pestañas y refresco automático.
+   Sincronización en tiempo real con localStorage (modoTasa y tasaManual).
    ========================================================================== */
-
-const STORAGE_KEY_RATE = 'bcv_current_rate';
-const STORAGE_KEY_MODE = 'bcv_rate_mode';
-const STORAGE_KEY_SOURCE = 'bcv_rate_source';
-const STORAGE_KEY_DATE = 'bcv_rate_date';
 
 class BcvRateStoreManager {
   constructor() {
-    this.rate = parseFloat(localStorage.getItem(STORAGE_KEY_RATE)) || 761.21;
-    this.mode = localStorage.getItem(STORAGE_KEY_MODE) || 'auto';
-    this.source = localStorage.getItem(STORAGE_KEY_SOURCE) || 'BCV Oficial (En Vivo)';
-    this.date = localStorage.getItem(STORAGE_KEY_DATE) || '';
+    this.mode = localStorage.getItem('modoTasa') || 'auto';
+    this.rate = parseFloat(localStorage.getItem('tasaManual')) || 761.21;
+    this.source = this.mode === 'manual' ? 'Tasa: Manual (Editada)' : 'Tasa: Automática (En Vivo)';
+    this.date = '';
     this.listeners = [];
 
     // Escuchar actualizaciones entre pestañas en tiempo real (storage event)
     if (typeof window !== 'undefined') {
       window.addEventListener('storage', (e) => {
-        if (e.key === STORAGE_KEY_RATE || e.key === STORAGE_KEY_MODE) {
-          this.rate = parseFloat(localStorage.getItem(STORAGE_KEY_RATE)) || this.rate;
-          this.mode = localStorage.getItem(STORAGE_KEY_MODE) || this.mode;
-          this.source = localStorage.getItem(STORAGE_KEY_SOURCE) || this.source;
+        if (e.key === 'modoTasa' || e.key === 'tasaManual' || e.key === 'bcv_current_rate') {
+          this.mode = localStorage.getItem('modoTasa') || 'auto';
+          this.rate = parseFloat(localStorage.getItem('tasaManual')) || 761.21;
+          this.source = this.mode === 'manual' ? 'Tasa: Manual (Editada)' : 'Tasa: Automática (En Vivo)';
           this.notifyListeners();
         }
       });
 
       window.addEventListener('bcvRateChanged', (e) => {
-        if (e.detail) {
-          this.rate = e.detail.rate || this.rate;
-          this.mode = e.detail.mode || this.mode;
-          this.source = e.detail.source || this.source;
-          this.notifyListeners();
-        }
+        this.mode = localStorage.getItem('modoTasa') || (e.detail && e.detail.mode) || 'auto';
+        this.rate = parseFloat(localStorage.getItem('tasaManual')) || (e.detail && parseFloat(e.detail.rate)) || 761.21;
+        this.source = this.mode === 'manual' ? 'Tasa: Manual (Editada)' : 'Tasa: Automática (En Vivo)';
+        this.notifyListeners();
       });
     }
   }
@@ -69,56 +62,63 @@ class BcvRateStoreManager {
   }
 
   /**
-   * Consultar la tasa actual desde el backend PHP (/api/bcv_rate.php)
-   * @param {Boolean} forceRefresh Forzar bypass de caché
+   * Consultar la tasa actual respetando localStorage (modoTasa y tasaManual)
+   * @param {Boolean} forceRefresh Forzar bypass de caché si es modo auto
    */
   async fetchRate(forceRefresh = false) {
+    // Requerimiento 3: Si el modo en localStorage es 'manual', no llamar a API
+    if (localStorage.getItem('modoTasa') === 'manual') {
+      const manualVal = parseFloat(localStorage.getItem('tasaManual'));
+      if (manualVal && manualVal > 0) {
+        this.mode = 'manual';
+        this.rate = manualVal;
+        this.source = 'Tasa: Manual (Editada)';
+        this.notifyListeners();
+        return { success: true, rate: this.rate, mode: this.mode, source: this.source };
+      }
+    }
+
     try {
-      const url = `../api/bcv_rate.php?t=${Date.now()}${forceRefresh ? '&refresh=1' : ''}`;
+      const url = `../api/bcmrate.php?t=${Date.now()}${forceRefresh ? '&refresh=1' : ''}`;
       const res = await fetch(url, { cache: 'no-store' });
       
       if (res.ok) {
         const data = await res.json();
-        if (data.success && data.rate && parseFloat(data.rate) > 0) {
-          this.rate = parseFloat(data.rate);
-          this.mode = data.mode || 'auto';
-          this.source = data.source || 'BCV Oficial';
-          this.date = data.date || '';
+        const apiRate = data.rate || data.promedio;
+        if (apiRate && parseFloat(apiRate) > 0) {
+          this.rate = parseFloat(apiRate);
+          this.mode = 'auto';
+          this.source = 'Tasa: Automática (En Vivo)';
 
-          // Persistir estado local
-          localStorage.setItem(STORAGE_KEY_RATE, this.rate.toString());
-          localStorage.setItem(STORAGE_KEY_MODE, this.mode);
-          localStorage.setItem(STORAGE_KEY_SOURCE, this.source);
-          localStorage.setItem(STORAGE_KEY_DATE, this.date);
+          localStorage.setItem('modoTasa', 'auto');
+          localStorage.setItem('tasaManual', this.rate.toString());
 
           this.notifyListeners();
-          return data;
+          return { success: true, rate: this.rate, mode: this.mode, source: this.source };
         }
       }
     } catch (e) {
-      console.warn('Error al consultar BcvRateStore desde API:', e);
+      console.warn('Error al consultar bcmrate.php:', e);
     }
 
     return {
       success: true,
       rate: this.rate,
       mode: this.mode,
-      source: this.source,
-      date: this.date
+      source: this.source
     };
   }
 
   /**
-   * Emitir evento global de cambio de tasa (llamado desde Módulo 9 al guardar)
+   * Emitir evento global de cambio de tasa al guardar
    */
   broadcastChange(newRate, newMode, newSource) {
     this.rate = parseFloat(newRate);
     this.mode = newMode;
     this.source = newSource;
 
-    localStorage.setItem(STORAGE_KEY_RATE, this.rate.toString());
-    localStorage.setItem(STORAGE_KEY_MODE, this.mode);
-    localStorage.setItem(STORAGE_KEY_SOURCE, this.source);
+    localStorage.setItem('modoTasa', this.mode);
+    localStorage.setItem('tasaManual', this.rate.toString());
 
     if (typeof window !== 'undefined') {
       window.dispatchEvent(new CustomEvent('bcvRateChanged', {
@@ -129,16 +129,10 @@ class BcvRateStoreManager {
     this.notifyListeners();
   }
 
-  /**
-   * Convertir dólares ($ USD) a Bolívares (Bs. VES)
-   */
   convertUsdToves(usdAmount) {
     return (parseFloat(usdAmount) || 0) * this.rate;
   }
 
-  /**
-   * Formatear monto en Bolívares con símbolo Bs.
-   */
   formatVes(usdAmount) {
     const vesVal = this.convertUsdToves(usdAmount);
     return `Bs. ${vesVal.toLocaleString('es-VE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
@@ -146,3 +140,4 @@ class BcvRateStoreManager {
 }
 
 export const BcvRateStore = new BcvRateStoreManager();
+

@@ -4,6 +4,47 @@ Todos los cambios significativos, nuevas funcionalidades y actualizaciones del s
 
 El formato está basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1.0.0/) y este proyecto se adhiere a [Semantic Versioning](https://semver.org/lang/es/).
 
+## [3.9.4] - 2026-08-13 (Eventos Inline Onclick Directos en HTML para Control de Tasa en Módulo 4)
+
+### 🛠️ Corregido (Fixed)
+- **Implementación Estricta de Inline Events (`onclick`) ([modules/dashboard.html](file:///C:/Users/juana/.gemini/antigravity-ide/scratch/la-nueva-parisienne/modules/dashboard.html))**:
+  - Inclusión directa en el HTML de las instrucciones `onclick` en los radio buttons `#radio_auto` y `#radio_manual`, así como en sus etiquetas contenedoras.
+  - Al hacer clic en Manual, fuerza inmediatamente `disabled = false`, `style.opacity = '1'`, `label_candado.innerText = '✏️ (Modo Edición)'` y `input_tasa_manual.focus()`.
+  - Al hacer clic en Automático, fuerza `disabled = true`, `style.opacity = '0.5'` y `label_candado.innerText = '🔒 (Bloqueado)'`.
+
+---
+
+## [3.9.3] - 2026-08-13 (Solución Definitiva al Conflicto Asíncrono y Actualización Visual de Pills)
+
+### 🛠️ Corregido (Fixed)
+- **Aislamiento de Sobrescritura Asíncrona ([js/modules/dashboard.js](file:///C:/Users/juana/.gemini/antigravity-ide/scratch/la-nueva-parisienne/js/modules/dashboard.js))**:
+  - Protección en `updateBcvKpiUI` para impedir que los datos en segundo plano reseteen el radio button a Automático ni vuelvan a bloquear el input mientras el usuario tiene seleccionado el modo Manual.
+- **Sincronización de Bordes Visuales (Pills)**:
+  - `actualizarVistaTasa()` conmuta inmediatamente el borde verde activo (`border: 2px solid var(--color-success)`) hacia la píldora de Manual y deja en gris la de Automático.
+  - Habilitación inmediata del campo `#input_tasa_manual` (`opacity = 1`, `disabled = false`, `readonly = false`), texto `✏️ (Modo Edición)`, badge `• Tasa: Manual (Editada)` y foco con selección de texto automática.
+
+---
+
+## [3.9.2] - 2026-08-13 (Corrección del Error de Declaración Duplicada y ReferenceError en Dashboard)
+
+### 🛠️ Corregido (Fixed)
+- **Eliminación del SyntaxError de Duplicidad ([js/modules/dashboard.js](file:///C:/Users/juana/.gemini/antigravity-ide/scratch/la-nueva-parisienne/js/modules/dashboard.js))**:
+  - Eliminación de la declaración duplicada de constantes al final del archivo que provocaba un `Uncaught SyntaxError` e interrumpía la ejecución del script.
+- **Definición de `updateBcvKpiUI` ([js/modules/dashboard.js](file:///C:/Users/juana/.gemini/antigravity-ide/scratch/la-nueva-parisienne/js/modules/dashboard.js))**:
+  - Incorporación limpia de la función `updateBcvKpiUI(data)` para evitar el `ReferenceError` al recibir eventos de la suscripción del store.
+
+---
+
+## [3.9.1] - 2026-08-13 (Vinculación de IDs Exactos y Bloque de JavaScript para Control de Tasa)
+
+### 🛠️ Corregido (Fixed)
+- **Implementación de IDs Estandarizados ([modules/dashboard.html](file:///C:/Users/juana/.gemini/antigravity-ide/scratch/la-nueva-parisienne/modules/dashboard.html) y [modules/configuraciones.html](file:///C:/Users/juana/.gemini/antigravity-ide/scratch/la-nueva-parisienne/modules/configuraciones.html))**:
+  - Incorporación estricta de los IDs requeridos: `radio_auto`, `radio_manual`, `input_tasa_manual`, `label_candado` y `texto_estado_tasa`.
+- **Bloque de Eventos e Interactividad ([js/modules/dashboard.js](file:///C:/Users/juana/.gemini/antigravity-ide/scratch/la-nueva-parisienne/js/modules/dashboard.js) y [js/modules/configuraciones.js](file:///C:/Users/juana/.gemini/antigravity-ide/scratch/la-nueva-parisienne/js/modules/configuraciones.js))**:
+  - Inclusión del bloque `actualizarVistaTasa()` con remoción explícita de `disabled` y `readonly`, actualización de textos de estado y foco automático al conmutar a Manual.
+
+---
+
 ## [3.9.0] - 2026-08-13 (Reescritura del Control Cambiario con LocalStorage e Integración Estricta Módulo 4 & Módulo 3)
 
 ### 🚀 Añadido (Added)

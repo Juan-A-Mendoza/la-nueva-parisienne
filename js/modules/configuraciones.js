@@ -202,4 +202,39 @@ document.addEventListener('DOMContentLoaded', async () => {
       }, 5000);
     }
   }
+
+  // ==========================================================================
+  // BLOQUE EXACTO DE JAVASCRIPT SOLICITADO PARA CONTROL DE VISTA DE TASA
+  // ==========================================================================
+  const radioAutoConfig = document.getElementById('radio_auto');
+  const radioManualConfig = document.getElementById('radio_manual');
+  const inputTasaConfig = document.getElementById('input_tasa_manual');
+  const labelCandadoConfig = document.getElementById('label_candado');
+  const textoEstadoConfig = document.getElementById('texto_estado_tasa');
+
+  function actualizarVistaTasaConfig() {
+      if (radioManualConfig && radioManualConfig.checked) {
+          if (inputTasaConfig) {
+              inputTasaConfig.removeAttribute('disabled');
+              inputTasaConfig.removeAttribute('readonly');
+              inputTasaConfig.style.pointerEvents = 'auto';
+              inputTasaConfig.style.opacity = '1';
+              try { inputTasaConfig.focus(); } catch (e) {}
+          }
+          if (labelCandadoConfig) labelCandadoConfig.innerHTML = '✏️ (Modo Edición)';
+          if (textoEstadoConfig) textoEstadoConfig.innerHTML = '• Tasa: Manual (Editada)';
+      } else if (radioAutoConfig) {
+          if (inputTasaConfig) {
+              inputTasaConfig.setAttribute('disabled', 'true');
+              inputTasaConfig.style.opacity = '0.5';
+          }
+          if (labelCandadoConfig) labelCandadoConfig.innerHTML = '🔒 (Bloqueado en Modo Auto)';
+          if (textoEstadoConfig) textoEstadoConfig.innerHTML = '• Tasa: Automática (En Vivo)';
+      }
+  }
+
+  if (radioAutoConfig && radioManualConfig) {
+      radioAutoConfig.addEventListener('change', actualizarVistaTasaConfig);
+      radioManualConfig.addEventListener('change', actualizarVistaTasaConfig);
+  }
 });
