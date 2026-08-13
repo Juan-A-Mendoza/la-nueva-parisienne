@@ -4,6 +4,16 @@ Todos los cambios significativos, nuevas funcionalidades y actualizaciones del s
 
 El formato está basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1.0.0/) y este proyecto se adhiere a [Semantic Versioning](https://semver.org/lang/es/).
 
+## [3.6.0] - 2026-08-13 (Selector de Banco Emisor con Código Bancario en Pago Móvil / QR)
+
+### 🚀 Añadido (Added)
+- **Selector de Banco Emisor en Pago Móvil / QR ([modules/pos.html](file:///C:/Users/juana/.gemini/antigravity-ide/scratch/la-nueva-parisienne/modules/pos.html) y [js/modules/pos.js](file:///C:/Users/juana/.gemini/antigravity-ide/scratch/la-nueva-parisienne/js/modules/pos.js))**:
+  - Incorporación del selector desplegable **"Banco Emisor / Origen"** en el panel de **Pago Móvil / QR** del Paso 2 de cobro.
+  - Inclusión de las instituciones bancarias venezolanas con su código bancario oficial de 4 dígitos (ej: `0134 - Banesco`, `0102 - Banco de Venezuela`, `0108 - Banco Provincial`, `0105 - Banco Mercantil`, etc.).
+  - Registro de la clave `bank_name` en la orden de venta e impresión dinámica en el ticket térmico de 80mm (`Banco Emisor: 0134 - Banesco | Ref: 982401`).
+
+---
+
 ## [3.5.0] - 2026-08-12 (Integración cURL ve.dolarapi.com, Interfaz Módulo 9 Tasa Manual/Auto y Persistencia MySQL)
 
 ### 🚀 Añadido (Added)

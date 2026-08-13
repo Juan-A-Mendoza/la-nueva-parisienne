@@ -99,6 +99,8 @@ document.addEventListener('DOMContentLoaded', async () => {
   const cardTotalUsdVal = document.getElementById('cardTotalUsdVal');
   const cardTotalVesVal = document.getElementById('cardTotalVesVal');
   const cardTransferMsg = document.getElementById('cardTransferMsg');
+  const bankSelectGroup = document.getElementById('bankSelectGroup');
+  const bankSelect = document.getElementById('bankSelect');
   const referenceInput = document.getElementById('referenceInput');
   const btnCompleteSale = document.getElementById('btnCompleteSale');
   const cashCalculatorPanel = document.getElementById('cashCalculatorPanel');
@@ -550,6 +552,9 @@ document.addEventListener('DOMContentLoaded', async () => {
       } else {
         if (cashCalculatorPanel) cashCalculatorPanel.style.display = 'none';
         if (cardTransferPanel) cardTransferPanel.style.display = 'block';
+        if (bankSelectGroup) {
+          bankSelectGroup.style.display = selectedPaymentMethod === 'transferencia' ? 'flex' : 'none';
+        }
         if (cardTransferMsg) {
           if (selectedPaymentMethod === 'tarjeta') {
             cardTransferMsg.textContent = '💳 Pase o inserte la tarjeta en el terminal de punto de venta por el monto exacto.';
@@ -696,6 +701,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
       const clientName = (clientNameInput && clientNameInput.value.trim()) ? clientNameInput.value.trim() : 'Consumidor Final';
       const clientRif = (clientRifInput && clientRifInput.value.trim()) ? clientRifInput.value.trim() : 'V-00000000-0';
+      const bankName = (bankSelect && bankSelect.value.trim()) ? bankSelect.value.trim() : '';
 
       const salePayload = {
         order_number: `FAC-2026-${orderCounter}`,
@@ -703,6 +709,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         client_rif: clientRif,
         order_type: currentOrderType,
         payment_method: selectedPaymentMethod,
+        bank_name: bankName,
         discount_percent: currentDiscountPercent,
         subtotal: rawSubtotal,
         discount: discountVal,
@@ -876,12 +883,13 @@ document.addEventListener('DOMContentLoaded', async () => {
 
         <!-- INFORMACIÓN DE PAGO Y VUELTO -->
         <div style="font-size: 9px; margin-top: 3px;">
-          <div><strong>MEDIO DE PAGO:</strong> ${(saleData.payment_method || 'EFECTIVO').toUpperCase()}</div>
+          <div><strong>MEDIO DE PAGO:</strong> ${(saleData.payment_method === 'transferencia' ? 'PAGO MÓVIL / QR' : (saleData.payment_method || 'EFECTIVO')).toUpperCase()}</div>
           ${saleData.payment_method === 'efectivo' ? `
             <div>Monto Recibido ($): $${saleData.tender_amount.toFixed(2)}</div>
             <div>Vuelto Entregado ($): $${saleData.change_due.toFixed(2)} (Bs. ${(saleData.change_due * saleData.bcv_rate).toLocaleString('es-VE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })})</div>
           ` : `
-            <div>Ref. Operación: ${saleData.reference_code || 'N/A'}</div>
+            ${saleData.bank_name ? `<div><strong>BANCO EMISOR:</strong> ${saleData.bank_name}</div>` : ''}
+            <div><strong>REF. OPERACIÓN:</strong> ${saleData.reference_code || 'N/A'}</div>
           `}
         </div>
 
@@ -933,6 +941,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     currentCategory = 'todos';
     if (tenderInput) tenderInput.value = '0.00';
     if (referenceInput) referenceInput.value = '';
+    if (bankSelect) bankSelect.value = '';
     if (clientNameInput) clientNameInput.value = '';
     if (clientRifInput) clientRifInput.value = '';
     if (discountSelect) discountSelect.value = '0';

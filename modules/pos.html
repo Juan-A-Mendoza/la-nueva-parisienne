@@ -303,9 +303,39 @@
               <p id="cardTransferMsg" style="font-size: 0.85rem; font-weight: 600; color: var(--color-espresso); margin-bottom: 0.65rem;">
                 💳 Pase o inserte la tarjeta en el terminal de punto de venta por el monto exacto.
               </p>
-              <div style="display: flex; flex-direction: column; gap: 0.35rem; text-align: left;">
-                <label for="referenceInput" style="font-size: 0.82rem; font-weight: 700; color: var(--color-espresso);">Número de Referencia / Aprobación:</label>
-                <input type="text" id="referenceInput" class="tender-input" style="width: 100%; text-align: left; font-size: 0.95rem; background: #FFFFFF;" placeholder="Ej. REF-982401" autocomplete="off">
+
+              <div style="display: flex; flex-direction: column; gap: 0.5rem;">
+                <!-- SELECCIÓN DE BANCO EMISOR CON CÓDIGO BANCARIO DE 4 DÍGITOS -->
+                <div id="bankSelectGroup" style="display: flex; flex-direction: column; gap: 0.2rem; text-align: left;">
+                  <label for="bankSelect" style="font-size: 0.82rem; font-weight: 700; color: var(--color-espresso);">Banco Emisor / Origen (Código - Nombre):</label>
+                  <select id="bankSelect" class="tender-input" style="width: 100%; text-align: left; font-size: 0.85rem; height: 38px; background: #FFFFFF; cursor: pointer;">
+                    <option value="">-- Seleccionar Banco --</option>
+                    <option value="0102 - Banco de Venezuela">0102 - Banco de Venezuela</option>
+                    <option value="0105 - Banco Mercantil">0105 - Banco Mercantil</option>
+                    <option value="0108 - Banco Provincial">0108 - Banco Provincial</option>
+                    <option value="0134 - Banesco">0134 - Banesco</option>
+                    <option value="0114 - Bancamiga">0114 - Bancamiga</option>
+                    <option value="0151 - BNC Banco Nacional de Crédito">0151 - BNC Banco Nacional de Crédito</option>
+                    <option value="0163 - Banco del Tesoro">0163 - Banco del Tesoro</option>
+                    <option value="0175 - Banco Bicentenario">0175 - Banco Bicentenario</option>
+                    <option value="0174 - Banplus">0174 - Banplus</option>
+                    <option value="0115 - Banco Exterior">0115 - Banco Exterior</option>
+                    <option value="0128 - Banco Caroní">0128 - Banco Caroní</option>
+                    <option value="0138 - Banco Plaza">0138 - Banco Plaza</option>
+                    <option value="0156 - 100% Banco">0156 - 100% Banco</option>
+                    <option value="0157 - DelSur Banco Universal">0157 - DelSur Banco Universal</option>
+                    <option value="0168 - Bancrecer">0168 - Bancrecer</option>
+                    <option value="0169 - Mi Banco">0169 - Mi Banco</option>
+                    <option value="0171 - Banco Activo">0171 - Banco Activo</option>
+                    <option value="0177 - BANFANB">0177 - BANFANB</option>
+                  </select>
+                </div>
+
+                <!-- NÚMERO DE REFERENCIA DE OPERACIÓN / APROBACIÓN -->
+                <div style="display: flex; flex-direction: column; gap: 0.2rem; text-align: left;">
+                  <label for="referenceInput" style="font-size: 0.82rem; font-weight: 700; color: var(--color-espresso);">Número de Referencia / Aprobación:</label>
+                  <input type="text" id="referenceInput" class="tender-input" style="width: 100%; text-align: left; font-size: 0.95rem; background: #FFFFFF; height: 38px;" placeholder="Ej. REF-982401" autocomplete="off">
+                </div>
               </div>
             </div>
 
