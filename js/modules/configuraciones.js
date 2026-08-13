@@ -1,9 +1,11 @@
 /* ==========================================================================
    LA NUEVA PARISIENNE - CONTROLADOR MÓDULO 9 CONFIGURACIONES (CONFIGURACIONES.JS)
    Gestión de datos fiscales de la empresa y Tasa Cambiaria BCV / Multimoneda
+   Sincronización en vivo con bloqueo estricto Auto vs Manual
    ========================================================================== */
 
 import { SessionStore } from '../core/session-store.js';
+import { BcvRateStore } from '../core/bcv-rate-store.js';
 
 document.addEventListener('DOMContentLoaded', async () => {
   // 1. Verificar Sesión Activa
@@ -31,21 +33,49 @@ document.addEventListener('DOMContentLoaded', async () => {
   // Elementos de Tasa Cambiaria BCV / Multimoneda
   const modoTasaAuto = document.getElementById('modoTasaAuto');
   const modoTasaManual = document.getElementById('modoTasaManual');
+  const lblModoAuto = document.getElementById('lblModoAuto');
+  const lblModoManual = document.getElementById('lblModoManual');
   const tasaManualGroup = document.getElementById('tasaManualGroup');
   const tasaManualInput = document.getElementById('tasaManualInput');
+  const lockStatusTag = document.getElementById('lockStatusTag');
+  const previewRateVal = document.getElementById('previewRateVal');
+  const previewRateSource = document.getElementById('previewRateSource');
 
-  // Manejador del Toggle Switch / Radio Selector de Modo de Tasa
-  function updateTasaUiMode(isManual) {
+  // Manejador del Toggle Switch / Radio Selector de Modo de Tasa con Bloqueo Estricto
+  async function updateTasaUiMode(isManual) {
+    if (lblModoAuto) lblModoAuto.style.borderColor = isManual ? 'var(--border-subtle)' : 'var(--color-gold)';
+    if (lblModoManual) lblModoManual.style.borderColor = isManual ? 'var(--color-gold)' : 'var(--border-subtle)';
+
     if (tasaManualGroup && tasaManualInput) {
       if (isManual) {
+        // DESBLOQUEAR MODO MANUAL
         tasaManualGroup.style.opacity = '1';
         tasaManualGroup.style.pointerEvents = 'auto';
         tasaManualInput.disabled = false;
-        tasaManualInput.focus();
+        if (lockStatusTag) {
+          lockStatusTag.textContent = '🔓 (Desbloqueado para Edición)';
+          lockStatusTag.style.color = 'var(--color-success)';
+        }
+        
+        const manualRateVal = parseFloat(tasaManualInput.value) || 761.21;
+        if (previewRateVal) previewRateVal.textContent = `Bs. ${manualRateVal.toFixed(2)}`;
+        if (previewRateSource) previewRateSource.textContent = 'Origen: Tasa Manual Gerencial';
       } else {
-        tasaManualGroup.style.opacity = '0.5';
+        // BLOQUEAR EN MODO AUTOMÁTICO (API BCV EN VIVO)
+        tasaManualGroup.style.opacity = '0.35';
         tasaManualGroup.style.pointerEvents = 'none';
         tasaManualInput.disabled = true;
+        if (lockStatusTag) {
+          lockStatusTag.textContent = '🔒 (Bloqueado en Modo Auto)';
+          lockStatusTag.style.color = 'var(--color-muted)';
+        }
+
+        // Consultar API en vivo para la vista previa
+        const apiData = await BcvRateStore.fetchRate(true);
+        if (apiData && apiData.rate) {
+          if (previewRateVal) previewRateVal.textContent = `Bs. ${apiData.rate.toFixed(2)}`;
+          if (previewRateSource) previewRateSource.textContent = `Origen: ${apiData.source || 'API BCV Oficial ve.dolarapi.com'}`;
+        }
       }
     }
   }
@@ -55,6 +85,15 @@ document.addEventListener('DOMContentLoaded', async () => {
       updateTasaUiMode(e.target.value === 'manual');
     });
   });
+
+  if (tasaManualInput) {
+    tasaManualInput.addEventListener('input', (e) => {
+      const val = parseFloat(e.target.value) || 0;
+      if (previewRateVal && modoTasaManual && modoTasaManual.checked) {
+        previewRateVal.textContent = `Bs. ${val.toFixed(2)}`;
+      }
+    });
+  }
 
   // 3. Cargar Datos Fiscales y Tasa Actuales al Iniciar
   await loadEmpresaData();
@@ -78,7 +117,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             tasaManualInput.value = parseFloat(data.empresa.tasa_manual).toFixed(2);
           }
           
-          updateTasaUiMode(isManual);
+          await updateTasaUiMode(isManual);
         }
       }
     } catch (e) {
@@ -120,11 +159,14 @@ document.addEventListener('DOMContentLoaded', async () => {
         const result = await res.json();
 
         if (res.ok && result.success) {
-          // Guardar respaldo cliente en localStorage
-          localStorage.setItem('bcv_rate_mode', selectedMode);
-          localStorage.setItem('bcv_manual_rate', manualVal.toString());
+          // Consultar la tasa activa del backend o difundir manual
+          const currentData = await BcvRateStore.fetchRate(true);
+          const activeRate = selectedMode === 'manual' ? manualVal : (currentData.rate || manualVal);
+          const activeSource = selectedMode === 'manual' ? 'Tasa Manual Gerencial' : 'BCV Oficial (ve.dolarapi.com - En Vivo)';
 
-          showStatus('✓ ¡Datos de la empresa y configuración de tasa cambiaria actualizados con éxito! El POS aplicará los cambios.', 'success');
+          BcvRateStore.broadcastChange(activeRate, selectedMode, activeSource);
+
+          showStatus('✓ ¡Configuración actualizada y transmitida exitosamente a todos los módulos del sistema en tiempo real!', 'success');
         } else {
           showStatus(`❌ Error al guardar: ${result.message || 'Error en el servidor.'}`, 'error');
         }

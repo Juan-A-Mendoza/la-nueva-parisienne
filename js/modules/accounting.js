@@ -61,6 +61,9 @@ document.addEventListener('DOMContentLoaded', () => {
       const card = document.createElement('div');
       card.className = 'voucher-card';
 
+      const rateHist = voucher.bcvRateHistorical || 761.21;
+      const totalDebeVes = voucher.totalDebe * rateHist;
+
       let detailsHtml = '';
       voucher.details.forEach(detail => {
         detailsHtml += `
@@ -81,7 +84,12 @@ document.addEventListener('DOMContentLoaded', () => {
               <span style="font-size: 0.8rem; color: var(--color-muted);">${voucher.date}</span>
             </div>
           </div>
-          <span class="voucher-source-tag">${voucher.sourceModule}</span>
+          <div style="display: flex; flex-direction: column; align-items: flex-end; gap: 0.2rem;">
+            <span class="voucher-source-tag">${voucher.sourceModule}</span>
+            <span style="font-size: 0.72rem; font-weight: 700; color: var(--color-gold-dark); background: rgba(212,155,84,0.12); padding: 0.2rem 0.5rem; border-radius: var(--radius-pill); border: 1px solid rgba(212,155,84,0.3);">
+              📌 Tasa Registrada del Día: Bs. ${rateHist.toFixed(2)} / USD
+            </span>
+          </div>
         </div>
 
         <table class="voucher-table">
@@ -98,7 +106,7 @@ document.addEventListener('DOMContentLoaded', () => {
         </table>
 
         <div style="display: flex; justify-content: space-between; align-items: center; background: var(--bg-main); padding: 0.6rem 1rem; border-radius: var(--radius-sm); font-size: 0.88rem;">
-          <span style="color: var(--color-success); font-weight: 700;">✓ Partida Doble Verificada (Debe = Haber)</span>
+          <span style="color: var(--color-success); font-weight: 700;">✓ Partida Doble Verificada (Equivalente Fiscal: Bs. ${totalDebeVes.toLocaleString('es-VE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })})</span>
           <strong>Total Asiento: $${voucher.totalDebe.toFixed(2)}</strong>
         </div>
       `;

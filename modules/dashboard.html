@@ -109,20 +109,57 @@
           </div>
         </div>
 
-        <!-- KPI TASA OFICIAL BANCO CENTRAL DE VENEZUELA (BCV) -->
-        <div class="dashboard-kpi-card" style="border: 2px solid rgba(46, 125, 50, 0.3); background: linear-gradient(135deg, rgba(255,255,255,1) 0%, rgba(46, 125, 50, 0.04) 100%);">
+        <!-- TARJETA CONTROL GERENCIAL: TASA OFICIAL BANCO CENTRAL DE VENEZUELA (BCV) -->
+        <div class="dashboard-kpi-card" style="grid-column: span 2; border: 2px solid rgba(46, 125, 50, 0.35); background: linear-gradient(135deg, #FFFFFF 0%, rgba(46, 125, 50, 0.05) 100%);">
           <div class="kpi-card-header" style="display: flex; justify-content: space-between; align-items: flex-start;">
             <div>
-              <span class="kpi-card-label" style="color: var(--color-success); font-weight: 700;">🇻🇪 Tasa Oficial BCV</span>
-              <div id="kpiBcvRateVal" class="kpi-card-value" style="color: var(--color-success); font-size: 1.8rem; margin-top: 0.25rem;">Bs. 761.21</div>
+              <span class="kpi-card-label" style="color: var(--color-success); font-weight: 800; font-size: 0.9rem;">🇻🇪 Tasa Oficial BCV / Multimoneda ($ USD ➔ Bs. VES)</span>
+              <div id="kpiBcvRateVal" class="kpi-card-value" style="color: var(--color-success); font-size: 2rem; margin-top: 0.15rem; font-weight: 800;">Bs. 761.21</div>
             </div>
-            <button id="btnRefreshBcvRate" type="button" class="btn-clear-cart" style="font-size: 0.78rem; padding: 0.35rem 0.65rem; border: 1px solid rgba(46, 125, 50, 0.3); color: var(--color-success); background: #FFFFFF; min-height: 36px; cursor: pointer;" title="Forzar actualización en tiempo real desde la API sin caché">
-              <span>🔄 Actualizar Tasa</span>
+            <button id="btnRefreshBcvRate" type="button" class="btn-clear-cart" style="font-size: 0.75rem; padding: 0.35rem 0.65rem; border: 1px solid rgba(46, 125, 50, 0.3); color: var(--color-success); background: #FFFFFF; min-height: 34px; cursor: pointer;" title="Forzar actualización desde la API en vivo">
+              <span>🔄 Refrescar API</span>
             </button>
           </div>
-          <div class="kpi-card-footer" style="margin-top: 0.85rem;">
-            <span id="kpiBcvSource" class="growth-badge positive">● Tasa: Automática</span>
-            <span id="kpiBcvDate" class="growth-subtitle">por $1.00 USD</span>
+
+          <!-- CONTROLES GERENCIALES INTERACTIVOS AUTO VS MANUAL -->
+          <div style="margin-top: 0.75rem; padding-top: 0.65rem; border-top: 1px dashed rgba(46, 125, 50, 0.25);">
+            <div style="display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 0.65rem;">
+              <!-- SELECTOR MODO -->
+              <div>
+                <label style="font-size: 0.72rem; font-weight: 800; color: var(--color-espresso); display: block; margin-bottom: 0.2rem;">
+                  Modo Cambiario Gerencial:
+                </label>
+                <div style="display: flex; gap: 0.35rem;">
+                  <label id="dashLblAuto" style="display: flex; align-items: center; gap: 0.3rem; font-size: 0.78rem; font-weight: 700; cursor: pointer; padding: 0.3rem 0.65rem; background: #FFFFFF; border: 2px solid var(--color-success); border-radius: var(--radius-pill);">
+                    <input type="radio" name="dashModoTasaRadio" value="auto" id="dashModoAuto" checked>
+                    <span>🌐 Automático (API)</span>
+                  </label>
+                  <label id="dashLblManual" style="display: flex; align-items: center; gap: 0.3rem; font-size: 0.78rem; font-weight: 700; cursor: pointer; padding: 0.3rem 0.65rem; background: #FFFFFF; border: 2px solid var(--border-subtle); border-radius: var(--radius-pill);">
+                    <input type="radio" name="dashModoTasaRadio" value="manual" id="dashModoManual">
+                    <span>✍️ Manual</span>
+                  </label>
+                </div>
+              </div>
+
+              <!-- CAMPO NUMÉRICO TASA MANUAL CON BLOQUEO ESTRICTO -->
+              <div id="dashTasaGroup" style="flex: 1; min-width: 180px; opacity: 0.4; pointer-events: none; transition: all 0.2s ease;">
+                <label for="dashTasaInput" style="font-size: 0.72rem; font-weight: 800; color: var(--color-espresso); display: block; margin-bottom: 0.2rem;">
+                  Tasa Manual (Bs. / $1 USD):
+                  <span id="dashLockTag" style="font-size: 0.68rem; font-weight: 600; color: var(--color-muted);">🔒 (Bloqueado)</span>
+                </label>
+                <div style="display: flex; gap: 0.35rem;">
+                  <input type="number" step="0.01" min="100" id="dashTasaInput" class="config-input" style="height: 34px; font-size: 0.95rem; font-weight: 800; color: var(--color-gold-dark); background: #FFFFFF; text-align: left; padding: 0.3rem 0.5rem;" placeholder="761.21" disabled>
+                  <button id="btnSaveDashRate" type="button" class="btn-save-config" style="height: 34px; padding: 0 0.75rem; font-size: 0.78rem; border-radius: var(--radius-sm); white-space: nowrap;">
+                    <span>💾 Aplicar</span>
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="kpi-card-footer" style="margin-top: 0.65rem; padding-top: 0.4rem; border-top: 1px dotted rgba(46, 125, 50, 0.2);">
+            <span id="kpiBcvSource" class="growth-badge positive">● Tasa: Automática (En Vivo)</span>
+            <span id="kpiBcvDate" class="growth-subtitle">Afecta a POS, Inventario y RRHH (Contabilidad congelada en fecha)</span>
           </div>
         </div>
 

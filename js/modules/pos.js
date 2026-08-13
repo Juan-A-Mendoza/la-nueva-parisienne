@@ -8,6 +8,7 @@
    ========================================================================== */
 
 import { SessionStore } from '../core/session-store.js';
+import { BcvRateStore } from '../core/bcv-rate-store.js';
 import { CATEGORIES, PRODUCTS_DATABASE, ProductsStore } from '../data/products-db.js';
 
 document.addEventListener('DOMContentLoaded', async () => {
@@ -174,42 +175,22 @@ document.addEventListener('DOMContentLoaded', async () => {
   }
 
   // ==========================================================================
-  // CONSULTA DE TASA BCV EN VIVO VIA API PHP (BCV_RATE.PHP / BCMRATE.PHP)
+  // CONSULTA Y SUSCRIPCIÓN EN TIEMPO REAL A TASA BCV (BCV_RATE_STORE)
   // ==========================================================================
+  BcvRateStore.subscribe((data) => {
+    if (data && data.rate && data.rate >= 100) {
+      bcvRate = data.rate;
+      if (bcvRateValEl) bcvRateValEl.textContent = `Bs. ${bcvRate.toFixed(2)}`;
+      if (bcvRateBadge) {
+        const modeLabel = data.mode === 'manual' ? 'Manual' : (data.mode === 'auto' ? 'En Vivo' : 'Resguardo');
+        bcvRateBadge.innerHTML = `<span>🇻🇪 Tasa BCV (${modeLabel}):</span> <strong>Bs. ${bcvRate.toFixed(2)}</strong>`;
+      }
+      updateCartTotals();
+    }
+  });
+
   async function loadLiveBcvRate() {
-    try {
-      let res = await fetch(`../api/bcv_rate.php?t=${Date.now()}`, { cache: 'no-store' });
-      if (!res.ok) {
-        res = await fetch(`../api/bcmrate.php?t=${Date.now()}`, { cache: 'no-store' });
-      }
-      if (res.ok) {
-        const data = await res.json();
-        if (data.success && data.rate && data.rate >= 100) {
-          bcvRate = data.rate;
-          if (bcvRateValEl) bcvRateValEl.textContent = `Bs. ${bcvRate.toFixed(2)}`;
-          if (bcvRateBadge) {
-            const modeLabel = data.mode === 'manual' ? 'Manual' : (data.mode === 'auto' ? 'En Vivo' : 'Resguardo');
-            bcvRateBadge.innerHTML = `<span>🇻🇪 Tasa BCV (${modeLabel}):</span> <strong>Bs. ${bcvRate.toFixed(2)}</strong>`;
-          }
-          updateCartTotals();
-          return;
-        }
-      }
-    } catch (err) {
-      console.warn('Error al obtener la tasa en vivo de la API BCV:', err);
-    }
-    
-    const cachedRate = parseFloat(localStorage.getItem('bcv_manual_rate')) || (companyInfo && companyInfo.tasa_manual) || 761.21;
-    if (cachedRate >= 100) {
-      bcvRate = cachedRate;
-    }
-    if (bcvRateValEl && (!bcvRateValEl.textContent || bcvRateValEl.textContent.includes('Cargando'))) {
-      bcvRateValEl.textContent = `Bs. ${bcvRate.toFixed(2)}`;
-    }
-    if (bcvRateBadge && bcvRateBadge.innerHTML.includes('Cargando')) {
-      bcvRateBadge.innerHTML = `<span>🇻🇪 Tasa BCV (Resguardo):</span> <strong>Bs. ${bcvRate.toFixed(2)}</strong>`;
-    }
-    updateCartTotals();
+    await BcvRateStore.fetchRate();
   }
 
   // ==========================================================================

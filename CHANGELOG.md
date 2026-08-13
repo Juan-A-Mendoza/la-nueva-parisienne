@@ -4,6 +4,32 @@ Todos los cambios significativos, nuevas funcionalidades y actualizaciones del s
 
 El formato está basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1.0.0/) y este proyecto se adhiere a [Semantic Versioning](https://semver.org/lang/es/).
 
+## [3.8.0] - 2026-08-13 (Control de Tasa BCV en Dashboard Gerencial e Inmutabilidad Histórica Contable)
+
+### 🚀 Añadido (Added)
+- **Panel Interactivo de Tasa BCV en Módulo 4 Dashboard Gerencial ([modules/dashboard.html](file:///C:/Users/juana/.gemini/antigravity-ide/scratch/la-nueva-parisienne/modules/dashboard.html) y [js/modules/dashboard.js](file:///C:/Users/juana/.gemini/antigravity-ide/scratch/la-nueva-parisienne/js/modules/dashboard.js))**:
+  - Incorporación del panel de control interactivo directamente dentro de la tarjeta **"🇻🇪 Tasa Oficial BCV / Multimoneda"** del Dashboard Gerencial (CU-02).
+  - Selector en vivo `[🌐 Automático (API)]` vs `[✍️ Manual]` con bloqueo estricto del campo de entrada numérico.
+  - Botón de guardado rápido `💾 Aplicar` que actualiza MySQL y transmite la tasa de inmediato hacia los demás módulos (POS, Inventario, etc.).
+- **Inmutabilidad Histórica en Módulo 7 Contabilidad ([js/data/accounting-db.js](file:///C:/Users/juana/.gemini/antigravity-ide/scratch/la-nueva-parisienne/js/data/accounting-db.js) y [js/modules/accounting.js](file:///C:/Users/juana/.gemini/antigravity-ide/scratch/la-nueva-parisienne/js/modules/accounting.js))**:
+  - Exclusión deliberada del Módulo de Contabilidad de los recálculos dinámicos en vivo.
+  - Cada comprobante contable almacena y muestra la **tasa histórica congelada del día de trabajo** (`📌 Tasa Registrada del Día: Bs. XXX.XX`), garantizando el cumplimiento fiscal (SENIAT / VEN-NIF).
+
+---
+
+## [3.7.0] - 2026-08-13 (Sistema Global de Tasa BCV Oficial con Bloqueo Estricto Auto/Manual y Propagación Multimódulo)
+
+### 🚀 Añadido (Added)
+- **Gestor Centralizado de Tasa BCV (`js/core/bcv-rate-store.js`)**:
+  - Implementación del store reactivo `BcvRateStore` con patrón de suscripción y difusión entre pestañas (`window.addEventListener('storage')`) para propagación en tiempo real sin recargar página.
+- **Bloqueo Estricto Mutuo Auto vs Manual ([modules/configuraciones.html](file:///C:/Users/juana/.gemini/antigravity-ide/scratch/la-nueva-parisienne/modules/configuraciones.html) y [js/modules/configuraciones.js](file:///C:/Users/juana/.gemini/antigravity-ide/scratch/la-nueva-parisienne/js/modules/configuraciones.js))**:
+  - En **Modo Automático**: Bloqueo e inhabilitación estricta del campo numérico "Tasa Manual" (`disabled = true`, opacidad 0.35, indicativo `🔒 Bloqueado en Modo Auto`). La aplicación actualiza en vivo la tasa oficial mediante cURL a `ve.dolarapi.com`.
+  - En **Modo Manual**: Desbloqueo inmediato del campo numérico (`disabled = false`, indicativo `🔓 Desbloqueado para Edición`) e inhabilitación de la consulta automática.
+- **Impacto Multimódulo Global ([js/modules/pos.js](file:///C:/Users/juana/.gemini/antigravity-ide/scratch/la-nueva-parisienne/js/modules/pos.js) y [js/modules/dashboard.js](file:///C:/Users/juana/.gemini/antigravity-ide/scratch/la-nueva-parisienne/js/modules/dashboard.js))**:
+  - Actualización reactiva instantánea en el Punto de Venta (POS) y Dashboard Gerencial al momento en que el Gerente guarda o cambia la configuración.
+
+---
+
 ## [3.6.0] - 2026-08-13 (Selector de Banco Emisor con Código Bancario en Pago Móvil / QR)
 
 ### 🚀 Añadido (Added)
