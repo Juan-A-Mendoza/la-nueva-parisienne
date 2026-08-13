@@ -4,6 +4,40 @@ Todos los cambios significativos, nuevas funcionalidades y actualizaciones del s
 
 El formato está basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1.0.0/) y este proyecto se adhiere a [Semantic Versioning](https://semver.org/lang/es/).
 
+## [3.9.7] - 2026-08-13 (Restricción de Acceso Exclusivo al Módulo 9 para Gerente General desde Módulo 4)
+
+### 🔒 Seguridad y Control de Acceso (Security & Access Control)
+- **Acceso Exclusivo de Gerente General ([js/modules/configuraciones.js](file:///C:/Users/juana/.gemini/antigravity-ide/scratch/la-nueva-parisienne/js/modules/configuraciones.js))**:
+  - Implementación de control de acceso por rol en el Módulo 9: si un usuario sin rol de Gerente General intenta acceder a `configuraciones.html`, el sistema bloquea el acceso con un mensaje de advertencia y redirige automáticamente al Panel Central (`dashboard.html`).
+- **Enlace de Entrada en Módulo 4 ([modules/dashboard.html](file:///C:/Users/juana/.gemini/antigravity-ide/scratch/la-nueva-parisienne/modules/dashboard.html))**:
+  - Incorporación del botón de acceso directo `⚙️ Módulo 9: Configuraciones` en la barra superior del Dashboard Gerencial (Módulo 4), disponible exclusivamente para el Gerente General.
+- **Navegación de Retorno ([modules/configuraciones.html](file:///C:/Users/juana/.gemini/antigravity-ide/scratch/la-nueva-parisienne/modules/configuraciones.html))**:
+  - Botón de retorno `⬅️ Volver al Dashboard (Módulo 4)` en la barra superior de Módulo 9 para navegar fluidamente hacia el Panel Gerencial.
+
+---
+
+## [3.9.6] - 2026-08-13 (Confirmación de Integración Perfecta del Widget en Módulo 4 Dashboard)
+
+### 🧹 Verificado e Integrado (Verified & Integrated)
+- **Verificación de Integración Directa ([modules/dashboard.html](file:///C:/Users/juana/.gemini/antigravity-ide/scratch/la-nueva-parisienne/modules/dashboard.html) y [js/modules/dashboard.js](file:///C:/Users/juana/.gemini/antigravity-ide/scratch/la-nueva-parisienne/js/modules/dashboard.js))**:
+  - Se confirmó que el nuevo widget limpio de Tasa BCV y su JavaScript se encuentran 100% integrados dentro del archivo original del **Módulo 4: Dashboard Gerencial** (`modules/dashboard.html` y `js/modules/dashboard.js`).
+  - Mantiene exactamente la cuadrícula Grid (`class="dashboard-kpi-card"` con `grid-column: span 2`) y los estilos CSS acordes con el resto del tablero.
+  - Se verificó la inexistencia de archivos basura o aislados en el proyecto.
+
+---
+
+## [3.9.5] - 2026-08-13 (Reconstrucción Limpia Completa del Widget de Tasa BCV)
+
+### 🚀 Reconstruido (Rebuilt)
+- **HTML del Widget de Tasa ([modules/dashboard.html](file:///C:/Users/juana/.gemini/antigravity-ide/scratch/la-nueva-parisienne/modules/dashboard.html))**:
+  - Reestructuración completa con la estructura limpia solicitada: título `"TASA OFICIAL BCV / MULTIMONEDA"`, visor `<h1 id="tasa_actual_display">`, radio buttons `#modo_auto` y `#modo_manual`, campo `#input_tasa_manual`, botón `#btn_aplicar_tasa` y texto `#texto_estado_tasa`.
+- **Script Aislado de Control ([js/modules/dashboard.js](file:///C:/Users/juana/.gemini/antigravity-ide/scratch/la-nueva-parisienne/js/modules/dashboard.js))**:
+  - Reescritura del JavaScript desde cero: habilita/deshabilita el input al cambiar los radio buttons, persiste en `localStorage.setItem('modo_tasa', ...)` y `localStorage.setItem('tasa_manual', ...)`, actualiza visualmente la tasa en pantalla al instante, emite alerta `"Tasa actualizada correctamente en todo el sistema"` y restaura el estado guardado al recargar.
+- **Sincronización en Caja ([js/modules/pos.js](file:///C:/Users/juana/.gemini/antigravity-ide/scratch/la-nueva-parisienne/js/modules/pos.js))**:
+  - Lectura transparente de las claves `modo_tasa`/`modoTasa` y `tasa_manual`/`tasaManual`.
+
+---
+
 ## [3.9.4] - 2026-08-13 (Eventos Inline Onclick Directos en HTML para Control de Tasa en Módulo 4)
 
 ### 🛠️ Corregido (Fixed)

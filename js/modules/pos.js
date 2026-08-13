@@ -178,9 +178,10 @@ document.addEventListener('DOMContentLoaded', async () => {
   // REQUERIMIENTO 3: SINCRONIZACIÓN DE TASA CON CAJA USANDO LOCALSTORAGE (MÓDULO 3)
   // ==========================================================================
   async function resolveBcvRate() {
-    // 1. Al cargar la página o calcular totales, primero pregunta si modoTasa es manual
-    if (localStorage.getItem('modoTasa') === 'manual') {
-      const tasaManualVal = parseFloat(localStorage.getItem('tasaManual'));
+    // 1. Al cargar la página o calcular totales, primero pregunta si modo_tasa/modoTasa es manual
+    const modoGuardado = localStorage.getItem('modo_tasa') || localStorage.getItem('modoTasa');
+    if (modoGuardado === 'manual') {
+      const tasaManualVal = parseFloat(localStorage.getItem('tasa_manual') || localStorage.getItem('tasaManual'));
       if (tasaManualVal && tasaManualVal > 0) {
         updatePosRateBadge(tasaManualVal, 'Tasa: Manual (Editada)', true);
         return tasaManualVal;

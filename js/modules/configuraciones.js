@@ -8,13 +8,30 @@ import { SessionStore } from '../core/session-store.js';
 import { BcvRateStore } from '../core/bcv-rate-store.js';
 
 document.addEventListener('DOMContentLoaded', async () => {
-  // 1. Verificar Sesión Activa
+  // 1. Verificar Sesión Activa y Permisos de Gerente General
   const session = SessionStore.getSession();
-  if (session && session.user) {
+  if (!session || !session.user) {
+    alert('⚠️ Sesión expirada o no encontrada. Por favor inicie sesión.');
+    window.location.href = '../index.html';
+    return;
+  }
+
+  // Comprobar rol de Gerente General
+  const userRole = (session.user.role || '').toLowerCase();
+  const userRoleCode = session.user.roleCode || '';
+  const isGerenteGeneral = userRoleCode === 'ADMIN' || userRole.includes('gerente general') || userRole.includes('administrador');
+
+  if (!isGerenteGeneral) {
+    alert('⛔ Acceso Restringido: El Módulo 9 (Configuraciones) solo puede ser accedido por el Gerente General desde el Módulo 4 (Dashboard Gerencial).');
+    window.location.href = 'dashboard.html';
+    return;
+  }
+
+  if (session.user) {
     const managerAvatar = document.getElementById('managerAvatar');
     const managerName = document.getElementById('managerName');
     if (managerAvatar) managerAvatar.textContent = session.user.icon || '👨‍💼';
-    if (managerName) managerName.textContent = session.user.name || 'Administrador';
+    if (managerName) managerName.textContent = session.user.name || 'Gerente General';
   }
 
   const logoutBtn = document.getElementById('logoutBtn');
