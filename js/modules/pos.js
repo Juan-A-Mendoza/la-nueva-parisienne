@@ -178,8 +178,8 @@ document.addEventListener('DOMContentLoaded', async () => {
   // CONSULTA Y SUSCRIPCIÓN EN TIEMPO REAL A TASA BCV (BCV_RATE_STORE)
   // ==========================================================================
   BcvRateStore.subscribe((data) => {
-    if (data && data.rate && data.rate >= 100) {
-      bcvRate = data.rate;
+    if (data && data.rate && parseFloat(data.rate) > 0) {
+      bcvRate = parseFloat(data.rate);
       if (bcvRateValEl) bcvRateValEl.textContent = `Bs. ${bcvRate.toFixed(2)}`;
       if (bcvRateBadge) {
         const modeLabel = data.mode === 'manual' ? 'Manual' : (data.mode === 'auto' ? 'En Vivo' : 'Resguardo');

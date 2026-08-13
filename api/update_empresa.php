@@ -1,7 +1,7 @@
 <?php
 /* ==========================================================================
-   LA NUEVA PARISIENNE - ENDPOINT ACTUALIZACIÓN DATOS EMPRESA (UPDATE_EMPRESA.PHP)
-   Recibe los campos fiscales desde el Módulo 9 y actualiza la base de datos
+   LA NUEVA PARISIENNE - ENDPOINT ACTUALIZACIÓN DATOS EMPRESA & TASA BCV (UPDATE_EMPRESA.PHP)
+   Soporta actualizaciones completas y parciales de modo de tasa cambiaria
    ========================================================================== */
 
 header("Access-Control-Allow-Origin: *");
@@ -25,27 +25,35 @@ if (!$data) {
     exit();
 }
 
-$nombre = isset($data['nombre']) ? trim($data['nombre']) : '';
-$rif = isset($data['rif']) ? trim($data['rif']) : '';
-$direccion = isset($data['direccion']) ? trim($data['direccion']) : '';
-$telefono = isset($data['telefono']) ? trim($data['telefono']) : '';
-$modoTasa = isset($data['modo_tasa']) ? strtolower(trim($data['modo_tasa'])) : 'auto';
-$tasaManual = isset($data['tasa_manual']) && is_numeric($data['tasa_manual']) ? floatval($data['tasa_manual']) : 761.21;
-
-if (empty($nombre) || empty($rif)) {
-    http_response_code(422);
-    echo json_encode([
-        'success' => false,
-        'message' => 'El nombre y el RIF de la empresa son requeridos.'
-    ], JSON_UNESCAPED_UNICODE);
-    exit();
-}
-
 try {
     require_once __DIR__ . '/config/conexion.php';
     $pdo = getDbConnection();
 
-    // Intentar actualizar la fila con ID 1 o insertarla si no existe
+    // Obtener valores actuales de la base de datos
+    $stmtCur = $pdo->query("SELECT nombre, rif, direccion, telefono, modo_tasa, tasa_manual FROM configuracion_empresa WHERE id = 1 LIMIT 1");
+    $currentConfig = $stmtCur->fetch(PDO::FETCH_ASSOC) ?: [
+        'nombre' => 'La Nueva Parisienne C.A.',
+        'rif' => 'J-40123456-7',
+        'direccion' => 'Barquisimeto, Edo. Lara',
+        'telefono' => '(0251) 555-1234',
+        'modo_tasa' => 'auto',
+        'tasa_manual' => 761.21
+    ];
+
+    $nombre = !empty($data['nombre']) ? trim($data['nombre']) : $currentConfig['nombre'];
+    $rif = !empty($data['rif']) ? trim($data['rif']) : $currentConfig['rif'];
+    $direccion = isset($data['direccion']) ? trim($data['direccion']) : $currentConfig['direccion'];
+    $telefono = isset($data['telefono']) ? trim($data['telefono']) : $currentConfig['telefono'];
+    $modoTasa = isset($data['modo_tasa']) ? strtolower(trim($data['modo_tasa'])) : $currentConfig['modo_tasa'];
+    
+    $tasaManual = $currentConfig['tasa_manual'];
+    if (isset($data['tasa_manual'])) {
+        $rawManual = str_replace(',', '.', (string)$data['tasa_manual']);
+        if (is_numeric($rawManual) && floatval($rawManual) > 0) {
+            $tasaManual = floatval($rawManual);
+        }
+    }
+
     $sql = "INSERT INTO configuracion_empresa (id, nombre, rif, direccion, telefono, modo_tasa, tasa_manual) 
             VALUES (1, :nombre, :rif, :direccion, :telefono, :modo_tasa, :tasa_manual)
             ON DUPLICATE KEY UPDATE 
@@ -66,7 +74,7 @@ try {
         ':tasa_manual' => $tasaManual
     ]);
 
-    // También actualizar tabla auxiliar de configuraciones si existe
+    // Actualizar tabla auxiliar de configuraciones si existe
     try {
         $pdo->exec("INSERT INTO configuraciones (clave, valor) VALUES ('bcv_rate_mode', '$modoTasa'), ('bcv_manual_rate', '$tasaManual') ON DUPLICATE KEY UPDATE valor = VALUES(valor)");
     } catch (Exception $ex) {}
@@ -74,7 +82,7 @@ try {
     http_response_code(200);
     echo json_encode([
         'success' => true,
-        'message' => 'Datos fiscales y configuración de tasa cambiaria actualizados en MySQL.',
+        'message' => 'Configuración cambiaria y datos de empresa actualizados con éxito en MySQL.',
         'empresa' => [
             'nombre' => $nombre,
             'rif' => $rif,
@@ -89,6 +97,6 @@ try {
     http_response_code(500);
     echo json_encode([
         'success' => false,
-        'message' => 'Error al guardar los datos en MySQL: ' . $e->getMessage()
+        'message' => 'Error al guardar en MySQL: ' . $e->getMessage()
     ], JSON_UNESCAPED_UNICODE);
 }

@@ -79,7 +79,7 @@ class BcvRateStoreManager {
       
       if (res.ok) {
         const data = await res.json();
-        if (data.success && data.rate && data.rate >= 100) {
+        if (data.success && data.rate && parseFloat(data.rate) > 0) {
           this.rate = parseFloat(data.rate);
           this.mode = data.mode || 'auto';
           this.source = data.source || 'BCV Oficial';

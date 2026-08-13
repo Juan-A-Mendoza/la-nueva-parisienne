@@ -41,36 +41,43 @@ document.addEventListener('DOMContentLoaded', async () => {
   const previewRateVal = document.getElementById('previewRateVal');
   const previewRateSource = document.getElementById('previewRateSource');
 
-  // Manejador del Toggle Switch / Radio Selector de Modo de Tasa con Bloqueo Estricto
+  // Manejador del Toggle Switch / Radio Selector de Modo de Tasa
   async function updateTasaUiMode(isManual) {
     if (lblModoAuto) lblModoAuto.style.borderColor = isManual ? 'var(--border-subtle)' : 'var(--color-gold)';
     if (lblModoManual) lblModoManual.style.borderColor = isManual ? 'var(--color-gold)' : 'var(--border-subtle)';
 
     if (tasaManualGroup && tasaManualInput) {
+      tasaManualGroup.style.opacity = '1';
+      tasaManualGroup.style.pointerEvents = 'auto';
+
       if (isManual) {
-        // DESBLOQUEAR MODO MANUAL
-        tasaManualGroup.style.opacity = '1';
-        tasaManualGroup.style.pointerEvents = 'auto';
+        tasaManualInput.readOnly = false;
         tasaManualInput.disabled = false;
+        tasaManualInput.style.background = '#FFFFFF';
+        tasaManualInput.style.cursor = 'text';
+
         if (lockStatusTag) {
           lockStatusTag.textContent = '🔓 (Desbloqueado para Edición)';
           lockStatusTag.style.color = 'var(--color-success)';
         }
-        
-        const manualRateVal = parseFloat(tasaManualInput.value) || 761.21;
-        if (previewRateVal) previewRateVal.textContent = `Bs. ${manualRateVal.toFixed(2)}`;
+        const manualRateVal = parseFloat(tasaManualInput.value) || 0;
+        if (previewRateVal && manualRateVal > 0) previewRateVal.textContent = `Bs. ${manualRateVal.toFixed(2)}`;
         if (previewRateSource) previewRateSource.textContent = 'Origen: Tasa Manual Gerencial';
+        
+        try {
+          tasaManualInput.focus();
+          tasaManualInput.select();
+        } catch (e) {}
       } else {
-        // BLOQUEAR EN MODO AUTOMÁTICO (API BCV EN VIVO)
-        tasaManualGroup.style.opacity = '0.35';
-        tasaManualGroup.style.pointerEvents = 'none';
-        tasaManualInput.disabled = true;
+        tasaManualInput.readOnly = true;
+        tasaManualInput.disabled = false;
+        tasaManualInput.style.background = '#F5F5F5';
+        tasaManualInput.style.cursor = 'pointer';
+
         if (lockStatusTag) {
-          lockStatusTag.textContent = '🔒 (Bloqueado en Modo Auto)';
+          lockStatusTag.textContent = '🔒 (Haz clic en Manual para editar)';
           lockStatusTag.style.color = 'var(--color-muted)';
         }
-
-        // Consultar API en vivo para la vista previa
         const apiData = await BcvRateStore.fetchRate(true);
         if (apiData && apiData.rate) {
           if (previewRateVal) previewRateVal.textContent = `Bs. ${apiData.rate.toFixed(2)}`;
@@ -80,20 +87,28 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
   }
 
+  if (tasaManualInput) {
+    const activateManualConfigInput = () => {
+      if (modoTasaManual) modoTasaManual.checked = true;
+      updateTasaUiMode(true);
+    };
+
+    tasaManualInput.addEventListener('click', activateManualConfigInput);
+    tasaManualInput.addEventListener('focus', activateManualConfigInput);
+    tasaManualInput.addEventListener('input', (e) => {
+      activateManualConfigInput();
+      const val = parseFloat(e.target.value) || 0;
+      if (previewRateVal) {
+        previewRateVal.textContent = `Bs. ${val.toFixed(2)}`;
+      }
+    });
+  }
+
   document.querySelectorAll('input[name="modoTasaRadio"]').forEach(radio => {
     radio.addEventListener('change', (e) => {
       updateTasaUiMode(e.target.value === 'manual');
     });
   });
-
-  if (tasaManualInput) {
-    tasaManualInput.addEventListener('input', (e) => {
-      const val = parseFloat(e.target.value) || 0;
-      if (previewRateVal && modoTasaManual && modoTasaManual.checked) {
-        previewRateVal.textContent = `Bs. ${val.toFixed(2)}`;
-      }
-    });
-  }
 
   // 3. Cargar Datos Fiscales y Tasa Actuales al Iniciar
   await loadEmpresaData();
@@ -133,8 +148,8 @@ document.addEventListener('DOMContentLoaded', async () => {
       const selectedMode = modoTasaManual && modoTasaManual.checked ? 'manual' : 'auto';
       const manualVal = tasaManualInput ? parseFloat(tasaManualInput.value) || 761.21 : 761.21;
 
-      if (selectedMode === 'manual' && manualVal < 100) {
-        showStatus('⚠️ La tasa manual ingresada debe ser un valor válido mayor a Bs. 100.', 'error');
+      if (selectedMode === 'manual' && manualVal <= 0) {
+        showStatus('⚠️ La tasa manual ingresada debe ser un valor válido mayor a Bs. 0.00.', 'error');
         return;
       }
 

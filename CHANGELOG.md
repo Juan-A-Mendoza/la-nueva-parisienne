@@ -4,6 +4,48 @@ Todos los cambios significativos, nuevas funcionalidades y actualizaciones del s
 
 El formato está basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1.0.0/) y este proyecto se adhiere a [Semantic Versioning](https://semver.org/lang/es/).
 
+## [3.8.4] - 2026-08-13 (Solución Definitiva de Edición por readOnly y Eventos de Foco Directos)
+
+### 🛠️ Corregido (Fixed)
+- **Eliminación Total del Bloqueo por `disabled` ([modules/dashboard.html](file:///C:/Users/juana/.gemini/antigravity-ide/scratch/la-nueva-parisienne/modules/dashboard.html), [modules/configuraciones.html](file:///C:/Users/juana/.gemini/antigravity-ide/scratch/la-nueva-parisienne/modules/configuraciones.html), [js/modules/dashboard.js](file:///C:/Users/juana/.gemini/antigravity-ide/scratch/la-nueva-parisienne/js/modules/dashboard.js) y [js/modules/configuraciones.js](file:///C:/Users/juana/.gemini/antigravity-ide/scratch/la-nueva-parisienne/js/modules/configuraciones.js))**:
+  - Reemplazo del atributo estático `disabled` por `readOnly = false` e inmunidad ante sobrescrituras periódicas del background store (`userIsEditingManualRate`).
+  - Asignación de event listeners para `click`, `focus` e `input` directamente sobre la casilla numéricas. Al hacer clic o tocar la casilla, conmuta automáticamente a modo manual, selecciona el texto y habilita la escritura inmediata sin ningún bloqueo del navegador.
+
+---
+
+## [3.8.3] - 2026-08-13 (Desbloqueo al Seleccionar Modo Manual y Actualización Inmediata en Dashboard y POS)
+
+### 🚀 Añadido (Added)
+- **Desbloqueo Exclusivo al Seleccionar Modo Manual ([modules/dashboard.html](file:///C:/Users/juana/.gemini/antigravity-ide/scratch/la-nueva-parisienne/modules/dashboard.html) y [js/modules/dashboard.js](file:///C:/Users/juana/.gemini/antigravity-ide/scratch/la-nueva-parisienne/js/modules/dashboard.js))**:
+  - Al marcar el radio selector **"✍️ Manual"**, el campo numérico se **desbloquea inmediatamente** (`disabled = false`, opacidad 1.0) y recibe el foco del teclado. En modo **"🌐 Automático"**, el campo permanece inhabilitado (`disabled = true`, `🔒 Bloqueado`).
+- **Actualización Instantánea de la Tasa en Pantalla ([js/modules/dashboard.js](file:///C:/Users/juana/.gemini/antigravity-ide/scratch/la-nueva-parisienne/js/modules/dashboard.js) y [js/modules/pos.js](file:///C:/Users/juana/.gemini/antigravity-ide/scratch/la-nueva-parisienne/js/modules/pos.js))**:
+  - Al hacer clic en **"💾 Aplicar"**, la cifra en la tarjeta del **Dashboard (Módulo 4)** (`#kpiBcvRateVal`) se actualiza de inmediato al nuevo valor.
+  - Sincronización en tiempo real con la cabecera del **POS (Módulo 3)** (`#bcvRateValEl` / `#bcvRateBadge`) mediante `BcvRateStore.broadcastChange`, eliminando cualquier chequeo antiguo de `>= 100`.
+
+---
+
+## [3.8.2] - 2026-08-13 (Acceso Continuo Desbloqueado para la Tasa Manual)
+
+### 🛠️ Corregido (Fixed)
+- **Remoción Total de Bloqueos en Campo Numérico ([modules/dashboard.html](file:///C:/Users/juana/.gemini/antigravity-ide/scratch/la-nueva-parisienne/modules/dashboard.html), [modules/configuraciones.html](file:///C:/Users/juana/.gemini/antigravity-ide/scratch/la-nueva-parisienne/modules/configuraciones.html), [js/modules/dashboard.js](file:///C:/Users/juana/.gemini/antigravity-ide/scratch/la-nueva-parisienne/js/modules/dashboard.js) y [js/modules/configuraciones.js](file:///C:/Users/juana/.gemini/antigravity-ide/scratch/la-nueva-parisienne/js/modules/configuraciones.js))**:
+  - Eliminación completa de `pointer-events: none` y `disabled` en los inputs de Tasa Manual.
+  - El campo ahora es **100% editable e interactivo siempre**. Al tipear una cifra en la casilla, el sistema conmuta automáticamente al modo manual y permite guardar/aplicar con un solo clic.
+
+---
+
+## [3.8.1] - 2026-08-13 (Corrección del Parser de Decimales con Coma en API BCV y Actualizaciones Parciales en MySQL)
+
+### 🛠️ Corregido (Fixed)
+- **Normalización de Formato Decimal de la API BCV en Vivo ([api/bcv_rate.php](file:///C:/Users/juana/.gemini/antigravity-ide/scratch/la-nueva-parisienne/api/bcv_rate.php))**:
+  - Conversión automática de coma decimal a punto (`str_replace(',', '.', $val)`) para procesar correctamente las respuestas flotantes devueltas por la API oficial (ej. `"766,8603"`).
+  - Eliminación de la restricción rígida que forzaba tasas `>= 100`, permitiendo cualquier número flotante válido mayor a 0.
+- **Soporte de Actualizaciones Parciales en MySQL ([api/update_empresa.php](file:///C:/Users/juana/.gemini/antigravity-ide/scratch/la-nueva-parisienne/api/update_empresa.php))**:
+  - Ajuste del endpoint para permitir guardar `modo_tasa` y `tasa_manual` desde la tarjeta interactiva del Dashboard sin exigir `nombre` y `rif` en cada petición.
+- **Remoción de Límites Rígidos en Frontend ([js/core/bcv-rate-store.js](file:///C:/Users/juana/.gemini/antigravity-ide/scratch/la-nueva-parisienne/js/core/bcv-rate-store.js), [js/modules/dashboard.js](file:///C:/Users/juana/.gemini/antigravity-ide/scratch/la-nueva-parisienne/js/modules/dashboard.js) y [js/modules/configuraciones.js](file:///C:/Users/juana/.gemini/antigravity-ide/scratch/la-nueva-parisienne/js/modules/configuraciones.js))**:
+  - Eliminación de chequeos artificiales de mínimos que impedían el funcionamiento normal en modo automático y manual.
+
+---
+
 ## [3.8.0] - 2026-08-13 (Control de Tasa BCV en Dashboard Gerencial e Inmutabilidad Histórica Contable)
 
 ### 🚀 Añadido (Added)

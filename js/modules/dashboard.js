@@ -53,6 +53,8 @@ document.addEventListener('DOMContentLoaded', () => {
     if (marginVal) marginVal.textContent = `${DASHBOARD_KPIS.profitMargin}%`;
   }
 
+  let userIsEditingManualRate = false;
+
   function updateBcvKpiUI(data) {
     const rateValEl = document.getElementById('kpiBcvRateVal');
     const sourceEl = document.getElementById('kpiBcvSource');
@@ -70,11 +72,13 @@ document.addEventListener('DOMContentLoaded', () => {
       dateEl.textContent = `${data.date || 'Hoy'} (por $1.00 USD)`;
     }
 
-    const isManualMode = data && data.mode === 'manual';
-    if (dashModoManual && isManualMode) dashModoManual.checked = true;
-    if (dashModoAuto && !isManualMode) dashModoAuto.checked = true;
-    if (dashTasaInput && data && data.rate) dashTasaInput.value = data.rate.toFixed(2);
-    updateDashTasaUiMode(isManualMode);
+    if (!userIsEditingManualRate) {
+      const isManualMode = data && data.mode === 'manual';
+      if (dashModoManual && isManualMode) dashModoManual.checked = true;
+      if (dashModoAuto && !isManualMode) dashModoAuto.checked = true;
+      if (dashTasaInput && data && data.rate) dashTasaInput.value = data.rate.toFixed(2);
+      updateDashTasaUiMode(isManualMode);
+    }
   }
 
   // Controles Gerenciales interactivos de la tarjeta BCV en el Dashboard
@@ -92,29 +96,52 @@ document.addEventListener('DOMContentLoaded', () => {
     if (dashLblManual) dashLblManual.style.borderColor = isManual ? 'var(--color-success)' : 'var(--border-subtle)';
 
     if (dashTasaGroup && dashTasaInput) {
+      dashTasaGroup.style.opacity = '1';
+      dashTasaGroup.style.pointerEvents = 'auto';
+
       if (isManual) {
-        dashTasaGroup.style.opacity = '1';
-        dashTasaGroup.style.pointerEvents = 'auto';
+        dashTasaInput.readOnly = false;
         dashTasaInput.disabled = false;
+        dashTasaInput.style.background = '#FFFFFF';
+        dashTasaInput.style.cursor = 'text';
         if (dashLockTag) {
-          dashLockTag.textContent = '🔓 (Desbloqueado)';
+          dashLockTag.textContent = '🔓 (Desbloqueado para Edición)';
           dashLockTag.style.color = 'var(--color-success)';
         }
+        try {
+          dashTasaInput.focus();
+          dashTasaInput.select();
+        } catch (e) {}
       } else {
-        dashTasaGroup.style.opacity = '0.4';
-        dashTasaGroup.style.pointerEvents = 'none';
-        dashTasaInput.disabled = true;
+        dashTasaInput.readOnly = true;
+        dashTasaInput.disabled = false;
+        dashTasaInput.style.background = '#F5F5F5';
+        dashTasaInput.style.cursor = 'pointer';
         if (dashLockTag) {
-          dashLockTag.textContent = '🔒 (Bloqueado)';
+          dashLockTag.textContent = '🔒 (Haz clic en Manual para editar)';
           dashLockTag.style.color = 'var(--color-muted)';
         }
       }
     }
   }
 
+  if (dashTasaInput) {
+    const activateManualInput = () => {
+      userIsEditingManualRate = true;
+      if (dashModoManual) dashModoManual.checked = true;
+      updateDashTasaUiMode(true);
+    };
+
+    dashTasaInput.addEventListener('click', activateManualInput);
+    dashTasaInput.addEventListener('focus', activateManualInput);
+    dashTasaInput.addEventListener('input', activateManualInput);
+  }
+
   document.querySelectorAll('input[name="dashModoTasaRadio"]').forEach(radio => {
     radio.addEventListener('change', (e) => {
-      updateDashTasaUiMode(e.target.value === 'manual');
+      const isManual = e.target.value === 'manual';
+      userIsEditingManualRate = isManual;
+      updateDashTasaUiMode(isManual);
     });
   });
 
@@ -124,13 +151,13 @@ document.addEventListener('DOMContentLoaded', () => {
       const selectedMode = isManual ? 'manual' : 'auto';
       const manualVal = dashTasaInput ? parseFloat(dashTasaInput.value) || 761.21 : 761.21;
 
-      if (isManual && manualVal < 100) {
-        alert('⚠️ Ingrese una tasa manual válida mayor a Bs. 100.');
+      if (isManual && manualVal <= 0) {
+        alert('⚠️ Ingrese una tasa manual válida mayor a Bs. 0.00.');
         return;
       }
 
       btnSaveDashRate.disabled = true;
-      btnSaveDashRate.textContent = '⏳ Guardando...';
+      btnSaveDashRate.textContent = '⏳ Aplicando...';
 
       try {
         const payload = {
@@ -146,17 +173,30 @@ document.addEventListener('DOMContentLoaded', () => {
 
         const result = await res.json();
         if (res.ok && result.success) {
-          const currentData = await BcvRateStore.fetchRate(true);
-          const activeRate = isManual ? manualVal : (currentData.rate || manualVal);
-          const activeSource = isManual ? 'Tasa Manual Gerencial (Dashboard)' : 'BCV Oficial (ve.dolarapi.com - En Vivo)';
+          let activeRate = manualVal;
+          let activeSource = 'Tasa Manual Gerencial (Dashboard)';
 
+          if (selectedMode === 'auto') {
+            const currentData = await BcvRateStore.fetchRate(true);
+            activeRate = currentData.rate || manualVal;
+            activeSource = currentData.source || 'BCV Oficial (ve.dolarapi.com - En Vivo)';
+          }
+
+          userIsEditingManualRate = false;
+          // ACTUALIZAR DIRECTAMENTE LA TASA MOSTRADA EN EL DASHBOARD (MÓDULO 4)
+          const kpiBcvRateVal = document.getElementById('kpiBcvRateVal');
+          if (kpiBcvRateVal) {
+            kpiBcvRateVal.textContent = `Bs. ${activeRate.toFixed(2)}`;
+          }
+
+          // DIFUNDIR A TODOS LOS MÓDULOS (POS MÓDULO 3, INVENTARIO, ETC.)
           BcvRateStore.broadcastChange(activeRate, selectedMode, activeSource);
-          alert(`✓ ¡Tasa cambiaria actualizada a Bs. ${activeRate.toFixed(2)} (${selectedMode === 'manual' ? 'Manual' : 'Automática en Vivo'})! Transmitido a POS e Inventario.`);
+          alert(`✓ ¡Tasa cambiaria aplicada con éxito: Bs. ${activeRate.toFixed(2)} (${selectedMode === 'manual' ? 'Manual' : 'Automática en Vivo'})! Reflejada en POS y Dashboard.`);
         } else {
           alert(`❌ Error al guardar: ${result.message || 'Error en el servidor.'}`);
         }
       } catch (err) {
-        alert('❌ Error de conexión al guardar la tasa cambiaria.');
+        alert('❌ Error de conexión al aplicar la tasa cambiaria.');
       }
 
       btnSaveDashRate.disabled = false;

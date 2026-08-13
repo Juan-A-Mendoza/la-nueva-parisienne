@@ -1,8 +1,8 @@
 <?php
 /* ==========================================================================
    LA NUEVA PARISIENNE - SERVICIO API EN VIVO DE TASA BCV (BCV_RATE.PHP / BCMRATE.PHP)
-   Consulta en tiempo real la API oficial ve.dolarapi.com via cURL estricto
-   y valida la lectura del campo 'promedio' con fallback a Tasa Manual persisitida.
+   Consulta en tiempo real la API oficial ve.dolarapi.com via cURL estricto,
+   normaliza decimales con coma/punto y valida la lectura con fallback a Tasa Manual.
    ========================================================================== */
 
 header('Content-Type: application/json; charset=utf-8');
@@ -28,15 +28,21 @@ try {
         if (!empty($empresaConfig['modo_tasa'])) {
             $mode = strtolower(trim($empresaConfig['modo_tasa']));
         }
-        if (isset($empresaConfig['tasa_manual']) && is_numeric($empresaConfig['tasa_manual']) && floatval($empresaConfig['tasa_manual']) >= 100) {
-            $manualRate = floatval($empresaConfig['tasa_manual']);
+        if (isset($empresaConfig['tasa_manual']) && is_numeric(str_replace(',', '.', (string)$empresaConfig['tasa_manual']))) {
+            $val = floatval(str_replace(',', '.', (string)$empresaConfig['tasa_manual']));
+            if ($val > 0) {
+                $manualRate = $val;
+            }
         }
     } else {
         // Fallback a tabla auxiliares configuraciones
         $stmtAux = $pdo->query("SELECT clave, valor FROM configuraciones WHERE clave IN ('bcv_rate_mode', 'bcv_manual_rate')");
         $aux = $stmtAux->fetchAll(PDO::FETCH_KEY_PAIR);
         if (isset($aux['bcv_rate_mode'])) $mode = strtolower(trim($aux['bcv_rate_mode']));
-        if (isset($aux['bcv_manual_rate']) && is_numeric($aux['bcv_manual_rate'])) $manualRate = floatval($aux['bcv_manual_rate']);
+        if (isset($aux['bcv_manual_rate'])) {
+            $val = floatval(str_replace(',', '.', (string)$aux['bcv_manual_rate']));
+            if ($val > 0) $manualRate = $val;
+        }
     }
 } catch (Exception $e) {
     // Si falla la conexión a MySQL, se procede con valores seguros
@@ -45,28 +51,42 @@ try {
 // 2. Lógica de Selección de Tasa (Manual vs Automática via cURL)
 if ($mode === 'manual') {
     $currentRate = $manualRate;
-    $source = "Tasa Manual (Persistida en MySQL)";
+    $source = "Tasa Manual (Definida por Gerencia)";
 } else {
     // MODO AUTOMÁTICO: CONSULTA cURL A HTTPS://VE.DOLARAPI.COM/V1/DOLARES/OFICIAL
     $apiRate = fetchLiveBcvRateViaCurl();
     
-    if ($apiRate !== null && $apiRate >= 100) {
+    if ($apiRate !== null && $apiRate > 0) {
         $currentRate = $apiRate;
         $source = "BCV Oficial (ve.dolarapi.com - En Vivo)";
     } else {
         $currentRate = $manualRate;
         $mode = 'auto_fallback';
         $source = "Resguardo BCV (Offline / Fallback)";
-        $warning = "La API de ve.dolarapi.com no respondió o devolvió una tasa inválida (< 100). Usando tasa de resguardo.";
+        $warning = "La API en vivo no respondió. Usando tasa de resguardo.";
     }
 }
 
 /**
- * Consulta cURL robusta a https://ve.dolarapi.com/v1/dolares/oficial
+ * Consulta cURL robusta a la API oficial normalizando comas decimales
  */
 function fetchLiveBcvRateViaCurl() {
-    $url = 'https://ve.dolarapi.com/v1/dolares/oficial';
+    $urls = [
+        'https://ve.dolarapi.com/v1/dolares/oficial',
+        'https://bcv-api.vercel.app/api/bcv'
+    ];
     
+    foreach ($urls as $url) {
+        $parsed = executeCurlRequest($url);
+        if ($parsed !== null && $parsed > 0) {
+            return $parsed;
+        }
+    }
+    
+    return null;
+}
+
+function executeCurlRequest($url) {
     if (function_exists('curl_init')) {
         $ch = curl_init();
         curl_setopt($ch, CURLOPT_URL, $url);
@@ -87,13 +107,12 @@ function fetchLiveBcvRateViaCurl() {
         
         if ($response !== false && $httpCode === 200) {
             $data = json_decode($response, true);
-            if (is_array($data) && isset($data['promedio']) && is_numeric($data['promedio'])) {
-                return floatval($data['promedio']);
-            }
+            $parsed = parseNumericRateFromJson($data);
+            if ($parsed !== null) return $parsed;
         }
     }
     
-    // Fallback secundario vía file_get_contents con stream context
+    // Fallback con stream context
     $opts = [
         'http' => [
             'method' => 'GET',
@@ -110,11 +129,25 @@ function fetchLiveBcvRateViaCurl() {
     
     if ($json !== false) {
         $data = json_decode($json, true);
-        if (is_array($data) && isset($data['promedio']) && is_numeric($data['promedio'])) {
-            return floatval($data['promedio']);
-        }
+        return parseNumericRateFromJson($data);
     }
     
+    return null;
+}
+
+function parseNumericRateFromJson($data) {
+    if (!is_array($data)) return null;
+
+    $possibleKeys = ['promedio', 'precio', 'monto', 'price', 'rate'];
+    foreach ($possibleKeys as $key) {
+        if (isset($data[$key])) {
+            $raw = str_replace(',', '.', (string)$data[$key]);
+            if (is_numeric($raw) && floatval($raw) > 0) {
+                return floatval($raw);
+            }
+        }
+    }
+
     return null;
 }
 
