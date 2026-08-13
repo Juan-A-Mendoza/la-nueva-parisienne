@@ -4,6 +4,24 @@ Todos los cambios significativos, nuevas funcionalidades y actualizaciones del s
 
 El formato está basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1.0.0/) y este proyecto se adhiere a [Semantic Versioning](https://semver.org/lang/es/).
 
+## [3.9.0] - 2026-08-13 (Reescritura del Control Cambiario con LocalStorage e Integración Estricta Módulo 4 & Módulo 3)
+
+### 🚀 Añadido (Added)
+- **Desbloqueo e Inhabilitación por Radio Buttons ([js/modules/dashboard.js](file:///C:/Users/juana/.gemini/antigravity-ide/scratch/la-nueva-parisienne/js/modules/dashboard.js) y [modules/dashboard.html](file:///C:/Users/juana/.gemini/antigravity-ide/scratch/la-nueva-parisienne/modules/dashboard.html))**:
+  - EventListener asignado a los radio buttons `Automático` / `Manual`.
+  - En **Automático**: Inhabilita la casilla manual (`disabled = true`), activa candado visual (`🔒 (Bloqueado en Modo Auto)`) y ejecuta la consulta a la API oficial.
+  - En **Manual**: Habilita la casilla manual (`disabled = false`), activa aviso visual (`🔓 (Desbloqueado para Edición)`) y coloca el foco del teclado inmediatamente en el campo (`dashTasaInput.focus()`).
+- **Persistencia Global con `localStorage`**:
+  - Al pulsar el botón **"💾 Aplicar"**, se guardan las claves `localStorage.setItem('modoTasa', 'manual')` (o `'auto'`) y `localStorage.setItem('tasaManual', valorIngresado)`.
+  - Actualización inmediata de la etiqueta de estado a `"Tasa: Manual (Editada)"` o `"Tasa: Automática (En Vivo)"`.
+- **Sincronización con Caja ([js/modules/pos.js](file:///C:/Users/juana/.gemini/antigravity-ide/scratch/la-nueva-parisienne/js/modules/pos.js))**:
+  - Al cargar la página del POS o calcular totales, se verifica primeramente `if (localStorage.getItem('modoTasa') === 'manual')`.
+  - Si es verdadero, toma el valor directo de `localStorage.getItem('tasaManual')`.
+  - Si es falso ('auto'), consulta `bcmrate.php` o la API oficial.
+  - Sincronización instantánea mediante eventos `storage` y `bcvRateChanged`.
+
+---
+
 ## [3.8.4] - 2026-08-13 (Solución Definitiva de Edición por readOnly y Eventos de Foco Directos)
 
 ### 🛠️ Corregido (Fixed)

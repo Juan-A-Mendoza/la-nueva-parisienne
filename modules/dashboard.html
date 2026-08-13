@@ -141,14 +141,14 @@
                 </div>
               </div>
 
-              <!-- CAMPO NUMÉRICO TASA MANUAL INTERACTIVO -->
-              <div id="dashTasaGroup" style="flex: 1; min-width: 180px; transition: all 0.2s ease;">
+              <!-- CAMPO NUMÉRICO TASA MANUAL Y BOTÓN APLICAR -->
+              <div id="dashTasaGroup" style="flex: 1; min-width: 180px; opacity: 0.6; transition: all 0.2s ease;">
                 <label for="dashTasaInput" style="font-size: 0.72rem; font-weight: 800; color: var(--color-espresso); display: block; margin-bottom: 0.2rem;">
                   Tasa Manual (Bs. / $1 USD):
-                  <span id="dashLockTag" style="font-size: 0.68rem; font-weight: 600; color: var(--color-muted);">🔒 (Haz clic en Manual para editar)</span>
+                  <span id="dashLockTag" style="font-size: 0.68rem; font-weight: 600; color: var(--color-muted);">🔒 (Bloqueado en Modo Auto)</span>
                 </label>
                 <div style="display: flex; gap: 0.35rem;">
-                  <input type="number" step="0.01" min="0.01" id="dashTasaInput" class="config-input" style="height: 34px; font-size: 0.95rem; font-weight: 800; color: var(--color-gold-dark); background: #F5F5F5; text-align: left; padding: 0.3rem 0.5rem; cursor: pointer;" placeholder="Ej. 766.86" readonly>
+                  <input type="number" step="0.01" min="0.01" id="dashTasaInput" class="config-input" style="height: 34px; font-size: 0.95rem; font-weight: 800; color: var(--color-gold-dark); background: #F5F5F5; text-align: left; padding: 0.3rem 0.5rem; cursor: not-allowed;" placeholder="Ej. 766.86" disabled>
                   <button id="btnSaveDashRate" type="button" class="btn-save-config" style="height: 34px; padding: 0 0.75rem; font-size: 0.78rem; border-radius: var(--radius-sm); white-space: nowrap; cursor: pointer;">
                     <span>💾 Aplicar</span>
                   </button>

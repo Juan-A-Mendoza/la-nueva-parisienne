@@ -175,23 +175,80 @@ document.addEventListener('DOMContentLoaded', async () => {
   }
 
   // ==========================================================================
-  // CONSULTA Y SUSCRIPCIÓN EN TIEMPO REAL A TASA BCV (BCV_RATE_STORE)
+  // REQUERIMIENTO 3: SINCRONIZACIÓN DE TASA CON CAJA USANDO LOCALSTORAGE (MÓDULO 3)
   // ==========================================================================
-  BcvRateStore.subscribe((data) => {
-    if (data && data.rate && parseFloat(data.rate) > 0) {
-      bcvRate = parseFloat(data.rate);
-      if (bcvRateValEl) bcvRateValEl.textContent = `Bs. ${bcvRate.toFixed(2)}`;
-      if (bcvRateBadge) {
-        const modeLabel = data.mode === 'manual' ? 'Manual' : (data.mode === 'auto' ? 'En Vivo' : 'Resguardo');
-        bcvRateBadge.innerHTML = `<span>🇻🇪 Tasa BCV (${modeLabel}):</span> <strong>Bs. ${bcvRate.toFixed(2)}</strong>`;
-      }
-      updateCartTotals();
+  async function resolveBcvRate() {
+    const modoTasa = localStorage.getItem('modoTasa');
+    const tasaManualStr = localStorage.getItem('tasaManual');
+
+    // 1. Si modoTasa es 'manual', usa el número guardado en localStorage.getItem('tasaManual')
+    if (modoTasa === 'manual' && tasaManualStr && parseFloat(tasaManualStr) > 0) {
+      const activeRate = parseFloat(tasaManualStr);
+      updatePosRateBadge(activeRate, 'Tasa: Manual (Editada)', true);
+      return activeRate;
     }
-  });
+
+    // 2. Solo si es falso ('auto'), intenta conectarse a bcmrate.php o a la API oficial
+    try {
+      const res = await fetch('../api/bcmrate.php?t=' + Date.now());
+      if (res.ok) {
+        const data = await res.json();
+        const apiRate = data.rate || data.promedio;
+        if (apiRate && parseFloat(apiRate) > 0) {
+          const val = parseFloat(apiRate);
+          updatePosRateBadge(val, 'Tasa: Automática (En Vivo)', false);
+          return val;
+        }
+      }
+    } catch (e) {}
+
+    // Fallback secundario a bcv_rate.php
+    try {
+      const res2 = await fetch('../api/bcv_rate.php?t=' + Date.now());
+      if (res2.ok) {
+        const data2 = await res2.json();
+        if (data2 && data2.rate && parseFloat(data2.rate) > 0) {
+          const val2 = parseFloat(data2.rate);
+          updatePosRateBadge(val2, 'Tasa: Automática (En Vivo)', false);
+          return val2;
+        }
+      }
+    } catch (e) {}
+
+    const fallbackRate = parseFloat(tasaManualStr) || 761.21;
+    updatePosRateBadge(fallbackRate, 'Tasa: Resguardo', true);
+    return fallbackRate;
+  }
+
+  function updatePosRateBadge(rate, labelText, isManual) {
+    bcvRate = rate;
+    const bcvRateValEl = document.getElementById('bcvRateVal');
+    const bcvRateBadge = document.getElementById('bcvRateBadge');
+
+    if (bcvRateValEl) {
+      bcvRateValEl.textContent = `Bs. ${rate.toFixed(2)}`;
+    }
+    if (bcvRateBadge) {
+      bcvRateBadge.innerHTML = `<span>🇻🇪 ${labelText}:</span> <strong>Bs. ${rate.toFixed(2)}</strong>`;
+      bcvRateBadge.className = isManual ? 'bcv-rate-badge warning' : 'bcv-rate-badge';
+    }
+  }
 
   async function loadLiveBcvRate() {
-    await BcvRateStore.fetchRate();
+    bcvRate = await resolveBcvRate();
+    updateCartTotals();
   }
+
+  // Escuchar cambios de localStorage en tiempo real cuando el Gerente modifica la tasa desde Módulo 4
+  window.addEventListener('storage', async () => {
+    await loadLiveBcvRate();
+  });
+  window.addEventListener('bcvRateChanged', async (e) => {
+    await loadLiveBcvRate();
+  });
+  BcvRateStore.subscribe(async () => {
+    await loadLiveBcvRate();
+  });
 
   // ==========================================================================
   // CONTROLADOR DEL WIZARD DE PASOS (PASO 1 VS PASO 2 VS PASO 3)
@@ -392,6 +449,13 @@ document.addEventListener('DOMContentLoaded', async () => {
   }
 
   function updateCartTotals() {
+    // Requerimiento 3: Verificar si el modo es manual en localStorage antes de calcular
+    const modoTasaLocal = localStorage.getItem('modoTasa');
+    const tasaManualLocal = localStorage.getItem('tasaManual');
+    if (modoTasaLocal === 'manual' && tasaManualLocal && parseFloat(tasaManualLocal) > 0) {
+      bcvRate = parseFloat(tasaManualLocal);
+    }
+
     let rawSubtotal = 0;
 
     cart.forEach(item => {

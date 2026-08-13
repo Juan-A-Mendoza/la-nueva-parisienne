@@ -53,35 +53,9 @@ document.addEventListener('DOMContentLoaded', () => {
     if (marginVal) marginVal.textContent = `${DASHBOARD_KPIS.profitMargin}%`;
   }
 
-  let userIsEditingManualRate = false;
-
-  function updateBcvKpiUI(data) {
-    const rateValEl = document.getElementById('kpiBcvRateVal');
-    const sourceEl = document.getElementById('kpiBcvSource');
-    const dateEl = document.getElementById('kpiBcvDate');
-
-    if (rateValEl && data && data.rate) {
-      rateValEl.textContent = `Bs. ${data.rate.toFixed(2)}`;
-    }
-    if (sourceEl && data) {
-      const isManual = data.mode === 'manual';
-      sourceEl.textContent = isManual ? `● Tasa: Manual (Gerencial)` : `● Tasa: Automática (En Vivo)`;
-      sourceEl.className = isManual ? 'growth-badge warning' : 'growth-badge positive';
-    }
-    if (dateEl && data) {
-      dateEl.textContent = `${data.date || 'Hoy'} (por $1.00 USD)`;
-    }
-
-    if (!userIsEditingManualRate) {
-      const isManualMode = data && data.mode === 'manual';
-      if (dashModoManual && isManualMode) dashModoManual.checked = true;
-      if (dashModoAuto && !isManualMode) dashModoAuto.checked = true;
-      if (dashTasaInput && data && data.rate) dashTasaInput.value = data.rate.toFixed(2);
-      updateDashTasaUiMode(isManualMode);
-    }
-  }
-
-  // Controles Gerenciales interactivos de la tarjeta BCV en el Dashboard
+  // ==========================================================================
+  // REQUERIMIENTOS 1 Y 2: CONTROL DE TASA CAMBIARIA CON LOCALSTORAGE (MÓDULO 4)
+  // ==========================================================================
   const dashModoAuto = document.getElementById('dashModoAuto');
   const dashModoManual = document.getElementById('dashModoManual');
   const dashLblAuto = document.getElementById('dashLblAuto');
@@ -90,119 +64,157 @@ document.addEventListener('DOMContentLoaded', () => {
   const dashTasaInput = document.getElementById('dashTasaInput');
   const dashLockTag = document.getElementById('dashLockTag');
   const btnSaveDashRate = document.getElementById('btnSaveDashRate');
+  const kpiBcvRateVal = document.getElementById('kpiBcvRateVal');
+  const kpiBcvSource = document.getElementById('kpiBcvSource');
 
-  function updateDashTasaUiMode(isManual) {
+  // 1. Desbloqueo del Input (Módulo 4)
+  function applyTasaModeUI(modo) {
+    const isManual = (modo === 'manual');
+
     if (dashLblAuto) dashLblAuto.style.borderColor = isManual ? 'var(--border-subtle)' : 'var(--color-success)';
     if (dashLblManual) dashLblManual.style.borderColor = isManual ? 'var(--color-success)' : 'var(--border-subtle)';
 
-    if (dashTasaGroup && dashTasaInput) {
-      dashTasaGroup.style.opacity = '1';
-      dashTasaGroup.style.pointerEvents = 'auto';
-
+    if (dashTasaInput) {
       if (isManual) {
-        dashTasaInput.readOnly = false;
         dashTasaInput.disabled = false;
         dashTasaInput.style.background = '#FFFFFF';
+        dashTasaInput.style.opacity = '1';
         dashTasaInput.style.cursor = 'text';
+        if (dashTasaGroup) dashTasaGroup.style.opacity = '1';
         if (dashLockTag) {
           dashLockTag.textContent = '🔓 (Desbloqueado para Edición)';
           dashLockTag.style.color = 'var(--color-success)';
         }
-        try {
-          dashTasaInput.focus();
-          dashTasaInput.select();
-        } catch (e) {}
+        try { dashTasaInput.focus(); } catch (e) {}
       } else {
-        dashTasaInput.readOnly = true;
-        dashTasaInput.disabled = false;
+        dashTasaInput.disabled = true;
         dashTasaInput.style.background = '#F5F5F5';
-        dashTasaInput.style.cursor = 'pointer';
+        dashTasaInput.style.opacity = '0.6';
+        dashTasaInput.style.cursor = 'not-allowed';
+        if (dashTasaGroup) dashTasaGroup.style.opacity = '0.6';
         if (dashLockTag) {
-          dashLockTag.textContent = '🔒 (Haz clic en Manual para editar)';
+          dashLockTag.textContent = '🔒 (Bloqueado en Modo Auto)';
           dashLockTag.style.color = 'var(--color-muted)';
         }
       }
     }
   }
 
-  if (dashTasaInput) {
-    const activateManualInput = () => {
-      userIsEditingManualRate = true;
-      if (dashModoManual) dashModoManual.checked = true;
-      updateDashTasaUiMode(true);
-    };
-
-    dashTasaInput.addEventListener('click', activateManualInput);
-    dashTasaInput.addEventListener('focus', activateManualInput);
-    dashTasaInput.addEventListener('input', activateManualInput);
-  }
-
+  // EventListener para Radio Buttons (Automático / Manual)
   document.querySelectorAll('input[name="dashModoTasaRadio"]').forEach(radio => {
     radio.addEventListener('change', (e) => {
-      const isManual = e.target.value === 'manual';
-      userIsEditingManualRate = isManual;
-      updateDashTasaUiMode(isManual);
+      const modo = e.target.value;
+      if (modo === 'manual') {
+        applyTasaModeUI('manual');
+      } else {
+        applyTasaModeUI('auto');
+        fetchLiveApiRate();
+      }
     });
   });
 
+  // 2. Guardado Global (Botón Aplicar)
   if (btnSaveDashRate) {
     btnSaveDashRate.addEventListener('click', async () => {
       const isManual = dashModoManual && dashModoManual.checked;
-      const selectedMode = isManual ? 'manual' : 'auto';
-      const manualVal = dashTasaInput ? parseFloat(dashTasaInput.value) || 761.21 : 761.21;
+      const modoSeleccionado = isManual ? 'manual' : 'auto';
+      const valorIngresado = dashTasaInput ? parseFloat(dashTasaInput.value) || 0 : 0;
 
-      if (isManual && manualVal <= 0) {
-        alert('⚠️ Ingrese una tasa manual válida mayor a Bs. 0.00.');
+      if (isManual && valorIngresado <= 0) {
+        alert('⚠️ Por favor ingrese un monto en Bolívares válido mayor a 0.00.');
         return;
       }
 
       btnSaveDashRate.disabled = true;
       btnSaveDashRate.textContent = '⏳ Aplicando...';
 
-      try {
-        const payload = {
-          modo_tasa: selectedMode,
-          tasa_manual: manualVal
-        };
+      let rateToApply = valorIngresado;
+      let sourceLabel = "Tasa: Manual (Editada)";
 
-        const res = await fetch('../api/update_empresa.php', {
+      if (modoSeleccionado === 'auto') {
+        rateToApply = await fetchLiveApiRate();
+        sourceLabel = "Tasa: Automática (En Vivo)";
+      }
+
+      // Guardar en localStorage
+      localStorage.setItem('modoTasa', modoSeleccionado);
+      localStorage.setItem('tasaManual', rateToApply.toString());
+
+      // Persistir en MySQL (update_empresa.php)
+      try {
+        await fetch('../api/update_empresa.php', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(payload)
+          body: JSON.stringify({
+            modo_tasa: modoSeleccionado,
+            tasa_manual: rateToApply
+          })
         });
+      } catch (err) {}
 
-        const result = await res.json();
-        if (res.ok && result.success) {
-          let activeRate = manualVal;
-          let activeSource = 'Tasa Manual Gerencial (Dashboard)';
-
-          if (selectedMode === 'auto') {
-            const currentData = await BcvRateStore.fetchRate(true);
-            activeRate = currentData.rate || manualVal;
-            activeSource = currentData.source || 'BCV Oficial (ve.dolarapi.com - En Vivo)';
-          }
-
-          userIsEditingManualRate = false;
-          // ACTUALIZAR DIRECTAMENTE LA TASA MOSTRADA EN EL DASHBOARD (MÓDULO 4)
-          const kpiBcvRateVal = document.getElementById('kpiBcvRateVal');
-          if (kpiBcvRateVal) {
-            kpiBcvRateVal.textContent = `Bs. ${activeRate.toFixed(2)}`;
-          }
-
-          // DIFUNDIR A TODOS LOS MÓDULOS (POS MÓDULO 3, INVENTARIO, ETC.)
-          BcvRateStore.broadcastChange(activeRate, selectedMode, activeSource);
-          alert(`✓ ¡Tasa cambiaria aplicada con éxito: Bs. ${activeRate.toFixed(2)} (${selectedMode === 'manual' ? 'Manual' : 'Automática en Vivo'})! Reflejada en POS y Dashboard.`);
-        } else {
-          alert(`❌ Error al guardar: ${result.message || 'Error en el servidor.'}`);
-        }
-      } catch (err) {
-        alert('❌ Error de conexión al aplicar la tasa cambiaria.');
+      // Actualizar UI del Dashboard
+      if (kpiBcvRateVal) {
+        kpiBcvRateVal.textContent = `Bs. ${rateToApply.toFixed(2)}`;
       }
+      if (kpiBcvSource) {
+        kpiBcvSource.textContent = `● ${sourceLabel}`;
+        kpiBcvSource.className = isManual ? 'growth-badge warning' : 'growth-badge positive';
+      }
+
+      // Sincronizar en tiempo real con Módulo 3 POS y otras pestañas
+      window.dispatchEvent(new Event('storage'));
+      window.dispatchEvent(new CustomEvent('bcvRateChanged', { detail: { rate: rateToApply, mode: modoSeleccionado } }));
+      BcvRateStore.broadcastChange(rateToApply, modoSeleccionado, sourceLabel);
 
       btnSaveDashRate.disabled = false;
       btnSaveDashRate.textContent = '💾 Aplicar';
+
+      alert(`✓ ¡Tasa cambiaria aplicada con éxito!\nModo: ${sourceLabel}\nMonto: Bs. ${rateToApply.toFixed(2)}`);
     });
   }
+
+  async function fetchLiveApiRate() {
+    try {
+      const res = await fetch('../api/bcmrate.php?t=' + Date.now());
+      if (res.ok) {
+        const data = await res.json();
+        const apiRate = data.rate || data.promedio;
+        if (apiRate && parseFloat(apiRate) > 0) {
+          const val = parseFloat(apiRate);
+          if (kpiBcvRateVal) kpiBcvRateVal.textContent = `Bs. ${val.toFixed(2)}`;
+          if (!dashModoManual?.checked && dashTasaInput) {
+            dashTasaInput.value = val.toFixed(2);
+          }
+          return val;
+        }
+      }
+    } catch (e) {}
+    return parseFloat(localStorage.getItem('tasaManual')) || 761.21;
+  }
+
+  // Inicializar estado guardado en Módulo 4
+  function initDashboardRateState() {
+    const modoGuardado = localStorage.getItem('modoTasa') || 'auto';
+    const tasaGuardada = parseFloat(localStorage.getItem('tasaManual')) || 761.21;
+
+    if (dashTasaInput) dashTasaInput.value = tasaGuardada.toFixed(2);
+
+    if (modoGuardado === 'manual') {
+      if (dashModoManual) dashModoManual.checked = true;
+      applyTasaModeUI('manual');
+      if (kpiBcvRateVal) kpiBcvRateVal.textContent = `Bs. ${tasaGuardada.toFixed(2)}`;
+      if (kpiBcvSource) {
+        kpiBcvSource.textContent = '● Tasa: Manual (Editada)';
+        kpiBcvSource.className = 'growth-badge warning';
+      }
+    } else {
+      if (dashModoAuto) dashModoAuto.checked = true;
+      applyTasaModeUI('auto');
+      fetchLiveApiRate();
+    }
+  }
+
+  initDashboardRateState();
 
   async function fetchBcvRate(forceRefresh = false) {
     const btnRefresh = document.getElementById('btnRefreshBcvRate');
