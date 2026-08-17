@@ -227,11 +227,18 @@ document.addEventListener('DOMContentLoaded', async () => {
     updateCartTotals();
   }
 
-  // Escuchar cambios de localStorage en tiempo real cuando el Gerente modifica la tasa desde Módulo 4
+  // Escuchar cambios de localStorage y BroadcastChannel en tiempo real cuando el Gerente modifica la tasa
+  if (typeof BroadcastChannel !== 'undefined') {
+    const rateChannel = new BroadcastChannel('lnp_bcv_channel');
+    rateChannel.onmessage = async () => {
+      await loadLiveBcvRate();
+    };
+  }
+
   window.addEventListener('storage', async () => {
     await loadLiveBcvRate();
   });
-  window.addEventListener('bcvRateChanged', async (e) => {
+  window.addEventListener('bcvRateChanged', async () => {
     await loadLiveBcvRate();
   });
   BcvRateStore.subscribe(async () => {

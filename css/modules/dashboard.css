@@ -46,6 +46,26 @@
   gap: 1.25rem;
 }
 
+.bcv-rate-badge {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  background: rgba(46, 125, 50, 0.08);
+  border: 1px solid rgba(46, 125, 50, 0.25);
+  color: var(--color-success);
+  padding: 0.35rem 0.8rem;
+  border-radius: var(--radius-pill);
+  font-size: 0.82rem;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.bcv-rate-badge.warning {
+  background: rgba(212, 155, 84, 0.12);
+  border: 1px solid rgba(212, 155, 84, 0.35);
+  color: var(--color-gold-dark);
+}
+
 .period-select-btn {
   padding: 0.5rem 1rem;
   border-radius: var(--radius-pill);

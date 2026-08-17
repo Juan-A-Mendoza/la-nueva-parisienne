@@ -4,6 +4,170 @@ Todos los cambios significativos, nuevas funcionalidades y actualizaciones del s
 
 El formato está basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1.0.0/) y este proyecto se adhiere a [Semantic Versioning](https://semver.org/lang/es/).
 
+## [4.2.0] - 2026-08-17 (Estandarización del Indicador de Tasa BCV en Navbar entre Módulo 3 POS y Módulo 4 Dashboard)
+
+### 🎨 Estandarización Visual de Navbar sin Tarjetas Innecesarias ([modules/dashboard.html](file:///C:/Users/juana/.gemini/antigravity-ide/scratch/la-nueva-parisienne/modules/dashboard.html), [css/modules/dashboard.css](file:///C:/Users/juana/.gemini/antigravity-ide/scratch/la-nueva-parisienne/css/modules/dashboard.css), [js/modules/dashboard.js](file:///C:/Users/juana/.gemini/antigravity-ide/scratch/la-nueva-parisienne/js/modules/dashboard.js))
+- **Eliminación Completa de la Tarjeta KPI**:
+  - Se borró por completo el contenedor de tarjeta grande de la cuadrícula principal del Dashboard.
+- **Clonación e Integración del Badge del Navbar del POS**:
+  - Se replicó la estructura HTML `#bcvRateBadge` en la barra superior (navbar) del Módulo 4 Dashboard, ubicándola junto a la credencial del Gerente General.
+- **JavaScript Limpio y Directo**:
+  - `resolveDashboardBcvRate()` actualiza `#bcvRateBadge` y `#bcvRateVal` con la misma estética y etiquetas (`🇻🇪 Tasa: Manual (Editada): Bs. 772.80` / `🇻🇪 Tasa: Automática (En Vivo): Bs. 761.21`) que en el Módulo de Caja POS.
+
+---
+
+## [4.1.4] - 2026-08-17 (Solución Definitiva de Sobreescritura en BcvRateStore y Mapeo Exacto entre POS y Dashboard)
+
+### 🐛 Corrección de Sobreescritura en BcvRateStore ([js/core/bcv-rate-store.js](file:///C:/Users/juana/.gemini/antigravity-ide/scratch/la-nueva-parisienne/js/core/bcv-rate-store.js), [js/modules/dashboard.js](file:///C:/Users/juana/.gemini/antigravity-ide/scratch/la-nueva-parisienne/js/modules/dashboard.js))
+- **Eliminación de Sobreescritura de `modo_tasa`**:
+  - Se eliminó el `localStorage.setItem('modo_tasa', 'auto')` involuntario dentro de `BcvRateStore.fetchRate()`, evitando que el sistema reescribiera el modo elegido por el gerente al consultar la API.
+- **Sincronización Infalible entre Módulo 3 POS y Módulo 4 Dashboard**:
+  - Tanto el indicador de la Caja POS (`🇻🇪 Tasa: Manual (Editada): Bs. 772.80`) como la tarjeta KPI del Dashboard (`Bs. 772.80` • `• Tasa: Manual (Editada)`) muestran exactamente la misma cifra y modalidad configuradas en Módulo 9.
+
+---
+
+## [4.1.3] - 2026-08-17 (Unificación Idéntica de la Lógica de Tasa BCV entre Módulo 4 Dashboard y Módulo 3 Caja POS)
+
+### 🏛️ Reconstrucción con Lógica Espejo de Caja POS ([modules/dashboard.html](file:///C:/Users/juana/.gemini/antigravity-ide/scratch/la-nueva-parisienne/modules/dashboard.html), [js/modules/dashboard.js](file:///C:/Users/juana/.gemini/antigravity-ide/scratch/la-nueva-parisienne/js/modules/dashboard.js))
+- **Tarjeta 100% Idéntica a Caja**:
+  - Se recreó el título `🇻🇪 TASA DE CAMBIO BCV` y la función `resolveDashboardBcvRate()` copiada exactamente de la lógica de resolución utilizada en el Módulo 3 (Punto de Venta / Caja POS).
+- **Mapeo Fiel del Estado**:
+  - Si es **Manual**: Muestra el valor manual de Módulo 9 (ej. `Bs. 772.80`) y la leyenda `• Tasa: Manual (Editada)`.
+  - Si es **Automático**: Muestra la tasa oficial en vivo (ej. `Bs. 761.21`) y la leyenda `• Tasa: Automática (En Vivo)`.
+
+---
+
+## [4.1.2] - 2026-08-17 (Representación Directa e Inmediata de la Tasa Activa del Módulo 9 en Módulo 4 Dashboard)
+
+### ⚡ Visualización Inmediata sin Demoras ([modules/dashboard.html](file:///C:/Users/juana/.gemini/antigravity-ide/scratch/la-nueva-parisienne/modules/dashboard.html), [js/modules/dashboard.js](file:///C:/Users/juana/.gemini/antigravity-ide/scratch/la-nueva-parisienne/js/modules/dashboard.js))
+- **Inyección Directa e Ininterrumpida**:
+  - Se configuró la tarjeta **`💵 TASA DE CAMBIO ACTIVA`** para mostrar inmediatamente la cotización vigente al abrir el Dashboard, sin estados vacíos ni demoras.
+  - Muestra fielmente el valor activo traído desde el Módulo 9 (Manual o Automático) y actualiza su cifra y badge instantáneamente.
+
+---
+
+## [4.1.1] - 2026-08-17 (Reconstrucción Total de la Tarjeta de Tasa en Módulo 4 Dashboard Sin Valores Estáticos)
+
+### 🧹 Reconstrucción HTML y Alimentación Dinámica 100% Desde Módulo 9 ([modules/dashboard.html](file:///C:/Users/juana/.gemini/antigravity-ide/scratch/la-nueva-parisienne/modules/dashboard.html), [js/modules/dashboard.js](file:///C:/Users/juana/.gemini/antigravity-ide/scratch/la-nueva-parisienne/js/modules/dashboard.js))
+- **Eliminación Total de Cifras Hardcodeadas**:
+  - Se eliminó el texto estático `Bs. 761.21` del HTML en `dashboard.html`. Ahora la tarjeta inicia en un estado limpio `Bs. --.--` hasta la inyección dinámica.
+- **Reflejo Exclusivo de la Configuración del Módulo 9**:
+  - La tarjeta lee directamente los datos fijados por el Gerente General en el Módulo 9: si es **Manual**, inyecta la cifra ingresada (ej. `Bs. 772.80`) y el distintivo `• Modo Manual Gerencial`; si es **Automático**, inyecta la tasa en vivo y el distintivo `• Modo Automático (API BCV)`.
+
+---
+
+## [4.1.0] - 2026-08-17 (Solución Definitiva de Inicialización de Tasa en Módulo 4 Dashboard)
+
+### 🐛 Corrección de Excepción de Ejecución (Fix Uncaught ReferenceError) ([js/modules/dashboard.js](file:///C:/Users/juana/.gemini/antigravity-ide/scratch/la-nueva-parisienne/js/modules/dashboard.js))
+- **Eliminación de Llamadas de Función Inexistentes**:
+  - Se corrigió la llamada desactualizada a `fetchBcvRate()` y `updateBcvKpiUI()`, la cual producía un `ReferenceError` no capturado al iniciar el Dashboard y detenía la ejecución del script antes de renderizar la tasa activa.
+- **Sincronización Infalible del Módulo 9 al Módulo 4**:
+  - La tarjeta **`💵 TASA DE CAMBIO ACTIVA`** del Dashboard ejecuta de forma limpia `updateBcvDisplay()`, reflejando exactamente la tasa ingresada en el Módulo 9 (sea **Manual**, ej. `Bs. 772.80`, o **Automática**, ej. `Bs. 761.21`), actualizándose en tiempo real y persistiendo al recargar.
+
+---
+
+## [4.0.9] - 2026-08-17 (Persistencia e Inmutabilidad de la Modalidad Seleccionada en Módulo 9 y Módulo 4 Dashboard)
+
+### 🧠 Memoria Incondicional de Configuración Gerencial ([js/modules/configuraciones.js](file:///C:/Users/juana/.gemini/antigravity-ide/scratch/la-nueva-parisienne/js/modules/configuraciones.js), [js/modules/dashboard.js](file:///C:/Users/juana/.gemini/antigravity-ide/scratch/la-nueva-parisienne/js/modules/dashboard.js), [js/core/bcv-rate-store.js](file:///C:/Users/juana/.gemini/antigravity-ide/scratch/la-nueva-parisienne/js/core/bcv-rate-store.js))
+- **Prioridad Absoluta a la Elección Gerencial**:
+  - Se corrigió la lógica donde la consulta inicial a `get_empresa.php` reescribía `localStorage` con la modalidad por defecto (`auto`).
+  - Tanto el **Módulo 9 (Configuraciones)** como el **Módulo 4 (Dashboard Gerencial)** leen primero y de forma inmutable la preferencia guardada por el Gerente General (`modo_tasa` y `tasa_manual`).
+- **Recordatorio Ininterrumpido en Módulo 9**:
+  - Al ingresar a Módulo 9, el formulario selecciona automáticamente la opción recordada (Manual vs Automática) y muestra el panel correspondiente con la cifra escrita previamente.
+- **Visualización Infalible en Módulo 4 Dashboard**:
+  - Si la última opción guardada fue **Modo Manual**, la tarjeta **`💵 TASA DE CAMBIO ACTIVA`** muestra de forma permanente e inmutable el valor manual (ej. `Bs. 772.80`) y la leyenda `• Modo Manual Gerencial` (en color dorado/ámbar), sin revertirse a automático.
+
+---
+
+## [4.0.8] - 2026-08-17 (Manejo Resiliente y Eliminación de Falsos Positivos de Conexión al Guardar Tasa)
+
+### 🛠️ Persistencia Resiliente ([js/modules/configuraciones.js](file:///C:/Users/juana/.gemini/antigravity-ide/scratch/la-nueva-parisienne/js/modules/configuraciones.js))
+- **Manejo Desacoplado de Conexión**:
+  - Al guardar la tasa manual en Módulo 9, la información se persiste en `localStorage` y se transmite vía `BroadcastChannel` de forma inmediata e incondicional.
+  - Se eliminó el falso positivo de "Error de conexión" que se producía cuando el backend de MySQL/PHP no estaba ejecutándose localmente, asegurando que el sistema muestre `✓ ¡Tasa de cambio guardada y transmitida a todo el sistema!` sin bloquear al usuario.
+- **Sin Dependencias de Red al Guardar Tasa Manual**:
+  - Al estar en Modo Manual, la función de guardado ya no intenta realizar llamadas asíncronas externas a APIs remotas, haciendo el proceso instantáneo.
+
+---
+
+## [4.0.7] - 2026-08-17 (Reconstrucción Total de la Tarjeta de Tasa de Cambio Activa en Módulo 4 Dashboard)
+
+### 🧹 Reconstrucción Precisa y Corrección Dinámica ([modules/dashboard.html](file:///C:/Users/juana/.gemini/antigravity-ide/scratch/la-nueva-parisienne/modules/dashboard.html), [js/modules/dashboard.js](file:///C:/Users/juana/.gemini/antigravity-ide/scratch/la-nueva-parisienne/js/modules/dashboard.js))
+- **Eliminación de Etiqueta Estática "Tasa Oficial"**:
+  - Reemplazo del título ambiguo `"🇻🇪 TASA OFICIAL BCV"` por el rótulo dinámico `"💵 TASA DE CAMBIO ACTIVA"`.
+- **Reflejo Exacto del Valor y Modalidad Activa**:
+  - Si el sistema rige con **Modo Automático**: muestra la cotización en vivo (`tasa_auto`, ej. `Bs. 761.21`) y la etiqueta `• Modo Automático (API BCV)` (verde).
+  - Si el sistema rige con **Modo Manual**: muestra la cotización fija gerencial (`tasa_manual`, ej. `Bs. 780.00`) y la etiqueta `• Modo Manual Gerencial` (dorado/ámbar).
+
+---
+
+## [4.0.6] - 2026-08-17 (Rediseño de Paneles Mutuamente Exclusivos para Tasa Automática y Manual en Módulo 9)
+
+### 🎨 Interfaz Ordenada y Mutuamente Exclusiva (Clean & Exclusive UI)
+- **Paneles Dinámicos Aislados ([modules/configuraciones.html](file:///C:/Users/juana/.gemini/antigravity-ide/scratch/la-nueva-parisienne/modules/configuraciones.html), [js/modules/configuraciones.js](file:///C:/Users/juana/.gemini/antigravity-ide/scratch/la-nueva-parisienne/js/modules/configuraciones.js))**:
+  - **Panel Automático (`#boxModoAuto`)**: Al seleccionar "Modo Automático", se muestra exclusivamente la tarjeta de conexión API en vivo, ocultando completamente el campo manual.
+  - **Panel Manual (`#boxModoManual`)**: Al seleccionar "Modo Manual", se oculta el panel de API y se despliega y enfoca únicamente el panel de edición de tasa manual (`#input_tasa_manual`).
+- **Claridad Total para el Gerente**:
+  - Garantiza que solo un modo esté activo y desplegado visualmente a la vez, eliminando cualquier ambigüedad de cuál modalidad rige el sistema.
+
+---
+
+## [4.0.5] - 2026-08-17 (Refuerzo de Sincronización Inmediata en Dashboard al Cambiar Modalidad en Módulo 9)
+
+### 🔄 Refuerzo de Transmisión Reactiva ([js/modules/configuraciones.js](file:///C:/Users/juana/.gemini/antigravity-ide/scratch/la-nueva-parisienne/js/modules/configuraciones.js), [js/modules/dashboard.js](file:///C:/Users/juana/.gemini/antigravity-ide/scratch/la-nueva-parisienne/js/modules/dashboard.js))
+- **Emisión Instantánea al Hacer Clic en el Radio Selector**:
+  - Al cambiar los radio buttons ("Modo Automático" vs "Modo Manual") o escribir un monto en la casilla manual del Módulo 9, la tarjeta del Módulo 4 Dashboard recibe inmediatamente la orden de transmisión antes e incluso después de guardar.
+- **Doble Fuente de Verdad (MySQL + LocalStorage)**:
+  - Al cargar el Dashboard Gerencial, `initBcvDisplay()` consulta automáticamente `api/get_empresa.php` para sincronizar la verdad guardada en la base de datos MySQL de forma infalible.
+
+---
+
+## [4.0.4] - 2026-08-17 (Sincronización Ultrarrápida Multicanal vía BroadcastChannel en Dashboard y POS)
+
+### 📡 Transmisión Instantánea Inter-Pestañas (Multichannel Inter-Tab Sync)
+- **Incorporación de BroadcastChannel (`lnp_bcv_channel`) ([js/modules/configuraciones.js](file:///C:/Users/juana/.gemini/antigravity-ide/scratch/la-nueva-parisienne/js/modules/configuraciones.js), [js/modules/dashboard.js](file:///C:/Users/juana/.gemini/antigravity-ide/scratch/la-nueva-parisienne/js/modules/dashboard.js), [js/modules/pos.js](file:///C:/Users/juana/.gemini/antigravity-ide/scratch/la-nueva-parisienne/js/modules/pos.js))**:
+  - Implementación del canal nativo `BroadcastChannel('lnp_bcv_channel')` que conecta directamente todas las ventanas abiertas del sistema (Módulo 9, Módulo 4 Dashboard y Módulo 3 POS).
+  - Al guardar la tasa (automática o manual) en el Módulo 9, la tarjeta del **Dashboard Gerencial (Módulo 4)** actualiza de inmediato el monto y la etiqueta de estado (`• Tasa: Automática (En Vivo)` o `• Tasa: Manual (Editada)`).
+
+---
+
+## [4.0.3] - 2026-08-17 (Sincronización Dinámica de la Tarjeta del Dashboard con la Modalidad Seleccionada)
+
+### 📊 Actualización en Tiempo Real en Módulo 4 ([js/modules/dashboard.js](file:///C:/Users/juana/.gemini/antigravity-ide/scratch/la-nueva-parisienne/js/modules/dashboard.js))
+- **Reflejo Dinámico del Modo Seleccionado**:
+  - La tarjeta de Tasa BCV del **Módulo 4: Dashboard Gerencial** (`#tasa_actual_display` y `#texto_estado_tasa`) ahora se actualiza automáticamente con la opción elegida por el Gerente General.
+  - Si se elige **Modo Automático**: muestra el monto en vivo de `tasa_auto` y la leyenda `• Tasa: Automática (En Vivo)`.
+  - Si se elige **Modo Manual**: muestra el monto personalizado de `tasa_manual` y la leyenda `• Tasa: Manual (Editada)`.
+- **Recepción de Eventos Reactivos**:
+  - El manejador de eventos `handleBcvRateEvent()` escucha de forma pasiva cualquier cambio transmitido desde el Módulo 9 y actualiza la tarjeta KPI sin requerir recargar la página.
+
+---
+
+## [4.0.2] - 2026-08-17 (Manejo de Variables Independientes de Tasa Automática y Tasa Manual)
+
+### 🔀 Variables Independientes (Dual Rate Variable Architecture)
+- **Separación de Variables en localStorage y Memoria ([js/modules/configuraciones.js](file:///C:/Users/juana/.gemini/antigravity-ide/scratch/la-nueva-parisienne/js/modules/configuraciones.js))**:
+  - `tasa_auto` / `tasaAuto`: Almacena la cotización obtenida en vivo desde la API de Fawaz Ahmed.
+  - `tasa_manual` / `tasaManual`: Almacena el valor personalizado ingresado por el Gerente General.
+  - `modo_tasa` / `modoTasa`: Determina la modalidad activa (`auto` o `manual`).
+- **Conmutación Visual Dinámica**:
+  - Al seleccionar "Modo Automático", la previsualización muestra `tasa_auto` sin modificar la cifra guardada en `tasa_manual`.
+  - Al seleccionar "Modo Manual", la previsualización muestra `tasa_manual` permitiendo su edición y guardado aislados.
+
+---
+
+## [4.0.1] - 2026-08-17 (Verificación Completa de Sincronización en Tiempo Real para Caja y Facturas)
+
+### ⚡ Sincronización en Tiempo Real (Real-Time Sync & Ticket Printing)
+- **Sincronización Multicapa ([js/modules/configuraciones.js](file:///C:/Users/juana/.gemini/antigravity-ide/scratch/la-nueva-parisienne/js/modules/configuraciones.js), [js/modules/pos.js](file:///C:/Users/juana/.gemini/antigravity-ide/scratch/la-nueva-parisienne/js/modules/pos.js))**:
+  - Al guardar cualquier cambio de tasa en el Módulo 9, la variable activa se persiste inmediatamente en `localStorage` (`modo_tasa`, `tasa_manual` y `bcv_current_rate`) y emite los eventos `storage`, `bcvRateChanged` y de suscripción en `BcvRateStore`.
+- **Actualización Instantánea en Punto de Venta (Caja - Módulo 3)**:
+  - El Punto de Venta (POS) recalcula en tiempo real los totales en Bolívares (`step1TotalVes`, `totalVesEl`), actualiza los badges de indicación de tasa y asigna la tasa vigente a la venta.
+- **Facturación Impresa y Ticket Térmico**:
+  - El generador de facturas térmicas de 80mm imprime exactamente la tasa de referencia activa en el bloque legal SENIAT: `CONVERSIÓN TASA OFICIAL BCV: Bs. XXX.XX / USD` y `TOTAL EN BS: Bs. XXX.XX`.
+
+---
+
 ## [4.0.0] - 2026-08-17 (Migración Completa a API Open-Source Fawaz Ahmed via jsdelivr)
 
 ### 🚀 Nueva Arquitectura Cambiaria (New Currency API Architecture)

@@ -31,12 +31,12 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // Suscripción en tiempo real a BcvRateStore
   BcvRateStore.subscribe((data) => {
-    updateBcvKpiUI(data);
+    handleRateBroadcast(data);
   });
 
   // Initial render
   renderKPIs();
-  fetchBcvRate();
+  resolveDashboardBcvRate();
   initSalesChart();
   renderMovementsTable();
 
@@ -54,53 +54,83 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   // ==========================================================================
-  // TARJETA INFORMATIVA DE TASA OFICIAL BCV EN DASHBOARD
+  // BADGE DE TASA DE CAMBIO BCV EN NAVBAR GERENCIAL (IDÉNTICO A CAJA POS)
   // ==========================================================================
-  const tasaDisplay = document.getElementById('tasa_actual_display');
-  const textoEstadoTasa = document.getElementById('texto_estado_tasa');
+  function updateDashboardRateBadge(rate, labelText, isManual) {
+    const bcvRateValEl = document.getElementById('bcvRateVal');
+    const bcvRateBadge = document.getElementById('bcvRateBadge');
 
-  // Función auxiliar para consultar la nueva API en vivo (Fawaz Ahmed via jsdelivr)
-  async function fetchLiveBcvRate() {
-    const modoGuardado = localStorage.getItem('modo_tasa') || localStorage.getItem('modoTasa') || 'auto';
+    if (bcvRateValEl) {
+      bcvRateValEl.textContent = `Bs. ${rate.toFixed(2)}`;
+    }
+    if (bcvRateBadge) {
+      bcvRateBadge.innerHTML = `<span>🇻🇪 ${labelText}:</span> <strong>Bs. ${rate.toFixed(2)}</strong>`;
+      bcvRateBadge.className = isManual ? 'bcv-rate-badge warning' : 'bcv-rate-badge';
+    }
+  }
+
+  async function resolveDashboardBcvRate() {
+    // 1. Verificar si la tasa está en modo manual desde Módulo 9
+    const modoGuardado = localStorage.getItem('modo_tasa') || localStorage.getItem('modoTasa');
     if (modoGuardado === 'manual') {
-      const tasaManual = parseFloat(localStorage.getItem('tasa_manual') || localStorage.getItem('tasaManual'));
-      if (tasaManual && tasaManual > 0) return tasaManual;
+      const tasaManualVal = parseFloat(localStorage.getItem('tasa_manual') || localStorage.getItem('tasaManual'));
+      if (tasaManualVal && tasaManualVal > 0) {
+        updateDashboardRateBadge(tasaManualVal, 'Tasa: Manual (Editada)', true);
+        return tasaManualVal;
+      }
     }
 
+    // 2. Si es modo automático, consultar la API en vivo (currency-api via jsdelivr)
     try {
       const res = await fetch('https://cdn.jsdelivr.net/npm/@fawazahmed0/currency-api@latest/v1/currencies/usd.json', { cache: 'no-store' });
       if (res.ok) {
         const data = await res.json();
         if (data && data.usd && data.usd.ves && parseFloat(data.usd.ves) > 0) {
-          return parseFloat(data.usd.ves);
+          const liveRate = parseFloat(data.usd.ves);
+          localStorage.setItem('tasa_auto', liveRate.toString());
+          localStorage.setItem('tasaAuto', liveRate.toString());
+          updateDashboardRateBadge(liveRate, 'Tasa: Automática (En Vivo)', false);
+          return liveRate;
         }
       }
     } catch (e) {
-      console.warn('Error al consultar currency-api en Dashboard:', e);
+      console.warn('Error al consultar currency-api en Dashboard Navbar:', e);
     }
-    return parseFloat(localStorage.getItem('tasa_manual') || localStorage.getItem('tasaManual')) || 761.21;
+
+    const fallbackRate = parseFloat(localStorage.getItem('tasa_manual') || localStorage.getItem('tasaManual')) || 761.21;
+    updateDashboardRateBadge(fallbackRate, 'Tasa: Resguardo', true);
+    return fallbackRate;
   }
 
-  // Inicializar visualización de la Tasa BCV
-  async function initBcvDisplay() {
-    const modoGuardado = localStorage.getItem('modo_tasa') || localStorage.getItem('modoTasa') || 'auto';
-    const tasaGuardada = parseFloat(localStorage.getItem('tasa_manual') || localStorage.getItem('tasaManual')) || 761.21;
-
-    if (modoGuardado === 'manual') {
-      if (tasaDisplay) tasaDisplay.innerText = `Bs. ${tasaGuardada.toFixed(2)}`;
-      if (textoEstadoTasa) textoEstadoTasa.innerText = '• Tasa Manual Gerencial';
-    } else {
-      if (textoEstadoTasa) textoEstadoTasa.innerText = '• Tasa Oficial BCV en Vivo';
-      const liveRate = await fetchLiveBcvRate();
-      if (tasaDisplay) tasaDisplay.innerText = `Bs. ${liveRate.toFixed(2)}`;
+  function handleRateBroadcast(data) {
+    if (!data) {
+      resolveDashboardBcvRate();
+      return;
+    }
+    const isManual = data.mode === 'manual';
+    const rateVal = parseFloat(data.rate) || 0;
+    const labelText = isManual ? 'Tasa: Manual (Editada)' : 'Tasa: Automática (En Vivo)';
+    if (rateVal > 0) {
+      updateDashboardRateBadge(rateVal, labelText, isManual);
     }
   }
 
-  initBcvDisplay();
+  resolveDashboardBcvRate();
 
-  // Escuchar actualizaciones de tasa en tiempo real (por ejemplo desde Módulo 9)
-  window.addEventListener('storage', initBcvDisplay);
-  window.addEventListener('bcvRateChanged', initBcvDisplay);
+  // Escuchar a través de BroadcastChannel de latencia cero
+  if (typeof BroadcastChannel !== 'undefined') {
+    const rateChannel = new BroadcastChannel('lnp_bcv_channel');
+    rateChannel.onmessage = (e) => {
+      if (e.data) handleRateBroadcast(e.data);
+    };
+  }
+
+  // Escuchar eventos globales del navegador
+  window.addEventListener('storage', () => resolveDashboardBcvRate());
+  window.addEventListener('bcvRateChanged', (e) => {
+    if (e && e.detail) handleRateBroadcast(e.detail);
+    else resolveDashboardBcvRate();
+  });
 
   // 3. Inicialización del Gráfico de Tendencia de Ventas (Chart.js)
   function initSalesChart() {

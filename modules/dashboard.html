@@ -26,6 +26,11 @@
       </div>
 
       <div class="dashboard-controls">
+        <!-- BADGE DE TASA BCV CLONADO DE POS (MÓDULO 3) -->
+        <div id="bcvRateBadge" class="bcv-rate-badge" title="Tasa Oficial de Cambio del Banco Central de Venezuela">
+          <span>🇻🇪 Tasa BCV:</span> <strong id="bcvRateVal">Cargando...</strong>
+        </div>
+
         <div class="cashier-badge">
           <span id="managerAvatar" class="cashier-avatar">👨‍💼</span>
           <div class="cashier-info">
@@ -109,19 +114,6 @@
           <div class="kpi-card-footer">
             <span class="growth-badge positive">Salud Excelente</span>
             <span class="growth-subtitle">costos bajo control</span>
-          </div>
-        </div>
-
-        <!-- TARJETA INFORMATIVA: TASA OFICIAL BANCO CENTRAL DE VENEZUELA (BCV) -->
-        <div class="dashboard-kpi-card" style="border: 2px solid rgba(46, 125, 50, 0.35); background: linear-gradient(135deg, #FFFFFF 0%, rgba(46, 125, 50, 0.05) 100%);">
-          <div class="kpi-card-header">
-            <span class="kpi-card-label" style="color: var(--color-success); font-weight: 800; font-size: 0.88rem;">🇻🇪 TASA OFICIAL BCV</span>
-            <div class="kpi-card-icon" style="background: rgba(46, 125, 50, 0.1); color: var(--color-success);">🏛️</div>
-          </div>
-          <h1 id="tasa_actual_display" class="kpi-card-value" style="color: var(--color-success); font-size: 1.85rem; margin-top: 0.2rem; font-weight: 800;">Bs. 761.21</h1>
-          <div class="kpi-card-footer" style="margin-top: 0.65rem; padding-top: 0.4rem; border-top: 1px dotted rgba(46, 125, 50, 0.2);">
-            <span id="texto_estado_tasa" class="growth-badge positive">• Tasa Oficial Vigente</span>
-            <span class="growth-subtitle">Afecta a POS, Inventario y RRHH</span>
           </div>
         </div>
 
