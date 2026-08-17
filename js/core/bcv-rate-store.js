@@ -66,9 +66,9 @@ class BcvRateStoreManager {
    * @param {Boolean} forceRefresh Forzar bypass de caché si es modo auto
    */
   async fetchRate(forceRefresh = false) {
-    // Requerimiento 3: Si el modo en localStorage es 'manual', no llamar a API
-    if (localStorage.getItem('modoTasa') === 'manual') {
-      const manualVal = parseFloat(localStorage.getItem('tasaManual'));
+    const modoGuardado = localStorage.getItem('modo_tasa') || localStorage.getItem('modoTasa') || 'auto';
+    if (modoGuardado === 'manual') {
+      const manualVal = parseFloat(localStorage.getItem('tasa_manual') || localStorage.getItem('tasaManual'));
       if (manualVal && manualVal > 0) {
         this.mode = 'manual';
         this.rate = manualVal;
@@ -79,26 +79,25 @@ class BcvRateStoreManager {
     }
 
     try {
-      const url = `../api/bcmrate.php?t=${Date.now()}${forceRefresh ? '&refresh=1' : ''}`;
+      const url = `https://cdn.jsdelivr.net/npm/@fawazahmed0/currency-api@latest/v1/currencies/usd.json?t=${Date.now()}`;
       const res = await fetch(url, { cache: 'no-store' });
       
       if (res.ok) {
         const data = await res.json();
-        const apiRate = data.rate || data.promedio;
-        if (apiRate && parseFloat(apiRate) > 0) {
-          this.rate = parseFloat(apiRate);
+        if (data && data.usd && data.usd.ves && parseFloat(data.usd.ves) > 0) {
+          this.rate = parseFloat(data.usd.ves);
           this.mode = 'auto';
           this.source = 'Tasa: Automática (En Vivo)';
 
+          localStorage.setItem('modo_tasa', 'auto');
           localStorage.setItem('modoTasa', 'auto');
-          localStorage.setItem('tasaManual', this.rate.toString());
 
           this.notifyListeners();
           return { success: true, rate: this.rate, mode: this.mode, source: this.source };
         }
       }
     } catch (e) {
-      console.warn('Error al consultar bcmrate.php:', e);
+      console.warn('Error al consultar currency-api jsdelivr:', e);
     }
 
     return {

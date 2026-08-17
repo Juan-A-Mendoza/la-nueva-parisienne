@@ -188,34 +188,22 @@ document.addEventListener('DOMContentLoaded', async () => {
       }
     }
 
-    // 2. Solo si es falso (auto), intenta conectarse a bcmrate.php o a la API oficial
+    // 2. Si es automático, hacer fetch a la nueva API de Fawaz Ahmed via jsdelivr
     try {
-      const res = await fetch('../api/bcmrate.php?t=' + Date.now());
+      const res = await fetch('https://cdn.jsdelivr.net/npm/@fawazahmed0/currency-api@latest/v1/currencies/usd.json', { cache: 'no-store' });
       if (res.ok) {
         const data = await res.json();
-        const apiRate = data.rate || data.promedio;
-        if (apiRate && parseFloat(apiRate) > 0) {
-          const val = parseFloat(apiRate);
-          updatePosRateBadge(val, 'Tasa: Automática (En Vivo)', false);
-          return val;
+        if (data && data.usd && data.usd.ves && parseFloat(data.usd.ves) > 0) {
+          const liveRate = parseFloat(data.usd.ves);
+          updatePosRateBadge(liveRate, 'Tasa: Automática (En Vivo)', false);
+          return liveRate;
         }
       }
-    } catch (e) {}
+    } catch (e) {
+      console.warn('Error al consultar currency-api en POS:', e);
+    }
 
-    // Fallback secundario a bcv_rate.php
-    try {
-      const res2 = await fetch('../api/bcv_rate.php?t=' + Date.now());
-      if (res2.ok) {
-        const data2 = await res2.json();
-        if (data2 && data2.rate && parseFloat(data2.rate) > 0) {
-          const val2 = parseFloat(data2.rate);
-          updatePosRateBadge(val2, 'Tasa: Automática (En Vivo)', false);
-          return val2;
-        }
-      }
-    } catch (e) {}
-
-    const fallbackRate = parseFloat(localStorage.getItem('tasaManual')) || 761.21;
+    const fallbackRate = parseFloat(localStorage.getItem('tasa_manual') || localStorage.getItem('tasaManual')) || 761.21;
     updatePosRateBadge(fallbackRate, 'Tasa: Resguardo', true);
     return fallbackRate;
   }

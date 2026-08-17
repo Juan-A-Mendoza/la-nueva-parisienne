@@ -4,6 +4,43 @@ Todos los cambios significativos, nuevas funcionalidades y actualizaciones del s
 
 El formato está basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1.0.0/) y este proyecto se adhiere a [Semantic Versioning](https://semver.org/lang/es/).
 
+## [4.0.0] - 2026-08-17 (Migración Completa a API Open-Source Fawaz Ahmed via jsdelivr)
+
+### 🚀 Nueva Arquitectura Cambiaria (New Currency API Architecture)
+- **Migración de Endpoint en Modo Automático ([js/core/bcv-rate-store.js](file:///C:/Users/juana/.gemini/antigravity-ide/scratch/la-nueva-parisienne/js/core/bcv-rate-store.js), [js/modules/dashboard.js](file:///C:/Users/juana/.gemini/antigravity-ide/scratch/la-nueva-parisienne/js/modules/dashboard.js), [js/modules/pos.js](file:///C:/Users/juana/.gemini/antigravity-ide/scratch/la-nueva-parisienne/js/modules/pos.js), [js/modules/configuraciones.js](file:///C:/Users/juana/.gemini/antigravity-ide/scratch/la-nueva-parisienne/js/modules/configuraciones.js))**:
+  - Reemplazo total de la API BCV previa y de scripts intermediarios (`bcmrate.php`) por la API open-source de Fawaz Ahmed vía jsdelivr (`https://cdn.jsdelivr.net/npm/@fawazahmed0/currency-api@latest/v1/currencies/usd.json`).
+  - Extracción de valor mediante la propiedad `data.usd.ves`.
+- **Respeto a la Lógica Automática / Manual y localStorage**:
+  - Mantenimiento intacto del control conmutador Automático/Manual con persisecia en `localStorage` (`modo_tasa` y `tasa_manual`).
+  - Si el sistema está en modo manual, se omite el `fetch()` externo y se aplica la tasa manual gerencial. Si está en modo automático, consulta jsdelivr en tiempo real.
+- **Limpieza de Código (Code Cleanup)**:
+  - Depuración completa de referencias a `bcmrate.php` y `dolarapi` en los controladores JavaScript para evitar errores de consola o bloqueos CORS.
+
+---
+
+## [3.9.9] - 2026-08-17 (Independización Completa del Guardado de Tasa de Cambio y Datos Fiscales)
+
+### 🚀 Mejorado (Improved)
+- **Separación de Formularios en Módulo 9 ([modules/configuraciones.html](file:///C:/Users/juana/.gemini/antigravity-ide/scratch/la-nueva-parisienne/modules/configuraciones.html))**:
+  - División del Módulo 9 en dos tarjetas y formularios independientes: `🏢 Datos Fiscales` (`#empresaForm`) y `💵 Tasa de Cambio BCV / Multimoneda` (`#tasaForm`).
+  - Incorporación del botón independiente `💾 Guardar Datos Fiscales` y del botón independiente `💾 Guardar Tasa de Cambio`.
+- **Lógica de Procesamiento Independiente ([js/modules/configuraciones.js](file:///C:/Users/juana/.gemini/antigravity-ide/scratch/la-nueva-parisienne/js/modules/configuraciones.js))**:
+  - El Gerente General puede modificar y guardar la Tasa BCV sin estar obligado a rellenar o modificar los campos fiscales, y viceversa.
+  - La actualización de la tasa guarda inmediatamente en `localStorage`, actualiza el backend vía POST y transmite la tasa activa a Módulo 4 (Dashboard) y Módulo 3 (POS) en tiempo real.
+
+---
+
+## [3.9.8] - 2026-08-17 (Simplificación Informativa del Widget de Tasa BCV en Módulo 4)
+
+### 🧹 Simplificación e Interfaz Limpia (Clean & Minimal UI)
+- **Transformación a Tarjeta Puramente Informativa ([modules/dashboard.html](file:///C:/Users/juana/.gemini/antigravity-ide/scratch/la-nueva-parisienne/modules/dashboard.html))**:
+  - Eliminación completa de los botones de conmutación ("Automático" / "Manual"), el input de tasa manual, el botón "Aplicar" y el botón "Refrescar API".
+  - La tarjeta ahora muestra limpiamente el indicador oficial `🇻🇪 TASA OFICIAL BCV`, el monto activo `Bs. XXX.XX` y el estado vigente (`• Tasa Oficial BCV en Vivo` o `• Tasa Manual Gerencial`), perfectamente integrada al layout de métricas KPI del Dashboard.
+- **Controlador de Lectura en Tiempo Real ([js/modules/dashboard.js](file:///C:/Users/juana/.gemini/antigravity-ide/scratch/la-nueva-parisienne/js/modules/dashboard.js))**:
+  - Simplificación del JavaScript a un controlador que consulta y muestra automáticamente la tasa oficial activa (con escucha de eventos `storage` y `bcvRateChanged` para reflejar cualquier cambio realizado en el Módulo 9).
+
+---
+
 ## [3.9.7] - 2026-08-13 (Restricción de Acceso Exclusivo al Módulo 9 para Gerente General desde Módulo 4)
 
 ### 🔒 Seguridad y Control de Acceso (Security & Access Control)

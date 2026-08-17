@@ -98,7 +98,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         const apiData = await BcvRateStore.fetchRate(true);
         if (apiData && apiData.rate) {
           if (previewRateVal) previewRateVal.textContent = `Bs. ${apiData.rate.toFixed(2)}`;
-          if (previewRateSource) previewRateSource.textContent = `Origen: ${apiData.source || 'API BCV Oficial ve.dolarapi.com'}`;
+          if (previewRateSource) previewRateSource.textContent = `Origen: ${apiData.source || 'API Fawaz Ahmed (currency-api en Vivo)'}`;
         }
       }
     }
@@ -157,30 +157,20 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
   }
 
-  // 4. Guardar Cambios mediante POST a update_empresa.php
+  // 4. Guardar Datos Fiscales de la Empresa Independientemente
   if (empresaForm) {
     empresaForm.addEventListener('submit', async (e) => {
       e.preventDefault();
-
-      const selectedMode = modoTasaManual && modoTasaManual.checked ? 'manual' : 'auto';
-      const manualVal = tasaManualInput ? parseFloat(tasaManualInput.value) || 761.21 : 761.21;
-
-      if (selectedMode === 'manual' && manualVal <= 0) {
-        showStatus('⚠️ La tasa manual ingresada debe ser un valor válido mayor a Bs. 0.00.', 'error');
-        return;
-      }
 
       const payload = {
         nombre: empresaNombre.value.trim(),
         rif: empresaRif.value.trim(),
         direccion: empresaDireccion.value.trim(),
-        telefono: empresaTelefono.value.trim(),
-        modo_tasa: selectedMode,
-        tasa_manual: manualVal
+        telefono: empresaTelefono.value.trim()
       };
 
       try {
-        showStatus('Guardando configuración en la base de datos MySQL...', 'info');
+        showStatus('Guardando datos fiscales de la empresa en MySQL...', 'info');
         
         const res = await fetch('../api/update_empresa.php', {
           method: 'POST',
@@ -191,19 +181,68 @@ document.addEventListener('DOMContentLoaded', async () => {
         const result = await res.json();
 
         if (res.ok && result.success) {
-          // Consultar la tasa activa del backend o difundir manual
-          const currentData = await BcvRateStore.fetchRate(true);
-          const activeRate = selectedMode === 'manual' ? manualVal : (currentData.rate || manualVal);
-          const activeSource = selectedMode === 'manual' ? 'Tasa Manual Gerencial' : 'BCV Oficial (ve.dolarapi.com - En Vivo)';
-
-          BcvRateStore.broadcastChange(activeRate, selectedMode, activeSource);
-
-          showStatus('✓ ¡Configuración actualizada y transmitida exitosamente a todos los módulos del sistema en tiempo real!', 'success');
+          showStatus('✓ ¡Datos fiscales de la empresa guardados exitosamente!', 'success');
         } else {
-          showStatus(`❌ Error al guardar: ${result.message || 'Error en el servidor.'}`, 'error');
+          showStatus(`❌ Error al guardar datos fiscales: ${result.message || 'Error en el servidor.'}`, 'error');
         }
       } catch (err) {
         showStatus('❌ Error de conexión con el servidor backend.', 'error');
+      }
+    });
+  }
+
+  // 5. Guardar Configuración de Tasa de Cambio Independientemente
+  const tasaForm = document.getElementById('tasaForm');
+  if (tasaForm) {
+    tasaForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+
+      const selectedMode = modoTasaManual && modoTasaManual.checked ? 'manual' : 'auto';
+      const manualVal = tasaManualInput ? parseFloat(tasaManualInput.value) || 761.21 : 761.21;
+
+      if (selectedMode === 'manual' && manualVal <= 0) {
+        showStatus('⚠️ La tasa manual ingresada debe ser un valor válido mayor a Bs. 0.00.', 'error');
+        return;
+      }
+
+      // Guardar en localStorage inmediatamente
+      localStorage.setItem('modo_tasa', selectedMode);
+      localStorage.setItem('modoTasa', selectedMode);
+      localStorage.setItem('tasa_manual', manualVal.toString());
+      localStorage.setItem('tasaManual', manualVal.toString());
+
+      const payload = {
+        modo_tasa: selectedMode,
+        tasa_manual: manualVal
+      };
+
+      try {
+        showStatus('Guardando tasa de cambio en MySQL...', 'info');
+
+        const res = await fetch('../api/update_empresa.php', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+
+        const result = await res.json();
+
+        if (res.ok && result.success) {
+          const currentData = await BcvRateStore.fetchRate(true);
+          const activeRate = selectedMode === 'manual' ? manualVal : (currentData.rate || manualVal);
+          const activeSource = selectedMode === 'manual' ? 'Tasa Manual Gerencial' : 'BCV Oficial (currency-api en Vivo)';
+
+          // Transmitir cambio a POS, Dashboard y demás pestañas en vivo
+          window.dispatchEvent(new Event('storage'));
+          window.dispatchEvent(new CustomEvent('bcvRateChanged', { detail: { rate: activeRate, mode: selectedMode } }));
+          BcvRateStore.broadcastChange(activeRate, selectedMode, activeSource);
+
+          showStatus('✓ ¡Tasa de cambio guardada y transmitida a todo el sistema en tiempo real!', 'success');
+        } else {
+          showStatus(`❌ Error al guardar tasa: ${result.message || 'Error en el servidor.'}`, 'error');
+        }
+      } catch (err) {
+        showStatus('❌ Error de conexión al guardar la tasa.', 'error');
       }
     });
   }
