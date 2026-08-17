@@ -370,3 +370,262 @@
   background: var(--color-gold-light);
   border-color: var(--color-gold);
 }
+
+/* ==========================================================================
+   MODAL DE DETALLE DE MOVIMIENTO / TRANSACCIÓN (DASHBOARD GERENCIAL)
+   ========================================================================== */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background: rgba(28, 23, 20, 0.68);
+  backdrop-filter: blur(8px);
+  z-index: 9999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1.5rem;
+  animation: fadeInModal 0.25s ease-out forwards;
+}
+
+@keyframes fadeInModal {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.modal-card-container {
+  background: #FFFFFF;
+  border-radius: var(--radius-lg);
+  width: 100%;
+  max-width: 580px;
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.25);
+  border: 1px solid rgba(212, 155, 84, 0.3);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  animation: scaleUpModal 0.25s ease-out forwards;
+}
+
+@keyframes scaleUpModal {
+  from { transform: scale(0.92); opacity: 0; }
+  to { transform: scale(1); opacity: 1; }
+}
+
+.modal-card-header {
+  padding: 1.25rem 1.5rem;
+  background: var(--gradient-espresso);
+  color: #FFFFFF;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-bottom: 2px solid var(--color-gold);
+}
+
+.modal-header-title {
+  display: flex;
+  align-items: center;
+  gap: 0.85rem;
+}
+
+.modal-header-icon {
+  font-size: 1.5rem;
+  background: rgba(212, 155, 84, 0.2);
+  width: 44px;
+  height: 44px;
+  border-radius: var(--radius-pill);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.modal-title-text {
+  font-size: 1.15rem;
+  font-weight: 800;
+  margin: 0;
+  color: #FFFFFF;
+}
+
+.modal-subtitle-text {
+  font-size: 0.8rem;
+  color: var(--color-gold-light);
+  display: block;
+  margin-top: 0.15rem;
+}
+
+.btn-modal-close {
+  background: rgba(255, 255, 255, 0.15);
+  border: none;
+  color: #FFFFFF;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  font-size: 1rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+}
+
+.btn-modal-close:hover {
+  background: rgba(255, 255, 255, 0.3);
+  transform: rotate(90deg);
+}
+
+.modal-card-body {
+  padding: 1.5rem;
+  max-height: 75vh;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+
+.modal-amount-hero {
+  text-align: center;
+  padding: 1.25rem;
+  background: linear-gradient(135deg, rgba(46, 125, 50, 0.08) 0%, rgba(46, 125, 50, 0.02) 100%);
+  border: 1px dashed rgba(46, 125, 50, 0.35);
+  border-radius: var(--radius-md);
+}
+
+.modal-amount-hero.negative {
+  background: linear-gradient(135deg, rgba(198, 40, 40, 0.08) 0%, rgba(198, 40, 40, 0.02) 100%);
+  border-color: rgba(198, 40, 40, 0.35);
+}
+
+.amount-hero-label {
+  font-size: 0.78rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--color-muted);
+  font-weight: 700;
+}
+
+.amount-hero-value-usd {
+  font-size: 2.2rem;
+  font-weight: 800;
+  color: var(--color-success);
+  margin-top: 0.25rem;
+}
+
+.modal-amount-hero.negative .amount-hero-value-usd {
+  color: var(--color-danger);
+}
+
+.amount-hero-value-ves {
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--color-espresso);
+  margin-top: 0.15rem;
+}
+
+.modal-meta-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 0.85rem;
+}
+
+.meta-item {
+  background: var(--bg-main);
+  padding: 0.75rem 0.9rem;
+  border-radius: var(--radius-sm);
+  border: var(--border-subtle);
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+}
+
+.meta-label {
+  font-size: 0.75rem;
+  color: var(--color-muted);
+  font-weight: 600;
+}
+
+.meta-val {
+  font-size: 0.88rem;
+  color: var(--color-espresso);
+}
+
+.modal-breakdown-box {
+  background: #FAFAFA;
+  border: 1px solid #EAEAEA;
+  border-radius: var(--radius-md);
+  padding: 1rem;
+}
+
+.breakdown-title {
+  font-size: 0.88rem;
+  font-weight: 800;
+  color: var(--color-espresso);
+  margin-bottom: 0.75rem;
+}
+
+.breakdown-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.breakdown-item-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.45rem 0.75rem;
+  background: #FFFFFF;
+  border-radius: var(--radius-xs);
+  border: 1px solid #EEEEEE;
+  font-size: 0.83rem;
+}
+
+.breakdown-item-name {
+  font-weight: 600;
+  color: var(--color-espresso);
+}
+
+.breakdown-item-price {
+  font-weight: 700;
+  color: var(--color-gold-dark);
+}
+
+.modal-card-footer {
+  padding: 1rem 1.5rem;
+  background: #F8F9FA;
+  border-top: 1px solid #EAEAEA;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 0.75rem;
+}
+
+.btn-modal-action {
+  padding: 0.55rem 1.15rem;
+  border-radius: var(--radius-pill);
+  font-size: 0.85rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.btn-modal-action.primary {
+  background: var(--color-espresso);
+  color: #FFFFFF;
+  border: none;
+}
+
+.btn-modal-action.primary:hover {
+  background: var(--color-gold-dark);
+}
+
+.btn-modal-action.secondary {
+  background: #FFFFFF;
+  color: var(--color-espresso);
+  border: 1px solid var(--border-subtle);
+}
+
+.btn-modal-action.secondary:hover {
+  background: var(--color-gold-light);
+  border-color: var(--color-gold);
+}

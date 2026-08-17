@@ -4,6 +4,32 @@ Todos los cambios significativos, nuevas funcionalidades y actualizaciones del s
 
 El formato está basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1.0.0/) y este proyecto se adhiere a [Semantic Versioning](https://semver.org/lang/es/).
 
+## [4.4.0] - 2026-08-17 (Soporte de Selección Independiente entre Tarjeta de Débito y Tarjeta de Crédito en Módulo 3 POS)
+
+### 💳 Medios de Pago Estandarizados a 4 Opciones Táctiles ([modules/pos.html](file:///C:/Users/juana/.gemini/antigravity-ide/scratch/la-nueva-parisienne/modules/pos.html), [css/modules/pos.css](file:///C:/Users/juana/.gemini/antigravity-ide/scratch/la-nueva-parisienne/css/modules/pos.css), [js/modules/pos.js](file:///C:/Users/juana/.gemini/antigravity-ide/scratch/la-nueva-parisienne/js/modules/pos.js))
+- **Discriminación Explícita de Tarjetas**:
+  - Se separó la opción genérica "Tarjeta" en dos botones directos de un solo toque: **💳 T. Débito** (`debito`) y **💳 T. Crédito** (`credito`).
+- **Instrucciones Diferenciadas para el Cajero**:
+  - El panel del punto de venta emite instrucciones claras especificando si el cliente debe presentar/deslizar su Tarjeta de Débito o Crédito.
+- **Registro Fiel en Factura e Impresión**:
+  - En la BD MySQL y el ticket fiscal impreso se registra explícitamente `TARJETA DE DÉBITO` o `TARJETA DE CRÉDITO` según corresponda.
+
+---
+
+## [4.3.0] - 2026-08-17 (Modal de Detalle de Movimientos Financieros con Diseño Premium en Módulo 4 Dashboard)
+
+### 💎 Modal de Detalle de Transacciones con Diseño Moderno y Glassmorphism ([modules/dashboard.html](file:///C:/Users/juana/.gemini/antigravity-ide/scratch/la-nueva-parisienne/modules/dashboard.html), [css/modules/dashboard.css](file:///C:/Users/juana/.gemini/antigravity-ide/scratch/la-nueva-parisienne/css/modules/dashboard.css), [js/modules/dashboard.js](file:///C:/Users/juana/.gemini/antigravity-ide/scratch/la-nueva-parisienne/js/modules/dashboard.js))
+- **Sustitución Completa de `alert()` por Ventana Modal Interactiva**:
+  - Al hacer clic en **"Ver Detalle"** en la tabla de últimos movimientos, se abre una ventana modal emergente con diseño de alta gama (efecto cristal backdrop blur, bordes dorados, tipografía moderna).
+- **Cálculo Dinámico Multimoneda ($ USD / Bs. VES)**:
+  - Muestra el monto en USD y calcula al instante su conversión en Bolívares usando la tasa BCV activa del sistema traída del Módulo 9.
+- **Desglose de Ítems y Auditoría Fiscal**:
+  - Incluye metadatos completos (tipo de operación, responsable, método de pago, timestamp, auditoría SENIAT OK) y un desglose detallado de los productos o insumos involucrados.
+- **Acciones de Exportación e Impresión**:
+  - Incorpora botones para imprimir el voucher oficial de la transacción y copiar la referencia de control.
+
+---
+
 ## [4.2.0] - 2026-08-17 (Estandarización del Indicador de Tasa BCV en Navbar entre Módulo 3 POS y Módulo 4 Dashboard)
 
 ### 🎨 Estandarización Visual de Navbar sin Tarjetas Innecesarias ([modules/dashboard.html](file:///C:/Users/juana/.gemini/antigravity-ide/scratch/la-nueva-parisienne/modules/dashboard.html), [css/modules/dashboard.css](file:///C:/Users/juana/.gemini/antigravity-ide/scratch/la-nueva-parisienne/css/modules/dashboard.css), [js/modules/dashboard.js](file:///C:/Users/juana/.gemini/antigravity-ide/scratch/la-nueva-parisienne/js/modules/dashboard.js))

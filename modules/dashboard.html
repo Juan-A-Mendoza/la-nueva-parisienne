@@ -189,6 +189,74 @@
   </div>
 
 
+  <!-- MODAL GERENCIAL DE DETALLE DE MOVIMIENTO / TRANSACCIÓN -->
+  <div id="modalMovimientoDetalle" class="modal-overlay" aria-hidden="true" style="display: none;">
+    <div class="modal-card-container">
+      <div class="modal-card-header">
+        <div class="modal-header-title">
+          <span id="modalDetalleIcon" class="modal-header-icon">🧾</span>
+          <div>
+            <h2 id="modalDetalleCodigo" class="modal-title-text">Transacción #FAC-2026-1003</h2>
+            <span id="modalDetalleSubtitulo" class="modal-subtitle-text">Registro Financiero de Operación</span>
+          </div>
+        </div>
+        <button id="btnCerrarModalDetalle" type="button" class="btn-modal-close" aria-label="Cerrar ventana">✕</button>
+      </div>
+
+      <div class="modal-card-body">
+        <!-- Tarjeta Resumen de Monto -->
+        <div id="modalMontoCard" class="modal-amount-hero">
+          <div class="amount-hero-label">Monto de la Operación</div>
+          <div id="modalMontoUsd" class="amount-hero-value-usd">$0.00 USD</div>
+          <div id="modalMontoVes" class="amount-hero-value-ves">Bs. 0.00 VES</div>
+          <span id="modalEstadoBadge" class="growth-badge positive" style="margin-top: 0.4rem; display: inline-block;">● Transacción Procesada</span>
+        </div>
+
+        <!-- Grid de Metadatos -->
+        <div class="modal-meta-grid">
+          <div class="meta-item">
+            <span class="meta-label">🏷️ Tipo de Operación</span>
+            <strong id="modalTipoOp" class="meta-val">-</strong>
+          </div>
+          <div class="meta-item">
+            <span class="meta-label">👤 Responsable</span>
+            <strong id="modalResponsable" class="meta-val">-</strong>
+          </div>
+          <div class="meta-item">
+            <span class="meta-label">💳 Método de Pago</span>
+            <strong id="modalMetodoPago" class="meta-val">-</strong>
+          </div>
+          <div class="meta-item">
+            <span class="meta-label">📅 Fecha y Hora</span>
+            <strong id="modalFecha" class="meta-val">-</strong>
+          </div>
+          <div class="meta-item">
+            <span class="meta-label">🏛️ Tasa BCV Aplicada</span>
+            <strong id="modalTasaBcv" class="meta-val">-</strong>
+          </div>
+          <div class="meta-item">
+            <span class="meta-label">🧾 Estado Fiscal</span>
+            <strong id="modalEstadoFiscal" class="meta-val" style="color: var(--color-success);">Auditado SENIAT OK</strong>
+          </div>
+        </div>
+
+        <!-- Desglose de Ítems / Concepto -->
+        <div class="modal-breakdown-box">
+          <h3 class="breakdown-title">📦 Desglose del Movimiento</h3>
+          <div id="modalBreakdownList" class="breakdown-list">
+            <!-- Renderizado dinámico de productos / conceptos -->
+          </div>
+        </div>
+      </div>
+
+      <div class="modal-card-footer">
+        <button id="btnImprimirComprobante" type="button" class="btn-modal-action secondary">🖨️ Imprimir Voucher</button>
+        <button id="btnCopiarRef" type="button" class="btn-modal-action secondary">📋 Copiar Ref</button>
+        <button id="btnCerrarModalDetalleFooter" type="button" class="btn-modal-action primary">Cerrar</button>
+      </div>
+    </div>
+  </div>
+
   <!-- LIBRERÍA CHART.JS CDN Y SCRIPT MODULAR -->
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <script type="module" src="../js/modules/dashboard.js"></script>

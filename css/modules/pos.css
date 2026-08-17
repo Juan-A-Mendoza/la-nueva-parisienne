@@ -714,8 +714,8 @@
 /* MEDIOS DE PAGO Y CALCULADORA */
 .payment-methods-grid {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 0.4rem;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 0.35rem;
   margin-bottom: 0.65rem;
 }
 

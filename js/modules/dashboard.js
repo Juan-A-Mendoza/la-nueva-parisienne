@@ -213,6 +213,127 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   }
 
+  // Desglose dinámico de ítems por movimiento
+  const BREAKDOWN_MAP = {
+    'FAC-2026-1003': [
+      { name: '🥖 Baguette Tradición (x2)', price: '$3.60 USD' },
+      { name: '🥐 Croissant de Mantequilla (x3)', price: '$7.50 USD' },
+      { name: '☕ Café Au Lait (x2)', price: '$6.40 USD' },
+      { name: '🍰 Tarta de Almendras (x1)', price: '$15.00 USD' }
+    ],
+    'FAC-2026-1002': [
+      { name: '🍞 Pan de Campo Artesanal (x1)', price: '$6.00 USD' },
+      { name: '🍫 Pain au Chocolat (x2)', price: '$8.00 USD' }
+    ],
+    'OC-2026-0089': [
+      { name: '🌾 Harina de Trigo Panadera 50kg (x10 Sacos)', price: '-$450.00 USD' }
+    ],
+    'FAC-2026-1001': [
+      { name: '🍞 Brioche Tradicional (x3)', price: '$10.80 USD' },
+      { name: '🍫 Éclair de Chocolate (x2)', price: '$18.00 USD' }
+    ],
+    'ARQ-2026-0012': [
+      { name: '🔍 Auditoría de Caja e Inventario (Turno Mañana - Sin Descuadres)', price: '$0.00 USD' }
+    ],
+    'OC-2026-0088': [
+      { name: '🧈 Mantequilla AOP Normandía 25kg (x4 Cajas)', price: '-$280.00 USD' }
+    ]
+  };
+
+  function openMovementDetailModal(mov) {
+    const modal = document.getElementById('modalMovimientoDetalle');
+    if (!modal) return;
+
+    // Calcular tasa BCV actual
+    const modoGuardado = localStorage.getItem('modo_tasa') || localStorage.getItem('modoTasa');
+    let activeRate = 761.21;
+    if (modoGuardado === 'manual') {
+      activeRate = parseFloat(localStorage.getItem('tasa_manual') || localStorage.getItem('tasaManual')) || 780.00;
+    } else {
+      activeRate = parseFloat(localStorage.getItem('tasa_auto') || localStorage.getItem('tasaAuto')) || 761.21;
+    }
+
+    const isPositive = mov.amount >= 0;
+    const amountUsdText = isPositive ? `+$${mov.amount.toFixed(2)} USD` : `-$${Math.abs(mov.amount).toFixed(2)} USD`;
+    const amountVesVal = Math.abs(mov.amount) * activeRate;
+    const amountVesText = isPositive 
+      ? `+Bs. ${amountVesVal.toLocaleString('es-VE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} VES` 
+      : `-Bs. ${amountVesVal.toLocaleString('es-VE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} VES`;
+
+    // Asignar valores a la ventana modal
+    document.getElementById('modalDetalleCodigo').textContent = `Transacción #${mov.code}`;
+    document.getElementById('modalDetalleSubtitulo').textContent = `Registro Financiero de Operación (${mov.type})`;
+
+    const iconEl = document.getElementById('modalDetalleIcon');
+    if (iconEl) {
+      if (mov.category === 'venta') iconEl.textContent = '🛍️';
+      else if (mov.category === 'gasto') iconEl.textContent = '📦';
+      else iconEl.textContent = '📊';
+    }
+
+    const montoCard = document.getElementById('modalMontoCard');
+    if (montoCard) {
+      if (mov.amount < 0) montoCard.classList.add('negative');
+      else montoCard.classList.remove('negative');
+    }
+
+    document.getElementById('modalMontoUsd').textContent = amountUsdText;
+    document.getElementById('modalMontoVes').textContent = amountVesText;
+    document.getElementById('modalTipoOp').textContent = mov.type;
+    document.getElementById('modalResponsable').textContent = mov.user;
+    document.getElementById('modalMetodoPago').textContent = mov.paymentMethod;
+    document.getElementById('modalFecha').textContent = mov.timestamp;
+    document.getElementById('modalTasaBcv').textContent = `Bs. ${activeRate.toFixed(2)} / USD`;
+
+    // Renderizar desglose
+    const listContainer = document.getElementById('modalBreakdownList');
+    if (listContainer) {
+      listContainer.innerHTML = '';
+      const items = BREAKDOWN_MAP[mov.code] || [
+        { name: `Concepto General: ${mov.type}`, price: `$${Math.abs(mov.amount).toFixed(2)} USD` }
+      ];
+
+      items.forEach(it => {
+        const row = document.createElement('div');
+        row.className = 'breakdown-item-row';
+        row.innerHTML = `
+          <span class="breakdown-item-name">${it.name}</span>
+          <span class="breakdown-item-price">${it.price}</span>
+        `;
+        listContainer.appendChild(row);
+      });
+    }
+
+    modal.style.display = 'flex';
+    modal.setAttribute('aria-hidden', 'false');
+  }
+
+  function closeMovementDetailModal() {
+    const modal = document.getElementById('modalMovimientoDetalle');
+    if (modal) {
+      modal.style.display = 'none';
+      modal.setAttribute('aria-hidden', 'true');
+    }
+  }
+
+  // Listeners de Cierre e Interacción del Modal
+  document.getElementById('btnCerrarModalDetalle')?.addEventListener('click', closeMovementDetailModal);
+  document.getElementById('btnCerrarModalDetalleFooter')?.addEventListener('click', closeMovementDetailModal);
+  document.getElementById('modalMovimientoDetalle')?.addEventListener('click', (e) => {
+    if (e.target.id === 'modalMovimientoDetalle') closeMovementDetailModal();
+  });
+
+  document.getElementById('btnImprimirComprobante')?.addEventListener('click', () => {
+    const cod = document.getElementById('modalDetalleCodigo')?.textContent || '';
+    alert(`🖨️ Imprimiendo voucher oficial para ${cod}...`);
+  });
+
+  document.getElementById('btnCopiarRef')?.addEventListener('click', () => {
+    const cod = document.getElementById('modalDetalleCodigo')?.textContent || '';
+    navigator.clipboard?.writeText(cod);
+    alert(`📋 ${cod} copiado al portapapeles.`);
+  });
+
   // 4. Renderizado y Filtrado de la Tabla de Movimientos Recientes
   function renderMovementsTable() {
     const tbody = document.getElementById('recentMovementsBody');
@@ -244,7 +365,7 @@ document.addEventListener('DOMContentLoaded', () => {
       `;
 
       tr.querySelector('.btn-table-action').addEventListener('click', () => {
-        alert(`Detalle de Transacción ${mov.code}:\n\nOperación: ${mov.type}\nFecha: ${mov.timestamp}\nResponsable: ${mov.user}\nMonto: $${mov.amount.toFixed(2)}\nMétodo: ${mov.paymentMethod}`);
+        openMovementDetailModal(mov);
       });
 
       tbody.appendChild(tr);

@@ -579,7 +579,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   // PASO 2: LÓGICA NUMPAD TÁCTIL Y DESPLAZAMIENTO DECIMAL DER -> IZQ (ATM STYLE)
   // ==========================================================================
 
-  // Manejador del cambio de método de pago
+  // Manejador del cambio de método de pago (Efectivo, T. Débito, T. Crédito, Pago Móvil)
   document.querySelectorAll('.method-btn').forEach(btn => {
     btn.addEventListener('click', () => {
       document.querySelectorAll('.method-btn').forEach(b => b.classList.remove('active'));
@@ -596,10 +596,14 @@ document.addEventListener('DOMContentLoaded', async () => {
           bankSelectGroup.style.display = selectedPaymentMethod === 'transferencia' ? 'flex' : 'none';
         }
         if (cardTransferMsg) {
-          if (selectedPaymentMethod === 'tarjeta') {
-            cardTransferMsg.textContent = '💳 Pase o inserte la tarjeta en el terminal de punto de venta por el monto exacto.';
-          } else {
+          if (selectedPaymentMethod === 'debito') {
+            cardTransferMsg.textContent = '💳 Pase o inserte la Tarjeta de DÉBITO en el terminal de punto de venta por el monto exacto.';
+          } else if (selectedPaymentMethod === 'credito') {
+            cardTransferMsg.textContent = '💳 Pase o inserte la Tarjeta de CRÉDITO en el terminal de punto de venta por el monto exacto.';
+          } else if (selectedPaymentMethod === 'transferencia') {
             cardTransferMsg.textContent = '📲 Escanee el código QR o realice el pago móvil por el monto exacto en Bolívares.';
+          } else {
+            cardTransferMsg.textContent = '💳 Pase o inserte la tarjeta en el terminal de punto de venta por el monto exacto.';
           }
         }
       }
@@ -923,7 +927,12 @@ document.addEventListener('DOMContentLoaded', async () => {
 
         <!-- INFORMACIÓN DE PAGO Y VUELTO -->
         <div style="font-size: 9px; margin-top: 3px;">
-          <div><strong>MEDIO DE PAGO:</strong> ${(saleData.payment_method === 'transferencia' ? 'PAGO MÓVIL / QR' : (saleData.payment_method || 'EFECTIVO')).toUpperCase()}</div>
+          <div><strong>MEDIO DE PAGO:</strong> ${
+            saleData.payment_method === 'debito' ? 'TARJETA DE DÉBITO' :
+            (saleData.payment_method === 'credito' ? 'TARJETA DE CRÉDITO' :
+            (saleData.payment_method === 'transferencia' ? 'PAGO MÓVIL / QR' :
+            (saleData.payment_method === 'tarjeta' ? 'TARJETA (DÉBITO/CRÉDITO)' : 'EFECTIVO')))
+          }</div>
           ${saleData.payment_method === 'efectivo' ? `
             <div>Monto Recibido ($): $${saleData.tender_amount.toFixed(2)}</div>
             <div>Vuelto Entregado ($): $${saleData.change_due.toFixed(2)} (Bs. ${(saleData.change_due * saleData.bcv_rate).toLocaleString('es-VE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })})</div>
