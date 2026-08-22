@@ -770,6 +770,30 @@
     </div>
   </div>
 
+  <!-- MODAL DE ADVERTENCIA / ERROR CON ANIMACIÓN SVG DE 'X' (NUEVO DESIGN) -->
+  <div id="modalErrorNotificacion" class="modal-overlay" aria-hidden="true" style="display: none; z-index: 10000;">
+    <div class="modal-card-container error-modal-card">
+      <div class="error-modal-body">
+        
+        <!-- CÍRCULO ROJO CON ANIMACIÓN DE 'X' (CROSS) EN TIEMPO REAL -->
+        <div class="error-cross-wrapper">
+          <svg class="error-cross-svg" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 52 52">
+            <circle class="error-cross-circle" cx="26" cy="26" r="23" fill="none" />
+            <path class="error-cross-line1" fill="none" d="M16 16 L36 36" />
+            <path class="error-cross-line2" fill="none" d="M36 16 L16 36" />
+          </svg>
+        </div>
+
+        <h3 id="modalErrorTitle" class="error-modal-title">Acceso Restringido</h3>
+        <p id="modalErrorMsg" class="error-modal-msg">Ocurrió una advertencia o restricción de acceso en el sistema.</p>
+
+        <button id="closeErrorModalBtn" type="button" class="btn-primary-action gold-variant" style="min-width: 160px; margin-top: 0.5rem; background: var(--gradient-espresso); color: #FFFFFF; border: 1px solid var(--color-terracotta);">
+          <span>✕ Entendido</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
   <!-- LIBRERÍA CHART.JS CDN Y SCRIPT MODULAR -->
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <script type="module" src="../js/modules/dashboard.js"></script>

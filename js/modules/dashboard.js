@@ -8,11 +8,45 @@ import { BcvRateStore } from '../core/bcv-rate-store.js';
 import { DASHBOARD_KPIS, SALES_TREND_DATA, RECENT_MOVEMENTS } from '../data/dashboard-db.js';
 
 document.addEventListener('DOMContentLoaded', () => {
+  const modalErrorNotificacion = document.getElementById('modalErrorNotificacion');
+  const modalErrorTitle = document.getElementById('modalErrorTitle');
+  const modalErrorMsg = document.getElementById('modalErrorMsg');
+  const closeErrorModalBtn = document.getElementById('closeErrorModalBtn');
+
+  function showErrorModal(title, msg, onConfirm = null) {
+    if (modalErrorTitle) modalErrorTitle.textContent = title;
+    if (modalErrorMsg) modalErrorMsg.textContent = msg;
+
+    if (modalErrorNotificacion) {
+      modalErrorNotificacion.style.display = 'flex';
+      modalErrorNotificacion.setAttribute('aria-hidden', 'false');
+
+      const svg = modalErrorNotificacion.querySelector('.error-cross-svg');
+      if (svg) {
+        svg.style.animation = 'none';
+        void svg.offsetWidth;
+        svg.style.animation = '';
+      }
+
+      const handleClose = () => {
+        modalErrorNotificacion.style.display = 'none';
+        modalErrorNotificacion.setAttribute('aria-hidden', 'true');
+        if (onConfirm) onConfirm();
+      };
+
+      closeErrorModalBtn?.onclick = handleClose;
+    } else {
+      alert(`${title}\n\n${msg}`);
+      if (onConfirm) onConfirm();
+    }
+  }
+
   // 1. Verificación de Seguridad y Sesión
   const session = SessionStore.getSession();
   if (!session) {
-    alert('Sesión no encontrada. Por favor inicie sesión.');
-    window.location.href = '../index.html';
+    showErrorModal('⚠️ Sesión Expirada', 'Sesión no encontrada o caducada. Por favor inicie sesión.', () => {
+      window.location.href = '../index.html';
+    });
     return;
   }
 

@@ -8,11 +8,46 @@ import { SessionStore } from '../core/session-store.js';
 import { BcvRateStore } from '../core/bcv-rate-store.js';
 
 document.addEventListener('DOMContentLoaded', async () => {
+  // Modal Error y Advertencias (SVG X)
+  const modalErrorNotificacion = document.getElementById('modalErrorNotificacion');
+  const modalErrorTitle = document.getElementById('modalErrorTitle');
+  const modalErrorMsg = document.getElementById('modalErrorMsg');
+  const closeErrorModalBtn = document.getElementById('closeErrorModalBtn');
+
+  function showErrorModal(title, msg, onConfirm = null) {
+    if (modalErrorTitle) modalErrorTitle.textContent = title;
+    if (modalErrorMsg) modalErrorMsg.textContent = msg;
+
+    if (modalErrorNotificacion) {
+      modalErrorNotificacion.style.display = 'flex';
+      modalErrorNotificacion.setAttribute('aria-hidden', 'false');
+
+      const svg = modalErrorNotificacion.querySelector('.error-cross-svg');
+      if (svg) {
+        svg.style.animation = 'none';
+        void svg.offsetWidth;
+        svg.style.animation = '';
+      }
+
+      const handleClose = () => {
+        modalErrorNotificacion.style.display = 'none';
+        modalErrorNotificacion.setAttribute('aria-hidden', 'true');
+        if (onConfirm) onConfirm();
+      };
+
+      closeErrorModalBtn?.onclick = handleClose;
+    } else {
+      alert(`${title}\n\n${msg}`);
+      if (onConfirm) onConfirm();
+    }
+  }
+
   // 1. Verificar Sesión Activa y Permisos de Gerente General
   const session = SessionStore.getSession();
   if (!session || !session.user) {
-    alert('⚠️ Sesión expirada o no encontrada. Por favor inicie sesión.');
-    window.location.href = '../index.html';
+    showErrorModal('⚠️ Sesión Expirada', 'Sesión no encontrada o expirada. Por favor inicie sesión.', () => {
+      window.location.href = '../index.html';
+    });
     return;
   }
 
@@ -22,8 +57,9 @@ document.addEventListener('DOMContentLoaded', async () => {
   const isGerenteGeneral = userRoleCode === 'ADMIN' || userRole.includes('gerente general') || userRole.includes('administrador');
 
   if (!isGerenteGeneral) {
-    alert('⛔ Acceso Restringido: El Módulo 9 (Configuraciones) solo puede ser accedido por el Gerente General desde el Módulo 4 (Dashboard Gerencial).');
-    window.location.href = 'dashboard.html';
+    showErrorModal('⛔ Acceso Restringido', 'El Módulo 9 (Configuraciones) solo puede ser accedido por el Gerente General desde el Módulo 4 (Dashboard Gerencial).', () => {
+      window.location.href = 'dashboard.html';
+    });
     return;
   }
 
@@ -611,6 +647,48 @@ document.addEventListener('DOMContentLoaded', async () => {
     const role = document.getElementById('modalUserRol')?.value;
 
     if (!name || !username || !role) return;
+
+    // =========================================================================
+    // REGLAS DE VALIDACIÓN STRICTAS DE USUARIOS (REGLAS A, B Y C)
+    // =========================================================================
+
+    // Regla A (Usuario Único): El login no puede coincidir con ningún otro perfil registrado
+    const duplicateUsername = usersData.find(u => u.username.toLowerCase() === username.toLowerCase() && u.id !== id);
+    if (duplicateUsername) {
+      showErrorModal(
+        '❌ Error: Usuario Duplicado',
+        `El Nombre de Usuario (login) "@${username}" ya pertenece al perfil de "${duplicateUsername.name}". Debe elegir un nombre de usuario diferente.`
+      );
+      return;
+    }
+
+    // Regla B (Contraseña Única): La contraseña no puede estar siendo usada por ningún otro usuario
+    if (password && password !== '••••••••') {
+      const duplicatePassword = usersData.find(u => u.password === password && u.id !== id);
+      if (duplicatePassword) {
+        showErrorModal(
+          '❌ Error: Contraseña en Uso',
+          `Por políticas de seguridad, la contraseña ingresada ya está siendo utilizada por el usuario "${duplicatePassword.name}". Debe asignar una contraseña única.`
+        );
+        return;
+      }
+    }
+
+    // Regla C (Contador Único): El sistema solo admite un (1) usuario con el rol de "Contador"
+    const isTargetContador = role.toLowerCase().includes('contador') || role.toLowerCase().includes('contabilidad');
+    if (isTargetContador) {
+      const existingContador = usersData.find(u => 
+        (u.role.toLowerCase().includes('contador') || u.role.toLowerCase().includes('contabilidad') || u.roleCode === 'ACCOUNTANT') &&
+        u.id !== id
+      );
+      if (existingContador) {
+        showErrorModal(
+          '❌ Error: Rol Contador Duplicado',
+          `Error: Ya existe un perfil de Contabilidad activo (${existingContador.name} - @${existingContador.username}). Debe editarlo o eliminarlo primero.`
+        );
+        return;
+      }
+    }
 
     closeUserModal();
 

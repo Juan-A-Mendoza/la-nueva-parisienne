@@ -122,7 +122,7 @@ export const SessionStore = {
               roleCode = 'KITCHEN';
               icon = user.icon || '👨‍🍳';
             } else if (roleLower.includes('contador') || roleLower.includes('contabilidad')) {
-              redirectUrl = 'modules/configuraciones.html';
+              redirectUrl = 'modules/accounting.html';
               allowedModules = ['accounting', 'settings'];
               roleCode = 'ACCOUNTANT';
               icon = user.icon || '📊';
@@ -210,7 +210,7 @@ export const SessionStore = {
             const roleLower = (user.role || '').toLowerCase();
             if (roleLower.includes('cajero')) redirectUrl = 'modules/pos.html';
             else if (roleLower.includes('panadero')) redirectUrl = 'modules/kitchen.html';
-            else if (roleLower.includes('contador')) redirectUrl = 'modules/configuraciones.html';
+            else if (roleLower.includes('contador') || roleLower.includes('contabilidad')) redirectUrl = 'modules/accounting.html';
 
             const sessionData = {
               user: {

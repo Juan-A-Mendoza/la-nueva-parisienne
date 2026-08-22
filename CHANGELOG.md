@@ -4,6 +4,29 @@ Todos los cambios significativos, nuevas funcionalidades y actualizaciones del s
 
 El formato está basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1.0.0/) y este proyecto se adhiere a [Semantic Versioning](https://semver.org/lang/es/).
 
+## [5.9.1] - 2026-08-22 (Corrección de Ruteo para Contador y Reglas Estrictas A, B y C de Usuario)
+
+### ⚙️ Ruteo del Lobby y Validaciones del CRUD ([js/core/session-store.js](file:///C:/Users/juana/.gemini/antigravity-ide/scratch/la-nueva-parisienne/js/core/session-store.js), [js/modules/configuraciones.js](file:///C:/Users/juana/.gemini/antigravity-ide/scratch/la-nueva-parisienne/js/modules/configuraciones.js))
+- **Corrección de Ruteo para el Contador**:
+  - Al autenticarse desde el Lobby (`index.html`) con un perfil de rol `Contador`, la redirección apunta directamente a `modules/accounting.html` en lugar de `modules/configuraciones.html`.
+- **Reglas de Validación Estrictas en Módulo 9**:
+  - **Regla A (Usuario Único)**: Bloquea la creación/edición si el login (`@username`) coincide con otro perfil registrado.
+  - **Regla B (Contraseña Única)**: Rechaza claves duplicadas entre distintos usuarios por políticas de seguridad.
+  - **Regla C (Contador Único)**: Restringe el sistema a un máximo de un (1) usuario con rol `Contador`. Notifica con modal de error: *"Error: Ya existe un perfil de Contabilidad activo. Debe editarlo o eliminarlo primero."*
+
+---
+
+## [5.9.0] - 2026-08-22 (Modal de Advertencia / Acceso Restringido con Animación SVG de 'X' Roja)
+
+### ⛔ Reemplazo de Alertas Nativas por Modal de Error/Acceso Restringido ([modules/configuraciones.html](file:///C:/Users/juana/.gemini/antigravity-ide/scratch/la-nueva-parisienne/modules/configuraciones.html), [modules/dashboard.html](file:///C:/Users/juana/.gemini/antigravity-ide/scratch/la-nueva-parisienne/modules/dashboard.html), [css/modules/dashboard.css](file:///C:/Users/juana/.gemini/antigravity-ide/scratch/la-nueva-parisienne/css/modules/dashboard.css), [js/modules/configuraciones.js](file:///C:/Users/juana/.gemini/antigravity-ide/scratch/la-nueva-parisienne/js/modules/configuraciones.js), [js/modules/dashboard.js](file:///C:/Users/juana/.gemini/antigravity-ide/scratch/la-nueva-parisienne/js/modules/dashboard.js))
+- **Modal de Advertencia / Acceso Restringido (`#modalErrorNotificacion`)**:
+  - Se eliminaron las ventanas emergentes nativas del navegador (`alert()`) al intentar ingresar a módulos no autorizados o cuando caduca la sesión.
+  - Se diseñó un modal estilizado con tarjeta redondeada (`border-radius: 20px`), sombra en tono carmín (`rgba(198, 40, 40, 0.35)`), bordes sutiles y estética espresso/dorada.
+- **Animación SVG de 'X' (Cross) en Tiempo Real (`.error-cross-svg`)**:
+  - Trazado dinámico de las líneas diagonales de la `❌` (`stroke-dasharray` / `stroke-dashoffset`) sobre un círculo carmín radiante y animación elástica de rebote (*bounce*).
+
+---
+
 ## [5.8.1] - 2026-08-22 (Pulido UI Módulo 9 y Agrupación Dinámica por Departamentos en Index)
 
 ### 🎨 Refactorizaciones Visuales y Sincronización del Lobby ([modules/configuraciones.html](file:///C:/Users/juana/.gemini/antigravity-ide/scratch/la-nueva-parisienne/modules/configuraciones.html), [js/modules/auth.js](file:///C:/Users/juana/.gemini/antigravity-ide/scratch/la-nueva-parisienne/js/modules/auth.js), [css/modules/auth.css](file:///C:/Users/juana/.gemini/antigravity-ide/scratch/la-nueva-parisienne/css/modules/auth.css), [js/core/session-store.js](file:///C:/Users/juana/.gemini/antigravity-ide/scratch/la-nueva-parisienne/js/core/session-store.js))
