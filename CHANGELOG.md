@@ -4,6 +4,20 @@ Todos los cambios significativos, nuevas funcionalidades y actualizaciones del s
 
 El formato está basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1.0.0/) y este proyecto se adhiere a [Semantic Versioning](https://semver.org/lang/es/).
 
+## [5.2.0] - 2026-08-22 (Estandarización UI de Modales, Unidades de Medida UoM y Pestaña de Proveedores)
+
+### 🎨 Estandarización Visual UI/UX & Gestión de Proveedores ([modules/dashboard.html](file:///C:/Users/juana/.gemini/antigravity-ide/scratch/la-nueva-parisienne/modules/dashboard.html), [css/modules/dashboard.css](file:///C:/Users/juana/.gemini/antigravity-ide/scratch/la-nueva-parisienne/css/modules/dashboard.css), [js/modules/dashboard.js](file:///C:/Users/juana/.gemini/antigravity-ide/scratch/la-nueva-parisienne/js/modules/dashboard.js))
+- **Estilización Corporativa de Modales**:
+  - Se aplicó el sistema de diseño corporativo (fondo blanco sólido, sombras elevadas `0 20px 60px rgba(0,0,0,0.35)`, borde dorado, cabecera espresso y backdrop oscuro con `backdrop-filter: blur(4px)`) a `#modalIngresoMercancia` y al nuevo `#modalProveedor`.
+- **Unidades de Medida Estandarizadas (UoM)**:
+  - Se integró la columna "UoM" en las tablas de inventario y se actualizó el selector `<select id="modalIngresoUnidad">` con las 6 opciones estándar: `Kilogramos (Kg)`, `Gramos (g)`, `Litros (L)`, `Mililitros (ml)`, `Unidades (Und)` y `Cajas (Cx)`.
+- **Pestaña y CRUD Visual de Proveedores (`🚚 Proveedores`)**:
+  - Se añadió la tercera pestaña `🚚 Proveedores` con su tabla responsive mostrando: Código, Nombre de Empresa, RIF, Teléfono, Contacto y Dirección.
+  - Cada fila incluye botones de acción (`✏️ Editar` y `🗑️ Eliminar`).
+  - Botón principal `+ Nuevo Proveedor` conectado al modal emergente `#modalProveedor`.
+
+---
+
 ## [5.1.0] - 2026-08-22 (Módulo de Inventario y Almacén para Dashboard Gerencial)
 
 ### 📦 Maqueta Visual UI/UX & Gestión de Almacén ([modules/dashboard.html](file:///C:/Users/juana/.gemini/antigravity-ide/scratch/la-nueva-parisienne/modules/dashboard.html), [css/modules/dashboard.css](file:///C:/Users/juana/.gemini/antigravity-ide/scratch/la-nueva-parisienne/css/modules/dashboard.css), [js/modules/dashboard.js](file:///C:/Users/juana/.gemini/antigravity-ide/scratch/la-nueva-parisienne/js/modules/dashboard.js))

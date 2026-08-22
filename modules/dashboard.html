@@ -213,7 +213,7 @@
           </button>
         </div>
 
-        <!-- PESTAÑAS (TABS) PARA ALTERNAR ENTRE MATERIA PRIMA Y PRODUCTOS TERMINADOS -->
+        <!-- PESTAÑAS (TABS) PARA ALTERNAR ENTRE MATERIA PRIMA, PRODUCTOS TERMINADOS Y PROVEEDORES -->
         <div class="inventory-tabs-bar">
           <div class="inventory-tabs-group">
             <button id="tabBtnMateriaPrima" type="button" class="inventory-tab-pill active">
@@ -224,11 +224,15 @@
               <span>🛍️ Productos Terminados / Venta Directa</span>
               <span id="badgeProductosTerminadosCount" class="inventory-tab-count">6</span>
             </button>
+            <button id="tabBtnProveedores" type="button" class="inventory-tab-pill">
+              <span>🚚 Proveedores</span>
+              <span id="badgeProveedoresCount" class="inventory-tab-count">4</span>
+            </button>
           </div>
 
           <!-- BARRA DE BÚSQUEDA Y FILTRADO RÁPIDO -->
           <div class="inventory-filter-group">
-            <input type="text" id="inventorySearchInput" class="inventory-search-input" placeholder="🔍 Buscar por código, producto..." />
+            <input type="text" id="inventorySearchInput" class="inventory-search-input" placeholder="🔍 Buscar código, producto, RIF..." />
             <select id="inventoryCategoryFilter" class="inventory-select-filter">
               <option value="todos">Todas las Categorías</option>
               <option value="low_stock">⚠️ Solo Stock Bajo (Alertas)</option>
@@ -245,6 +249,7 @@
                   <th>Código</th>
                   <th>Descripción / Producto</th>
                   <th>Categoría</th>
+                  <th>UoM</th>
                   <th>Costo Unitario ($)</th>
                   <th>Stock Actual</th>
                   <th>Nivel Mínimo / Alerta</th>
@@ -267,6 +272,7 @@
                   <th>Código</th>
                   <th>Descripción / Producto</th>
                   <th>Categoría</th>
+                  <th>UoM</th>
                   <th>Costo Unitario ($)</th>
                   <th>Precio Venta ($)</th>
                   <th>Stock Actual</th>
@@ -275,6 +281,38 @@
                 </tr>
               </thead>
               <tbody id="productosTerminadosTbody">
+                <!-- Renderizado dinámico vía dashboard.js -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- VISTA DE TABLA 3: PESTAÑA DE PROVEEDORES (CRUD VISUAL - REQUERIMIENTO 3) -->
+        <div id="panelProveedores" class="inventory-tab-panel" style="display: none;">
+          <div class="inventory-panel-header" style="margin-bottom: 1rem;">
+            <div class="inventory-title-group">
+              <h3 style="font-size: 1.15rem; color: var(--color-espresso);">🚚 Catálogo de Proveedores Registrados</h3>
+              <p>Directorio de proveedores para compras de materias primas, insumos y servicios.</p>
+            </div>
+            <button id="btnOpenProveedorModalHeader" type="button" class="btn-export-report" style="cursor: pointer; border: none; background: var(--color-espresso); color: #FFFFFF;">
+              <span>+ Nuevo Proveedor</span>
+            </button>
+          </div>
+
+          <div class="table-responsive-container">
+            <table class="dashboard-table inventory-table">
+              <thead>
+                <tr>
+                  <th>Código</th>
+                  <th>Nombre de Empresa</th>
+                  <th>RIF</th>
+                  <th>Teléfono</th>
+                  <th>Contacto</th>
+                  <th>Dirección Fiscal</th>
+                  <th>Acciones</th>
+                </tr>
+              </thead>
+              <tbody id="proveedoresTbody">
                 <!-- Renderizado dinámico vía dashboard.js -->
               </tbody>
             </table>
@@ -387,12 +425,14 @@
               <input type="number" id="modalIngresoCantidad" class="form-control-custom" placeholder="Ej: 50.00" min="0.01" step="0.01" required />
             </div>
             <div class="form-group-custom">
-              <label for="modalIngresoUnidad" class="form-label-custom">📏 Unidad</label>
+              <label for="modalIngresoUnidad" class="form-label-custom">📏 Unidad de Medida (UoM) *</label>
               <select id="modalIngresoUnidad" class="form-control-custom" required>
-                <option value="kg">kg (Kilogramos)</option>
-                <option value="ud">ud (Unidades)</option>
-                <option value="litros">litros (L)</option>
-                <option value="cajas">cajas</option>
+                <option value="Kg">Kilogramos (Kg)</option>
+                <option value="g">Gramos (g)</option>
+                <option value="L">Litros (L)</option>
+                <option value="ml">Mililitros (ml)</option>
+                <option value="Und">Unidades (Und)</option>
+                <option value="Cx">Cajas (Cx)</option>
               </select>
             </div>
           </div>
@@ -421,7 +461,7 @@
           <!-- Preview de Costo Unitario Calculado -->
           <div id="costoUnitarioPreviewBox" class="modal-amount-hero" style="padding: 0.8rem; background: rgba(212, 155, 84, 0.08); border-color: rgba(212, 155, 84, 0.3);">
             <div class="amount-hero-label" style="font-size: 0.75rem;">Costo Unitario Calculado</div>
-            <div id="costoUnitarioPreviewVal" class="amount-hero-value-usd" style="font-size: 1.2rem; color: var(--color-gold-dark);">$0.00 / ud</div>
+            <div id="costoUnitarioPreviewVal" class="amount-hero-value-usd" style="font-size: 1.2rem; color: var(--color-gold-dark);">$0.00 / unidad</div>
           </div>
 
         </div>
@@ -429,6 +469,60 @@
         <div class="modal-card-footer">
           <button id="cancelIngresoMercanciaBtn" type="button" class="btn-modal-action secondary">Cancelar</button>
           <button type="submit" class="btn-modal-action primary">💾 Guardar Ingreso de Mercancía</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- MODAL DE GESTIÓN DE PROVEEDORES (REQUERIMIENTO 3) -->
+  <div id="modalProveedor" class="modal-overlay" aria-hidden="true" style="display: none;">
+    <div class="modal-card-container" style="max-width: 580px; width: 92%;">
+      <div class="modal-card-header">
+        <div class="modal-header-title">
+          <span class="modal-header-icon">🚚</span>
+          <div>
+            <h2 id="modalProveedorTitle" class="modal-title-text">Registrar Nuevo Proveedor</h2>
+            <span class="modal-subtitle-text">Información de Proveedor para Compras e Inventario</span>
+          </div>
+        </div>
+        <button id="closeProveedorModalBtn" type="button" class="btn-modal-close" aria-label="Cerrar ventana">✕</button>
+      </div>
+
+      <form id="proveedorForm">
+        <input type="hidden" id="modalProvCode" value="" />
+        <div class="modal-card-body" style="gap: 1.25rem;">
+          
+          <div class="form-group-custom">
+            <label for="modalProvNombre" class="form-label-custom">🏬 Nombre de la Empresa / Razón Social *</label>
+            <input type="text" id="modalProvNombre" class="form-control-custom" placeholder="Ej: Molinos del Sur, C.A." required />
+          </div>
+
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+            <div class="form-group-custom">
+              <label for="modalProvRif" class="form-label-custom">🪪 RIF de la Empresa *</label>
+              <input type="text" id="modalProvRif" class="form-control-custom" placeholder="Ej: J-30819283-4" required />
+            </div>
+            <div class="form-group-custom">
+              <label for="modalProvTelefono" class="form-label-custom">📞 Teléfono de Contacto *</label>
+              <input type="text" id="modalProvTelefono" class="form-control-custom" placeholder="Ej: (01) 555-MOLINO" required />
+            </div>
+          </div>
+
+          <div class="form-group-custom">
+            <label for="modalProvContacto" class="form-label-custom">👤 Persona de Contacto *</label>
+            <input type="text" id="modalProvContacto" class="form-control-custom" placeholder="Ej: Carlos Mendoza" required />
+          </div>
+
+          <div class="form-group-custom">
+            <label for="modalProvDireccion" class="form-label-custom">📍 Dirección Fiscal</label>
+            <input type="text" id="modalProvDireccion" class="form-control-custom" placeholder="Ej: Zona Industrial Sur, Parcela 14, Caracas" />
+          </div>
+
+        </div>
+
+        <div class="modal-card-footer">
+          <button id="cancelProveedorBtn" type="button" class="btn-modal-action secondary">Cancelar</button>
+          <button type="submit" class="btn-modal-action primary">💾 Guardar Proveedor</button>
         </div>
       </form>
     </div>

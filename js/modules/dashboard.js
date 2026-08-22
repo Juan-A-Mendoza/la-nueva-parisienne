@@ -391,21 +391,28 @@ document.addEventListener('DOMContentLoaded', () => {
   // DATOS DE PRUEBA DE INVENTARIO Y ALMACÉN (REQUERIMIENTOS 1-4)
   // ==========================================================================
   let rawMaterialsData = [
-    { code: 'MAT-001', name: 'Harina de Trigo Tradicional T55', icon: '🌾', category: 'Materias Primas', unitCost: 1.80, unit: 'kg', stock: 18.00, minStock: 50.00 },
-    { code: 'MAT-002', name: 'Mantequilla de Normandía 84% M.G.', icon: '🧈', category: 'Lácteos & Mantequillas', unitCost: 8.50, unit: 'kg', stock: 12.50, minStock: 30.00 },
-    { code: 'MAT-003', name: 'Levadura Madre Activa Tostada', icon: '🧫', category: 'Levaduras & Fermentos', unitCost: 4.20, unit: 'kg', stock: 8.00, minStock: 15.00 },
-    { code: 'MAT-004', name: 'Chocolate Belga 60% Cacao', icon: '🍫', category: 'Coberturas & Cacao', unitCost: 12.00, unit: 'kg', stock: 42.00, minStock: 20.00 },
-    { code: 'MAT-005', name: 'Azúcar Fina Refinada', icon: '🧂', category: 'Materias Primas', unitCost: 1.50, unit: 'kg', stock: 65.00, minStock: 25.00 },
-    { code: 'MAT-006', name: 'Huevos Frescos de Granja', icon: '🥚', category: 'Insumos Frescos', unitCost: 0.25, unit: 'ud', stock: 120.00, minStock: 150.00 }
+    { code: 'MAT-001', name: 'Harina de Trigo Tradicional T55', icon: '🌾', category: 'Materias Primas', unitCost: 1.80, unit: 'Kg', stock: 18.00, minStock: 50.00 },
+    { code: 'MAT-002', name: 'Mantequilla de Normandía 84% M.G.', icon: '🧈', category: 'Lácteos & Mantequillas', unitCost: 8.50, unit: 'Kg', stock: 12.50, minStock: 30.00 },
+    { code: 'MAT-003', name: 'Levadura Madre Activa Tostada', icon: '🧫', category: 'Levaduras & Fermentos', unitCost: 4.20, unit: 'Kg', stock: 8.00, minStock: 15.00 },
+    { code: 'MAT-004', name: 'Chocolate Belga 60% Cacao', icon: '🍫', category: 'Coberturas & Cacao', unitCost: 12.00, unit: 'Kg', stock: 42.00, minStock: 20.00 },
+    { code: 'MAT-005', name: 'Azúcar Fina Refinada', icon: '🧂', category: 'Materias Primas', unitCost: 1.50, unit: 'Kg', stock: 65.00, minStock: 25.00 },
+    { code: 'MAT-006', name: 'Huevos Frescos de Granja', icon: '🥚', category: 'Insumos Frescos', unitCost: 0.25, unit: 'Und', stock: 120.00, minStock: 150.00 }
   ];
 
   let finishedGoodsData = [
-    { code: 'PAN-001', name: 'Baguette Tradicional Parisina', icon: '🥖', category: 'Panadería Artesanal', unitCost: 1.20, salePrice: 2.50, unit: 'ud', stock: 45, minStock: 20 },
-    { code: 'PAN-002', name: 'Croissant de Mantequilla', icon: '🥐', category: 'Panadería Artesanal', unitCost: 1.40, salePrice: 3.00, unit: 'ud', stock: 60, minStock: 25 },
-    { code: 'PAS-001', name: 'Éclair de Chocolate Belga', icon: '⚡', category: 'Pastelería & Repostería', unitCost: 2.10, salePrice: 4.50, unit: 'ud', stock: 8, minStock: 15 },
-    { code: 'BEB-001', name: 'Café Espresso Doble', icon: '☕', category: 'Cafetería & Bebidas', unitCost: 0.80, salePrice: 2.80, unit: 'ud', stock: 100, minStock: 30 },
-    { code: 'BEB-004', name: 'Jugo de Naranja Recién Exprimido', icon: '🍊', category: 'Cafetería & Bebidas', unitCost: 1.50, salePrice: 4.00, unit: 'ud', stock: 40, minStock: 15 },
-    { code: 'ESP-001', name: 'Croque-Monsieur Tradicional', icon: '🥪', category: 'Especialidades & Desayunos', unitCost: 3.20, salePrice: 7.50, unit: 'ud', stock: 5, minStock: 10 }
+    { code: 'PAN-001', name: 'Baguette Tradicional Parisina', icon: '🥖', category: 'Panadería Artesanal', unitCost: 1.20, salePrice: 2.50, unit: 'Und', stock: 45, minStock: 20 },
+    { code: 'PAN-002', name: 'Croissant de Mantequilla', icon: '🥐', category: 'Panadería Artesanal', unitCost: 1.40, salePrice: 3.00, unit: 'Und', stock: 60, minStock: 25 },
+    { code: 'PAS-001', name: 'Éclair de Chocolate Belga', icon: '⚡', category: 'Pastelería & Repostería', unitCost: 2.10, salePrice: 4.50, unit: 'Und', stock: 8, minStock: 15 },
+    { code: 'BEB-001', name: 'Café Espresso Doble', icon: '☕', category: 'Cafetería & Bebidas', unitCost: 0.80, salePrice: 2.80, unit: 'Und', stock: 100, minStock: 30 },
+    { code: 'BEB-004', name: 'Jugo de Naranja Recién Exprimido', icon: '🍊', category: 'Cafetería & Bebidas', unitCost: 1.50, salePrice: 4.00, unit: 'L', stock: 40, minStock: 15 },
+    { code: 'ESP-001', name: 'Croque-Monsieur Tradicional', icon: '🥪', category: 'Especialidades & Desayunos', unitCost: 3.20, salePrice: 7.50, unit: 'Und', stock: 5, minStock: 10 }
+  ];
+
+  let suppliersData = [
+    { code: 'PROV-001', name: 'Molinos del Sur, C.A.', icon: '🌾', rif: 'J-30819283-4', phone: '(01) 555-MOLINO', contact: 'Carlos Mendoza', address: 'Zona Industrial Sur, Parcela 14, Caracas' },
+    { code: 'PROV-002', name: 'Lácteos La Granja', icon: '🧈', rif: 'J-40192837-1', phone: '(01) 555-LACTEOS', contact: 'María Elena Suárez', address: 'Av. Las Acacias, Edif. La Granja, Valencia' },
+    { code: 'PROV-003', name: 'Empaques del Norte', icon: '📦', rif: 'J-29837482-9', phone: '(01) 555-EMPAQUE', contact: 'Roberto Gómez', address: 'Av. Principal Norte, Bodega 5, Maracay' },
+    { code: 'PROV-004', name: 'Chocolates del Rey', icon: '🍫', rif: 'J-50192834-6', phone: '(01) 555-CACAO', contact: 'Jean-Philippe Laurent', address: 'Calle Los Artesanos, Qta. Cacao, Los Teques' }
   ];
 
   // 1. NAVEGACIÓN ENTRE VISTAS DEL DASHBOARD (ANALYTICS VS INVENTARIO)
@@ -434,33 +441,46 @@ document.addEventListener('DOMContentLoaded', () => {
   if (navBtnAnalytics) navBtnAnalytics.addEventListener('click', () => switchDashboardView('analytics'));
   if (navBtnInventory) navBtnInventory.addEventListener('click', () => switchDashboardView('inventory'));
 
-  // 2. PESTAÑAS DENTRO DEL PANEL DE INVENTARIO (MATERIA PRIMA VS PRODUCTOS TERMINADOS)
+  // 2. PESTAÑAS DENTRO DEL PANEL DE INVENTARIO (MATERIA PRIMA VS PRODUCTOS TERMINADOS VS PROVEEDORES)
   const tabBtnMateriaPrima = document.getElementById('tabBtnMateriaPrima');
   const tabBtnProductosTerminados = document.getElementById('tabBtnProductosTerminados');
+  const tabBtnProveedores = document.getElementById('tabBtnProveedores');
+
   const panelMateriaPrima = document.getElementById('panelMateriaPrima');
   const panelProductosTerminados = document.getElementById('panelProductosTerminados');
+  const panelProveedores = document.getElementById('panelProveedores');
 
   function switchInventoryTab(tabName) {
+    tabBtnMateriaPrima?.classList.remove('active');
+    tabBtnProductosTerminados?.classList.remove('active');
+    tabBtnProveedores?.classList.remove('active');
+
+    if (panelMateriaPrima) panelMateriaPrima.style.display = 'none';
+    if (panelProductosTerminados) panelProductosTerminados.style.display = 'none';
+    if (panelProveedores) panelProveedores.style.display = 'none';
+
     if (tabName === 'finished') {
-      tabBtnMateriaPrima?.classList.remove('active');
       tabBtnProductosTerminados?.classList.add('active');
-      if (panelMateriaPrima) panelMateriaPrima.style.display = 'none';
       if (panelProductosTerminados) panelProductosTerminados.style.display = 'block';
+    } else if (tabName === 'suppliers') {
+      tabBtnProveedores?.classList.add('active');
+      if (panelProveedores) panelProveedores.style.display = 'block';
     } else {
       tabBtnMateriaPrima?.classList.add('active');
-      tabBtnProductosTerminados?.classList.remove('active');
       if (panelMateriaPrima) panelMateriaPrima.style.display = 'block';
-      if (panelProductosTerminados) panelProductosTerminados.style.display = 'none';
     }
   }
 
   tabBtnMateriaPrima?.addEventListener('click', () => switchInventoryTab('raw'));
   tabBtnProductosTerminados?.addEventListener('click', () => switchInventoryTab('finished'));
+  tabBtnProveedores?.addEventListener('click', () => switchInventoryTab('suppliers'));
 
-  // 3. RENDERIZADO DE LAS TABLAS DE INVENTARIO (REQUERIMIENTO 3)
+  // 3. RENDERIZADO DE LAS TABLAS DE INVENTARIO (REQUERIMIENTO 2 & 3)
   function renderInventoryTables() {
     const rawTbody = document.getElementById('materiaPrimaTbody');
     const finishedTbody = document.getElementById('productosTerminadosTbody');
+    const suppliersTbody = document.getElementById('proveedoresTbody');
+
     const searchTerm = (document.getElementById('inventorySearchInput')?.value || '').toLowerCase().trim();
     const filterCat = document.getElementById('inventoryCategoryFilter')?.value || 'todos';
 
@@ -484,6 +504,7 @@ document.addEventListener('DOMContentLoaded', () => {
           <td class="table-code-badge">${item.code}</td>
           <td><strong>${item.icon || '📦'} ${item.name}</strong></td>
           <td style="color: var(--color-muted);">${item.category}</td>
+          <td><span class="table-status-tag" style="background: rgba(0,0,0,0.06); color: var(--color-espresso); font-weight: 700;">${item.unit}</span></td>
           <td style="font-weight: 700; color: var(--color-gold-dark);">$${item.unitCost.toFixed(2)} / ${item.unit}</td>
           <td style="font-weight: 800; font-size: 0.95rem;">${item.stock.toFixed(2)} ${item.unit}</td>
           <td>
@@ -524,6 +545,7 @@ document.addEventListener('DOMContentLoaded', () => {
           <td class="table-code-badge">${item.code}</td>
           <td><strong>${item.icon || '🛍️'} ${item.name}</strong></td>
           <td style="color: var(--color-muted);">${item.category}</td>
+          <td><span class="table-status-tag" style="background: rgba(0,0,0,0.06); color: var(--color-espresso); font-weight: 700;">${item.unit}</span></td>
           <td style="color: var(--color-muted);">$${item.unitCost.toFixed(2)} / ${item.unit}</td>
           <td style="font-weight: 700; color: var(--color-gold-dark);">$${item.salePrice.toFixed(2)} USD</td>
           <td style="font-weight: 800; font-size: 0.95rem;">${item.stock} ${item.unit}</td>
@@ -544,12 +566,57 @@ document.addEventListener('DOMContentLoaded', () => {
         finishedTbody.appendChild(tr);
       });
     }
+
+    // 3.3 Proveedores (Pestaña 3 - Requerimiento 3)
+    if (suppliersTbody) {
+      suppliersTbody.innerHTML = '';
+      const filteredSuppliers = suppliersData.filter(item => {
+        return item.code.toLowerCase().includes(searchTerm) || 
+               item.name.toLowerCase().includes(searchTerm) || 
+               item.rif.toLowerCase().includes(searchTerm) ||
+               item.contact.toLowerCase().includes(searchTerm);
+      });
+
+      const badgeSuppliers = document.getElementById('badgeProveedoresCount');
+      if (badgeSuppliers) badgeSuppliers.textContent = suppliersData.length;
+
+      filteredSuppliers.forEach(prov => {
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+          <td class="table-code-badge">${prov.code}</td>
+          <td><strong>${prov.icon || '🏬'} ${prov.name}</strong></td>
+          <td style="font-weight: 600; color: var(--color-espresso);">${prov.rif}</td>
+          <td style="color: var(--color-muted);">${prov.phone}</td>
+          <td>👤 ${prov.contact}</td>
+          <td style="color: var(--color-muted); font-size: 0.82rem;">${prov.address || 'N/A'}</td>
+          <td>
+            <div style="display: flex; gap: 0.35rem;">
+              <button type="button" class="btn-table-action-sm btn-edit-prov" title="Editar datos del proveedor">✏️ Editar</button>
+              <button type="button" class="btn-table-action-sm btn-del-prov" style="background: rgba(198,40,40,0.1); color: var(--color-danger); border-color: rgba(198,40,40,0.3);" title="Eliminar proveedor">🗑️</button>
+            </div>
+          </td>
+        `;
+
+        tr.querySelector('.btn-edit-prov')?.addEventListener('click', () => {
+          openProveedorModal(prov);
+        });
+
+        tr.querySelector('.btn-del-prov')?.addEventListener('click', () => {
+          if (confirm(`¿Desea eliminar al proveedor ${prov.name} (${prov.rif})?`)) {
+            suppliersData = suppliersData.filter(p => p.code !== prov.code);
+            renderInventoryTables();
+          }
+        });
+
+        suppliersTbody.appendChild(tr);
+      });
+    }
   }
 
   document.getElementById('inventorySearchInput')?.addEventListener('input', renderInventoryTables);
   document.getElementById('inventoryCategoryFilter')?.addEventListener('change', renderInventoryTables);
 
-  // 4. MODAL DE REGISTRO DE INGRESO DE MERCANCÍA (REQUERIMIENTO 4)
+  // 4. MODAL DE REGISTRO DE INGRESO DE MERCANCÍA (REQUERIMIENTO 1 & 2)
   const modalIngresoMercancia = document.getElementById('modalIngresoMercancia');
   const btnOpenIngresoMercanciaModal = document.getElementById('btnOpenIngresoMercanciaModal');
   const closeIngresoMercanciaModalBtn = document.getElementById('closeIngresoMercanciaModalBtn');
@@ -632,6 +699,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const selectedCode = modalIngresoProductoSelect?.value;
     const qty = parseFloat(modalIngresoCantidad?.value || 0);
+    const selectedUom = document.getElementById('modalIngresoUnidad')?.value || 'Und';
     const totalCost = parseFloat(modalIngresoCostoTotal?.value || 0);
     const provider = document.getElementById('modalIngresoProveedor')?.value || 'Proveedor';
     const numFactura = document.getElementById('modalIngresoNumFactura')?.value || 'N/A';
@@ -645,12 +713,101 @@ document.addEventListener('DOMContentLoaded', () => {
 
     if (targetItem) {
       targetItem.stock += qty;
+      targetItem.unit = selectedUom;
       targetItem.unitCost = totalCost / qty;
     }
 
     renderInventoryTables();
     closeIngresoMercanciaModal();
-    alert(`✅ ¡Ingreso Registrado con Éxito!\n\nProducto: ${targetItem ? targetItem.name : selectedCode}\nCantidad Ingresada: +${qty}\nProveedor: ${provider}\nFactura N°: ${numFactura}`);
+    alert(`✅ ¡Ingreso Registrado con Éxito!\n\nProducto: ${targetItem ? targetItem.name : selectedCode}\nCantidad Ingresada: +${qty} ${selectedUom}\nProveedor: ${provider}\nFactura N°: ${numFactura}`);
+  });
+
+  // 5. MODAL DE GESTIÓN DE PROVEEDORES (REQUERIMIENTO 3)
+  const modalProveedor = document.getElementById('modalProveedor');
+  const modalProveedorTitle = document.getElementById('modalProveedorTitle');
+  const btnOpenProveedorModalHeader = document.getElementById('btnOpenProveedorModalHeader');
+  const closeProveedorModalBtn = document.getElementById('closeProveedorModalBtn');
+  const cancelProveedorBtn = document.getElementById('cancelProveedorBtn');
+  const proveedorForm = document.getElementById('proveedorForm');
+
+  function openProveedorModal(provToEdit = null) {
+    if (provToEdit) {
+      if (modalProveedorTitle) modalProveedorTitle.textContent = 'Editar Información de Proveedor';
+      document.getElementById('modalProvCode').value = provToEdit.code;
+      document.getElementById('modalProvNombre').value = provToEdit.name;
+      document.getElementById('modalProvRif').value = provToEdit.rif;
+      document.getElementById('modalProvTelefono').value = provToEdit.phone;
+      document.getElementById('modalProvContacto').value = provToEdit.contact;
+      document.getElementById('modalProvDireccion').value = provToEdit.address || '';
+    } else {
+      if (modalProveedorTitle) modalProveedorTitle.textContent = 'Registrar Nuevo Proveedor';
+      proveedorForm?.reset();
+      document.getElementById('modalProvCode').value = '';
+    }
+
+    if (modalProveedor) {
+      modalProveedor.style.display = 'flex';
+      modalProveedor.setAttribute('aria-hidden', 'false');
+    }
+  }
+
+  function closeProveedorModal() {
+    if (modalProveedor) {
+      modalProveedor.style.display = 'none';
+      modalProveedor.setAttribute('aria-hidden', 'true');
+      proveedorForm?.reset();
+    }
+  }
+
+  btnOpenProveedorModalHeader?.addEventListener('click', () => openProveedorModal());
+  closeProveedorModalBtn?.addEventListener('click', closeProveedorModal);
+  cancelProveedorBtn?.addEventListener('click', closeProveedorModal);
+
+  proveedorForm?.addEventListener('submit', (e) => {
+    e.preventDefault();
+
+    const code = document.getElementById('modalProvCode')?.value;
+    const name = document.getElementById('modalProvNombre')?.value?.trim();
+    const rif = document.getElementById('modalProvRif')?.value?.trim();
+    const phone = document.getElementById('modalProvTelefono')?.value?.trim();
+    const contact = document.getElementById('modalProvContacto')?.value?.trim();
+    const address = document.getElementById('modalProvDireccion')?.value?.trim() || '';
+
+    if (!name || !rif || !phone || !contact) return;
+
+    if (code) {
+      // Editar existente
+      const existing = suppliersData.find(p => p.code === code);
+      if (existing) {
+        existing.name = name;
+        existing.rif = rif;
+        existing.phone = phone;
+        existing.contact = contact;
+        existing.address = address;
+      }
+    } else {
+      // Crear nuevo
+      const newCode = `PROV-${String(suppliersData.length + 1).padStart(3, '0')}`;
+      suppliersData.push({
+        code: newCode,
+        name: name,
+        icon: '🏬',
+        rif: rif,
+        phone: phone,
+        contact: contact,
+        address: address
+      });
+    }
+
+    renderInventoryTables();
+    closeProveedorModal();
+    alert(`✅ Proveedor ${name} (${rif}) guardado con éxito.`);
+  });
+
+  // Close modals on overlay backdrop click
+  window.addEventListener('click', (e) => {
+    if (e.target === modalIngresoMercancia) closeIngresoMercanciaModal();
+    if (e.target === modalProveedor) closeProveedorModal();
   });
 
   // Render inicial de tablas de inventario
