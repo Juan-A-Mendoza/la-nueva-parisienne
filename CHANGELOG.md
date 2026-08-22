@@ -4,6 +4,20 @@ Todos los cambios significativos, nuevas funcionalidades y actualizaciones del s
 
 El formato está basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1.0.0/) y este proyecto se adhiere a [Semantic Versioning](https://semver.org/lang/es/).
 
+## [5.0.0] - 2026-08-22 (Escalamiento Full-Stack Real MySQL/PDO Módulo 2 Producción y Cocina)
+
+### 🚀 Arquitectura Backend y Conexión PDO ([conexion.php](file:///C:/Users/juana/.gemini/antigravity-ide/scratch/la-nueva-parisienne/conexion.php), [api_hornos.php](file:///C:/Users/juana/.gemini/antigravity-ide/scratch/la-nueva-parisienne/api_hornos.php), [js/modules/kitchen.js](file:///C:/Users/juana/.gemini/antigravity-ide/scratch/la-nueva-parisienne/js/modules/kitchen.js))
+- **Tablas Relacionales de Producción (`hornos` y `comandas_cocina`)**:
+  - Sentencias DDL e inserciones iniciales añadidas en `database/database.sql` y `database/seed_data.sql`.
+- **Conexión MySQL Laragon (`conexion.php`)**:
+  - Conexión PDO a `127.0.0.1` (`la_nueva_parisienne`) con `try-catch`, manejo de excepciones HTTP 500 y función global `getDbConnection()`.
+- **Endpoint API de Lectura ([api_hornos.php](file:///C:/Users/juana/.gemini/antigravity-ide/scratch/la-nueva-parisienne/api_hornos.php))**:
+  - Endpoint PHP que lee la tabla `hornos` y retorna JSON con la información en tiempo real.
+- **Frontend Panadero ([js/modules/kitchen.js](file:///C:/Users/juana/.gemini/antigravity-ide/scratch/la-nueva-parisienne/js/modules/kitchen.js))**:
+  - `fetchKitchenState()` actualizado para consultar `api_hornos.php` mediante `fetch()`, eliminando `localStorage` y pintando las tarjetas con los datos reales del servidor.
+
+---
+
 ## [4.9.1] - 2026-08-22 (Solución a Error MySQL #1062 por Clave Duplicada en Impresiones SQL)
 
 ### 🛢️ Compatibilidad e Idempotencia en Importaciones SQL ([database/seed_data.sql](file:///C:/Users/juana/.gemini/antigravity-ide/scratch/la-nueva-parisienne/database/seed_data.sql), [database/database.sql](file:///C:/Users/juana/.gemini/antigravity-ide/scratch/la-nueva-parisienne/database/database.sql))

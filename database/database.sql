@@ -349,3 +349,42 @@ INSERT IGNORE INTO `estado_hornos` (`id`, `nombre`, `tipo`, `temperatura_actual`
 ('oven_02', 'Horno 2 (Convección B)', 'Convección Fina', 190, 190, 760, 900, 'baking', 'batch_043'),
 ('oven_03', 'Horno 3 (Piedra C)', 'Bóveda de Piedra', 240, 240, 0, 1500, 'ready', 'batch_044'),
 ('oven_04', 'Horno 4 (Pastelero D)', 'Convección Digital', 160, 175, 0, 0, 'preheating', NULL);
+
+-- ----------------------------------------------------------------------------
+-- 13. TABLA: hornos (Monitoreo de Hornos Módulo 2 Backend Real)
+-- ----------------------------------------------------------------------------
+CREATE TABLE IF NOT EXISTS `hornos` (
+  `id` VARCHAR(50) NOT NULL,
+  `nombre_horno` VARCHAR(100) NOT NULL,
+  `temperatura_actual` INT NOT NULL DEFAULT 150,
+  `tiempo_restante` INT NOT NULL DEFAULT 0,
+  `estado` VARCHAR(50) NOT NULL DEFAULT 'idle',
+  `lote_actual` VARCHAR(150) NULL,
+  `hora_inicio` DATETIME NULL,
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- ----------------------------------------------------------------------------
+-- 14. TABLA: comandas_cocina (Comandas POS KDS Módulo 2 Backend Real)
+-- ----------------------------------------------------------------------------
+CREATE TABLE IF NOT EXISTS `comandas_cocina` (
+  `id` VARCHAR(50) NOT NULL,
+  `numero_factura` VARCHAR(50) NOT NULL,
+  `detalles_pedido` TEXT NOT NULL,
+  `estado_preparacion` VARCHAR(50) NOT NULL DEFAULT 'pending',
+  `fecha_hora` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- Inserción Inicial en hornos
+INSERT IGNORE INTO `hornos` (`id`, `nombre_horno`, `temperatura_actual`, `tiempo_restante`, `estado`, `lote_actual`, `hora_inicio`) VALUES
+('oven_01', 'Horno 1 (Giratorio A)', 220, 255, 'baking', 'Baguette Tradicional Parisina (50 ud)', '2026-08-22 15:40:00'),
+('oven_02', 'Horno 2 (Convección B)', 190, 760, 'baking', 'Croissant de Mantequilla (60 ud)', '2026-08-22 15:45:00'),
+('oven_03', 'Horno 3 (Piedra C)', 240, 0, 'ready', 'Focaccia de Romero y Aceitunas (20 ud)', '2026-08-22 15:15:00'),
+('oven_04', 'Horno 4 (Pastelero D)', 160, 0, 'preheating', NULL, NULL);
+
+-- Inserción Inicial en comandas_cocina
+INSERT IGNORE INTO `comandas_cocina` (`id`, `numero_factura`, `detalles_pedido`, `estado_preparacion`, `fecha_hora`) VALUES
+('com_1002', 'FAC-2026-1002', '2x Croissant de Mantequilla, 1x Pain au Chocolat, 1x Capuchino Cremoso', 'in_progress', '2026-08-22 15:50:00'),
+('com_1003', 'FAC-2026-1003', '2x Croque-Monsieur Tradicional, 2x Café au Lait Parisien', 'pending', '2026-08-22 15:53:00'),
+('com_1001', 'FAC-2026-1001', '3x Baguette Tradicional Parisina, 2x Éclair de Chocolate Belga', 'ready', '2026-08-22 15:35:00');

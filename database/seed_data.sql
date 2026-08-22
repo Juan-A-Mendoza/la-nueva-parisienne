@@ -8,6 +8,8 @@ USE `la_nueva_parisienne`;
 
 -- 1. DESHABILITAR RESTRICCIONES TEMPORALMENTE Y LIMPIAR CON DELETE
 SET FOREIGN_KEY_CHECKS = 0;
+DELETE FROM `comandas_cocina`;
+DELETE FROM `hornos`;
 DELETE FROM `estado_hornos`;
 DELETE FROM `lotes_produccion`;
 DELETE FROM `asientos_detalle`;

@@ -52,25 +52,53 @@ document.addEventListener('DOMContentLoaded', () => {
   const bakeTempInput = document.getElementById('bakeTempInput');
   const bakeTimeInput = document.getElementById('bakeTimeInput');
 
-  // CONSULTA DE BACKEND PHP (get_estado_cocina.php)
+  // 4. FUNCIÓN INICIAL DE CARGA DESDE LA BASE DE DATOS REAL (API_HORNOS.PHP)
   async function fetchKitchenState() {
     try {
-      const response = await fetch('../api/get_estado_cocina.php');
-      if (!response.ok) throw new Error(`HTTP ${response.status}`);
+      let response = await fetch('../api_hornos.php');
+      if (!response.ok) {
+        response = await fetch('api_hornos.php');
+      }
+      if (!response.ok) throw new Error(`HTTP status ${response.status}`);
       const data = await response.json();
       
-      if (data && data.success) {
-        ovens = data.hornos || [];
-        stagingBatches = data.lotes_staging || [];
+      if (data && data.success && Array.isArray(data.hornos)) {
+        // Mapear los campos de la tabla MySQL `hornos` a la estructura de las tarjetas
+        ovens = data.hornos.map(h => {
+          let batchObj = null;
+          if (h.lote_actual || h.batch) {
+            batchObj = h.batch || {
+              id: `batch_${h.id}`,
+              productName: h.lote_actual || 'Lote Activo',
+              icon: (h.lote_actual && h.lote_actual.includes('Croissant')) ? '🥐' : ((h.lote_actual && h.lote_actual.includes('Focaccia')) ? '🫓' : '🥖'),
+              units: 50,
+              totalTimeSeconds: parseInt(h.tiempo_restante || 0) > 0 ? (parseInt(h.tiempo_restante || 0) + 300) : 1200,
+              remainingSeconds: parseInt(h.tiempo_restante || 0)
+            };
+          }
+
+          return {
+            id: h.id,
+            name: h.nombre_horno || h.name || 'Horno Industrial',
+            type: h.type || 'Industrial',
+            currentTemp: parseInt(h.temperatura_actual || h.currentTemp || 180),
+            targetTemp: parseInt(h.temperatura_objetivo || h.targetTemp || 200),
+            status: h.estado || h.status || 'idle',
+            batch: batchObj
+          };
+        });
       } else {
         ovens = JSON.parse(JSON.stringify(OVENS_INITIAL_STATE));
-        stagingBatches = JSON.parse(JSON.stringify(STAGING_BATCHES_INITIAL_STATE));
       }
     } catch (err) {
-      console.warn('Backend get_estado_cocina.php no disponible, aplicando estado por defecto:', err);
+      console.warn('API api_hornos.php no disponible, aplicando estado por defecto:', err);
       ovens = JSON.parse(JSON.stringify(OVENS_INITIAL_STATE));
+    }
+
+    if (!stagingBatches || stagingBatches.length === 0) {
       stagingBatches = JSON.parse(JSON.stringify(STAGING_BATCHES_INITIAL_STATE));
     }
+
     renderAll();
   }
 
