@@ -731,6 +731,16 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
   }
 
+  // Limpiar resaltado de error al escribir en la Cédula/RIF del cliente
+  if (clientRifInput) {
+    clientRifInput.addEventListener('input', () => {
+      if (clientRifInput.value.trim() !== '') {
+        clientRifInput.style.border = '1px solid var(--border-subtle)';
+        clientRifInput.style.background = '#FFFFFF';
+      }
+    });
+  }
+
   // ==========================================================================
   // PASO 3: REGISTRO MYSQL Y REINICIO AUTOMÁTICO DE ESTADO (resetPOS)
   // ==========================================================================
@@ -738,13 +748,32 @@ document.addEventListener('DOMContentLoaded', async () => {
     btnCompleteSale.addEventListener('click', async () => {
       if (cart.length === 0) return;
 
+      // 0. VALIDACIÓN OBLIGATORIA: CÉDULA / RIF DEL CLIENTE (PARA TODOS LOS MÉTODOS DE PAGO)
+      const rawRif = clientRifInput ? clientRifInput.value.trim() : '';
+      if (!rawRif || rawRif === '') {
+        if (clientRifInput) {
+          clientRifInput.style.border = '2px solid var(--color-terracotta)';
+          clientRifInput.style.background = '#FFF0F0';
+          clientRifInput.focus();
+        }
+
+        showCustomConfirm({
+          icon: '🪪',
+          title: 'Cédula o RIF del Cliente Requerido',
+          text: 'Por disposición fiscal y de control interno, es OBLIGATORIO ingresar la Cédula o RIF del cliente para finalizar la venta en cualquier método de pago (Efectivo, Débito, Crédito o Pago Móvil).',
+          acceptText: 'Entendido / Ingresar Cédula',
+          singleAction: true
+        });
+        return;
+      }
+
       let rawSubtotal = cart.reduce((acc, i) => acc + (i.product.price * i.quantity), 0);
       let discountVal = rawSubtotal * (currentDiscountPercent / 100);
       let totalUsd = (rawSubtotal - discountVal) * (1 + IVA_RATE);
       let totalVes = totalUsd * bcvRate;
 
       const clientName = (clientNameInput && clientNameInput.value.trim()) ? clientNameInput.value.trim() : 'Consumidor Final';
-      const clientRif = (clientRifInput && clientRifInput.value.trim()) ? clientRifInput.value.trim() : 'V-00000000-0';
+      const clientRif = rawRif;
       const bankName = (bankSelect && bankSelect.value.trim()) ? bankSelect.value.trim() : '';
 
       const salePayload = {
@@ -992,7 +1021,11 @@ document.addEventListener('DOMContentLoaded', async () => {
     if (referenceInput) referenceInput.value = '';
     if (bankSelect) bankSelect.value = '';
     if (clientNameInput) clientNameInput.value = '';
-    if (clientRifInput) clientRifInput.value = '';
+    if (clientRifInput) {
+      clientRifInput.value = '';
+      clientRifInput.style.border = '1px solid var(--border-subtle)';
+      clientRifInput.style.background = '#FFFFFF';
+    }
     if (discountSelect) discountSelect.value = '0';
     orderCounter++;
     initOrderNumber();

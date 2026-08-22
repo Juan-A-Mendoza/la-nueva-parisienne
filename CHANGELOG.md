@@ -4,6 +4,18 @@ Todos los cambios significativos, nuevas funcionalidades y actualizaciones del s
 
 El formato está basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1.0.0/) y este proyecto se adhiere a [Semantic Versioning](https://semver.org/lang/es/).
 
+## [4.5.0] - 2026-08-22 (Validación Obligatoria de Cédula o RIF del Cliente para Todo Método de Pago en Módulo 3 POS)
+
+### 🪪 Validación Fiscal Estricta de Identificación del Cliente ([modules/pos.html](file:///C:/Users/juana/.gemini/antigravity-ide/scratch/la-nueva-parisienne/modules/pos.html), [js/modules/pos.js](file:///C:/Users/juana/.gemini/antigravity-ide/scratch/la-nueva-parisienne/js/modules/pos.js))
+- **Obligatoriedad de Cédula / RIF para Todos los Métodos de Pago**:
+  - Para finalizar cualquier venta (Efectivo, Débito, Crédito o Pago Móvil), el sistema exige de forma estricta ingresar la Cédula o RIF del cliente.
+- **Resaltado Visual e Interrupción Preventiva**:
+  - Si el cajero intenta hacer clic en `✓ Finalizar Venta e Imprimir Ticket` sin haber ingresado la Cédula/RIF, el sistema interrumpe la operación, resalta la casilla en rojo con foco automático y despliega una alerta modal informativa.
+- **Feedback Interactivo**:
+  - El resaltado de error se limpia automáticamente al comenzar a escribir el documento de identidad.
+
+---
+
 ## [4.4.0] - 2026-08-17 (Soporte de Selección Independiente entre Tarjeta de Débito y Tarjeta de Crédito en Módulo 3 POS)
 
 ### 💳 Medios de Pago Estandarizados a 4 Opciones Táctiles ([modules/pos.html](file:///C:/Users/juana/.gemini/antigravity-ide/scratch/la-nueva-parisienne/modules/pos.html), [css/modules/pos.css](file:///C:/Users/juana/.gemini/antigravity-ide/scratch/la-nueva-parisienne/css/modules/pos.css), [js/modules/pos.js](file:///C:/Users/juana/.gemini/antigravity-ide/scratch/la-nueva-parisienne/js/modules/pos.js))
