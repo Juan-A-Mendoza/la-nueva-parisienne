@@ -192,13 +192,13 @@
         <span class="selected-user-role">Comprobante de Diario / Ajuste de Auditoría</span>
       </div>
 
-      <form id="manualEntryForm" style="display: flex; flex-direction: column; gap: 1.25rem; text-align: left;">
+      <form id="manualEntryForm" class="manual-entry-form" style="display: flex; flex-direction: column; gap: 1.25rem; text-align: left;">
         <div>
           <label for="entryConceptInput" style="font-weight: 700; font-size: 0.9rem; display: block; margin-bottom: 0.4rem;">Concepto de la Transacción:</label>
           <input type="text" id="entryConceptInput" class="pos-search-input" placeholder="Ej: Pago de Mantenimiento de Hornos Industriales" required>
         </div>
 
-        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+        <div class="manual-entry-row" style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
           <div>
             <label for="debeAccountSelect" style="font-weight: 700; font-size: 0.85rem; display: block; margin-bottom: 0.4rem;">Cuenta Débito (Debe):</label>
             <select id="debeAccountSelect" class="pos-search-input" style="padding: 0.65rem 1rem;">
@@ -215,7 +215,7 @@
           </div>
         </div>
 
-        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+        <div class="manual-entry-row" style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
           <div>
             <label for="haberAccountSelect" style="font-weight: 700; font-size: 0.85rem; display: block; margin-bottom: 0.4rem;">Cuenta Crédito (Haber):</label>
             <select id="haberAccountSelect" class="pos-search-input" style="padding: 0.65rem 1rem;">
