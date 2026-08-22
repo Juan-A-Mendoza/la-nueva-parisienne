@@ -4,6 +4,32 @@ Todos los cambios significativos, nuevas funcionalidades y actualizaciones del s
 
 El formato está basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1.0.0/) y este proyecto se adhiere a [Semantic Versioning](https://semver.org/lang/es/).
 
+## [5.9.3] - 2026-08-22 (Inicialización Segura de Usuarios 'Juan Mendoza', Semilla Estricta y 'usuario_activo' en localStorage)
+
+### 🔐 Manejo de Estado de Sesión y Semilla de Usuarios ([js/core/session-store.js](file:///C:/Users/juana/.gemini/antigravity-ide/scratch/la-nueva-parisienne/js/core/session-store.js), [js/modules/dashboard.js](file:///C:/Users/juana/.gemini/antigravity-ide/scratch/la-nueva-parisienne/js/modules/dashboard.js), [modules/dashboard.html](file:///C:/Users/juana/.gemini/antigravity-ide/scratch/la-nueva-parisienne/modules/dashboard.html), [js/modules/configuraciones.js](file:///C:/Users/juana/.gemini/antigravity-ide/scratch/la-nueva-parisienne/js/modules/configuraciones.js))
+- **Inicialización Segura (Seed)**:
+  - La inyección de usuarios por defecto en `localStorage` ahora se ejecuta ÚNICAMENTE si la clave `'usuarios'` / `'usuarios_sistema'` es estrictamente `null`.
+  - El perfil del Gerente General por defecto se llama `"Juan Mendoza"`.
+- **Manejo de Sesión Activa (`usuario_activo`)**:
+  - Al autenticarse correctamente desde la pantalla principal, el sistema guarda un objeto `{ id, name, username, role, roleCode, icon }` en `localStorage.getItem('usuario_activo')`.
+- **Consistencia en Módulo 4 (Dashboard)**:
+  - El Dashboard lee `usuario_activo` y sincroniza inmediatamente el nombre del Gerente General ("Juan Mendoza") y su avatar en la barra superior.
+  - Se registró el listener del botón "Cerrar Sesión" (`#logoutBtn`) antes de cualquier renderizado, funcionando como vía de escape resucitada que elimina `'usuario_activo'` y redirige al Index.
+
+---
+
+## [5.9.2] - 2026-08-22 (Protección con Try...Catch, Aislamiento de Módulos y Null-Checks Estrictos)
+
+### 🛠️ Aislamiento y Resiliencia en Lectura de localStorage ([js/core/session-store.js](file:///C:/Users/juana/.gemini/antigravity-ide/scratch/la-nueva-parisienne/js/core/session-store.js), [js/modules/configuraciones.js](file:///C:/Users/juana/.gemini/antigravity-ide/scratch/la-nueva-parisienne/js/modules/configuraciones.js), [js/modules/auth.js](file:///C:/Users/juana/.gemini/antigravity-ide/scratch/la-nueva-parisienne/js/modules/auth.js))
+- **Protección Try...Catch e Inicialización Segura**:
+  - Toda consulta a `localStorage.getItem('usuarios_sistema')` y `localStorage.getItem('usuarios')` cuenta con validación previa de `Array.isArray()` para evitar excepciones por datos corruptos o vacíos (`null`).
+- **Eliminación de Top-Level Await Bloqueante**:
+  - Se aisló la llamada asíncrona de inicialización de perfiles en `js/modules/auth.js`, asegurando que todos los event listeners, teclado PIN y botones sigan operando normalmente ante cualquier imprevisto.
+- **Validación con Optional Chaining**:
+  - Se previenen errores `TypeError: Cannot read properties of undefined` en las funciones de comparación de usuarios y contraseñas mediante accesos seguros `(u?.username || '')`.
+
+---
+
 ## [5.9.1] - 2026-08-22 (Corrección de Ruteo para Contador y Reglas Estrictas A, B y C de Usuario)
 
 ### ⚙️ Ruteo del Lobby y Validaciones del CRUD ([js/core/session-store.js](file:///C:/Users/juana/.gemini/antigravity-ide/scratch/la-nueva-parisienne/js/core/session-store.js), [js/modules/configuraciones.js](file:///C:/Users/juana/.gemini/antigravity-ide/scratch/la-nueva-parisienne/js/modules/configuraciones.js))

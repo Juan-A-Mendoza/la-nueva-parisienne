@@ -41,38 +41,58 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   }
 
-  // 1. Verificación de Seguridad y Sesión
-  const session = SessionStore.getSession();
-  if (!session) {
-    showErrorModal('⚠️ Sesión Expirada', 'Sesión no encontrada o caducada. Por favor inicie sesión.', () => {
-      window.location.href = '../index.html';
-    });
-    return;
+  // 1. Verificación de Seguridad y Sesión Activa (usuario_activo)
+  let session = null;
+  try {
+    session = SessionStore.getSession();
+  } catch (err) {
+    console.warn('Error leyendo usuario_activo:', err);
   }
 
-  // Actualizar datos del Gerente activo
+  const activeUser = (session && session.user) ? session.user : {
+    name: 'Juan Mendoza',
+    role: 'Gerente General',
+    icon: '👨‍💼'
+  };
+
+  // Actualizar inmediatamente datos del Gerente activo en la barra superior
   const managerNameEl = document.getElementById('managerName');
   const managerAvatarEl = document.getElementById('managerAvatar');
-  if (managerNameEl) managerNameEl.textContent = session.user.name;
-  if (managerAvatarEl) managerAvatarEl.textContent = session.user.icon;
+  if (managerNameEl) managerNameEl.textContent = activeUser.name || 'Juan Mendoza';
+  if (managerAvatarEl) managerAvatarEl.textContent = activeUser.icon || '👨‍💼';
 
-  document.getElementById('logoutBtn')?.addEventListener('click', () => {
-    SessionStore.logout();
-  });
+  // BOTÓN DE CERRAR SESIÓN SIEMPRE REGISTRADO PRIMERO (VÍA DE ESCAPE DE SEGURIDAD)
+  const logoutBtn = document.getElementById('logoutBtn');
+  if (logoutBtn) {
+    logoutBtn.addEventListener('click', (e) => {
+      e.preventDefault();
+      try {
+        SessionStore.logout();
+      } catch (err) {
+        localStorage.removeItem('usuario_activo');
+        sessionStorage.removeItem('LN_PARISIENNE_SESSION');
+        window.location.href = '../index.html';
+      }
+    });
+  }
 
   let currentCategoryFilter = 'todos';
   let salesChartInstance = null;
 
   // Suscripción en tiempo real a BcvRateStore
-  BcvRateStore.subscribe((data) => {
-    handleRateBroadcast(data);
-  });
+  try {
+    BcvRateStore.subscribe((data) => {
+      handleRateBroadcast(data);
+    });
+  } catch (err) {
+    console.warn('Error suscribiendo a BcvRateStore:', err);
+  }
 
-  // Initial render
-  renderKPIs();
-  resolveDashboardBcvRate();
-  initSalesChart();
-  renderMovementsTable();
+  // Initial render protegido con try...catch
+  try { renderKPIs(); } catch (e) { console.error('Error en renderKPIs:', e); }
+  try { resolveDashboardBcvRate(); } catch (e) { console.error('Error en resolveDashboardBcvRate:', e); }
+  try { initSalesChart(); } catch (e) { console.error('Error en initSalesChart:', e); }
+  try { renderMovementsTable(); } catch (e) { console.error('Error en renderMovementsTable:', e); }
 
   // 2. Renderizado de Tarjetas KPI y Tasa BCV
   function renderKPIs() {

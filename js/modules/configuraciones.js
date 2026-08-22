@@ -350,34 +350,45 @@ document.addEventListener('DOMContentLoaded', async () => {
   // 6. SUBMÓDULO DE GESTIÓN DE USUARIOS Y SEGURIDAD CON DOBLE VALIDACIÓN
   // ==========================================================================
   const INITIAL_USERS = [
-    { id: 'usr_001', name: 'Juan Alberto Mendoza', username: 'admin', role: 'Gerente General', roleCode: 'ADMIN', icon: '👨‍💼', description: 'Acceso total a KPIs, contabilidad, producción y personal.', redirectUrl: 'modules/dashboard.html' },
+    { id: 'usr_001', name: 'Juan Mendoza', username: 'admin', role: 'Gerente General', roleCode: 'ADMIN', icon: '👨‍💼', description: 'Acceso total a KPIs, contabilidad, producción y personal.', redirectUrl: 'modules/dashboard.html' },
     { id: 'usr_002', name: 'María Elena Suárez', username: 'cajero1', role: 'Cajero', roleCode: 'POS', icon: '👩‍💼', description: 'Facturación directa a clientes, cobros rápidos y apertura de caja.', redirectUrl: 'modules/pos.html' },
     { id: 'usr_003', name: 'Carlos Eduardo Rivas', username: 'panadero1', role: 'Panadero', roleCode: 'KITCHEN', icon: '👨‍🍳', description: 'Gestión de hornos, recetas, orden del día y preparación de masa.', redirectUrl: 'modules/kitchen.html' },
-    { id: 'usr_004', name: 'Andrés Felipe Gómez', username: 'contador1', role: 'Contador', roleCode: 'ACCOUNTANT', icon: '📊', description: 'Auditoría financiera, margen de ganancias y estados contables.', redirectUrl: 'modules/configuraciones.html' }
+    { id: 'usr_004', name: 'Andrés Felipe Gómez', username: 'contador1', role: 'Contador', roleCode: 'ACCOUNTANT', icon: '📊', description: 'Auditoría financiera, margen de ganancias y estados contables.', redirectUrl: 'modules/accounting.html' }
   ];
 
   const VALID_MANAGER_PASSWORDS = ['admin123', '1234', 'gerente', 'admin', '0000'];
 
   function getUsersFromStorage() {
     try {
-      const stored = localStorage.getItem('usuarios_sistema');
-      if (stored) {
+      const rawUsuarios = localStorage.getItem('usuarios');
+      const rawSistema = localStorage.getItem('usuarios_sistema');
+      const stored = rawUsuarios !== null ? rawUsuarios : rawSistema;
+
+      if (stored !== null) {
         const parsed = JSON.parse(stored);
-        if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          return parsed;
+        }
       }
     } catch (e) {
-      console.warn('Error leyendo usuarios_sistema:', e);
+      console.warn('Error leyendo usuarios de localStorage:', e);
     }
-    localStorage.setItem('usuarios_sistema', JSON.stringify(INITIAL_USERS));
-    return INITIAL_USERS;
+    const defaultList = Array.isArray(INITIAL_USERS) ? [...INITIAL_USERS] : [];
+    try {
+      localStorage.setItem('usuarios', JSON.stringify(defaultList));
+      localStorage.setItem('usuarios_sistema', JSON.stringify(defaultList));
+    } catch (e) {}
+    return defaultList;
   }
 
   function saveUsersToStorage(usersArray) {
     try {
-      localStorage.setItem('usuarios_sistema', JSON.stringify(usersArray));
+      const listToSave = Array.isArray(usersArray) ? usersArray : [];
+      localStorage.setItem('usuarios', JSON.stringify(listToSave));
+      localStorage.setItem('usuarios_sistema', JSON.stringify(listToSave));
       window.dispatchEvent(new Event('storage'));
     } catch (e) {
-      console.error('Error guardando usuarios_sistema:', e);
+      console.error('Error guardando usuarios:', e);
     }
   }
 
@@ -651,40 +662,41 @@ document.addEventListener('DOMContentLoaded', async () => {
     // =========================================================================
     // REGLAS DE VALIDACIÓN STRICTAS DE USUARIOS (REGLAS A, B Y C)
     // =========================================================================
+    const safeUsersList = Array.isArray(usersData) ? usersData : [];
 
     // Regla A (Usuario Único): El login no puede coincidir con ningún otro perfil registrado
-    const duplicateUsername = usersData.find(u => u.username.toLowerCase() === username.toLowerCase() && u.id !== id);
+    const duplicateUsername = safeUsersList.find(u => u && (u.username || '').toLowerCase() === (username || '').toLowerCase() && u.id !== id);
     if (duplicateUsername) {
       showErrorModal(
         '❌ Error: Usuario Duplicado',
-        `El Nombre de Usuario (login) "@${username}" ya pertenece al perfil de "${duplicateUsername.name}". Debe elegir un nombre de usuario diferente.`
+        `El Nombre de Usuario (login) "@${username}" ya pertenece al perfil de "${duplicateUsername.name || 'otro usuario'}". Debe elegir un nombre de usuario diferente.`
       );
       return;
     }
 
     // Regla B (Contraseña Única): La contraseña no puede estar siendo usada por ningún otro usuario
     if (password && password !== '••••••••') {
-      const duplicatePassword = usersData.find(u => u.password === password && u.id !== id);
+      const duplicatePassword = safeUsersList.find(u => u && u.password === password && u.id !== id);
       if (duplicatePassword) {
         showErrorModal(
           '❌ Error: Contraseña en Uso',
-          `Por políticas de seguridad, la contraseña ingresada ya está siendo utilizada por el usuario "${duplicatePassword.name}". Debe asignar una contraseña única.`
+          `Por políticas de seguridad, la contraseña ingresada ya está siendo utilizada por el usuario "${duplicatePassword.name || 'otro usuario'}". Debe asignar una contraseña única.`
         );
         return;
       }
     }
 
     // Regla C (Contador Único): El sistema solo admite un (1) usuario con el rol de "Contador"
-    const isTargetContador = role.toLowerCase().includes('contador') || role.toLowerCase().includes('contabilidad');
+    const isTargetContador = (role || '').toLowerCase().includes('contador') || (role || '').toLowerCase().includes('contabilidad');
     if (isTargetContador) {
-      const existingContador = usersData.find(u => 
-        (u.role.toLowerCase().includes('contador') || u.role.toLowerCase().includes('contabilidad') || u.roleCode === 'ACCOUNTANT') &&
+      const existingContador = safeUsersList.find(u => u && 
+        ((u.role || '').toLowerCase().includes('contador') || (u.role || '').toLowerCase().includes('contabilidad') || u.roleCode === 'ACCOUNTANT') &&
         u.id !== id
       );
       if (existingContador) {
         showErrorModal(
           '❌ Error: Rol Contador Duplicado',
-          `Error: Ya existe un perfil de Contabilidad activo (${existingContador.name} - @${existingContador.username}). Debe editarlo o eliminarlo primero.`
+          `Error: Ya existe un perfil de Contabilidad activo (${existingContador.name || 'Contador'} - @${existingContador.username || 'contador'}). Debe editarlo o eliminarlo primero.`
         );
         return;
       }

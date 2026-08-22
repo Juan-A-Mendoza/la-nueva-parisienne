@@ -21,16 +21,28 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   // Cargar perfiles de forma asíncrona desde MySQL o fallback local
   async function loadAndRenderProfiles() {
-    const profiles = await SessionStore.getProfilesAsync();
-    renderProfiles(profiles);
+    try {
+      const profiles = await SessionStore.getProfilesAsync();
+      renderProfiles(profiles);
+    } catch (err) {
+      console.error('Error cargando perfiles en Lobby:', err);
+    }
   }
 
-  await loadAndRenderProfiles();
+  try {
+    loadAndRenderProfiles();
+  } catch (err) {
+    console.error('Error inicializando perfiles de autenticación:', err);
+  }
 
   // Re-renderizar si el Gerente modifica usuarios en otra pestaña
   window.addEventListener('storage', (e) => {
-    if (!e.key || e.key === 'usuarios_sistema') {
-      loadAndRenderProfiles();
+    try {
+      if (!e.key || e.key === 'usuarios_sistema' || e.key === 'usuarios') {
+        loadAndRenderProfiles();
+      }
+    } catch (err) {
+      console.warn('Error respondiendo a evento storage en auth:', err);
     }
   });
 
