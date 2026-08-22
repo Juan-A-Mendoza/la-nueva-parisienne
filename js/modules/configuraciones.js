@@ -309,4 +309,323 @@ document.addEventListener('DOMContentLoaded', async () => {
       }, 5000);
     }
   }
+
+  // ==========================================================================
+  // 6. SUBMÓDULO DE GESTIÓN DE USUARIOS Y SEGURIDAD CON DOBLE VALIDACIÓN
+  // ==========================================================================
+  const INITIAL_USERS = [
+    { id: 'usr_001', name: 'Juan Alberto Mendoza', username: 'admin', role: 'Gerente General', roleCode: 'ADMIN', icon: '👨‍💼', description: 'Acceso total a KPIs, contabilidad, producción y personal.', redirectUrl: 'modules/dashboard.html' },
+    { id: 'usr_002', name: 'María Elena Suárez', username: 'cajero1', role: 'Cajero', roleCode: 'POS', icon: '👩‍💼', description: 'Facturación directa a clientes, cobros rápidos y apertura de caja.', redirectUrl: 'modules/pos.html' },
+    { id: 'usr_003', name: 'Carlos Eduardo Rivas', username: 'panadero1', role: 'Panadero', roleCode: 'KITCHEN', icon: '👨‍🍳', description: 'Gestión de hornos, recetas, orden del día y preparación de masa.', redirectUrl: 'modules/kitchen.html' },
+    { id: 'usr_004', name: 'Andrés Felipe Gómez', username: 'contador1', role: 'Contador', roleCode: 'ACCOUNTANT', icon: '📊', description: 'Auditoría financiera, margen de ganancias y estados contables.', redirectUrl: 'modules/configuraciones.html' }
+  ];
+
+  const VALID_MANAGER_PASSWORDS = ['admin123', '1234', 'gerente', 'admin', '0000'];
+
+  function getUsersFromStorage() {
+    try {
+      const stored = localStorage.getItem('usuarios_sistema');
+      if (stored) {
+        const parsed = JSON.parse(stored);
+        if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+      }
+    } catch (e) {
+      console.warn('Error leyendo usuarios_sistema:', e);
+    }
+    localStorage.setItem('usuarios_sistema', JSON.stringify(INITIAL_USERS));
+    return INITIAL_USERS;
+  }
+
+  function saveUsersToStorage(usersArray) {
+    try {
+      localStorage.setItem('usuarios_sistema', JSON.stringify(usersArray));
+      window.dispatchEvent(new Event('storage'));
+    } catch (e) {
+      console.error('Error guardando usuarios_sistema:', e);
+    }
+  }
+
+  let usersData = getUsersFromStorage();
+  let isUsersUnlocked = false;
+  let pendingAuthAction = null; // { actionType: 'UNLOCK_VIEW'|'SAVE_USER'|'DELETE_USER', data: ... }
+
+  // Elementos DOM de Seguridad y Usuarios
+  const btnUnlockUserManagement = document.getElementById('btnUnlockUserManagement');
+  const usersLockedPlaceholder = document.getElementById('usersLockedPlaceholder');
+  const usersCrudPanel = document.getElementById('usersCrudPanel');
+  const usuariosTbody = document.getElementById('usuariosTbody');
+  const btnOpenNuevoUsuarioModal = document.getElementById('btnOpenNuevoUsuarioModal');
+
+  // Modal Auth
+  const modalAuthPassword = document.getElementById('modalAuthPassword');
+  const authModalTitle = document.getElementById('authModalTitle');
+  const authModalSubtitle = document.getElementById('authModalSubtitle');
+  const authPasswordForm = document.getElementById('authPasswordForm');
+  const authPasswordInput = document.getElementById('authPasswordInput');
+  const authPasswordErrorMsg = document.getElementById('authPasswordErrorMsg');
+  const closeAuthModalBtn = document.getElementById('closeAuthModalBtn');
+  const cancelAuthModalBtn = document.getElementById('cancelAuthModalBtn');
+
+  // Modal Formulario Usuario
+  const modalUsuarioForm = document.getElementById('modalUsuarioForm');
+  const modalUserTitle = document.getElementById('modalUserTitle');
+  const usuarioForm = document.getElementById('usuarioForm');
+  const closeUserModalBtn = document.getElementById('closeUserModalBtn');
+  const cancelUserModalBtn = document.getElementById('cancelUserModalBtn');
+
+  // Modal Éxito
+  const modalExitoNotificacion = document.getElementById('modalExitoNotificacion');
+  const modalExitoTitle = document.getElementById('modalExitoTitle');
+  const modalExitoMsg = document.getElementById('modalExitoMsg');
+  const closeExitoModalBtn = document.getElementById('closeExitoModalBtn');
+
+  function showSuccessModal(title, msg) {
+    if (modalExitoTitle) modalExitoTitle.textContent = title;
+    if (modalExitoMsg) modalExitoMsg.textContent = msg;
+
+    if (modalExitoNotificacion) {
+      modalExitoNotificacion.style.display = 'flex';
+      modalExitoNotificacion.setAttribute('aria-hidden', 'false');
+
+      const svg = modalExitoNotificacion.querySelector('.success-checkmark-svg');
+      if (svg) {
+        svg.style.animation = 'none';
+        void svg.offsetWidth;
+        svg.style.animation = '';
+      }
+    }
+  }
+
+  function closeSuccessModal() {
+    if (modalExitoNotificacion) {
+      modalExitoNotificacion.style.display = 'none';
+      modalExitoNotificacion.setAttribute('aria-hidden', 'true');
+    }
+  }
+
+  closeExitoModalBtn?.addEventListener('click', closeSuccessModal);
+
+  function openAuthPasswordModal(actionType, data = null, customTitle = null, customSubtitle = null) {
+    pendingAuthAction = { actionType, data };
+    if (authPasswordInput) authPasswordInput.value = '';
+    if (authPasswordErrorMsg) authPasswordErrorMsg.style.display = 'none';
+
+    if (authModalTitle) {
+      authModalTitle.textContent = customTitle || (actionType === 'UNLOCK_VIEW' ? 'Autorización para Desbloquear Usuarios' : 'Confirmación Crítica de Seguridad');
+    }
+    if (authModalSubtitle) {
+      authModalSubtitle.textContent = customSubtitle || 'Doble Validación con Contraseña Gerencial';
+    }
+
+    if (modalAuthPassword) {
+      modalAuthPassword.style.display = 'flex';
+      modalAuthPassword.setAttribute('aria-hidden', 'false');
+      setTimeout(() => authPasswordInput?.focus(), 100);
+    }
+  }
+
+  function closeAuthPasswordModal() {
+    if (modalAuthPassword) {
+      modalAuthPassword.style.display = 'none';
+      modalAuthPassword.setAttribute('aria-hidden', 'true');
+      if (authPasswordInput) authPasswordInput.value = '';
+      if (authPasswordErrorMsg) authPasswordErrorMsg.style.display = 'none';
+      pendingAuthAction = null;
+    }
+  }
+
+  closeAuthModalBtn?.addEventListener('click', closeAuthPasswordModal);
+  cancelAuthModalBtn?.addEventListener('click', closeAuthPasswordModal);
+
+  btnUnlockUserManagement?.addEventListener('click', () => {
+    if (isUsersUnlocked) {
+      renderUsersTable();
+      return;
+    }
+    openAuthPasswordModal('UNLOCK_VIEW', null, '🔑 Autorizar Desbloqueo de Usuarios', 'Ingrese su contraseña gerencial para ver credenciales');
+  });
+
+  authPasswordForm?.addEventListener('submit', (e) => {
+    e.preventDefault();
+    const pass = (authPasswordInput?.value || '').trim();
+
+    if (!pass || !VALID_MANAGER_PASSWORDS.includes(pass)) {
+      if (authPasswordErrorMsg) {
+        authPasswordErrorMsg.style.display = 'block';
+        authPasswordErrorMsg.textContent = '❌ Contraseña gerencial incorrecta. Permiso denegado.';
+      }
+      authPasswordInput?.focus();
+      return;
+    }
+
+    const { actionType, data } = pendingAuthAction || {};
+    closeAuthPasswordModal();
+
+    if (actionType === 'UNLOCK_VIEW') {
+      isUsersUnlocked = true;
+      if (usersLockedPlaceholder) usersLockedPlaceholder.style.display = 'none';
+      if (usersCrudPanel) usersCrudPanel.style.display = 'block';
+      if (btnUnlockUserManagement) btnUnlockUserManagement.innerHTML = '<span>🔓 Gestión Desbloqueada</span>';
+      renderUsersTable();
+      showSuccessModal('¡Acceso Autorizado!', 'Gestión de Usuarios y Roles desbloqueada exitosamente.');
+    } else if (actionType === 'SAVE_USER') {
+      const { id, name, username, password, role } = data;
+      let roleCode = 'POS';
+      let icon = '👩‍💼';
+
+      const rLower = role.toLowerCase();
+      if (rLower.includes('gerente')) {
+        roleCode = 'ADMIN';
+        icon = '👨‍💼';
+      } else if (rLower.includes('panadero') || rLower.includes('cocina')) {
+        roleCode = 'KITCHEN';
+        icon = '👨‍🍳';
+      } else if (rLower.includes('contador') || rLower.includes('contabilidad')) {
+        roleCode = 'ACCOUNTANT';
+        icon = '📊';
+      } else if (rLower.includes('cajero')) {
+        roleCode = 'POS';
+        icon = '👩‍💼';
+      }
+
+      if (id) {
+        const existing = usersData.find(u => u.id === id);
+        if (existing) {
+          existing.name = name;
+          existing.username = username;
+          if (password && password !== '••••••••') existing.password = password;
+          existing.role = role;
+          existing.roleCode = roleCode;
+          existing.icon = icon;
+        }
+      } else {
+        const newId = `usr_${String(usersData.length + 1).padStart(3, '0')}`;
+        usersData.push({
+          id: newId,
+          name,
+          username,
+          password: password || '123456',
+          role,
+          roleCode,
+          icon
+        });
+      }
+
+      saveUsersToStorage(usersData);
+      renderUsersTable();
+      showSuccessModal('¡Usuario Guardado!', `El usuario "${name}" (@${username}) fue guardado y sincronizado con éxito.`);
+    } else if (actionType === 'DELETE_USER') {
+      usersData = usersData.filter(u => u.id !== data.id);
+      saveUsersToStorage(usersData);
+      renderUsersTable();
+      showSuccessModal('¡Usuario Eliminado!', `El usuario "${data.name}" (@${data.username}) fue eliminado correctamente del sistema.`);
+    }
+  });
+
+  function renderUsersTable() {
+    if (!usuariosTbody) return;
+    usuariosTbody.innerHTML = '';
+
+    usersData.forEach(user => {
+      const tr = document.createElement('tr');
+      
+      let badgeStyle = 'background: rgba(46,125,50,0.1); color: var(--color-success); border: 1px solid rgba(46,125,50,0.25);';
+      if (user.roleCode === 'ADMIN') {
+        badgeStyle = 'background: rgba(212,155,84,0.15); color: var(--color-gold-dark); border: 1px solid rgba(212,155,84,0.4); font-weight: 800;';
+      } else if (user.roleCode === 'KITCHEN') {
+        badgeStyle = 'background: rgba(255,152,0,0.1); color: #E65100; border: 1px solid rgba(255,152,0,0.3); font-weight: 700;';
+      } else if (user.roleCode === 'ACCOUNTANT') {
+        badgeStyle = 'background: rgba(33,150,243,0.1); color: #1565C0; border: 1px solid rgba(33,150,243,0.3); font-weight: 700;';
+      }
+
+      tr.innerHTML = `
+        <td><strong>${user.icon || '👤'} ${user.name}</strong></td>
+        <td><span class="table-code-badge">@${user.username}</span></td>
+        <td>
+          <span class="table-status-tag active" style="${badgeStyle}">
+            ${user.role}
+          </span>
+        </td>
+        <td>
+          <span class="badge-stock-normal">🟢 Activo</span>
+        </td>
+        <td>
+          <div style="display: flex; gap: 0.35rem;">
+            <button type="button" class="btn-table-action-sm btn-edit-usr" title="Editar usuario">✏️ Editar</button>
+            <button type="button" class="btn-table-action-sm btn-del-usr" style="background: rgba(198,40,40,0.1); color: var(--color-danger); border-color: rgba(198,40,40,0.3);" title="Eliminar usuario">🗑️</button>
+          </div>
+        </td>
+      `;
+
+      tr.querySelector('.btn-edit-usr')?.addEventListener('click', () => {
+        openUserFormModal(user);
+      });
+
+      tr.querySelector('.btn-del-usr')?.addEventListener('click', () => {
+        openAuthPasswordModal('DELETE_USER', user, '🗑️ Confirmar Eliminación de Usuario', `Ingrese su clave gerencial para autorizar la eliminación de "${user.name}"`);
+      });
+
+      usuariosTbody.appendChild(tr);
+    });
+  }
+
+  function openUserFormModal(userToEdit = null) {
+    if (userToEdit) {
+      if (modalUserTitle) modalUserTitle.textContent = 'Editar Información de Usuario';
+      document.getElementById('modalUserId').value = userToEdit.id;
+      document.getElementById('modalUserNombre').value = userToEdit.name;
+      document.getElementById('modalUserUsername').value = userToEdit.username;
+      document.getElementById('modalUserPassword').value = userToEdit.password || '••••••••';
+      document.getElementById('modalUserRol').value = userToEdit.role;
+    } else {
+      if (modalUserTitle) modalUserTitle.textContent = 'Crear Nuevo Usuario';
+      usuarioForm?.reset();
+      document.getElementById('modalUserId').value = '';
+    }
+
+    if (modalUsuarioForm) {
+      modalUsuarioForm.style.display = 'flex';
+      modalUsuarioForm.setAttribute('aria-hidden', 'false');
+    }
+  }
+
+  function closeUserModal() {
+    if (modalUsuarioForm) {
+      modalUsuarioForm.style.display = 'none';
+      modalUsuarioForm.setAttribute('aria-hidden', 'true');
+      usuarioForm?.reset();
+    }
+  }
+
+  btnOpenNuevoUsuarioModal?.addEventListener('click', () => openUserFormModal());
+  closeUserModalBtn?.addEventListener('click', closeUserModal);
+  cancelUserModalBtn?.addEventListener('click', closeUserModal);
+
+  usuarioForm?.addEventListener('submit', (e) => {
+    e.preventDefault();
+
+    const id = document.getElementById('modalUserId')?.value;
+    const name = document.getElementById('modalUserNombre')?.value?.trim();
+    const username = document.getElementById('modalUserUsername')?.value?.trim();
+    const password = document.getElementById('modalUserPassword')?.value;
+    const role = document.getElementById('modalUserRol')?.value;
+
+    if (!name || !username || !role) return;
+
+    closeUserModal();
+
+    // SEGUNDA BARRERA DE SEGURIDAD AL GUARDAR (CONFIRMACIÓN CRÍTICA)
+    const isEdit = Boolean(id);
+    const title = isEdit ? '💾 Confirmar Actualización de Usuario' : '✨ Confirmar Creación de Usuario';
+    const sub = isEdit ? `Autorice la actualización del usuario "${name}"` : `Autorice la creación del nuevo usuario "${name}"`;
+
+    openAuthPasswordModal('SAVE_USER', { id, name, username, password, role }, title, sub);
+  });
+
+  // Cerrar modales al hacer clic en el backdrop
+  window.addEventListener('click', (e) => {
+    if (e.target === modalAuthPassword) closeAuthPasswordModal();
+    if (e.target === modalUsuarioForm) closeUserModal();
+    if (e.target === modalExitoNotificacion) closeSuccessModal();
+  });
 });

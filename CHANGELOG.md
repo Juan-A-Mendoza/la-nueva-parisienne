@@ -4,6 +4,38 @@ Todos los cambios significativos, nuevas funcionalidades y actualizaciones del s
 
 El formato está basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1.0.0/) y este proyecto se adhiere a [Semantic Versioning](https://semver.org/lang/es/).
 
+## [5.8.1] - 2026-08-22 (Pulido UI Módulo 9 y Agrupación Dinámica por Departamentos en Index)
+
+### 🎨 Refactorizaciones Visuales y Sincronización del Lobby ([modules/configuraciones.html](file:///C:/Users/juana/.gemini/antigravity-ide/scratch/la-nueva-parisienne/modules/configuraciones.html), [js/modules/auth.js](file:///C:/Users/juana/.gemini/antigravity-ide/scratch/la-nueva-parisienne/js/modules/auth.js), [css/modules/auth.css](file:///C:/Users/juana/.gemini/antigravity-ide/scratch/la-nueva-parisienne/css/modules/auth.css), [js/core/session-store.js](file:///C:/Users/juana/.gemini/antigravity-ide/scratch/la-nueva-parisienne/js/core/session-store.js))
+- **Separador y Botón Único en Módulo 9**:
+  - Se agregó una línea divisoria punteada (`<hr>`) y espacio amplio antes de la Tarjeta de Usuarios.
+  - Se eliminó el botón duplicado interno, dejando únicamente la acción del encabezado "Desbloquear Gestión de Usuarios".
+  - Se expandió el selector de roles en el formulario para incluir: **Gerente General**, **Cajero**, **Panadero** y **Contador**.
+- **Agrupación Dinámica por Departamentos en `index.html`**:
+  - Los perfiles de usuarios guardados en `localStorage` (`usuarios_sistema`) se renderizan dinámicamente categorizados en 4 columnas por departamento:
+    - 🏢 **Gerencia General**
+    - 💰 **Caja y Facturación**
+    - 🥖 **Producción y Cocina**
+    - 📊 **Contabilidad**
+  - Cualquier adición, edición o eliminación en el Módulo 9 se refleja al instante en el Lobby principal.
+
+---
+
+## [5.8.0] - 2026-08-22 (Submódulo de Gestión de Usuarios y Roles con Doble Validación de Seguridad)
+
+### 👥 Control de Acceso y CRUD de Usuarios ([modules/configuraciones.html](file:///C:/Users/juana/.gemini/antigravity-ide:scratch/la-nueva-parisienne/modules/configuraciones.html), [js/modules/configuraciones.js](file:///C:/Users/juana/.gemini/antigravity-ide/scratch/la-nueva-parisienne/js/modules/configuraciones.js))
+- **Barrera de Acceso Inicial (Modal de Seguridad)**:
+  - La sección de Usuarios en el Módulo 9 inicia bloqueada por defecto (`#usersLockedPlaceholder`).
+  - Al presionar "🔑 Autorizar Acceso a Usuarios", exige el ingreso de la Contraseña Gerencial (`admin123`).
+- **Interfaz CRUD y Tabla Estilizada**:
+  - Presenta las columnas Nombre Completo, Usuario (Login), Rol Asignado (Gerente General, Cajero, Panadero) y Acciones (`✏️ Editar` y `🗑️ Eliminar`).
+- **Formulario Modal de Usuario (`#modalUsuarioForm`)**:
+  - Permite definir Nombre, Username, Contraseña y Selección de Rol.
+- **Segunda Barrera (Confirmación Crítica)**:
+  - Toda adición, edición o eliminación exige nuevamente la Contraseña Gerencial (`#modalAuthPassword`). Tras ser aprobada, se guarda en `localStorage` (`usuarios_sistema`) y se notifica con la animación SVG de Checkmark `✔`.
+
+---
+
 ## [5.7.1] - 2026-08-22 (Animación SVG de Checkmark para Cobro de Ventas en Caja Registradora POS)
 
 ### 🛒 Pantalla de Éxito en POS al Procesar Venta ([modules/pos.html](file:///C:/Users/juana/.gemini/antigravity-ide/scratch/la-nueva-parisienne/modules/pos.html), [css/modules/pos.css](file:///C:/Users/juana/.gemini/antigravity-ide/scratch/la-nueva-parisienne/css/modules/pos.css), [js/modules/pos.js](file:///C:/Users/juana/.gemini/antigravity-ide/scratch/la-nueva-parisienne/js/modules/pos.js))

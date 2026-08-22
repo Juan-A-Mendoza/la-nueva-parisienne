@@ -241,8 +241,186 @@
         </form>
       </section>
 
+      <!-- SEPARADOR VISUAL DE SECCIÓN DE ALTA SEGURIDAD -->
+      <hr style="margin: 3.5rem 0 2rem 0; border: none; border-top: 2px dashed rgba(212, 155, 84, 0.4);" />
+
+      <!-- TARJETA 3: GESTIÓN DE USUARIOS Y ROLES DE SEGURIDAD (MÓDULO DE SEGURIDAD DOBLE VALIDACIÓN) -->
+      <section class="config-card" style="border: 2px solid var(--color-gold);">
+        <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 0.5rem; padding-bottom: 0.4rem; border-bottom: 2px solid var(--color-gold); flex-wrap: wrap; gap: 0.75rem;">
+          <div>
+            <h2 style="font-size: 1.15rem; font-weight: 800; color: var(--color-espresso); margin: 0;">
+              👥 Gestión de Usuarios y Roles de Seguridad
+            </h2>
+            <p style="font-size: 0.85rem; color: var(--color-muted); margin-top: 0.2rem; margin-bottom: 0;">
+              Administración del personal autorizado para operar el POS, Cocina, Panadería y Gerencia General.
+            </p>
+          </div>
+          <button id="btnUnlockUserManagement" type="button" class="btn-primary-action gold-variant">
+            <span>🔒 Desbloquear Gestión de Usuarios</span>
+          </button>
+        </div>
+
+        <!-- BARRERA DE ACCESO: PANEL BLOQUEADO POR DEFECTO -->
+        <div id="usersLockedPlaceholder" style="text-align: center; padding: 2.5rem 1rem; background: rgba(212, 155, 84, 0.05); border: 2px dashed rgba(212, 155, 84, 0.3); border-radius: var(--radius-md);">
+          <div style="font-size: 3rem; margin-bottom: 0.5rem;">🔒</div>
+          <h3 style="font-size: 1.1rem; color: var(--color-espresso); font-weight: 800; margin-bottom: 0.3rem;">Acceso Protegido por Doble Validación</h3>
+          <p style="font-size: 0.85rem; color: var(--color-muted); max-width: 480px; margin: 0 auto 0 auto;">
+            Esta sección contiene credenciales críticas del sistema. Presione el botón <strong>"🔒 Desbloquear Gestión de Usuarios"</strong> situado en el encabezado superior para ingresar la contraseña de autorización gerencial.
+          </p>
+        </div>
+
+        <!-- INTERFAZ CRUD: TABLA DE USUARIOS Y BOTÓN CREAR (REVELADO TRAS AUTORIZACIÓN) -->
+        <div id="usersCrudPanel" style="display: none; margin-top: 1rem;">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; flex-wrap: wrap; gap: 0.75rem;">
+            <div style="display: flex; align-items: center; gap: 0.5rem;">
+              <span style="font-size: 0.85rem; font-weight: 700; color: var(--color-success); background: rgba(46,125,50,0.1); padding: 0.25rem 0.65rem; border-radius: 9999px; border: 1px solid rgba(46,125,50,0.25);">
+                🔓 Sesión de Seguridad Autorizada
+              </span>
+            </div>
+            <button id="btnOpenNuevoUsuarioModal" type="button" class="btn-primary-action">
+              <span>✨ + Nuevo Usuario</span>
+            </button>
+          </div>
+
+          <div class="table-responsive-container">
+            <table class="dashboard-table inventory-table">
+              <thead>
+                <tr>
+                  <th>Nombre Completo</th>
+                  <th>Usuario (Login)</th>
+                  <th>Rol Asignado</th>
+                  <th>Estado</th>
+                  <th>Acciones</th>
+                </tr>
+              </thead>
+              <tbody id="usuariosTbody">
+                <!-- Renderizado dinámico vía configuraciones.js -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
     </main>
 
+  </div>
+
+  <!-- ====================================================================
+       MODALES CORPORATIVOS DE SEGURIDAD, FORMULARIO Y ÉXITO
+       ==================================================================== -->
+
+  <!-- MODAL BARRERA DE SEGURIDAD / CONFIRMACIÓN CRÍTICA (REQUERIMIENTOS 1 Y 4) -->
+  <div id="modalAuthPassword" class="modal-overlay" aria-hidden="true" style="display: none;">
+    <div class="modal-card-container" style="max-width: 460px; width: 92%;">
+      <div class="modal-card-header">
+        <div class="modal-header-title">
+          <span class="modal-header-icon">🔐</span>
+          <div>
+            <h2 id="authModalTitle" class="modal-title-text">Autorización Gerencial Requerida</h2>
+            <span id="authModalSubtitle" class="modal-subtitle-text">Control de Acceso de Alta Seguridad</span>
+          </div>
+        </div>
+        <button id="closeAuthModalBtn" type="button" class="btn-modal-close" aria-label="Cerrar ventana">✕</button>
+      </div>
+
+      <form id="authPasswordForm">
+        <div class="modal-card-body" style="padding: 1.5rem; gap: 1rem;">
+          <div style="background: rgba(212, 155, 84, 0.08); border: 1px solid rgba(212, 155, 84, 0.3); padding: 0.85rem; border-radius: 8px; font-size: 0.85rem; color: var(--color-espresso);">
+            <strong>⚠️ Validación de Identidad:</strong> Por razones de seguridad, ingrese la <strong>Contraseña de Autorización</strong> para proceder.
+          </div>
+
+          <div class="form-group-custom">
+            <label for="authPasswordInput" class="form-label-custom">🔑 Contraseña de Autorización *</label>
+            <input type="password" id="authPasswordInput" class="form-control-custom" placeholder="Ingrese clave gerencial (ej: admin123)" required />
+            <div id="authPasswordErrorMsg" style="display: none; color: #D32F2F; font-size: 0.83rem; font-weight: 700; margin-top: 0.4rem; background: rgba(211, 47, 47, 0.1); padding: 0.4rem 0.75rem; border-radius: 6px; border: 1px solid rgba(211, 47, 47, 0.3);">
+              ❌ Contraseña gerencial incorrecta. Permiso denegado.
+            </div>
+          </div>
+        </div>
+
+        <div class="modal-card-footer">
+          <button id="cancelAuthModalBtn" type="button" class="btn-modal-action secondary">Cancelar</button>
+          <button type="submit" class="btn-modal-action primary">🔑 Validar & Confirmar</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- MODAL DE CREACIÓN / EDICIÓN DE USUARIO (REQUERIMIENTO 3) -->
+  <div id="modalUsuarioForm" class="modal-overlay" aria-hidden="true" style="display: none;">
+    <div class="modal-card-container" style="max-width: 520px; width: 92%;">
+      <div class="modal-card-header">
+        <div class="modal-header-title">
+          <span class="modal-header-icon">👤</span>
+          <div>
+            <h2 id="modalUserTitle" class="modal-title-text">Crear Nuevo Usuario</h2>
+            <span class="modal-subtitle-text">Registro de Credenciales y Asignación de Rol</span>
+          </div>
+        </div>
+        <button id="closeUserModalBtn" type="button" class="btn-modal-close" aria-label="Cerrar ventana">✕</button>
+      </div>
+
+      <form id="usuarioForm">
+        <input type="hidden" id="modalUserId" value="" />
+        <div class="modal-card-body" style="gap: 1.15rem;">
+          
+          <div class="form-group-custom">
+            <label for="modalUserNombre" class="form-label-custom">📝 Nombre Completo *</label>
+            <input type="text" id="modalUserNombre" class="form-control-custom" placeholder="Ej: Juan Alberto Mendoza" required />
+          </div>
+
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+            <div class="form-group-custom">
+              <label for="modalUserUsername" class="form-label-custom">👤 Nombre de Usuario (Login) *</label>
+              <input type="text" id="modalUserUsername" class="form-control-custom" placeholder="Ej: jmendoza" required />
+            </div>
+            <div class="form-group-custom">
+              <label for="modalUserPassword" class="form-label-custom">🔒 Contraseña de Acceso *</label>
+              <input type="password" id="modalUserPassword" class="form-control-custom" placeholder="••••••••" required />
+            </div>
+          </div>
+
+          <div class="form-group-custom">
+            <label for="modalUserRol" class="form-label-custom">🛡️ Seleccionar Rol del Sistema *</label>
+            <select id="modalUserRol" class="form-control-custom" required>
+              <option value="Gerente General">🏢 Gerente General (Control Total)</option>
+              <option value="Cajero">💰 Cajero (Punto de Venta POS)</option>
+              <option value="Panadero">🥖 Panadero (Módulo 2 Cocina & Hornos)</option>
+              <option value="Contador">📊 Contador (Módulo 5 Contabilidad & Finanzas)</option>
+            </select>
+          </div>
+
+        </div>
+
+        <div class="modal-card-footer">
+          <button id="cancelUserModalBtn" type="button" class="btn-modal-action secondary">Cancelar</button>
+          <button type="submit" class="btn-modal-action primary">💾 Guardar Usuario</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- MODAL DE NOTIFICACIÓN DE ÉXITO CON CHECKMARK ANIMADO (SVG) -->
+  <div id="modalExitoNotificacion" class="modal-overlay" aria-hidden="true" style="display: none;">
+    <div class="modal-card-container success-modal-card">
+      <div class="success-modal-body">
+        
+        <!-- CHECKMARK SVG CON ANIMACIÓN EN TIEMPO REAL -->
+        <div class="success-checkmark-wrapper">
+          <svg class="success-checkmark-svg" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 52 52">
+            <circle class="success-checkmark-circle" cx="26" cy="26" r="23" fill="none" />
+            <path class="success-checkmark-check" fill="none" d="M14.1 27.2l7.1 7.2 16.7-16.8" />
+          </svg>
+        </div>
+
+        <h3 id="modalExitoTitle" class="success-modal-title">¡Guardado con Éxito!</h3>
+        <p id="modalExitoMsg" class="success-modal-msg">El registro ha sido actualizado correctamente en el sistema.</p>
+
+        <button id="closeExitoModalBtn" type="button" class="btn-primary-action gold-variant" style="min-width: 160px; margin-top: 0.5rem;">
+          <span>✓ Entendido</span>
+        </button>
+      </div>
+    </div>
   </div>
 
   <script type="module" src="../js/modules/configuraciones.js"></script>

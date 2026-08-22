@@ -20,8 +20,19 @@ document.addEventListener('DOMContentLoaded', async () => {
   const pinErrorAlert = document.getElementById('pinErrorAlert') || document.getElementById('authMessage');
 
   // Cargar perfiles de forma asíncrona desde MySQL o fallback local
-  const profiles = await SessionStore.getProfilesAsync();
-  renderProfiles(profiles);
+  async function loadAndRenderProfiles() {
+    const profiles = await SessionStore.getProfilesAsync();
+    renderProfiles(profiles);
+  }
+
+  await loadAndRenderProfiles();
+
+  // Re-renderizar si el Gerente modifica usuarios en otra pestaña
+  window.addEventListener('storage', (e) => {
+    if (!e.key || e.key === 'usuarios_sistema') {
+      loadAndRenderProfiles();
+    }
+  });
 
   function renderProfiles(profileList) {
     if (!profileGrid) return;
@@ -30,44 +41,77 @@ document.addEventListener('DOMContentLoaded', async () => {
     if (!profileList || profileList.length === 0) {
       profileGrid.innerHTML = `
         <div style="grid-column: 1/-1; text-align: center; padding: 2rem; color: var(--color-muted);">
-          No se encontraron perfiles de usuario en la base de datos MySQL.
+          No se encontraron perfiles de usuario en el sistema.
         </div>
       `;
       return;
     }
 
-    profileList.forEach(profile => {
-      const card = document.createElement('article');
-      card.className = 'profile-card user-card';
-      card.setAttribute('role', 'button');
-      card.setAttribute('tabindex', '0');
-      card.setAttribute('aria-label', `Ingresar como ${profile.name}, ${profile.role}`);
+    const DEPARTMENTS = [
+      { id: 'gerencia', name: 'Gerencia General', icon: '🏢', roles: ['gerente general', 'admin'] },
+      { id: 'caja', name: 'Caja y Facturación', icon: '💰', roles: ['cajero', 'pos', 'cashier'] },
+      { id: 'cocina', name: 'Producción y Cocina', icon: '🥖', roles: ['panadero', 'kitchen', 'baker'] },
+      { id: 'contabilidad', name: 'Contabilidad', icon: '📊', roles: ['contador', 'accountant'] }
+    ];
 
-      card.innerHTML = `
-        <div class="profile-avatar-wrapper">
-          <div class="profile-avatar user-avatar">${profile.icon}</div>
-          <span class="status-dot"></span>
+    DEPARTMENTS.forEach(dept => {
+      const deptUsers = profileList.filter(p => {
+        const rLower = (p.role || '').toLowerCase();
+        const codeLower = (p.roleCode || '').toLowerCase();
+        return dept.roles.some(r => rLower.includes(r) || codeLower.includes(r));
+      });
+
+      const deptContainer = document.createElement('div');
+      deptContainer.className = 'department-column-card';
+
+      let usersHtml = '';
+      if (deptUsers.length === 0) {
+        usersHtml = `<div class="department-empty-tag">Sin usuarios asignados</div>`;
+      } else {
+        usersHtml = deptUsers.map(profile => `
+          <article class="profile-card user-card" data-user-id="${profile.id}" role="button" tabindex="0" aria-label="Ingresar como ${profile.name}">
+            <div class="profile-avatar-wrapper">
+              <div class="profile-avatar user-avatar">${profile.icon || '👤'}</div>
+              <span class="status-dot"></span>
+            </div>
+            <h3 class="profile-name user-name">${profile.name}</h3>
+            <span class="profile-role user-role">${profile.role}</span>
+            <p class="profile-desc user-desc">${profile.description || `@${profile.username || profile.id}`}</p>
+            <button type="button" class="btn-select-user profile-action-btn">Seleccionar Perfil</button>
+          </article>
+        `).join('');
+      }
+
+      deptContainer.innerHTML = `
+        <div class="department-header-badge">
+          <span class="dept-header-icon">${dept.icon}</span>
+          <span class="dept-header-title">${dept.name}</span>
+          <span class="dept-header-count">${deptUsers.length}</span>
         </div>
-        <h3 class="profile-name user-name">${profile.name}</h3>
-        <span class="profile-role user-role">${profile.role}</span>
-        <p class="profile-desc user-desc">${profile.description || ''}</p>
-        <button type="button" class="btn-select-user profile-action-btn">Seleccionar Perfil</button>
+        <div class="department-users-list">
+          ${usersHtml}
+        </div>
       `;
 
-      const selectUser = (e) => {
-        if (e) e.preventDefault();
-        openPinModal(profile);
-      };
-
-      card.addEventListener('click', selectUser);
-      card.addEventListener('keydown', (e) => {
-        if (e.key === 'Enter' || e.key === ' ') {
-          e.preventDefault();
-          selectUser(e);
+      // Registrar eventos click para cada tarjeta del departamento
+      deptUsers.forEach(profile => {
+        const card = deptContainer.querySelector(`[data-user-id="${profile.id}"]`);
+        if (card) {
+          const selectUser = (e) => {
+            if (e) e.preventDefault();
+            openPinModal(profile);
+          };
+          card.addEventListener('click', selectUser);
+          card.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter' || e.key === ' ') {
+              e.preventDefault();
+              selectUser(e);
+            }
+          });
         }
       });
 
-      profileGrid.appendChild(card);
+      profileGrid.appendChild(deptContainer);
     });
   }
 
