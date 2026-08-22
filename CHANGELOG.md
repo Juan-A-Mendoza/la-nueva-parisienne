@@ -4,6 +4,20 @@ Todos los cambios significativos, nuevas funcionalidades y actualizaciones del s
 
 El formato está basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1.0.0/) y este proyecto se adhiere a [Semantic Versioning](https://semver.org/lang/es/).
 
+## [5.1.0] - 2026-08-22 (Módulo de Inventario y Almacén para Dashboard Gerencial)
+
+### 📦 Maqueta Visual UI/UX & Gestión de Almacén ([modules/dashboard.html](file:///C:/Users/juana/.gemini/antigravity-ide/scratch/la-nueva-parisienne/modules/dashboard.html), [css/modules/dashboard.css](file:///C:/Users/juana/.gemini/antigravity-ide/scratch/la-nueva-parisienne/css/modules/dashboard.css), [js/modules/dashboard.js](file:///C:/Users/juana/.gemini/antigravity-ide/scratch/la-nueva-parisienne/js/modules/dashboard.js))
+- **Navegación de Secciones (Dashboard vs Inventario)**:
+  - Se añadió la barra de pestañas principal en la parte superior del Dashboard Gerencial permitiendo alternar fluidamente entre `📊 Métricas & Inteligencia` y `📦 Control de Inventario & Almacén`.
+- **Panel de Inventario con Pestañas Dinámicas**:
+  - Se crearon las sub-pestañas `🌾 Materia Prima e Insumos` y `🛍️ Productos Terminados / Venta Directa` con contadores dinámicos y barra de búsqueda y filtrado rápido.
+- **Columnas de Datos & Alertas de Stock Mínimo**:
+  - Tablas estilizadas con columnas: Código, Descripción, Categoría, Costo Unitario, Precio Venta, Stock Actual y Alerta Visual (`🔴 ALERTA: Stock Bajo` vs `🟢 Normal`).
+- **Modal de Ingreso de Mercancía (`#modalIngresoMercancia`)**:
+  - Ventana emergente con formulario para registrar compras a proveedores (Producto, Cantidad, Unidad, Costo Total USD, Proveedor y Número de Factura), con cálculo en vivo del costo unitario y actualización dinámica de existencias.
+
+---
+
 ## [5.0.0] - 2026-08-22 (Escalamiento Full-Stack Real MySQL/PDO Módulo 2 Producción y Cocina)
 
 ### 🚀 Arquitectura Backend y Conexión PDO ([conexion.php](file:///C:/Users/juana/.gemini/antigravity-ide/scratch/la-nueva-parisienne/conexion.php), [api_hornos.php](file:///C:/Users/juana/.gemini/antigravity-ide/scratch/la-nueva-parisienne/api_hornos.php), [js/modules/kitchen.js](file:///C:/Users/juana/.gemini/antigravity-ide/scratch/la-nueva-parisienne/js/modules/kitchen.js))

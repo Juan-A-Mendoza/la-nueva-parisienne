@@ -58,16 +58,29 @@
           <a href="dashboard.html">🏠 Inicio (Panel Central)</a>
         </li>
         <li class="breadcrumb-separator">/</li>
-        <li class="breadcrumb-item active" aria-current="page">Dashboard Gerencial</li>
+        <li id="breadcrumbActiveItem" class="breadcrumb-item active" aria-current="page">Dashboard Gerencial</li>
       </ol>
     </nav>
 
+    <!-- BARRA DE NAVEGACIÓN PRINCIPAL DEL GERENTE (VISTAS DASHBOARD VS INVENTARIO) -->
+    <nav class="dashboard-view-nav" aria-label="Navegación de Secciones">
+      <div class="view-nav-container">
+        <button id="navBtnAnalytics" type="button" class="dashboard-nav-tab active">
+          <span>📊 Métricas & Inteligencia de Negocios</span>
+        </button>
+        <button id="navBtnInventory" type="button" class="dashboard-nav-tab">
+          <span>📦 Control de Inventario & Almacén</span>
+        </button>
+      </div>
+    </nav>
 
-    <!-- CONTENIDO ANALÍTICO PRINCIPAL -->
+    <!-- CONTENIDO ANALÍTICO Y DE INVENTARIO PRINCIPAL -->
     <main class="dashboard-content">
 
-      <!-- SECCIÓN 1: TARJETAS KPI (INDICADORES CLAVE DE RENDIMIENTO) -->
-      <section class="kpi-cards-grid" aria-label="Indicadores Clave de Rendimiento">
+      <!-- VISTA 1: ANALÍTICA Y KPIs GERENCIALES -->
+      <div id="analyticsView" class="dashboard-view-section active">
+        <!-- SECCIÓN 1: TARJETAS KPI (INDICADORES CLAVE DE RENDIMIENTO) -->
+        <section class="kpi-cards-grid" aria-label="Indicadores Clave de Rendimiento">
         
         <div class="dashboard-kpi-card">
           <div class="kpi-card-header">
@@ -183,6 +196,92 @@
           </table>
         </div>
       </section>
+      </div> <!-- FIN DE VISTA 1: ANALÍTICA -->
+
+
+      <!-- VISTA 2: SECCIÓN DE CONTROL DE INVENTARIO Y ALMACÉN (REQUERIMIENTOS 1-4) -->
+      <div id="inventoryView" class="dashboard-view-section" style="display: none;" aria-label="Control de Inventario">
+        
+        <!-- CABECERA DEL PANEL DE INVENTARIO -->
+        <div class="inventory-panel-header">
+          <div class="inventory-title-group">
+            <h2>📦 Control de Inventario y Almacén Central</h2>
+            <p>Gestión de existencias de materias primas, productos terminados, costos unitarios y alertas de reabastecimiento en tiempo real.</p>
+          </div>
+          <button id="btnOpenIngresoMercanciaModal" type="button" class="btn-export-report" style="cursor: pointer; border: none;">
+            <span>+ Registrar Ingreso de Mercancía</span>
+          </button>
+        </div>
+
+        <!-- PESTAÑAS (TABS) PARA ALTERNAR ENTRE MATERIA PRIMA Y PRODUCTOS TERMINADOS -->
+        <div class="inventory-tabs-bar">
+          <div class="inventory-tabs-group">
+            <button id="tabBtnMateriaPrima" type="button" class="inventory-tab-pill active">
+              <span>🌾 Materia Prima e Insumos</span>
+              <span id="badgeMateriaPrimaCount" class="inventory-tab-count">6</span>
+            </button>
+            <button id="tabBtnProductosTerminados" type="button" class="inventory-tab-pill">
+              <span>🛍️ Productos Terminados / Venta Directa</span>
+              <span id="badgeProductosTerminadosCount" class="inventory-tab-count">6</span>
+            </button>
+          </div>
+
+          <!-- BARRA DE BÚSQUEDA Y FILTRADO RÁPIDO -->
+          <div class="inventory-filter-group">
+            <input type="text" id="inventorySearchInput" class="inventory-search-input" placeholder="🔍 Buscar por código, producto..." />
+            <select id="inventoryCategoryFilter" class="inventory-select-filter">
+              <option value="todos">Todas las Categorías</option>
+              <option value="low_stock">⚠️ Solo Stock Bajo (Alertas)</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- VISTA DE TABLA 1: MATERIA PRIMA E INSUMOS -->
+        <div id="panelMateriaPrima" class="inventory-tab-panel active">
+          <div class="table-responsive-container">
+            <table class="dashboard-table inventory-table">
+              <thead>
+                <tr>
+                  <th>Código</th>
+                  <th>Descripción / Producto</th>
+                  <th>Categoría</th>
+                  <th>Costo Unitario ($)</th>
+                  <th>Stock Actual</th>
+                  <th>Nivel Mínimo / Alerta</th>
+                  <th>Acciones</th>
+                </tr>
+              </thead>
+              <tbody id="materiaPrimaTbody">
+                <!-- Renderizado dinámico vía dashboard.js -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- VISTA DE TABLA 2: PRODUCTOS TERMINADOS / VENTA DIRECTA -->
+        <div id="panelProductosTerminados" class="inventory-tab-panel" style="display: none;">
+          <div class="table-responsive-container">
+            <table class="dashboard-table inventory-table">
+              <thead>
+                <tr>
+                  <th>Código</th>
+                  <th>Descripción / Producto</th>
+                  <th>Categoría</th>
+                  <th>Costo Unitario ($)</th>
+                  <th>Precio Venta ($)</th>
+                  <th>Stock Actual</th>
+                  <th>Nivel Mínimo / Alerta</th>
+                  <th>Acciones</th>
+                </tr>
+              </thead>
+              <tbody id="productosTerminadosTbody">
+                <!-- Renderizado dinámico vía dashboard.js -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+      </div> <!-- FIN DE VISTA 2: INVENTARIO -->
 
     </main>
 
@@ -254,6 +353,84 @@
         <button id="btnCopiarRef" type="button" class="btn-modal-action secondary">📋 Copiar Ref</button>
         <button id="btnCerrarModalDetalleFooter" type="button" class="btn-modal-action primary">Cerrar</button>
       </div>
+    </div>
+  </div>
+
+  <!-- MODAL 4: REGISTRO DE INGRESO DE MERCANCÍA / COMPRA A PROVEEDOR (REQUERIMIENTO 4) -->
+  <div id="modalIngresoMercancia" class="modal-overlay" aria-hidden="true" style="display: none;">
+    <div class="modal-card-container" style="max-width: 620px; width: 92%;">
+      <div class="modal-card-header">
+        <div class="modal-header-title">
+          <span class="modal-header-icon">📦</span>
+          <div>
+            <h2 class="modal-title-text">Registrar Ingreso de Mercancía</h2>
+            <span class="modal-subtitle-text">Recepción de Compras a Proveedores & Actualización de Inventario</span>
+          </div>
+        </div>
+        <button id="closeIngresoMercanciaModalBtn" type="button" class="btn-modal-close" aria-label="Cerrar ventana">✕</button>
+      </div>
+
+      <form id="ingresoMercanciaForm">
+        <div class="modal-card-body" style="gap: 1.25rem;">
+          
+          <div class="form-group-custom">
+            <label for="modalIngresoProductoSelect" class="form-label-custom">🛒 Seleccionar Producto o Insumo *</label>
+            <select id="modalIngresoProductoSelect" class="form-control-custom" required>
+              <option value="" disabled selected>-- Seleccione un ítem del catálogo --</option>
+              <!-- Opciones dinámicas agrupadas por Materia Prima / Producto Terminado -->
+            </select>
+          </div>
+
+          <div style="display: grid; grid-template-columns: 2fr 1fr; gap: 1rem;">
+            <div class="form-group-custom">
+              <label for="modalIngresoCantidad" class="form-label-custom">📦 Cantidad Ingresada *</label>
+              <input type="number" id="modalIngresoCantidad" class="form-control-custom" placeholder="Ej: 50.00" min="0.01" step="0.01" required />
+            </div>
+            <div class="form-group-custom">
+              <label for="modalIngresoUnidad" class="form-label-custom">📏 Unidad</label>
+              <select id="modalIngresoUnidad" class="form-control-custom" required>
+                <option value="kg">kg (Kilogramos)</option>
+                <option value="ud">ud (Unidades)</option>
+                <option value="litros">litros (L)</option>
+                <option value="cajas">cajas</option>
+              </select>
+            </div>
+          </div>
+
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+            <div class="form-group-custom">
+              <label for="modalIngresoCostoTotal" class="form-label-custom">💵 Costo Total Compra ($ USD) *</label>
+              <input type="number" id="modalIngresoCostoTotal" class="form-control-custom" placeholder="Ej: 180.00" min="0.01" step="0.01" required />
+            </div>
+            <div class="form-group-custom">
+              <label for="modalIngresoProveedor" class="form-label-custom">🏬 Proveedor *</label>
+              <select id="modalIngresoProveedor" class="form-control-custom" required>
+                <option value="Molinos del Sur, C.A.">Molinos del Sur, C.A.</option>
+                <option value="Lácteos La Granja">Lácteos La Granja</option>
+                <option value="Chocolates del Rey">Chocolates del Rey</option>
+                <option value="Empaques del Norte">Empaques del Norte</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="form-group-custom">
+            <label for="modalIngresoNumFactura" class="form-label-custom">🧾 Número de Factura / Nota Entrega *</label>
+            <input type="text" id="modalIngresoNumFactura" class="form-control-custom" placeholder="Ej: FAC-PROV-9082" required />
+          </div>
+
+          <!-- Preview de Costo Unitario Calculado -->
+          <div id="costoUnitarioPreviewBox" class="modal-amount-hero" style="padding: 0.8rem; background: rgba(212, 155, 84, 0.08); border-color: rgba(212, 155, 84, 0.3);">
+            <div class="amount-hero-label" style="font-size: 0.75rem;">Costo Unitario Calculado</div>
+            <div id="costoUnitarioPreviewVal" class="amount-hero-value-usd" style="font-size: 1.2rem; color: var(--color-gold-dark);">$0.00 / ud</div>
+          </div>
+
+        </div>
+
+        <div class="modal-card-footer">
+          <button id="cancelIngresoMercanciaBtn" type="button" class="btn-modal-action secondary">Cancelar</button>
+          <button type="submit" class="btn-modal-action primary">💾 Guardar Ingreso de Mercancía</button>
+        </div>
+      </form>
     </div>
   </div>
 
