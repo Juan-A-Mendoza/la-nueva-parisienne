@@ -4,6 +4,86 @@ Todos los cambios significativos, nuevas funcionalidades y actualizaciones del s
 
 El formato está basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1.0.0/) y este proyecto se adhiere a [Semantic Versioning](https://semver.org/lang/es/).
 
+## [5.7.1] - 2026-08-22 (Animación SVG de Checkmark para Cobro de Ventas en Caja Registradora POS)
+
+### 🛒 Pantalla de Éxito en POS al Procesar Venta ([modules/pos.html](file:///C:/Users/juana/.gemini/antigravity-ide/scratch/la-nueva-parisienne/modules/pos.html), [css/modules/pos.css](file:///C:/Users/juana/.gemini/antigravity-ide/scratch/la-nueva-parisienne/css/modules/pos.css), [js/modules/pos.js](file:///C:/Users/juana/.gemini/antigravity-ide/scratch/la-nueva-parisienne/js/modules/pos.js))
+- **Transición con Animación de Checkmark/Visto (`#posSuccessModal`)**:
+  - Al presionar "✓ Finalizar Venta e Imprimir Ticket", se despliega una pantalla de confirmación emergente con la animación SVG del visto verde (`✔`) durante 1.6 segundos.
+  - Al concluir la animación, transiciona de forma fluida a la presentación del ticket de caja térmico de 80mm.
+
+---
+
+## [5.7.0] - 2026-08-22 (Modal de Notificación de Éxito Corporativo con Animación SVG de Checkmark)
+
+### 🌟 Eliminación de Alertas Nativas y Modal de Éxito Animado ([modules/dashboard.html](file:///C:/Users/juana/.gemini/antigravity-ide/scratch/la-nueva-parisienne/modules/dashboard.html), [css/modules/dashboard.css](file:///C:/Users/juana/.gemini/antigravity-ide/scratch/la-nueva-parisienne/css/modules/dashboard.css), [js/modules/dashboard.js](file:///C:/Users/juana/.gemini/antigravity-ide/scratch/la-nueva-parisienne/js/modules/dashboard.js))
+- **Modal de Notificación de Éxito (`#modalExitoNotificacion`)**:
+  - Se eliminaron las ventanas emergentes nativas del navegador (`alert()`) al guardar materias primas, productos terminados, proveedores o ingresos de mercancía.
+  - Se creó un modal emergente estilizado con tarjeta redondeada (`border-radius: 20px`), sombra profunda y estética espresso/dorada corporativa.
+- **Animación SVG de Checkmark/Visto (`.success-checkmark-svg`)**:
+  - Animación fluida mediante trazado dinámico SVG (`stroke-dasharray` / `stroke-dashoffset`) del círculo verde y el visto (`✔`), acompañado de un efecto de rebote elástico (`bounce`).
+
+---
+
+## [5.6.1] - 2026-08-22 (Rediseño Estético Premium de Botones .btn-primary-action en Inventario)
+
+### 🎨 Estilización Visual de Botones ([css/modules/dashboard.css](file:///C:/Users/juana/.gemini/antigravity-ide/scratch/la-nueva-parisienne/css/modules/dashboard.css))
+- **Estilos Premium para `.btn-primary-action` y `.btn-primary-action.gold-variant`**:
+  - Se incorporaron las definiciones CSS faltantes para darle presencia corporativa a los botones `📥 Registrar Ingreso de Mercancía`, `✨ + Nueva Materia Prima`, `✨ + Nuevo Producto` y `🚚 + Nuevo Proveedor`.
+  - Incluye degradados metálicos, bordes dorados, esquinas redondeadas tipo píldora, sombras proyectadas (`box-shadow`) y animaciones elevadoras al pasar el cursor (`transform: translateY(-2px)`).
+
+---
+
+## [5.6.0] - 2026-08-22 (Conexión Maestra del Catálogo Módulo 4 Dashboard Gerencial -> Módulo 3 POS Punto de Venta)
+
+### 🔄 Sincronización Dinámica de Catálogo (`catalogo_pos` en localStorage) ([modules/dashboard.html](file:///C:/Users/juana/.gemini/antigravity-ide/scratch/la-nueva-parisienne/modules/dashboard.html), [js/modules/dashboard.js](file:///C:/Users/juana/.gemini/antigravity-ide/scratch/la-nueva-parisienne/js/modules/dashboard.js), [js/data/products-db.js](file:///C:/Users/juana/.gemini/antigravity-ide/scratch/la-nueva-parisienne/js/data/products-db.js), [js/modules/pos.js](file:///C:/Users/juana/.gemini/antigravity-ide/scratch/la-nueva-parisienne/js/modules/pos.js))
+- **Campos de Venta POS en Modal de Productos Terminados**:
+  - Formulario modal `#modalProductoTerminado` actualizado con campos requeridos por la caja registradora: Nombre, Categoría POS (Panadería, Pastelería, Bebidas, Salados), Precio de Venta ($ USD) y Checkbox "🛒 Mostrar en el Punto de Venta (POS)".
+- **Persistencia Dinámica en `localStorage` (`catalogo_pos`)**:
+  - Los 15 productos iniciales se guardan en la clave `catalogo_pos` de `localStorage`.
+  - Cualquier adición, modificación o eliminación efectuada por el Gerente actualiza inmediatamente `catalogo_pos`.
+- **Reflejo en Tiempo Real en la Caja Registradora POS**:
+  - El Módulo 3 (POS) lee dinámicamente `catalogo_pos` desde `localStorage` mediante `ProductsStore.getProductsCatalogAsync()`.
+  - Canales de comunicación en tiempo real (`window.storage`, `BroadcastChannel('lnp_pos_catalog_channel')`) regeneran instantáneamente los botones de venta del cajero sin necesidad de recargar manualmente.
+
+---
+
+## [5.5.0] - 2026-08-22 (Estilización Visual de Botones de Creación y Verificación con Clave Gerencial para Eliminación)
+
+### 🎨 Estilización de Botones y Seguridad de Eliminación Gerencial ([modules/dashboard.html](file:///C:/Users/juana/.gemini/antigravity-ide/scratch/la-nueva-parisienne/modules/dashboard.html), [css/modules/dashboard.css](file:///C:/Users/juana/.gemini/antigravity-ide/scratch/la-nueva-parisienne/css/modules/dashboard.css), [js/modules/dashboard.js](file:///C:/Users/juana/.gemini/antigravity-ide/scratch/la-nueva-parisienne/js/modules/dashboard.js))
+- **Estilización Corporativa de Botones de Creación (`.btn-primary-action`)**:
+  - Se definieron los estilos visuales para los botones `✨ + Nueva Materia Prima`, `✨ + Nuevo Producto`, `🚚 + Nuevo Proveedor` y `📥 Registrar Ingreso de Mercancía` con degradado espresso/dorado, sombra flotante, bordes redondeados (pill radius) y efectos hover interactivos (`transform: translateY(-2px)`).
+- **Verificación de Seguridad con Contraseña del Gerente General**:
+  - Se actualizó el modal `#modalConfirmEliminar` para requerir el ingreso de la contraseña del **Gerente General** (`#confirmEliminarPassword`).
+  - La eliminación solo se ejecuta tras ingresar la clave gerencial correcta (ej: `admin123`). Si la clave es incorrecta, se bloquea la acción y se muestra un banner de error animado en rojo.
+
+---
+
+## [5.4.0] - 2026-08-22 (Corrección Integral de Estilos CSS de Formularios, Rediseño de Modales de Inventario y Modal de Eliminación)
+
+### 🎨 Corrección de Layout & Rediseño Visual Formulario ([modules/dashboard.html](file:///C:/Users/juana/.gemini/antigravity-ide/scratch/la-nueva-parisienne/modules/dashboard.html), [css/modules/dashboard.css](file:///C:/Users/juana/.gemini/antigravity-ide/scratch/la-nueva-parisienne/css/modules/dashboard.css), [js/modules/dashboard.js](file:///C:/Users/juana/.gemini/antigravity-ide/scratch/la-nueva-parisienne/js/modules/dashboard.js))
+- **Solución al Desalineamiento de Inputs y Labels**:
+  - Se definieron explícitamente en `css/modules/dashboard.css` las clases `.form-group-custom` (`display: flex; flex-direction: column; width: 100%`), `.form-label-custom` y `.form-control-custom` (`width: 100%`, `padding: 0.75rem 1rem`, borde sutil y resplandor dorado en focus), corrigiendo las cajas desalineadas y squished mostradas en la captura.
+- **Rediseño de Modales de Creación y Edición**:
+  - Formularios modernizados para "Nueva Materia Prima", "Registrar Ingreso de Mercancía", "Editar Materia Prima / Producto" con cuadrículas limpias, selectores estilizados y botones flotantes en el footer.
+- **Modal Personalizado de Confirmación de Eliminación (`#modalConfirmEliminar`)**:
+  - Se reemplazaron las ventanas emergentes nativas del navegador (`confirm()`) por un modal estilizado corporativo con cabecera de alerta roja, ícono de papelera, código del ítem y botones "Cancelar" y "🗑️ Confirmar Eliminar".
+
+---
+
+## [5.3.0] - 2026-08-22 (Reescritura de Modales Corporativos, CRUD Completo de Inventario y Separación Visual de Conceptos)
+
+### 🎨 Reescritura UI & Lógica CRUD de Almacén ([modules/dashboard.html](file:///C:/Users/juana/.gemini/antigravity-ide/scratch/la-nueva-parisienne/modules/dashboard.html), [css/modules/dashboard.css](file:///C:/Users/juana/.gemini/antigravity-ide/scratch/la-nueva-parisienne/css/modules/dashboard.css), [js/modules/dashboard.js](file:///C:/Users/juana/.gemini/antigravity-ide/scratch/la-nueva-parisienne/js/modules/dashboard.js))
+- **Estilos de Modales POS Forzados**:
+  - Todos los modales (`#modalIngresoMercancia`, `#modalProveedor`, `#modalMateriaPrima`, `#modalProductoTerminado`) adoptan las clases del sistema de diseño POS (fondo blanco sólido, contenedor con bordes redondeados y sombra elevada, backdrop `.modal-overlay` semi-transparente, inputs modernos con focus dorado y botón `✕` para cerrar).
+- **CRUD Visual en Todas las Tablas**:
+  - Se habilitaron las acciones completas `+ Ingreso`, `✏️ Editar` y `🗑️ Eliminar` en las tres pestañas (`Materia Prima`, `Productos Terminados` y `Proveedores`).
+- **Botones de Creación de Catálogo**:
+  - Se agregaron los botones principales `✨ + Nueva Materia Prima` y `✨ + Nuevo Producto` dentro de las cabeceras de cada pestaña, abriendo sus respectivos modales emergentes estilizados con campos para Nombre, Categoría, Unidad de Medida (UoM) y Stock Mínimo.
+- **Separación Clara de Conceptos (Ingreso de Compras vs Creación de Catálogo)**:
+  - Distinción visual explícita entre `📥 Registrar Ingreso de Mercancía` (sumar stock vía compra/factura) y `✨ + Nuevo Producto / Materia Prima` (crear registro en el catálogo).
+
+---
+
 ## [5.2.0] - 2026-08-22 (Estandarización UI de Modales, Unidades de Medida UoM y Pestaña de Proveedores)
 
 ### 🎨 Estandarización Visual UI/UX & Gestión de Proveedores ([modules/dashboard.html](file:///C:/Users/juana/.gemini/antigravity-ide/scratch/la-nueva-parisienne/modules/dashboard.html), [css/modules/dashboard.css](file:///C:/Users/juana/.gemini/antigravity-ide/scratch/la-nueva-parisienne/css/modules/dashboard.css), [js/modules/dashboard.js](file:///C:/Users/juana/.gemini/antigravity-ide/scratch/la-nueva-parisienne/js/modules/dashboard.js))

@@ -601,33 +601,108 @@
 }
 
 .btn-modal-action {
-  padding: 0.55rem 1.15rem;
+  padding: 0.7rem 1.4rem;
   border-radius: var(--radius-pill);
-  font-size: 0.85rem;
+  font-size: 0.88rem;
   font-weight: 700;
   cursor: pointer;
   transition: all 0.2s ease;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
 }
 
 .btn-modal-action.primary {
-  background: var(--color-espresso);
+  background: var(--gradient-espresso);
   color: #FFFFFF;
-  border: none;
+  border: 1px solid var(--color-gold);
+  box-shadow: 0 4px 12px rgba(44, 24, 16, 0.25);
 }
 
 .btn-modal-action.primary:hover {
   background: var(--color-gold-dark);
+  transform: translateY(-1px);
+  box-shadow: 0 6px 16px rgba(212, 155, 84, 0.35);
 }
 
 .btn-modal-action.secondary {
   background: #FFFFFF;
   color: var(--color-espresso);
-  border: 1px solid var(--border-subtle);
+  border: 1.5px solid rgba(44, 24, 16, 0.2);
 }
 
 .btn-modal-action.secondary:hover {
   background: var(--color-gold-light);
   border-color: var(--color-gold);
+}
+
+.btn-modal-action.danger {
+  background: linear-gradient(135deg, #D32F2F 0%, #B71C1C 100%);
+  color: #FFFFFF;
+  border: 1px solid #FF8A80;
+  box-shadow: 0 4px 12px rgba(211, 47, 47, 0.3);
+}
+
+.btn-modal-action.danger:hover {
+  background: #B71C1C;
+  transform: translateY(-1px);
+  box-shadow: 0 6px 16px rgba(211, 47, 47, 0.45);
+}
+
+/* ==========================================================================
+   ESTILOS DE FORMULARIOS DE MODALES (INVENTARIO Y ALMACÉN)
+   ========================================================================== */
+.form-group-custom {
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.form-label-custom {
+  font-weight: 700;
+  font-size: 0.88rem;
+  color: var(--color-espresso);
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.form-control-custom {
+  width: 100%;
+  box-sizing: border-box;
+  display: block;
+  padding: 0.75rem 1rem;
+  font-size: 0.92rem;
+  font-family: var(--font-sans);
+  color: var(--color-espresso);
+  background: #FFFFFF;
+  border: 1.5px solid rgba(44, 24, 16, 0.2);
+  border-radius: var(--radius-sm, 8px);
+  transition: all 0.2s ease-in-out;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+}
+
+.form-control-custom:hover {
+  border-color: var(--color-gold);
+}
+
+.form-control-custom:focus {
+  outline: none;
+  border-color: var(--color-gold-dark);
+  box-shadow: 0 0 0 3.5px rgba(212, 155, 84, 0.25);
+  background: #FFFDF9;
+}
+
+select.form-control-custom {
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%232C1810' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 1rem center;
+  background-size: 1.1em;
+  padding-right: 2.75rem;
+  cursor: pointer;
 }
 
 /* ==========================================================================
@@ -672,6 +747,15 @@
   align-items: center;
   justify-content: space-between;
   margin-bottom: 1.5rem;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.inventory-panel-subhead {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 1rem;
   gap: 1rem;
   flex-wrap: wrap;
 }
@@ -823,5 +907,166 @@
 .btn-table-action-sm:hover {
   background: var(--color-gold);
   color: #FFFFFF;
+}
+
+/* ==========================================================================
+   ESTILOS PREMIUM PARA BOTONES DE ACCIÓN PRINCIPALES (.btn-primary-action)
+   ========================================================================== */
+.btn-primary-action {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.6rem;
+  padding: 0.65rem 1.35rem;
+  background: var(--gradient-espresso, linear-gradient(135deg, #2C1810 0%, #1A0E0A 100%));
+  color: #FFFFFF !important;
+  border: 1.5px solid var(--color-gold, #D49B54);
+  border-radius: var(--radius-pill, 9999px);
+  font-size: 0.88rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  cursor: pointer;
+  box-shadow: 0 4px 14px rgba(44, 24, 16, 0.25);
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  text-decoration: none;
+  line-height: 1.2;
+}
+
+.btn-primary-action span {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+}
+
+.btn-primary-action:hover {
+  background: linear-gradient(135deg, #3D2217 0%, #25140E 100%);
+  border-color: var(--color-gold-light, #E8C18C);
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(212, 155, 84, 0.35);
+  color: #FFFFFF !important;
+}
+
+.btn-primary-action:active {
+  transform: translateY(0);
+  box-shadow: 0 2px 8px rgba(44, 24, 16, 0.3);
+}
+
+/* VARIANTE DORADA BRILLANTE (REGISTRAR INGRESO DE MERCANCÍA / DESTACADO) */
+.btn-primary-action.gold-variant {
+  background: linear-gradient(135deg, #D49B54 0%, #B57F3A 100%);
+  color: #2C1810 !important;
+  border: 1.5px solid #E8C18C;
+  font-weight: 800;
+  box-shadow: 0 4px 15px rgba(212, 155, 84, 0.4);
+}
+
+.btn-primary-action.gold-variant:hover {
+  background: linear-gradient(135deg, #E2A85F 0%, #C48D47 100%);
+  color: #1A0E0A !important;
+  border-color: #FFFFFF;
+  box-shadow: 0 6px 22px rgba(212, 155, 84, 0.55);
+  transform: translateY(-2px);
+}
+
+.btn-primary-action.gold-variant:active {
+  transform: translateY(0);
+  box-shadow: 0 2px 10px rgba(212, 155, 84, 0.3);
+}
+
+/* ==========================================================================
+   MODAL DE ÉXITO CON CHECKMARK ANIMADO (SVG ANIMATION)
+   ========================================================================== */
+.success-modal-card {
+  max-width: 420px !important;
+  width: 90% !important;
+  border-radius: 20px !important;
+  text-align: center;
+  background: #FFFFFF !important;
+  box-shadow: 0 25px 50px -12px rgba(44, 24, 16, 0.4) !important;
+  border: 1.5px solid rgba(212, 155, 84, 0.35) !important;
+  overflow: hidden;
+  animation: popInSuccess 0.35s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+}
+
+@keyframes popInSuccess {
+  0% { opacity: 0; transform: scale(0.8) translateY(20px); }
+  100% { opacity: 1; transform: scale(1) translateY(0); }
+}
+
+.success-modal-body {
+  padding: 2.25rem 1.75rem 1.75rem 1.75rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.85rem;
+}
+
+.success-checkmark-wrapper {
+  width: 80px;
+  height: 80px;
+  margin-bottom: 0.25rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: radial-gradient(circle, rgba(46, 125, 50, 0.12) 0%, rgba(46, 125, 50, 0) 70%);
+  border-radius: 50%;
+}
+
+.success-checkmark-svg {
+  width: 68px;
+  height: 68px;
+  border-radius: 50%;
+  display: block;
+  stroke-width: 3.5;
+  stroke: #2E7D32;
+  stroke-miterlimit: 10;
+  box-shadow: inset 0px 0px 0px #2E7D32;
+  animation: scaleCheckmark .3s ease-in-out .7s bounce;
+}
+
+.success-checkmark-circle {
+  stroke-dasharray: 166;
+  stroke-dashoffset: 166;
+  stroke-width: 3.5;
+  stroke-miterlimit: 10;
+  stroke: #2E7D32;
+  fill: none;
+  animation: strokeCircle 0.6s cubic-bezier(0.65, 0, 0.45, 1) forwards;
+}
+
+.success-checkmark-check {
+  transform-origin: 50% 50%;
+  stroke-dasharray: 48;
+  stroke-dashoffset: 48;
+  stroke: #2E7D32;
+  animation: strokeCheck 0.35s cubic-bezier(0.65, 0, 0.45, 1) 0.45s forwards;
+}
+
+@keyframes strokeCircle {
+  100% { stroke-dashoffset: 0; }
+}
+
+@keyframes strokeCheck {
+  100% { stroke-dashoffset: 0; }
+}
+
+@keyframes scaleCheckmark {
+  0%, 100% { transform: none; }
+  50% { transform: scale3d(1.15, 1.15, 1); }
+}
+
+.success-modal-title {
+  font-size: 1.35rem;
+  font-weight: 800;
+  color: var(--color-espresso, #2C1810);
+  margin: 0;
+  letter-spacing: -0.02em;
+}
+
+.success-modal-msg {
+  font-size: 0.92rem;
+  color: var(--color-muted, #6B5E57);
+  line-height: 1.45;
+  margin: 0;
 }
 

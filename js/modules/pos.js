@@ -227,19 +227,30 @@ document.addEventListener('DOMContentLoaded', async () => {
     updateCartTotals();
   }
 
-  // Escuchar cambios de localStorage y BroadcastChannel en tiempo real cuando el Gerente modifica la tasa
+  // Escuchar cambios de localStorage y BroadcastChannel en tiempo real cuando el Gerente modifica la tasa o productos POS
   if (typeof BroadcastChannel !== 'undefined') {
     const rateChannel = new BroadcastChannel('lnp_bcv_channel');
     rateChannel.onmessage = async () => {
       await loadLiveBcvRate();
     };
+
+    const posChannel = new BroadcastChannel('lnp_pos_catalog_channel');
+    posChannel.onmessage = async () => {
+      await loadProductsCatalog();
+    };
   }
 
-  window.addEventListener('storage', async () => {
+  window.addEventListener('storage', async (e) => {
     await loadLiveBcvRate();
+    if (e.key === 'catalogo_pos' || e.key === 'inventario_simulado') {
+      await loadProductsCatalog();
+    }
   });
   window.addEventListener('bcvRateChanged', async () => {
     await loadLiveBcvRate();
+  });
+  window.addEventListener('catalogoPosChanged', async () => {
+    await loadProductsCatalog();
   });
   BcvRateStore.subscribe(async () => {
     await loadLiveBcvRate();
@@ -926,11 +937,36 @@ document.addEventListener('DOMContentLoaded', async () => {
       console.warn('Persistencia MySQL:', err);
     }
 
-    goToStep(3);
-    showReceiptModal(salePayload);
+    // MUESTRA EL MODAL ANIMADO DE ÉXITO CON CHECKMARK SVG ANTES DEL TICKET
+    showPosSuccessModal(() => {
+      goToStep(3);
+      showReceiptModal(salePayload);
+      btnCompleteSale.disabled = false;
+      btnCompleteSale.textContent = '✓ Finalizar Venta e Imprimir Ticket';
+    });
+  }
 
-    btnCompleteSale.disabled = false;
-    btnCompleteSale.textContent = '✓ Finalizar Venta e Imprimir Ticket';
+  function showPosSuccessModal(callback) {
+    const posSuccessModal = document.getElementById('posSuccessModal');
+    if (posSuccessModal) {
+      posSuccessModal.style.display = 'flex';
+      posSuccessModal.classList.add('active');
+
+      const svg = posSuccessModal.querySelector('.success-checkmark-svg');
+      if (svg) {
+        svg.style.animation = 'none';
+        void svg.offsetWidth;
+        svg.style.animation = '';
+      }
+
+      setTimeout(() => {
+        posSuccessModal.classList.remove('active');
+        posSuccessModal.style.display = 'none';
+        if (callback) callback();
+      }, 1600);
+    } else {
+      if (callback) callback();
+    }
   }
 
   function showReceiptModal(saleData) {

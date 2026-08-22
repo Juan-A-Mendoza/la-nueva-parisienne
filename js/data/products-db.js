@@ -166,10 +166,53 @@ export const PRODUCTS_DATABASE = [
 
 export const ProductsStore = {
   /**
-   * Consulta el catálogo de productos y categorías desde la API PHP/MySQL
-   * con fallback automático al catálogo de prueba local si no hay respuesta servidor
+   * Consulta el catálogo maestro de productos sincronizado desde el Inventario Gerencial (catalogo_pos en localStorage)
+   * o desde la API PHP/MySQL con fallback automático.
    */
   async getProductsCatalogAsync() {
+    // 1. Verificación de catálogo gerencial guardado en localStorage (Sincronización Módulo 4 -> Módulo 3)
+    try {
+      const storedCatalog = localStorage.getItem('catalogo_pos');
+      if (storedCatalog) {
+        const parsed = JSON.parse(storedCatalog);
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          // Filtrar solo productos visibles en POS y formatear categoría
+          const posProducts = parsed
+            .filter(item => item.showInPos !== false)
+            .map(item => {
+              let catId = (item.category || '').toLowerCase();
+              if (catId.includes('panader') || catId.includes('pan')) catId = 'panaderia';
+              else if (catId.includes('pastel') || catId.includes('repost')) catId = 'pasteleria';
+              else if (catId.includes('bebida') || catId.includes('cafe')) catId = 'cafeteria';
+              else if (catId.includes('salado') || catId.includes('especial')) catId = 'especialidades';
+
+              return {
+                id: item.id || `prod_${item.code}`,
+                code: item.code,
+                name: item.name,
+                category: catId,
+                price: parseFloat(item.salePrice || item.price || 0),
+                unitCost: parseFloat(item.unitCost || 0),
+                unit: item.unit || 'Und',
+                icon: item.icon || '🛍️',
+                stock: parseFloat(item.stock || 0),
+                description: item.description || `${item.name} (${item.unit || 'Und'})`
+              };
+            });
+
+          if (posProducts.length > 0) {
+            return {
+              categories: CATEGORIES,
+              products: posProducts
+            };
+          }
+        }
+      }
+    } catch (err) {
+      console.warn('Error al sincronizar catalogo_pos desde localStorage:', err);
+    }
+
+    // 2. Intentar API PHP/MySQL si está disponible
     try {
       let response = await fetch('../api/pos/get_products.php');
       if (!response.ok) {
@@ -185,8 +228,11 @@ export const ProductsStore = {
         }
       }
     } catch (err) {
-      console.warn('API get_products.php no disponible en este entorno. Cargando catálogo de productos local:', err);
+      console.warn('API get_products.php no disponible. Usando catálogo local por defecto:', err);
     }
+
+    // 3. Fallback a catálogo base local
+    localStorage.setItem('catalogo_pos', JSON.stringify(PRODUCTS_DATABASE));
     return {
       categories: CATEGORIES,
       products: PRODUCTS_DATABASE

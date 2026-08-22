@@ -374,6 +374,26 @@
 
   </div>
 
+  <!-- MODAL ANIMADO DE VENTA COMPLETADA CON CHECKMARK SVG (POS) -->
+  <div id="posSuccessModal" class="pin-modal-overlay no-print" role="dialog" aria-modal="true" style="display: none; z-index: 9999;">
+    <div class="pin-modal-card pos-success-card">
+      <div class="pos-success-body">
+        
+        <!-- CHECKMARK ANIMADO SVG EN CAJA -->
+        <div class="success-checkmark-wrapper">
+          <svg class="success-checkmark-svg" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 52 52">
+            <circle class="success-checkmark-circle" cx="26" cy="26" r="23" fill="none" />
+            <path class="success-checkmark-check" fill="none" d="M14.1 27.2l7.1 7.2 16.7-16.8" />
+          </svg>
+        </div>
+
+        <h3 class="pos-success-title">¡Venta Procesada con Éxito!</h3>
+        <p id="posSuccessSubtext" class="pos-success-subtext">Generando comprobante de venta...</p>
+
+      </div>
+    </div>
+  </div>
+
   <!-- ====================================================================
        PASO 3: MODAL DE COMPROBANTE DE VENTA Y REINICIO AUTOMÁTICO (resetPOS)
        ==================================================================== -->

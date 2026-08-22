@@ -388,8 +388,55 @@ document.addEventListener('DOMContentLoaded', () => {
   });
 
   // ==========================================================================
-  // DATOS DE PRUEBA DE INVENTARIO Y ALMACÉN (REQUERIMIENTOS 1-4)
+  // DATOS Y MAESTRO DE PRODUCTOS POS EN LOCALSTORAGE (REQUERIMIENTO 2)
   // ==========================================================================
+  const INITIAL_15_POS_PRODUCTS = [
+    { id: 'prod_001', code: 'PAN-001', name: 'Baguette Tradicional Parisina', category: 'Panadería', unitCost: 1.20, salePrice: 2.50, unit: 'Und', stock: 45, minStock: 20, icon: '🥖', showInPos: true, description: 'Corteza crujiente y miga alveolada con levadura madre.' },
+    { id: 'prod_002', code: 'PAN-002', name: 'Croissant de Mantequilla', category: 'Panadería', unitCost: 1.40, salePrice: 3.00, unit: 'Und', stock: 60, minStock: 25, icon: '🥐', showInPos: true, description: 'Hojaldre 100% mantequilla de Normandía.' },
+    { id: 'prod_003', code: 'PAN-003', name: 'Pain au Chocolat', category: 'Panadería', unitCost: 1.60, salePrice: 3.50, unit: 'Und', stock: 35, minStock: 15, icon: '🍫', showInPos: true, description: 'Hojaldre relleno de dos barras de chocolate negro 60%.' },
+    { id: 'prod_004', code: 'PAN-004', name: 'Brioche de Vainilla', category: 'Panadería', unitCost: 2.00, salePrice: 4.20, unit: 'Und', stock: 20, minStock: 10, icon: '🍞', showInPos: true, description: 'Pan de huevo esponjoso aromatizado con vainilla.' },
+    { id: 'prod_005', code: 'PAN-005', name: 'Focaccia de Romero y Aceitunas', category: 'Panadería', unitCost: 2.80, salePrice: 5.50, unit: 'Und', stock: 15, minStock: 8, icon: '🫓', showInPos: true, description: 'Pan plano italiano horneado con aceite de oliva extra virgen.' },
+    { id: 'prod_006', code: 'PAS-001', name: 'Éclair de Chocolate Belga', category: 'Pastelería', unitCost: 2.10, salePrice: 4.50, unit: 'Und', stock: 25, minStock: 15, icon: '⚡', showInPos: true, description: 'Pasta choux rellena de crema pastelera de chocolate oscuro.' },
+    { id: 'prod_007', code: 'PAS-002', name: 'Tarta de Limón Merengada', category: 'Pastelería', unitCost: 2.40, salePrice: 5.00, unit: 'Und', stock: 18, minStock: 10, icon: '🍋', showInPos: true, description: 'Base sablée, crema de limón amarillo y merengue tostado.' },
+    { id: 'prod_008', code: 'PAS-003', name: 'Caja de Macarons Surtidos (6 ud)', category: 'Pastelería', unitCost: 4.50, salePrice: 9.50, unit: 'Und', stock: 30, minStock: 12, icon: '🍡', showInPos: true, description: 'Selección de pistacho, frambuesa, vainilla, chocolate y café.' },
+    { id: 'prod_009', code: 'PAS-004', name: 'Milhojas Tradicional de Crema', category: 'Pastelería', unitCost: 2.20, salePrice: 4.80, unit: 'Und', stock: 14, minStock: 8, icon: '🍰', showInPos: true, description: 'Capas de hojaldre crujiente con crema diplomática.' },
+    { id: 'prod_010', code: 'BEB-001', name: 'Café Espresso Doble', category: 'Bebidas', unitCost: 0.80, salePrice: 2.80, unit: 'Und', stock: 100, minStock: 30, icon: '☕', showInPos: true, description: 'Grano 100% arábica de tueste medio de origen único.' },
+    { id: 'prod_011', code: 'BEB-002', name: 'Capuchino Cremoso', category: 'Bebidas', unitCost: 1.10, salePrice: 3.80, unit: 'Und', stock: 80, minStock: 25, icon: '🥛', showInPos: true, description: 'Espresso con leche al vapor y espuma suave de canela.' },
+    { id: 'prod_012', code: 'BEB-003', name: 'Café au Lait Parisien', category: 'Bebidas', unitCost: 1.00, salePrice: 3.50, unit: 'Und', stock: 90, minStock: 25, icon: '☕', showInPos: true, description: 'Café de filtro mezclado con leche entera caliente.' },
+    { id: 'prod_013', code: 'BEB-004', name: 'Jugo de Naranja Recién Exprimido', category: 'Bebidas', unitCost: 1.50, salePrice: 4.00, unit: 'L', stock: 40, minStock: 15, icon: '🍊', showInPos: true, description: '100% natural, prensado al momento sin azúcar añadida.' },
+    { id: 'prod_014', code: 'ESP-001', name: 'Croque-Monsieur Tradicional', category: 'Salados', unitCost: 3.20, salePrice: 7.50, unit: 'Und', stock: 22, minStock: 10, icon: '🥪', showInPos: true, description: 'Sándwich caliente de jamón cocido, queso Gruyère y bechamel.' },
+    { id: 'prod_015', code: 'ESP-002', name: 'Quiche Lorraine de Bacon', category: 'Salados', unitCost: 3.00, salePrice: 6.80, unit: 'Und', stock: 16, minStock: 8, icon: '🥧', showInPos: true, description: 'Tarta salada con tocino ahumado, crema de leche y queso.' }
+  ];
+
+  function getPosCatalogFromStorage() {
+    try {
+      const stored = localStorage.getItem('catalogo_pos');
+      if (stored) {
+        const parsed = JSON.parse(stored);
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          return parsed;
+        }
+      }
+    } catch (e) {
+      console.warn('Error al leer catalogo_pos de localStorage:', e);
+    }
+    localStorage.setItem('catalogo_pos', JSON.stringify(INITIAL_15_POS_PRODUCTS));
+    return INITIAL_15_POS_PRODUCTS;
+  }
+
+  function savePosCatalogToStorage(productsArray) {
+    try {
+      localStorage.setItem('catalogo_pos', JSON.stringify(productsArray));
+      window.dispatchEvent(new Event('catalogoPosChanged'));
+      if (typeof BroadcastChannel !== 'undefined') {
+        const posChannel = new BroadcastChannel('lnp_pos_catalog_channel');
+        posChannel.postMessage({ type: 'catalog_updated', timestamp: Date.now() });
+      }
+    } catch (e) {
+      console.error('Error guardando catalogo_pos en localStorage:', e);
+    }
+  }
+
   let rawMaterialsData = [
     { code: 'MAT-001', name: 'Harina de Trigo Tradicional T55', icon: '🌾', category: 'Materias Primas', unitCost: 1.80, unit: 'Kg', stock: 18.00, minStock: 50.00 },
     { code: 'MAT-002', name: 'Mantequilla de Normandía 84% M.G.', icon: '🧈', category: 'Lácteos & Mantequillas', unitCost: 8.50, unit: 'Kg', stock: 12.50, minStock: 30.00 },
@@ -399,14 +446,7 @@ document.addEventListener('DOMContentLoaded', () => {
     { code: 'MAT-006', name: 'Huevos Frescos de Granja', icon: '🥚', category: 'Insumos Frescos', unitCost: 0.25, unit: 'Und', stock: 120.00, minStock: 150.00 }
   ];
 
-  let finishedGoodsData = [
-    { code: 'PAN-001', name: 'Baguette Tradicional Parisina', icon: '🥖', category: 'Panadería Artesanal', unitCost: 1.20, salePrice: 2.50, unit: 'Und', stock: 45, minStock: 20 },
-    { code: 'PAN-002', name: 'Croissant de Mantequilla', icon: '🥐', category: 'Panadería Artesanal', unitCost: 1.40, salePrice: 3.00, unit: 'Und', stock: 60, minStock: 25 },
-    { code: 'PAS-001', name: 'Éclair de Chocolate Belga', icon: '⚡', category: 'Pastelería & Repostería', unitCost: 2.10, salePrice: 4.50, unit: 'Und', stock: 8, minStock: 15 },
-    { code: 'BEB-001', name: 'Café Espresso Doble', icon: '☕', category: 'Cafetería & Bebidas', unitCost: 0.80, salePrice: 2.80, unit: 'Und', stock: 100, minStock: 30 },
-    { code: 'BEB-004', name: 'Jugo de Naranja Recién Exprimido', icon: '🍊', category: 'Cafetería & Bebidas', unitCost: 1.50, salePrice: 4.00, unit: 'L', stock: 40, minStock: 15 },
-    { code: 'ESP-001', name: 'Croque-Monsieur Tradicional', icon: '🥪', category: 'Especialidades & Desayunos', unitCost: 3.20, salePrice: 7.50, unit: 'Und', stock: 5, minStock: 10 }
-  ];
+  let finishedGoodsData = getPosCatalogFromStorage();
 
   let suppliersData = [
     { code: 'PROV-001', name: 'Molinos del Sur, C.A.', icon: '🌾', rif: 'J-30819283-4', phone: '(01) 555-MOLINO', contact: 'Carlos Mendoza', address: 'Zona Industrial Sur, Parcela 14, Caracas' },
@@ -513,19 +553,31 @@ document.addEventListener('DOMContentLoaded', () => {
             </span>
           </td>
           <td>
-            <button type="button" class="btn-table-action-sm" data-code="${item.code}">+ Ingreso</button>
+            <div style="display: flex; gap: 0.35rem;">
+              <button type="button" class="btn-table-action-sm btn-ingreso-item" data-code="${item.code}" title="Registrar ingreso de mercancía">+ Ingreso</button>
+              <button type="button" class="btn-table-action-sm btn-edit-mp" title="Editar materia prima">✏️ Editar</button>
+              <button type="button" class="btn-table-action-sm btn-del-mp" style="background: rgba(198,40,40,0.1); color: var(--color-danger); border-color: rgba(198,40,40,0.3);" title="Eliminar materia prima">🗑️</button>
+            </div>
           </td>
         `;
 
-        tr.querySelector('.btn-table-action-sm')?.addEventListener('click', () => {
+        tr.querySelector('.btn-ingreso-item')?.addEventListener('click', () => {
           openIngresoMercanciaModal(item.code);
+        });
+
+        tr.querySelector('.btn-edit-mp')?.addEventListener('click', () => {
+          openMateriaPrimaModal(item);
+        });
+
+        tr.querySelector('.btn-del-mp')?.addEventListener('click', () => {
+          openConfirmEliminarModal(item, 'mp');
         });
 
         rawTbody.appendChild(tr);
       });
     }
 
-    // 3.2 Productos Terminados
+    // 3.2 Productos Terminados (Sincronizado con Maestro POS)
     if (finishedTbody) {
       finishedTbody.innerHTML = '';
       const filteredFinished = finishedGoodsData.filter(item => {
@@ -540,27 +592,45 @@ document.addEventListener('DOMContentLoaded', () => {
 
       filteredFinished.forEach(item => {
         const isLow = item.stock < item.minStock;
+        const isVisiblePos = item.showInPos !== false;
         const tr = document.createElement('tr');
         tr.innerHTML = `
           <td class="table-code-badge">${item.code}</td>
           <td><strong>${item.icon || '🛍️'} ${item.name}</strong></td>
-          <td style="color: var(--color-muted);">${item.category}</td>
-          <td><span class="table-status-tag" style="background: rgba(0,0,0,0.06); color: var(--color-espresso); font-weight: 700;">${item.unit}</span></td>
-          <td style="color: var(--color-muted);">$${item.unitCost.toFixed(2)} / ${item.unit}</td>
-          <td style="font-weight: 700; color: var(--color-gold-dark);">$${item.salePrice.toFixed(2)} USD</td>
-          <td style="font-weight: 800; font-size: 0.95rem;">${item.stock} ${item.unit}</td>
+          <td style="color: var(--color-espresso); font-weight: 600;">${item.category}</td>
+          <td><span class="table-status-tag" style="background: rgba(0,0,0,0.06); color: var(--color-espresso); font-weight: 700;">${item.unit || 'Und'}</span></td>
+          <td style="color: var(--color-muted);">$${(item.unitCost || 0).toFixed(2)} / ${item.unit || 'Und'}</td>
+          <td style="font-weight: 700; color: var(--color-gold-dark);">$${(item.salePrice || item.price || 0).toFixed(2)} USD</td>
+          <td style="font-weight: 800; font-size: 0.95rem;">${item.stock} ${item.unit || 'Und'}</td>
           <td>
-            <span class="${isLow ? 'badge-stock-low' : 'badge-stock-normal'}">
-              ${isLow ? `🔴 ALERTA: Stock Bajo (Min: ${item.minStock} ${item.unit})` : `🟢 Normal (Min: ${item.minStock} ${item.unit})`}
+            <span class="table-status-tag ${isVisiblePos ? 'active' : ''}" style="${isVisiblePos ? 'background: rgba(46,125,50,0.1); color: var(--color-success); font-weight: 700;' : 'background: rgba(0,0,0,0.06); color: var(--color-muted);'}">
+              ${isVisiblePos ? '🟢 Visible en POS' : '⚪ Oculto en POS'}
             </span>
           </td>
           <td>
-            <button type="button" class="btn-table-action-sm" data-code="${item.code}">+ Ingreso</button>
+            <span class="${isLow ? 'badge-stock-low' : 'badge-stock-normal'}">
+              ${isLow ? `🔴 ALERTA: Stock Bajo (Min: ${item.minStock} ${item.unit || 'Und'})` : `🟢 Normal (Min: ${item.minStock} ${item.unit || 'Und'})`}
+            </span>
+          </td>
+          <td>
+            <div style="display: flex; gap: 0.35rem;">
+              <button type="button" class="btn-table-action-sm btn-ingreso-item" data-code="${item.code}" title="Registrar ingreso de mercancía">+ Ingreso</button>
+              <button type="button" class="btn-table-action-sm btn-edit-pt" title="Editar producto">✏️ Editar</button>
+              <button type="button" class="btn-table-action-sm btn-del-pt" style="background: rgba(198,40,40,0.1); color: var(--color-danger); border-color: rgba(198,40,40,0.3);" title="Eliminar producto">🗑️</button>
+            </div>
           </td>
         `;
 
-        tr.querySelector('.btn-table-action-sm')?.addEventListener('click', () => {
+        tr.querySelector('.btn-ingreso-item')?.addEventListener('click', () => {
           openIngresoMercanciaModal(item.code);
+        });
+
+        tr.querySelector('.btn-edit-pt')?.addEventListener('click', () => {
+          openProductoTerminadoModal(item);
+        });
+
+        tr.querySelector('.btn-del-pt')?.addEventListener('click', () => {
+          openConfirmEliminarModal(item, 'pt');
         });
 
         finishedTbody.appendChild(tr);
@@ -602,10 +672,7 @@ document.addEventListener('DOMContentLoaded', () => {
         });
 
         tr.querySelector('.btn-del-prov')?.addEventListener('click', () => {
-          if (confirm(`¿Desea eliminar al proveedor ${prov.name} (${prov.rif})?`)) {
-            suppliersData = suppliersData.filter(p => p.code !== prov.code);
-            renderInventoryTables();
-          }
+          openConfirmEliminarModal(prov, 'prov');
         });
 
         suppliersTbody.appendChild(tr);
@@ -616,7 +683,7 @@ document.addEventListener('DOMContentLoaded', () => {
   document.getElementById('inventorySearchInput')?.addEventListener('input', renderInventoryTables);
   document.getElementById('inventoryCategoryFilter')?.addEventListener('change', renderInventoryTables);
 
-  // 4. MODAL DE REGISTRO DE INGRESO DE MERCANCÍA (REQUERIMIENTO 1 & 2)
+  // 4. MODAL DE REGISTRO DE INGRESO DE MERCANCÍA (COMPRA A PROVEEDOR)
   const modalIngresoMercancia = document.getElementById('modalIngresoMercancia');
   const btnOpenIngresoMercanciaModal = document.getElementById('btnOpenIngresoMercanciaModal');
   const closeIngresoMercanciaModalBtn = document.getElementById('closeIngresoMercanciaModalBtn');
@@ -719,10 +786,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
     renderInventoryTables();
     closeIngresoMercanciaModal();
-    alert(`✅ ¡Ingreso Registrado con Éxito!\n\nProducto: ${targetItem ? targetItem.name : selectedCode}\nCantidad Ingresada: +${qty} ${selectedUom}\nProveedor: ${provider}\nFactura N°: ${numFactura}`);
+    showSuccessModal('¡Ingreso Registrado!', `Se sumaron +${qty} ${selectedUom} a "${targetItem ? targetItem.name : selectedCode}" de Factura N°: ${numFactura}.`);
   });
 
-  // 5. MODAL DE GESTIÓN DE PROVEEDORES (REQUERIMIENTO 3)
+  // 5. MODAL DE GESTIÓN DE PROVEEDORES
   const modalProveedor = document.getElementById('modalProveedor');
   const modalProveedorTitle = document.getElementById('modalProveedorTitle');
   const btnOpenProveedorModalHeader = document.getElementById('btnOpenProveedorModalHeader');
@@ -776,7 +843,6 @@ document.addEventListener('DOMContentLoaded', () => {
     if (!name || !rif || !phone || !contact) return;
 
     if (code) {
-      // Editar existente
       const existing = suppliersData.find(p => p.code === code);
       if (existing) {
         existing.name = name;
@@ -786,7 +852,6 @@ document.addEventListener('DOMContentLoaded', () => {
         existing.address = address;
       }
     } else {
-      // Crear nuevo
       const newCode = `PROV-${String(suppliersData.length + 1).padStart(3, '0')}`;
       suppliersData.push({
         code: newCode,
@@ -801,13 +866,314 @@ document.addEventListener('DOMContentLoaded', () => {
 
     renderInventoryTables();
     closeProveedorModal();
-    alert(`✅ Proveedor ${name} (${rif}) guardado con éxito.`);
+    showSuccessModal('¡Proveedor Guardado!', `Información del proveedor "${name}" (${rif}) guardada con éxito.`);
   });
+
+  // 6. MODAL DE GESTIÓN DE MATERIA PRIMA (REQUERIMIENTO 3)
+  const modalMateriaPrima = document.getElementById('modalMateriaPrima');
+  const modalMpTitle = document.getElementById('modalMpTitle');
+  const btnOpenNuevaMateriaPrimaModal = document.getElementById('btnOpenNuevaMateriaPrimaModal');
+  const closeMpModalBtn = document.getElementById('closeMpModalBtn');
+  const cancelMpBtn = document.getElementById('cancelMpBtn');
+  const materiaPrimaForm = document.getElementById('materiaPrimaForm');
+
+  function openMateriaPrimaModal(itemToEdit = null) {
+    if (itemToEdit) {
+      if (modalMpTitle) modalMpTitle.textContent = 'Editar Materia Prima';
+      document.getElementById('modalMpCode').value = itemToEdit.code;
+      document.getElementById('modalMpNombre').value = itemToEdit.name;
+      document.getElementById('modalMpCategoria').value = itemToEdit.category;
+      document.getElementById('modalMpUnidad').value = itemToEdit.unit;
+      document.getElementById('modalMpCostoUnitario').value = itemToEdit.unitCost;
+      document.getElementById('modalMpStockInicial').value = itemToEdit.stock;
+      document.getElementById('modalMpStockMinimo').value = itemToEdit.minStock;
+    } else {
+      if (modalMpTitle) modalMpTitle.textContent = 'Crear Nueva Materia Prima';
+      materiaPrimaForm?.reset();
+      document.getElementById('modalMpCode').value = '';
+    }
+
+    if (modalMateriaPrima) {
+      modalMateriaPrima.style.display = 'flex';
+      modalMateriaPrima.setAttribute('aria-hidden', 'false');
+    }
+  }
+
+  function closeMateriaPrimaModal() {
+    if (modalMateriaPrima) {
+      modalMateriaPrima.style.display = 'none';
+      modalMateriaPrima.setAttribute('aria-hidden', 'true');
+      materiaPrimaForm?.reset();
+    }
+  }
+
+  btnOpenNuevaMateriaPrimaModal?.addEventListener('click', () => openMateriaPrimaModal());
+  closeMpModalBtn?.addEventListener('click', closeMateriaPrimaModal);
+  cancelMpBtn?.addEventListener('click', closeMateriaPrimaModal);
+
+  materiaPrimaForm?.addEventListener('submit', (e) => {
+    e.preventDefault();
+
+    const code = document.getElementById('modalMpCode')?.value;
+    const name = document.getElementById('modalMpNombre')?.value?.trim();
+    const category = document.getElementById('modalMpCategoria')?.value;
+    const unit = document.getElementById('modalMpUnidad')?.value;
+    const unitCost = parseFloat(document.getElementById('modalMpCostoUnitario')?.value || 0);
+    const stock = parseFloat(document.getElementById('modalMpStockInicial')?.value || 0);
+    const minStock = parseFloat(document.getElementById('modalMpStockMinimo')?.value || 0);
+
+    if (!name || unitCost <= 0) return;
+
+    if (code) {
+      const existing = rawMaterialsData.find(m => m.code === code);
+      if (existing) {
+        existing.name = name;
+        existing.category = category;
+        existing.unit = unit;
+        existing.unitCost = unitCost;
+        existing.stock = stock;
+        existing.minStock = minStock;
+      }
+    } else {
+      const newCode = `MAT-${String(rawMaterialsData.length + 1).padStart(3, '0')}`;
+      rawMaterialsData.push({
+        code: newCode,
+        name: name,
+        icon: '🌾',
+        category: category,
+        unitCost: unitCost,
+        unit: unit,
+        stock: stock,
+        minStock: minStock
+      });
+    }
+
+    renderInventoryTables();
+    closeMateriaPrimaModal();
+    showSuccessModal('¡Materia Prima Guardada!', `Materia prima "${name}" guardada con éxito en el catálogo.`);
+  });
+
+  // 7. MODAL DE GESTIÓN DE PRODUCTO TERMINADO (REQUERIMIENTO 3)
+  const modalProductoTerminado = document.getElementById('modalProductoTerminado');
+  const modalPtTitle = document.getElementById('modalPtTitle');
+  const btnOpenNuevoProductoTerminadoModal = document.getElementById('btnOpenNuevoProductoTerminadoModal');
+  const closePtModalBtn = document.getElementById('closePtModalBtn');
+  const cancelPtBtn = document.getElementById('cancelPtBtn');
+  const productoTerminadoForm = document.getElementById('productoTerminadoForm');
+
+  function openProductoTerminadoModal(itemToEdit = null) {
+    const showInPosCheckbox = document.getElementById('modalPtShowInPos');
+    if (itemToEdit) {
+      if (modalPtTitle) modalPtTitle.textContent = 'Editar Producto Terminado';
+      document.getElementById('modalPtCode').value = itemToEdit.code;
+      document.getElementById('modalPtNombre').value = itemToEdit.name;
+      document.getElementById('modalPtCategoria').value = itemToEdit.category;
+      document.getElementById('modalPtUnidad').value = itemToEdit.unit || 'Und';
+      document.getElementById('modalPtCostoUnitario').value = itemToEdit.unitCost;
+      document.getElementById('modalPtPrecioVenta').value = itemToEdit.salePrice || itemToEdit.price;
+      document.getElementById('modalPtStockInicial').value = itemToEdit.stock;
+      document.getElementById('modalPtStockMinimo').value = itemToEdit.minStock;
+      if (showInPosCheckbox) showInPosCheckbox.checked = itemToEdit.showInPos !== false;
+    } else {
+      if (modalPtTitle) modalPtTitle.textContent = 'Crear Nuevo Producto Terminado';
+      productoTerminadoForm?.reset();
+      document.getElementById('modalPtCode').value = '';
+      if (showInPosCheckbox) showInPosCheckbox.checked = true;
+    }
+
+    if (modalProductoTerminado) {
+      modalProductoTerminado.style.display = 'flex';
+      modalProductoTerminado.setAttribute('aria-hidden', 'false');
+    }
+  }
+
+  function closeProductoTerminadoModal() {
+    if (modalProductoTerminado) {
+      modalProductoTerminado.style.display = 'none';
+      modalProductoTerminado.setAttribute('aria-hidden', 'true');
+      productoTerminadoForm?.reset();
+    }
+  }
+
+  btnOpenNuevoProductoTerminadoModal?.addEventListener('click', () => openProductoTerminadoModal());
+  closePtModalBtn?.addEventListener('click', closeProductoTerminadoModal);
+  cancelPtBtn?.addEventListener('click', closeProductoTerminadoModal);
+
+  productoTerminadoForm?.addEventListener('submit', (e) => {
+    e.preventDefault();
+
+    const code = document.getElementById('modalPtCode')?.value;
+    const name = document.getElementById('modalPtNombre')?.value?.trim();
+    const category = document.getElementById('modalPtCategoria')?.value;
+    const unit = document.getElementById('modalPtUnidad')?.value;
+    const unitCost = parseFloat(document.getElementById('modalPtCostoUnitario')?.value || 0);
+    const salePrice = parseFloat(document.getElementById('modalPtPrecioVenta')?.value || 0);
+    const stock = parseFloat(document.getElementById('modalPtStockInicial')?.value || 0);
+    const minStock = parseFloat(document.getElementById('modalPtStockMinimo')?.value || 0);
+    const showInPos = Boolean(document.getElementById('modalPtShowInPos')?.checked);
+
+    if (!name || salePrice <= 0) return;
+
+    if (code) {
+      const existing = finishedGoodsData.find(p => p.code === code);
+      if (existing) {
+        existing.name = name;
+        existing.category = category;
+        existing.unit = unit;
+        existing.unitCost = unitCost;
+        existing.salePrice = salePrice;
+        existing.price = salePrice;
+        existing.stock = stock;
+        existing.minStock = minStock;
+        existing.showInPos = showInPos;
+      }
+    } else {
+      const newCode = `PROD-${String(finishedGoodsData.length + 1).padStart(3, '0')}`;
+      finishedGoodsData.push({
+        id: `prod_${String(finishedGoodsData.length + 1).padStart(3, '0')}`,
+        code: newCode,
+        name: name,
+        icon: category === 'Panadería' ? '🥖' : category === 'Pastelería' ? '🍰' : category === 'Bebidas' ? '☕' : '🥪',
+        category: category,
+        unitCost: unitCost,
+        salePrice: salePrice,
+        price: salePrice,
+        unit: unit,
+        stock: stock,
+        minStock: minStock,
+        showInPos: showInPos
+      });
+    }
+
+    savePosCatalogToStorage(finishedGoodsData);
+    renderInventoryTables();
+    closeProductoTerminadoModal();
+    showSuccessModal('¡Producto Sincronizado!', `Producto "${name}" guardado y sincronizado con la Caja POS.`);
+  });
+
+  // 8. MODAL PERSONALIZADO DE CONFIRMACIÓN DE ELIMINACIÓN CON CLAVE GERENCIAL
+  const modalConfirmEliminar = document.getElementById('modalConfirmEliminar');
+  const closeConfirmEliminarModalBtn = document.getElementById('closeConfirmEliminarModalBtn');
+  const cancelConfirmEliminarBtn = document.getElementById('cancelConfirmEliminarBtn');
+  const executeConfirmEliminarBtn = document.getElementById('executeConfirmEliminarBtn');
+  const confirmEliminarItemName = document.getElementById('confirmEliminarItemName');
+  const confirmEliminarItemCode = document.getElementById('confirmEliminarItemCode');
+  const confirmEliminarPassword = document.getElementById('confirmEliminarPassword');
+  const confirmEliminarErrorMsg = document.getElementById('confirmEliminarErrorMsg');
+
+  let pendingDeleteTarget = null; // { item, type: 'mp'|'pt'|'prov' }
+
+  // Claves válidas del Gerente General para autorización
+  const VALID_MANAGER_PASSWORDS = ['admin123', '1234', 'gerente', 'admin', '0000'];
+
+  function openConfirmEliminarModal(item, type) {
+    pendingDeleteTarget = { item, type };
+
+    if (confirmEliminarItemName) {
+      confirmEliminarItemName.textContent = `${item.icon || ''} ${item.name}`;
+    }
+    if (confirmEliminarItemCode) {
+      confirmEliminarItemCode.textContent = `Código / ID: ${item.code} ${item.rif ? `| RIF: ${item.rif}` : ''}`;
+    }
+    if (confirmEliminarPassword) {
+      confirmEliminarPassword.value = '';
+    }
+    if (confirmEliminarErrorMsg) {
+      confirmEliminarErrorMsg.style.display = 'none';
+    }
+
+    if (modalConfirmEliminar) {
+      modalConfirmEliminar.style.display = 'flex';
+      modalConfirmEliminar.setAttribute('aria-hidden', 'false');
+      setTimeout(() => confirmEliminarPassword?.focus(), 100);
+    }
+  }
+
+  function closeConfirmEliminarModal() {
+    if (modalConfirmEliminar) {
+      modalConfirmEliminar.style.display = 'none';
+      modalConfirmEliminar.setAttribute('aria-hidden', 'true');
+      if (confirmEliminarPassword) confirmEliminarPassword.value = '';
+      if (confirmEliminarErrorMsg) confirmEliminarErrorMsg.style.display = 'none';
+      pendingDeleteTarget = null;
+    }
+  }
+
+  closeConfirmEliminarModalBtn?.addEventListener('click', closeConfirmEliminarModal);
+  cancelConfirmEliminarBtn?.addEventListener('click', closeConfirmEliminarModal);
+
+  executeConfirmEliminarBtn?.addEventListener('click', () => {
+    if (!pendingDeleteTarget) return;
+
+    const enteredPass = (confirmEliminarPassword?.value || '').trim();
+
+    // Verificación de Contraseña del Gerente General
+    if (!enteredPass || !VALID_MANAGER_PASSWORDS.includes(enteredPass)) {
+      if (confirmEliminarErrorMsg) {
+        confirmEliminarErrorMsg.style.display = 'block';
+        confirmEliminarErrorMsg.textContent = '❌ Contraseña gerencial incorrecta. Permiso denegado.';
+      }
+      confirmEliminarPassword?.focus();
+      return;
+    }
+
+    const { item, type } = pendingDeleteTarget;
+
+    if (type === 'mp') {
+      rawMaterialsData = rawMaterialsData.filter(m => m.code !== item.code);
+    } else if (type === 'pt') {
+      finishedGoodsData = finishedGoodsData.filter(p => p.code !== item.code);
+      savePosCatalogToStorage(finishedGoodsData);
+    } else if (type === 'prov') {
+      suppliersData = suppliersData.filter(prov => prov.code !== item.code);
+    }
+
+    renderInventoryTables();
+    closeConfirmEliminarModal();
+    showSuccessModal('¡Autorización Aprobada!', `El ítem "${item.name}" (${item.code}) ha sido eliminado permanentemente por la Gerencia General.`);
+  });
+
+  // 9. MODAL DE NOTIFICACIÓN DE ÉXITO CON CHECKMARK ANIMADO
+  const modalExitoNotificacion = document.getElementById('modalExitoNotificacion');
+  const modalExitoTitle = document.getElementById('modalExitoTitle');
+  const modalExitoMsg = document.getElementById('modalExitoMsg');
+  const closeExitoModalBtn = document.getElementById('closeExitoModalBtn');
+
+  function showSuccessModal(title, msg) {
+    if (modalExitoTitle) modalExitoTitle.textContent = title;
+    if (modalExitoMsg) modalExitoMsg.textContent = msg;
+
+    if (modalExitoNotificacion) {
+      modalExitoNotificacion.style.display = 'flex';
+      modalExitoNotificacion.setAttribute('aria-hidden', 'false');
+
+      // Re-ejecutar animación de checkmark SVG reseteando estilos
+      const svg = modalExitoNotificacion.querySelector('.success-checkmark-svg');
+      if (svg) {
+        svg.style.animation = 'none';
+        void svg.offsetWidth; // Disparar reflow en navegador
+        svg.style.animation = '';
+      }
+    }
+  }
+
+  function closeSuccessModal() {
+    if (modalExitoNotificacion) {
+      modalExitoNotificacion.style.display = 'none';
+      modalExitoNotificacion.setAttribute('aria-hidden', 'true');
+    }
+  }
+
+  closeExitoModalBtn?.addEventListener('click', closeSuccessModal);
 
   // Close modals on overlay backdrop click
   window.addEventListener('click', (e) => {
     if (e.target === modalIngresoMercancia) closeIngresoMercanciaModal();
     if (e.target === modalProveedor) closeProveedorModal();
+    if (e.target === modalMateriaPrima) closeMateriaPrimaModal();
+    if (e.target === modalProductoTerminado) closeProductoTerminadoModal();
+    if (e.target === modalConfirmEliminar) closeConfirmEliminarModal();
+    if (e.target === modalExitoNotificacion) closeSuccessModal();
   });
 
   // Render inicial de tablas de inventario
