@@ -297,8 +297,40 @@ document.addEventListener('DOMContentLoaded', async () => {
   });
 
   // ==========================================================================
-  // PASO 1: CARGA AUTOMÁTICA DE PRODUCTOS DE LA BD (SIN BUSCADOR)
+  // PASO 1: CARGA AUTOMÁTICA DE PRODUCTOS DE LA BD (CON INVENTARIO SIMULADO EN LOCALSTORAGE)
   // ==========================================================================
+  function getSimulatedInventoryMap() {
+    let invMap = {};
+    const stored = localStorage.getItem('inventario_simulado');
+    if (stored) {
+      try {
+        invMap = JSON.parse(stored);
+      } catch (e) {
+        console.warn('Error al parsear inventario_simulado:', e);
+      }
+    }
+    return invMap;
+  }
+
+  function syncProductsWithSimulatedInventory() {
+    const invMap = getSimulatedInventoryMap();
+    let updated = false;
+
+    productsList.forEach(p => {
+      if (invMap.hasOwnProperty(p.id)) {
+        p.stock = invMap[p.id];
+      } else {
+        invMap[p.id] = typeof p.stock === 'number' ? p.stock : 50;
+        p.stock = invMap[p.id];
+        updated = true;
+      }
+    });
+
+    if (updated || !localStorage.getItem('inventario_simulado')) {
+      localStorage.setItem('inventario_simulado', JSON.stringify(invMap));
+    }
+  }
+
   async function loadProductsCatalog() {
     try {
       const catalogData = await ProductsStore.getProductsCatalogAsync();
@@ -317,6 +349,10 @@ document.addEventListener('DOMContentLoaded', async () => {
       productsList = PRODUCTS_DATABASE;
       categoriesList = CATEGORIES;
     }
+    
+    // 1. Inventario Inicial (localStorage: inventario_simulado)
+    syncProductsWithSimulatedInventory();
+
     renderCategoryTabs();
     renderProducts();
   }
@@ -344,6 +380,9 @@ document.addEventListener('DOMContentLoaded', async () => {
     if (!productsGrid) return;
     productsGrid.innerHTML = '';
 
+    // Sincronizar stock dinámico desde localStorage
+    syncProductsWithSimulatedInventory();
+
     const filtered = productsList.filter(prod => {
       return currentCategory === 'todos' || prod.category === currentCategory;
     });
@@ -360,8 +399,9 @@ document.addEventListener('DOMContentLoaded', async () => {
     filtered.forEach(prod => {
       const card = document.createElement('div');
       card.className = 'product-card';
+      const availableStock = prod.stock;
       card.innerHTML = `
-        <span class="product-stock-badge">${prod.stock} ud.</span>
+        <span class="product-stock-badge" style="${availableStock <= 0 ? 'background: rgba(198, 40, 40, 0.12); color: var(--color-danger); border-color: rgba(198, 40, 40, 0.3);' : ''}">${availableStock > 0 ? `Disponibles: ${availableStock}` : 'Agotado (0)'}</span>
         <div class="product-card-icon">${prod.icon || '🥖'}</div>
         <h3 class="product-card-title">${prod.name}</h3>
         <div class="product-card-footer">
@@ -377,12 +417,22 @@ document.addEventListener('DOMContentLoaded', async () => {
   // GESTIÓN DEL CARRITO INTERACTIVO (PASO 1 Y PASO 2)
   // ==========================================================================
   function addToCart(product) {
+    const invMap = getSimulatedInventoryMap();
+    const currentStock = invMap.hasOwnProperty(product.id) ? invMap[product.id] : product.stock;
+
+    // 4. Prevención de Errores: Stock Insuficiente
+    if (currentStock <= 0) {
+      alert("Stock insuficiente.");
+      return;
+    }
+
     const existing = cart.find(item => item.product.id === product.id);
     if (existing) {
-      if (existing.quantity < product.stock) {
+      if (existing.quantity < currentStock) {
         existing.quantity += 1;
       } else {
-        alert(`⚠️ Stock máximo alcanzado (${product.stock} unidades).`);
+        alert("Stock insuficiente.");
+        return;
       }
     } else {
       cart.push({ product, quantity: 1 });
@@ -430,12 +480,15 @@ document.addEventListener('DOMContentLoaded', async () => {
 
       row.querySelector('.btn-inc').addEventListener('click', (e) => {
         e.stopPropagation();
-        if (item.quantity < item.product.stock) {
+        const invMap = getSimulatedInventoryMap();
+        const currentStock = invMap.hasOwnProperty(item.product.id) ? invMap[item.product.id] : item.product.stock;
+
+        if (item.quantity < currentStock) {
           item.quantity += 1;
           updateCartTotals();
           renderStep1Cart();
         } else {
-          alert(`Stock máximo alcanzado (${item.product.stock} ud).`);
+          alert("Stock insuficiente.");
         }
       });
 
@@ -843,6 +896,21 @@ document.addEventListener('DOMContentLoaded', async () => {
   async function executeSaleProcess(salePayload) {
     btnCompleteSale.disabled = true;
     btnCompleteSale.textContent = 'Registrando Venta en MySQL...';
+
+    // 3. Deducción al Facturar: Restar cantidades vendidas del inventario_simulado en localStorage
+    const invMap = getSimulatedInventoryMap();
+    cart.forEach(item => {
+      const pId = item.product.id;
+      const qty = item.quantity;
+      if (invMap.hasOwnProperty(pId)) {
+        invMap[pId] = Math.max(0, invMap[pId] - qty);
+      } else {
+        invMap[pId] = Math.max(0, (item.product.stock || 50) - qty);
+      }
+    });
+    localStorage.setItem('inventario_simulado', JSON.stringify(invMap));
+    syncProductsWithSimulatedInventory();
+    renderProducts();
 
     try {
       const res = await fetch('../api/procesar_venta.php', {

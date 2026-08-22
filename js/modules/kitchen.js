@@ -25,10 +25,10 @@ document.addEventListener('DOMContentLoaded', () => {
     SessionStore.logout();
   });
 
-  // 2. Estado de la Aplicación de Cocina
-  let ovens = JSON.parse(JSON.stringify(OVENS_INITIAL_STATE));
+  // 2. Estado de la Aplicación de Cocina (Persistente desde Backend PHP/MySQL)
+  let ovens = [];
   let kdsOrders = JSON.parse(JSON.stringify(KDS_ORDERS_INITIAL_STATE));
-  let stagingBatches = JSON.parse(JSON.stringify(STAGING_BATCHES_INITIAL_STATE));
+  let stagingBatches = [];
   
   let bakedTodayCount = 142;
   let selectedStagingBatchId = null;
@@ -52,8 +52,30 @@ document.addEventListener('DOMContentLoaded', () => {
   const bakeTempInput = document.getElementById('bakeTempInput');
   const bakeTimeInput = document.getElementById('bakeTimeInput');
 
-  // Inicializar renderizado
-  renderAll();
+  // CONSULTA DE BACKEND PHP (get_estado_cocina.php)
+  async function fetchKitchenState() {
+    try {
+      const response = await fetch('../api/get_estado_cocina.php');
+      if (!response.ok) throw new Error(`HTTP ${response.status}`);
+      const data = await response.json();
+      
+      if (data && data.success) {
+        ovens = data.hornos || [];
+        stagingBatches = data.lotes_staging || [];
+      } else {
+        ovens = JSON.parse(JSON.stringify(OVENS_INITIAL_STATE));
+        stagingBatches = JSON.parse(JSON.stringify(STAGING_BATCHES_INITIAL_STATE));
+      }
+    } catch (err) {
+      console.warn('Backend get_estado_cocina.php no disponible, aplicando estado por defecto:', err);
+      ovens = JSON.parse(JSON.stringify(OVENS_INITIAL_STATE));
+      stagingBatches = JSON.parse(JSON.stringify(STAGING_BATCHES_INITIAL_STATE));
+    }
+    renderAll();
+  }
+
+  // Inicializar renderizado dinámico desde la BD
+  fetchKitchenState();
 
   // Bucle de Temporizadores en Tiempo Real (Cada 1 Segundo)
   setInterval(() => {

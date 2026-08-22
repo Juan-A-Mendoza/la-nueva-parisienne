@@ -4,6 +4,32 @@ Todos los cambios significativos, nuevas funcionalidades y actualizaciones del s
 
 El formato está basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1.0.0/) y este proyecto se adhiere a [Semantic Versioning](https://semver.org/lang/es/).
 
+## [4.9.0] - 2026-08-22 (Simulación Persistente de Inventario en localStorage para Módulo 3 POS)
+
+### 📦 Gestión de Stock Persistente y Validación de Inventario ([js/modules/pos.js](file:///C:/Users/juana/.gemini/antigravity-ide/scratch/la-nueva-parisienne/js/modules/pos.js))
+- **Inicialización de `inventario_simulado` en `localStorage`**:
+  - Al cargar la vista del POS, se verifica la presencia de la clave `inventario_simulado`. Si no existe, se inicializa automáticamente extrayendo las existencias iniciales del catálogo.
+- **Visualización Dinámica de Stock en Catálogo**:
+  - Las tarjetas del catálogo leen el inventario directamente desde `localStorage` mostrando de forma dinámica `"Disponibles: X"` o `"Agotado (0)"`.
+- **Deducción de Stock al Facturar**:
+  - En `executeSaleProcess()`, al procesar la venta se restan las unidades vendidas de cada producto en `inventario_simulado`, guardando el nuevo balance de inventario en `localStorage`.
+- **Bloqueo Preventivo por Stock Insuficiente**:
+  - Si el cajero intenta agregar al carrito o incrementar una cantidad mayor al stock disponible guardado, la operación se bloquea inmediatamente y se emite la alerta `Stock insuficiente.`.
+
+---
+
+## [4.8.0] - 2026-08-22 (Primera Fase de Integración Backend PHP/MySQL para Módulo 2 Producción)
+
+### 🛢️ Persistencia de Datos y Endpoint API de Lectura ([database/database.sql](file:///C:/Users/juana/.gemini/antigravity-ide/scratch/la-nueva-parisienne/database/database.sql), [api/get_estado_cocina.php](file:///C:/Users/juana/.gemini/antigravity-ide/scratch/la-nueva-parisienne/api/get_estado_cocina.php), [js/modules/kitchen.js](file:///C:/Users/juana/.gemini/antigravity-ide/scratch/la-nueva-parisienne/js/modules/kitchen.js))
+- **Creación de Tablas Relacionales MySQL (`estado_hornos` y `lotes_produccion`)**:
+  - Se diseñó el esquema relacional con clave foránea `fk_hornos_lotes` relacionando los hornos industriales con sus lotes activos en producción.
+- **Endpoint API PHP de Lectura en Tiempo Real (`api/get_estado_cocina.php`)**:
+  - Se desarrolló el script backend PHP que consulta MySQL usando PDO y retorna el estado de los hornos y lotes en formato JSON limpio con UTF-8 y fallback de contingencia.
+- **Consumo Dinámico Vía `fetch()` en Frontend JS**:
+  - Se sustituyó la carga de datos estáticos en `DOMContentLoaded` por una petición asíncrona `fetch('../api/get_estado_cocina.php')`, garantizando que la pantalla de cocina se dibuje con datos reales y persistentes.
+
+---
+
 ## [4.7.1] - 2026-08-22 (Fondo Blanco Sólido y Sombra de Enfoque en Ventanas Emergentes de Cocina)
 
 ### 🎨 Corrección de Opacidad de Modales en Cocina ([css/modules/kitchen.css](file:///C:/Users/juana/.gemini/antigravity-ide/scratch/la-nueva-parisienne/css/modules/kitchen.css))

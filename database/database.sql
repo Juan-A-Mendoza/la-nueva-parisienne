@@ -299,3 +299,53 @@ INSERT INTO `asientos_detalle` (`asiento_id`, `cuenta_codigo`, `debe`, `haber`) 
 ('as_001', '1105', 1485.50, 0.00),
 ('as_001', '4135', 0.00, 1280.60),
 ('as_001', '2408', 0.00, 204.90);
+
+-- ----------------------------------------------------------------------------
+-- 11. TABLA: lotes_produccion (Lotes Leudados Listos para Horneado - Staging)
+-- ----------------------------------------------------------------------------
+CREATE TABLE IF NOT EXISTS `lotes_produccion` (
+  `id` VARCHAR(50) NOT NULL,
+  `codigo` VARCHAR(50) NOT NULL,
+  `producto` VARCHAR(150) NOT NULL,
+  `icono` VARCHAR(20) DEFAULT '🥐',
+  `cantidad` INT NOT NULL DEFAULT 0,
+  `estado_leudado` VARCHAR(100) NOT NULL DEFAULT 'Leudado Completo (100%)',
+  `temperatura_recomendada` INT DEFAULT 190,
+  `tiempo_recomendado_min` INT DEFAULT 15,
+  `creado_en` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- ----------------------------------------------------------------------------
+-- 12. TABLA: estado_hornos (Monitoreo de Hornos Industriales en Tiempo Real)
+-- ----------------------------------------------------------------------------
+CREATE TABLE IF NOT EXISTS `estado_hornos` (
+  `id` VARCHAR(50) NOT NULL,
+  `nombre` VARCHAR(100) NOT NULL,
+  `tipo` VARCHAR(100) NOT NULL DEFAULT 'Industrial',
+  `temperatura_actual` INT NOT NULL DEFAULT 150,
+  `temperatura_objetivo` INT NOT NULL DEFAULT 200,
+  `tiempo_restante` INT NOT NULL DEFAULT 0,
+  `tiempo_total` INT NOT NULL DEFAULT 0,
+  `estado` VARCHAR(50) NOT NULL DEFAULT 'idle', -- 'idle' | 'preheating' | 'baking' | 'ready'
+  `lote_id` VARCHAR(50) NULL,
+  `actualizado_en` TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  CONSTRAINT `fk_hornos_lotes` FOREIGN KEY (`lote_id`) REFERENCES `lotes_produccion` (`id`) ON DELETE SET NULL ON UPDATE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- Inserción Inicial de Lotes de Producción
+INSERT INTO `lotes_produccion` (`id`, `codigo`, `producto`, `icono`, `cantidad`, `estado_leudado`, `temperatura_recomendada`, `tiempo_recomendado_min`) VALUES
+('batch_042', 'Lote #042', 'Baguette Tradicional Parisina', '🥖', 50, 'En Horneado Activo', 220, 20),
+('batch_043', 'Lote #043', 'Croissant de Mantequilla', '🥐', 60, 'En Horneado Activo', 190, 15),
+('batch_044', 'Lote #044', 'Focaccia de Romero y Aceitunas', '🫓', 20, 'Horneado Listo', 240, 25),
+('stage_045', 'Lote #045', 'Pain au Chocolat', '🍫', 40, 'Leudado Completo (100%)', 190, 15),
+('stage_046', 'Lote #046', 'Brioche de Vainilla', '🍞', 25, 'Barnizado con Huevo Listo', 180, 22),
+('stage_047', 'Lote #047', 'Masa de Éclairs (Choux)', '⚡', 35, 'Reposo en Bandeja (15 min)', 200, 18);
+
+-- Inserción Inicial del Estado de Hornos
+INSERT INTO `estado_hornos` (`id`, `nombre`, `tipo`, `temperatura_actual`, `temperatura_objetivo`, `tiempo_restante`, `tiempo_total`, `estado`, `lote_id`) VALUES
+('oven_01', 'Horno 1 (Giratorio A)', 'Giratorio Industrial', 220, 220, 255, 1200, 'baking', 'batch_042'),
+('oven_02', 'Horno 2 (Convección B)', 'Convección Fina', 190, 190, 760, 900, 'baking', 'batch_043'),
+('oven_03', 'Horno 3 (Piedra C)', 'Bóveda de Piedra', 240, 240, 0, 1500, 'ready', 'batch_044'),
+('oven_04', 'Horno 4 (Pastelero D)', 'Convección Digital', 160, 175, 0, 0, 'preheating', NULL);
