@@ -93,6 +93,7 @@
   gap: 1.5rem;
   padding: 0 2rem 2.5rem;
   flex: 1;
+  align-items: start;
 }
 
 @media (max-width: 1200px) {
@@ -147,6 +148,7 @@
   gap: 1rem;
   position: relative;
   transition: all var(--transition-normal);
+  overflow: hidden;
 }
 
 .oven-card:hover {
@@ -168,17 +170,30 @@
   display: flex;
   justify-content: space-between;
   align-items: flex-start;
+  gap: 0.75rem;
+  width: 100%;
+}
+
+.oven-title-group {
+  min-width: 0;
+  flex: 1;
 }
 
 .oven-title-group h3 {
   font-size: 1.05rem;
   font-weight: 700;
   color: var(--color-espresso);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .oven-title-group p {
   font-size: 0.8rem;
   color: var(--color-muted);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .oven-status-badge {
@@ -187,6 +202,8 @@
   padding: 0.25rem 0.65rem;
   border-radius: var(--radius-pill);
   text-transform: uppercase;
+  white-space: nowrap;
+  flex-shrink: 0;
 }
 
 .oven-status-badge.baking {
@@ -405,4 +422,248 @@
 .btn-load-oven:hover {
   background: var(--gradient-gold);
   color: var(--color-espresso);
+}
+
+/* MODAL Y OVERLAY DE CARGA DE HORNO */
+.pin-modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background: rgba(26, 16, 9, 0.65);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 0.3s var(--ease-smooth), visibility 0.3s var(--ease-smooth);
+}
+
+.pin-modal-overlay.active {
+  opacity: 1;
+  visibility: visible;
+}
+
+/* CONTENEDOR PRINCIPAL DE TARJETA MODAL (FONDO BLANCO SÓLIDO) */
+.modal-card-container {
+  background: #FFFFFF;
+  border-radius: var(--radius-lg);
+  width: 90%;
+  max-width: 540px;
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.35);
+  border: 1px solid rgba(212, 155, 84, 0.35);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  animation: scaleUpModal 0.25s ease-out forwards;
+}
+
+@keyframes scaleUpModal {
+  from { transform: scale(0.92); opacity: 0; }
+  to { transform: scale(1); opacity: 1; }
+}
+
+.modal-card-header {
+  padding: 1.15rem 1.4rem;
+  background: var(--gradient-espresso);
+  color: #FFFFFF;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-bottom: 2px solid var(--color-gold);
+}
+
+.modal-header-title {
+  display: flex;
+  align-items: center;
+  gap: 0.85rem;
+}
+
+.modal-header-icon {
+  font-size: 1.4rem;
+  background: rgba(212, 155, 84, 0.2);
+  width: 42px;
+  height: 42px;
+  border-radius: var(--radius-pill);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.modal-title-text {
+  font-size: 1.1rem;
+  font-weight: 800;
+  margin: 0;
+  color: #FFFFFF;
+}
+
+.modal-subtitle-text {
+  font-size: 0.78rem;
+  color: var(--color-gold-light);
+  display: block;
+  margin-top: 0.15rem;
+}
+
+.btn-modal-close {
+  background: rgba(255, 255, 255, 0.15);
+  border: none;
+  color: #FFFFFF;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  font-size: 1rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+}
+
+.btn-modal-close:hover {
+  background: rgba(255, 255, 255, 0.3);
+  transform: rotate(90deg);
+}
+
+.modal-card-body {
+  padding: 1.4rem;
+  background: #FFFFFF;
+  max-height: 75vh;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 1.15rem;
+}
+
+.modal-amount-hero {
+  text-align: center;
+  padding: 1.15rem;
+  background: linear-gradient(135deg, rgba(212, 155, 84, 0.08) 0%, rgba(212, 155, 84, 0.02) 100%);
+  border: 1px dashed rgba(212, 155, 84, 0.35);
+  border-radius: var(--radius-md);
+}
+
+.amount-hero-label {
+  font-size: 0.78rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--color-muted);
+  font-weight: 700;
+}
+
+.amount-hero-value-usd {
+  font-size: 2.2rem;
+  font-weight: 800;
+  color: var(--color-gold-dark);
+  margin-top: 0.25rem;
+}
+
+.modal-meta-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 0.85rem;
+}
+
+.meta-item {
+  background: var(--bg-main);
+  padding: 0.75rem 0.9rem;
+  border-radius: var(--radius-sm);
+  border: var(--border-subtle);
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+}
+
+.meta-label {
+  font-size: 0.75rem;
+  color: var(--color-muted);
+  font-weight: 600;
+}
+
+.meta-val {
+  font-size: 0.88rem;
+  color: var(--color-espresso);
+  font-weight: 700;
+}
+
+.modal-card-footer {
+  padding: 1rem 1.4rem;
+  background: var(--bg-main);
+  border-top: var(--border-subtle);
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.75rem;
+}
+
+.btn-modal-action {
+  padding: 0.65rem 1.25rem;
+  border-radius: var(--radius-sm);
+  font-weight: 700;
+  font-size: 0.85rem;
+  cursor: pointer;
+  border: none;
+  transition: all var(--transition-fast);
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.btn-modal-action.primary {
+  background: var(--gradient-espresso);
+  color: var(--color-gold);
+  box-shadow: var(--shadow-subtle);
+}
+
+.btn-modal-action.primary:hover {
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-medium);
+}
+
+/* ESTILOS DE FORMULARIO Y ALERTAS DE MODAL COCINA */
+.form-label-custom {
+  font-weight: 700;
+  font-size: 0.88rem;
+  color: var(--color-espresso);
+  display: block;
+  margin-bottom: 0.4rem;
+}
+
+.form-control-custom {
+  width: 100%;
+  padding: 0.65rem 0.85rem;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border-subtle);
+  background: #FFFFFF;
+  font-family: var(--font-sans);
+  font-size: 0.9rem;
+  color: var(--color-espresso);
+  box-sizing: border-box;
+  transition: border-color var(--transition-fast);
+}
+
+.form-control-custom:focus {
+  outline: none;
+  border-color: var(--color-gold);
+  box-shadow: 0 0 0 3px rgba(212, 155, 84, 0.2);
+}
+
+.alert-banner-error {
+  background: rgba(198, 40, 40, 0.1);
+  border: 1px solid rgba(198, 40, 40, 0.35);
+  color: var(--color-danger);
+  padding: 0.75rem 1rem;
+  border-radius: var(--radius-sm);
+  font-size: 0.85rem;
+  font-weight: 600;
+  line-height: 1.35;
+  animation: shakeAlert 0.35s ease-in-out;
+}
+
+@keyframes shakeAlert {
+  0%, 100% { transform: translateX(0); }
+  20%, 60% { transform: translateX(-6px); }
+  40%, 80% { transform: translateX(6px); }
 }

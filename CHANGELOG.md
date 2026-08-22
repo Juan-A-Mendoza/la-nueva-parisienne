@@ -4,6 +4,38 @@ Todos los cambios significativos, nuevas funcionalidades y actualizaciones del s
 
 El formato está basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1.0.0/) y este proyecto se adhiere a [Semantic Versioning](https://semver.org/lang/es/).
 
+## [4.7.1] - 2026-08-22 (Fondo Blanco Sólido y Sombra de Enfoque en Ventanas Emergentes de Cocina)
+
+### 🎨 Corrección de Opacidad de Modales en Cocina ([css/modules/kitchen.css](file:///C:/Users/juana/.gemini/antigravity-ide/scratch/la-nueva-parisienne/css/modules/kitchen.css))
+- **Asignación de Fondo Blanco Sólido (`#FFFFFF`) y Sombra Elevada**:
+  - Se incorporaron las definiciones de `.modal-card-container` y `.modal-card-body` en `kitchen.css` fijando el fondo de la tarjeta modal en `#FFFFFF` 100% opaco, eliminando la transparencia no deseada sobre el fondo oscuro con desenfoque de cristal.
+
+---
+
+## [4.7.0] - 2026-08-22 (Estilización de Modales, Modal de Detalles de Horneado y Validación Crítica de Hornos Ocupados en Módulo 2 Producción)
+
+### 👨‍🍳 Rediseño UI/UX de Modales y Lógica de Seguridad de Hornos ([modules/kitchen.html](file:///C:/Users/juana/.gemini/antigravity-ide/scratch/la-nueva-parisienne/modules/kitchen.html), [css/modules/kitchen.css](file:///C:/Users/juana/.gemini/antigravity-ide/scratch/la-nueva-parisienne/css/modules/kitchen.css), [js/modules/kitchen.js](file:///C:/Users/juana/.gemini/antigravity-ide/scratch/la-nueva-parisienne/js/modules/kitchen.js))
+- **Estilización Corporativa de Modales (#loadOvenModal y #ovenDetailModal)**:
+  - Se rediseñaron por completo los modales de asignación y detalle utilizando el sistema de diseño corporativo (encabezado con gradiente espresso, botón de cierre '✕', tipografía moderna, bordes redondeados y glassmorphism).
+- **Activación del Botón "Ver Detalles de Horneado"**:
+  - Al hacer clic en "👁️ Ver Detalles de Horneado" en un horno en ciclo activo, el sistema despliega el modal `#ovenDetailModal` mostrando producto, unidades, temperatura real/target, tiempo total/restante, tipo de horno, barra de progreso animada y chef responsable.
+- **Validación Estricta de Hornos Ocupados (Lógica Crítica)**:
+  - Si se intenta asignar un lote a un horno que está en estado "En Horneado" o "Listo", el formulario detiene la ejecución inmediatamente (`return false;`), muestra un banner de error vibrante en pantalla y deshabilita hornos ocupados en la lista desplegable.
+
+---
+
+## [4.6.0] - 2026-08-22 (Corrección de Estructura CSS, Layout y Modal en Módulo 2 Producción y Cocina)
+
+### 👨‍🍳 Corrección de Layout y Encapsulamiento Modal de Hornos ([modules/kitchen.html](file:///C:/Users/juana/.gemini/antigravity-ide/scratch/la-nueva-parisienne/modules/kitchen.html), [css/modules/kitchen.css](file:///C:/Users/juana/.gemini/antigravity-ide/scratch/la-nueva-parisienne/css/modules/kitchen.css), [js/modules/kitchen.js](file:///C:/Users/juana/.gemini/antigravity-ide/scratch/la-nueva-parisienne/js/modules/kitchen.js))
+- **Encapsulamiento del Formulario Flotante en Modal**:
+  - Se definieron los estilos completos `.pin-modal-overlay` y `.pin-modal-card` en `kitchen.css`, asegurando que el formulario de asignación de lote a horno quede 100% oculto por defecto y solo emerja como ventana modal con desenfoque de cristal al hacer clic en `+ Cargar Nuevo Lote` o `📥 Cargar a Horno Libre`.
+- **Eliminación del Desbordamiento de Texto (Overflow Control)**:
+  - Se aplicó `overflow: hidden;` a `.oven-card`, `min-width: 0;` a `.oven-title-group`, y truncado de texto (`text-overflow: ellipsis; white-space: nowrap;`), previniendo cualquier desbordamiento o superposición de texto en las tarjetas de los hornos.
+- **Alineación Independiente de Columnas (`align-items: start`)**:
+  - Se configuró `align-items: start;` en el contenedor principal `.kitchen-dashboard-grid`, permitiendo que las tres columnas (Hornos, Comandas y Lotes) crezcan de forma autónoma sin estirarse ni interferir entre sí.
+
+---
+
 ## [4.5.0] - 2026-08-22 (Validación Obligatoria de Cédula o RIF del Cliente para Todo Método de Pago en Módulo 3 POS)
 
 ### 🪪 Validación Fiscal Estricta de Identificación del Cliente ([modules/pos.html](file:///C:/Users/juana/.gemini/antigravity-ide/scratch/la-nueva-parisienne/modules/pos.html), [js/modules/pos.js](file:///C:/Users/juana/.gemini/antigravity-ide/scratch/la-nueva-parisienne/js/modules/pos.js))

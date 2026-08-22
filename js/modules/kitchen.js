@@ -169,6 +169,9 @@ document.addEventListener('DOMContentLoaded', () => {
           oven.status = 'idle';
           oven.batch = null;
           renderAll();
+        } else if (oven.status === 'baking') {
+          // ABRIR MODAL DE DETALLES DE HORNEADO
+          openOvenDetailModal(oven.id);
         } else if (oven.status === 'idle' || oven.status === 'preheating') {
           openLoadOvenModal(null, oven.id);
         }
@@ -267,12 +270,20 @@ document.addEventListener('DOMContentLoaded', () => {
   function openLoadOvenModal(batchId = null, ovenId = null) {
     selectedStagingBatchId = batchId;
     
-    // Rellenar selector de hornos
+    // Ocultar banner de error previo
+    const ovenErrorBanner = document.getElementById('ovenErrorBanner');
+    if (ovenErrorBanner) {
+      ovenErrorBanner.style.display = 'none';
+      ovenErrorBanner.innerHTML = '';
+    }
+
+    // Rellenar selector de hornos con estado de disponibilidad
     ovenSelect.innerHTML = '';
     ovens.forEach(o => {
       const option = document.createElement('option');
       option.value = o.id;
-      option.textContent = `${o.name} (${o.status === 'idle' || o.status === 'preheating' ? 'Disponible' : 'Ocupado'})`;
+      const isAvailable = o.status === 'idle' || o.status === 'preheating';
+      option.textContent = `${o.name} (${isAvailable ? '🟢 Disponible' : '🔴 Ocupado - En uso'})`;
       if (ovenId && o.id === ovenId) option.selected = true;
       ovenSelect.appendChild(option);
     });
@@ -295,13 +306,30 @@ document.addEventListener('DOMContentLoaded', () => {
     loadOvenModal.classList.remove('active');
   });
 
+  loadOvenModal?.addEventListener('click', (e) => {
+    if (e.target === loadOvenModal) {
+      loadOvenModal.classList.remove('active');
+    }
+  });
+
   loadOvenForm?.addEventListener('submit', (e) => {
     e.preventDefault();
     const targetOvenId = ovenSelect.value;
+    const oven = ovens.find(o => o.id === targetOvenId);
+
+    // VALIDACIÓN DE HORNO OCUPADO (LÓGICA CRÍTICA OBLIGATORIA)
+    if (!oven || oven.status === 'baking' || oven.status === 'ready') {
+      const ovenErrorBanner = document.getElementById('ovenErrorBanner');
+      if (ovenErrorBanner) {
+        ovenErrorBanner.innerHTML = `<span>⚠️ <strong>Error de Operación:</strong> El ${oven ? oven.name : 'horno seleccionado'} ya está ocupado en un ciclo activo. Seleccione un horno libre.</span>`;
+        ovenErrorBanner.style.display = 'block';
+      }
+      return false; // Interrumpir ejecución inmediatamente
+    }
+
     const temp = parseInt(bakeTempInput.value) || 200;
     const timeMin = parseInt(bakeTimeInput.value) || 15;
 
-    const oven = ovens.find(o => o.id === targetOvenId);
     let batchInfo = {
       id: `batch_${Date.now()}`,
       productName: 'Lote Personalizado',
@@ -321,14 +349,61 @@ document.addEventListener('DOMContentLoaded', () => {
       }
     }
 
-    if (oven) {
-      oven.currentTemp = temp;
-      oven.targetTemp = temp;
-      oven.status = 'baking';
-      oven.batch = batchInfo;
-    }
+    oven.currentTemp = temp;
+    oven.targetTemp = temp;
+    oven.status = 'baking';
+    oven.batch = batchInfo;
 
     loadOvenModal.classList.remove('active');
     renderAll();
+  });
+
+  // 8. Modal de Detalles de Horneado Activo
+  const ovenDetailModal = document.getElementById('ovenDetailModal');
+  const closeOvenDetailModalBtn = document.getElementById('closeOvenDetailModalBtn');
+  const closeOvenDetailModalFooterBtn = document.getElementById('closeOvenDetailModalFooterBtn');
+
+  function openOvenDetailModal(ovenId) {
+    const oven = ovens.find(o => o.id === ovenId);
+    if (!oven || !oven.batch) return;
+
+    const mins = Math.floor(oven.batch.remainingSeconds / 60);
+    const secs = oven.batch.remainingSeconds % 60;
+    const timerFormatted = `${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
+
+    const elapsed = oven.batch.totalTimeSeconds - oven.batch.remainingSeconds;
+    const progressPct = Math.min(100, Math.round((elapsed / oven.batch.totalTimeSeconds) * 100));
+
+    document.getElementById('modalDetailOvenIcon').textContent = oven.batch.icon || '🥖';
+    document.getElementById('modalDetailOvenTitle').textContent = `Detalle de Horneado - ${oven.name}`;
+    document.getElementById('modalDetailOvenSubtitle').textContent = `Monitoreo en Tiempo Real (${oven.type})`;
+    document.getElementById('modalDetailTimer').textContent = timerFormatted;
+    document.getElementById('modalDetailProgressPct').textContent = `${progressPct}%`;
+    
+    const progressBar = document.getElementById('modalDetailProgressBar');
+    if (progressBar) progressBar.style.width = `${progressPct}%`;
+
+    document.getElementById('modalDetailProduct').textContent = oven.batch.productName;
+    document.getElementById('modalDetailUnits').textContent = `${oven.batch.units} ud`;
+    document.getElementById('modalDetailTemp').textContent = `${oven.currentTemp}°C (Target: ${oven.targetTemp}°C)`;
+    document.getElementById('modalDetailTotalTime').textContent = `${Math.round(oven.batch.totalTimeSeconds / 60)} min`;
+    document.getElementById('modalDetailOvenType').textContent = oven.type;
+    document.getElementById('modalDetailChef').textContent = session.user.name || 'Chef Principal';
+
+    if (ovenDetailModal) ovenDetailModal.classList.add('active');
+  }
+
+  closeOvenDetailModalBtn?.addEventListener('click', () => {
+    ovenDetailModal?.classList.remove('active');
+  });
+
+  closeOvenDetailModalFooterBtn?.addEventListener('click', () => {
+    ovenDetailModal?.classList.remove('active');
+  });
+
+  ovenDetailModal?.addEventListener('click', (e) => {
+    if (e.target === ovenDetailModal) {
+      ovenDetailModal.classList.remove('active');
+    }
   });
 });

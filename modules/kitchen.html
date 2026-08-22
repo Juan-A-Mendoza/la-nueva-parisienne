@@ -133,41 +133,119 @@
 
   </div>
 
-  <!-- MODAL DE CARGA DE LOTE A HORNO -->
+  <!-- MODAL 1: ASIGNACIÓN DE LOTE A HORNO INDUSTRIAL -->
   <div id="loadOvenModal" class="pin-modal-overlay" role="dialog" aria-modal="true" aria-labelledby="modalBatchName">
-    <div class="pin-modal-card payment-modal-card">
-      <button id="closeLoadOvenModalBtn" class="modal-close-btn" aria-label="Cerrar modal">&times;</button>
-
-      <div class="selected-user-header" style="margin-bottom: 1.25rem;">
-        <div class="selected-user-avatar">🔥</div>
-        <h3 id="modalBatchName" class="selected-user-name">Asignar Lote a Horno</h3>
-        <span class="selected-user-role">Programación de Horneado</span>
+    <div class="modal-card-container">
+      <div class="modal-card-header">
+        <div class="modal-header-title">
+          <span class="modal-header-icon">🔥</span>
+          <div>
+            <h2 id="modalBatchName" class="modal-title-text">Asignar Lote a Horno</h2>
+            <span class="modal-subtitle-text">Programación de Horneado Industrial</span>
+          </div>
+        </div>
+        <button id="closeLoadOvenModalBtn" type="button" class="btn-modal-close" aria-label="Cerrar modal">✕</button>
       </div>
 
-      <form id="loadOvenForm" style="display: flex; flex-direction: column; gap: 1.25rem; text-align: left;">
-        <div>
-          <label for="ovenSelect" style="font-weight: 700; font-size: 0.9rem; display: block; margin-bottom: 0.4rem;">Seleccionar Horno Disponible:</label>
-          <select id="ovenSelect" class="pos-search-input" style="padding: 0.65rem 1rem;">
-            <!-- Opciones dinámicas -->
-          </select>
-        </div>
+      <div class="modal-card-body">
+        <!-- Banner de Alerta de Error (si el horno está ocupado) -->
+        <div id="ovenErrorBanner" class="alert-banner-error" style="display: none;"></div>
 
-        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+        <form id="loadOvenForm" style="display: flex; flex-direction: column; gap: 1.15rem; text-align: left;">
           <div>
-            <label for="bakeTempInput" style="font-weight: 700; font-size: 0.85rem; display: block; margin-bottom: 0.4rem;">Temperatura (°C):</label>
-            <input type="number" id="bakeTempInput" class="pos-search-input" value="200" min="100" max="300">
+            <label for="ovenSelect" class="form-label-custom">🔥 Seleccionar Horno Objetivo:</label>
+            <select id="ovenSelect" class="form-control-custom">
+              <!-- Opciones dinámicas -->
+            </select>
           </div>
 
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+            <div>
+              <label for="bakeTempInput" class="form-label-custom">🌡️ Temperatura (°C):</label>
+              <input type="number" id="bakeTempInput" class="form-control-custom" value="200" min="100" max="300" required>
+            </div>
+
+            <div>
+              <label for="bakeTimeInput" class="form-label-custom">⏱️ Tiempo (Minutos):</label>
+              <input type="number" id="bakeTimeInput" class="form-control-custom" value="15" min="1" max="120" required>
+            </div>
+          </div>
+
+          <div class="modal-card-footer" style="padding: 1rem 0 0 0; background: none; border: none;">
+            <button type="submit" class="btn-modal-action primary" style="width: 100%; justify-content: center;">
+              <span>▶ Iniciar Ciclo de Horneado</span>
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL 2: DETALLE DE HORNEADO EN CURSO -->
+  <div id="ovenDetailModal" class="pin-modal-overlay" role="dialog" aria-modal="true" aria-labelledby="modalDetailOvenTitle">
+    <div class="modal-card-container">
+      <div class="modal-card-header">
+        <div class="modal-header-title">
+          <span id="modalDetailOvenIcon" class="modal-header-icon">🥖</span>
           <div>
-            <label for="bakeTimeInput" style="font-weight: 700; font-size: 0.85rem; display: block; margin-bottom: 0.4rem;">Tiempo (Minutos):</label>
-            <input type="number" id="bakeTimeInput" class="pos-search-input" value="15" min="1" max="120">
+            <h2 id="modalDetailOvenTitle" class="modal-title-text">Detalle de Horneado - Horno 1</h2>
+            <span id="modalDetailOvenSubtitle" class="modal-subtitle-text">Monitoreo en Tiempo Real</span>
+          </div>
+        </div>
+        <button id="closeOvenDetailModalBtn" type="button" class="btn-modal-close" aria-label="Cerrar modal">✕</button>
+      </div>
+
+      <div class="modal-card-body">
+        <!-- Héroe del Temporizador -->
+        <div class="modal-amount-hero">
+          <div class="amount-hero-label">Tiempo Restante de Horneado</div>
+          <div id="modalDetailTimer" class="amount-hero-value-usd" style="color: var(--color-gold-dark);">00:00</div>
+          <span id="modalDetailStatusBadge" class="growth-badge warning" style="margin-top: 0.4rem; display: inline-block;">● En Horneado</span>
+        </div>
+
+        <!-- Barra de Progreso Animada -->
+        <div class="baking-progress-container">
+          <div style="display: flex; justify-content: space-between; font-size: 0.78rem; font-weight: 700; color: var(--color-muted); margin-bottom: 0.25rem;">
+            <span>Progreso del Ciclo</span>
+            <span id="modalDetailProgressPct">0%</span>
+          </div>
+          <div class="baking-progress-bar" style="height: 12px;">
+            <div id="modalDetailProgressBar" class="baking-progress-fill" style="width: 0%;"></div>
           </div>
         </div>
 
-        <button type="submit" class="btn-process-payment" style="margin-top: 0.5rem;">
-          <span>▶ Iniciar Horneado</span>
-        </button>
-      </form>
+        <!-- Grid de Metadatos de Horneado -->
+        <div class="modal-meta-grid">
+          <div class="meta-item">
+            <span class="meta-label">🥖 Producto Cargado</span>
+            <strong id="modalDetailProduct" class="meta-val">-</strong>
+          </div>
+          <div class="meta-item">
+            <span class="meta-label">📦 Cantidad de Unidades</span>
+            <strong id="modalDetailUnits" class="meta-val">-</strong>
+          </div>
+          <div class="meta-item">
+            <span class="meta-label">🌡️ Temperatura Actual</span>
+            <strong id="modalDetailTemp" class="meta-val">-</strong>
+          </div>
+          <div class="meta-item">
+            <span class="meta-label">⏱️ Tiempo Programado</span>
+            <strong id="modalDetailTotalTime" class="meta-val">-</strong>
+          </div>
+          <div class="meta-item">
+            <span class="meta-label">🔥 Tipo de Horno</span>
+            <strong id="modalDetailOvenType" class="meta-val">-</strong>
+          </div>
+          <div class="meta-item">
+            <span class="meta-label">👨‍🍳 Responsable / Chef</span>
+            <strong id="modalDetailChef" class="meta-val">-</strong>
+          </div>
+        </div>
+      </div>
+
+      <div class="modal-card-footer">
+        <button id="closeOvenDetailModalFooterBtn" type="button" class="btn-modal-action primary">Entendido / Cerrar</button>
+      </div>
     </div>
   </div>
 
