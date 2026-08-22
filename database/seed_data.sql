@@ -8,6 +8,8 @@ USE `la_nueva_parisienne`;
 
 -- 1. DESHABILITAR RESTRICCIONES TEMPORALMENTE Y LIMPIAR CON DELETE
 SET FOREIGN_KEY_CHECKS = 0;
+DELETE FROM `estado_hornos`;
+DELETE FROM `lotes_produccion`;
 DELETE FROM `asientos_detalle`;
 DELETE FROM `asientos_contables`;
 DELETE FROM `plan_cuentas`;
@@ -22,7 +24,7 @@ SET FOREIGN_KEY_CHECKS = 1;
 -- ----------------------------------------------------------------------------
 -- 2. POBLAR TABLA: roles
 -- ----------------------------------------------------------------------------
-INSERT INTO `roles` (`id`, `codigo`, `nombre`, `descripcion`) VALUES
+INSERT IGNORE INTO `roles` (`id`, `codigo`, `nombre`, `descripcion`) VALUES
 ('rol_admin', 'ADMIN', 'Gerente General / Administrador', 'Acceso total a KPIs, contabilidad, personal, inventario y configuración.'),
 ('rol_baker', 'BAKER', 'Maestro Panadero / Chef de Cuisine', 'Gestión de hornos industriales, comandas KDS e insumos de masa.'),
 ('rol_cashier', 'CASHIER', 'Personal de Caja / POS', 'Facturación directa, cobro en efectivo/tarjeta y arqueo de caja.'),
@@ -31,7 +33,7 @@ INSERT INTO `roles` (`id`, `codigo`, `nombre`, `descripcion`) VALUES
 -- ----------------------------------------------------------------------------
 -- 3. POBLAR TABLA: usuarios (TODOS CON PIN '1234')
 -- ----------------------------------------------------------------------------
-INSERT INTO `usuarios` (`id`, `rol_id`, `codigo`, `nombre`, `email`, `telefono`, `pin`, `icono`, `turno`, `redirect_url`, `estado`) VALUES
+INSERT IGNORE INTO `usuarios` (`id`, `rol_id`, `codigo`, `nombre`, `email`, `telefono`, `pin`, `icono`, `turno`, `redirect_url`, `estado`) VALUES
 ('usr_carlos', 'rol_baker', 'EMP-001', 'Carlos Mendoza', 'carlos.mendoza@parisienne.com', '(01) 555-CARLOS', '1234', '👨‍🍳', 'Mañana (05:00 - 13:00)', 'modules/kitchen.html', 'active'),
 ('usr_ana', 'rol_cashier', 'EMP-002', 'Ana Ramírez', 'ana.ramirez@parisienne.com', '(01) 555-ANA', '1234', '👩‍💼', 'Tarde (13:00 - 21:00)', 'modules/pos.html', 'active'),
 ('usr_manager', 'rol_admin', 'EMP-003', 'Juan', 'juan.gerente@parisienne.com', '(01) 555-JUAN', '1234', '👨‍💼', 'Turno Completo', 'modules/dashboard.html', 'active'),
@@ -42,7 +44,7 @@ INSERT INTO `usuarios` (`id`, `rol_id`, `codigo`, `nombre`, `email`, `telefono`,
 -- ----------------------------------------------------------------------------
 -- 4. POBLAR TABLA: categorias_producto
 -- ----------------------------------------------------------------------------
-INSERT INTO `categorias_producto` (`id`, `nombre`, `descripcion`) VALUES
+INSERT IGNORE INTO `categorias_producto` (`id`, `nombre`, `descripcion`) VALUES
 ('cat_insumos', 'Materias Primas', 'Harinas, mantequillas, levaduras y cacao para horneado.'),
 ('cat_panaderia', 'Panadería Artesanal', 'Baguettes, brioches y panes de especialidad.'),
 ('cat_pasteleria', 'Pastelería & Repostería', 'Éclairs, tartas de limón, macarons y milhojas.'),
@@ -52,7 +54,7 @@ INSERT INTO `categorias_producto` (`id`, `nombre`, `descripcion`) VALUES
 -- ----------------------------------------------------------------------------
 -- 5. POBLAR TABLA: productos (INVENTARIO E ÍTEMS DEL PUNTO DE VENTA POS)
 -- ----------------------------------------------------------------------------
-INSERT INTO `productos` (`id`, `categoria_id`, `codigo`, `nombre`, `unidad_medida`, `stock_actual`, `stock_minimo`, `precio_unitario`, `tipo`, `ubicacion`, `icono`, `descripcion`) VALUES
+INSERT IGNORE INTO `productos` (`id`, `categoria_id`, `codigo`, `nombre`, `unidad_medida`, `stock_actual`, `stock_minimo`, `precio_unitario`, `tipo`, `ubicacion`, `icono`, `descripcion`) VALUES
 ('inv_001', 'cat_insumos', 'MAT-001', 'Harina de Trigo Tradicional T55', 'kg', 18.00, 50.00, 1.80, 'raw_material', 'Almacén Principal A-1', '🌾', 'Harina refinada para panadería francesa.'),
 ('inv_002', 'cat_insumos', 'MAT-002', 'Mantequilla de Normandía 84% M.G.', 'kg', 12.50, 30.00, 8.50, 'raw_material', 'Cámara Frigorífica B-2', '🧈', 'Mantequilla de alta grasa para hojaldres.'),
 ('inv_003', 'cat_insumos', 'MAT-003', 'Levadura Madre Activa Tostada', 'kg', 8.00, 15.00, 4.20, 'raw_material', 'Refrigerador Insumos', '🧫', 'Masa madre natural fermentada.'),
@@ -60,7 +62,6 @@ INSERT INTO `productos` (`id`, `categoria_id`, `codigo`, `nombre`, `unidad_medid
 ('inv_005', 'cat_insumos', 'MAT-005', 'Azúcar Fina Refinada', 'kg', 65.00, 25.00, 1.50, 'raw_material', 'Almacén Seco A-2', '🧂', 'Azúcar blanca extra fina.'),
 ('inv_006', 'cat_insumos', 'MAT-006', 'Huevos Frescos de Granja', 'ud', 120.00, 150.00, 0.25, 'raw_material', 'Refrigerador Insumos', '🥚', 'Huevos de granja seleccionados.'),
 
--- PRODUCTOS TERMINADOS PARA EL PUNTO DE VENTA (POS)
 ('prod_001', 'cat_panaderia', 'PAN-001', 'Baguette Tradicional Parisina', 'ud', 45.00, 20.00, 2.50, 'finished_product', 'Mostrador Panadería', '🥖', 'Corteza crujiente y miga alveolada con levadura madre.'),
 ('prod_002', 'cat_panaderia', 'PAN-002', 'Croissant de Mantequilla', 'ud', 60.00, 25.00, 3.00, 'finished_product', 'Vitrinas POS', '🥐', 'Hojaldre 100% mantequilla de Normandía.'),
 ('prod_003', 'cat_panaderia', 'PAN-003', 'Pain au Chocolat', 'ud', 35.00, 15.00, 3.50, 'finished_product', 'Vitrinas POS', '🍫', 'Hojaldre relleno de dos barras de chocolate negro 60%.'),
@@ -83,7 +84,7 @@ INSERT INTO `productos` (`id`, `categoria_id`, `codigo`, `nombre`, `unidad_medid
 -- ----------------------------------------------------------------------------
 -- 6. POBLAR TABLA: proveedores
 -- ----------------------------------------------------------------------------
-INSERT INTO `proveedores` (`id`, `codigo`, `nombre`, `categoria`, `contacto`, `telefono`, `email`, `rif`, `direccion`, `condicion_pago`, `calificacion`, `icono`) VALUES
+INSERT IGNORE INTO `proveedores` (`id`, `codigo`, `nombre`, `categoria`, `contacto`, `telefono`, `email`, `rif`, `direccion`, `condicion_pago`, `calificacion`, `icono`) VALUES
 ('sup_01', 'PROV-001', 'Molinos del Sur, C.A.', 'Harinas y Cereales', 'Carlos Mendoza', '(01) 555-MOLINO', 'ventas@molinosdelsur.com', 'J-30819283-4', 'Zona Industrial Sur, Parcela 14, Caracas', 'Crédito 30 días', 4.9, '🌾'),
 ('sup_02', 'PROV-002', 'Lácteos La Granja', 'Lácteos y Mantequillas', 'María Elena Suárez', '(01) 555-LACTEOS', 'pedidos@lacteoslagranja.com', 'J-40192837-1', 'Av. Las Acacias, Edif. La Granja, Valencia', 'Contado / 15 días', 4.8, '🧈'),
 ('sup_03', 'PROV-003', 'Empaques del Norte', 'Empaques y Papelería', 'Roberto Gómez', '(01) 555-EMPAQUE', 'contacto@empaquesnorte.com', 'J-29837482-9', 'Av. Principal Norte, Bodega 5, Maracay', 'Crédito 30 días', 4.7, '📦'),
@@ -92,7 +93,7 @@ INSERT INTO `proveedores` (`id`, `codigo`, `nombre`, `categoria`, `contacto`, `t
 -- ----------------------------------------------------------------------------
 -- 7. POBLAR TABLA: ordenes_compra
 -- ----------------------------------------------------------------------------
-INSERT INTO `ordenes_compra` (`id`, `codigo`, `proveedor_id`, `resumen_insumos`, `fecha_pedido`, `fecha_entrega`, `estado`, `monto_total`) VALUES
+INSERT IGNORE INTO `ordenes_compra` (`id`, `codigo`, `proveedor_id`, `resumen_insumos`, `fecha_pedido`, `fecha_entrega`, `estado`, `monto_total`) VALUES
 ('po_001', 'OC-2026-0089', 'sup_01', '1,000 kg Harina de Trigo Tradicional T55', '2026-08-10', '2026-08-12', 'in_transit', 1800.00),
 ('po_002', 'OC-2026-0090', 'sup_02', '200 kg Mantequilla de Normandía 84%', '2026-08-11', '2026-08-11', 'in_transit', 1700.00),
 ('po_003', 'OC-2026-0088', 'sup_04', '50 kg Cobertura de Chocolate Belga 60%', '2026-08-05', '2026-08-07', 'received', 600.00),
@@ -101,7 +102,7 @@ INSERT INTO `ordenes_compra` (`id`, `codigo`, `proveedor_id`, `resumen_insumos`,
 -- ----------------------------------------------------------------------------
 -- 8. POBLAR TABLA: plan_cuentas (PUC)
 -- ----------------------------------------------------------------------------
-INSERT INTO `plan_cuentas` (`codigo`, `nombre`, `tipo`, `naturaleza`) VALUES
+INSERT IGNORE INTO `plan_cuentas` (`codigo`, `nombre`, `tipo`, `naturaleza`) VALUES
 ('1105', 'Caja General', 'Activo', 'Deudor'),
 ('1110', 'Bancos Nacionales', 'Activo', 'Deudor'),
 ('1435', 'Inventario Materia Prima', 'Activo', 'Deudor'),
@@ -117,11 +118,11 @@ INSERT INTO `plan_cuentas` (`codigo`, `nombre`, `tipo`, `naturaleza`) VALUES
 -- ----------------------------------------------------------------------------
 -- 9. POBLAR TABLAS: asientos_contables y asientos_detalle
 -- ----------------------------------------------------------------------------
-INSERT INTO `asientos_contables` (`id`, `codigo`, `fecha_hora`, `concepto`, `modulo_origen`, `icono`, `total_debe`, `total_haber`) VALUES
+INSERT IGNORE INTO `asientos_contables` (`id`, `codigo`, `fecha_hora`, `concepto`, `modulo_origen`, `icono`, `total_debe`, `total_haber`) VALUES
 ('as_001', 'AS-2026-001', '2026-08-11 16:42:00', 'Venta POS Mostrador (Comprobante FAC-2026-1003)', 'Punto de Venta (POS)', '🛒', 1485.50, 1485.50),
 ('as_002', 'AS-2026-002', '2026-08-10 14:15:00', 'Compra de Harina a Molinos del Sur (Orden OC-2026-0089)', 'Proveedores', '🌾', 1800.00, 1800.00);
 
-INSERT INTO `asientos_detalle` (`asiento_id`, `cuenta_codigo`, `debe`, `haber`) VALUES
+INSERT IGNORE INTO `asientos_detalle` (`asiento_id`, `cuenta_codigo`, `debe`, `haber`) VALUES
 ('as_001', '1105', 1485.50, 0.00),
 ('as_001', '4135', 0.00, 1280.60),
 ('as_001', '2408', 0.00, 204.90),
@@ -131,7 +132,7 @@ INSERT INTO `asientos_detalle` (`asiento_id`, `cuenta_codigo`, `debe`, `haber`) 
 -- ----------------------------------------------------------------------------
 -- 10. POBLAR TABLA: lotes_produccion
 -- ----------------------------------------------------------------------------
-INSERT INTO `lotes_produccion` (`id`, `codigo`, `producto`, `icono`, `cantidad`, `estado_leudado`, `temperatura_recomendada`, `tiempo_recomendado_min`) VALUES
+INSERT IGNORE INTO `lotes_produccion` (`id`, `codigo`, `producto`, `icono`, `cantidad`, `estado_leudado`, `temperatura_recomendada`, `tiempo_recomendado_min`) VALUES
 ('batch_042', 'Lote #042', 'Baguette Tradicional Parisina', '🥖', 50, 'En Horneado Activo', 220, 20),
 ('batch_043', 'Lote #043', 'Croissant de Mantequilla', '🥐', 60, 'En Horneado Activo', 190, 15),
 ('batch_044', 'Lote #044', 'Focaccia de Romero y Aceitunas', '🫓', 20, 'Horneado Listo', 240, 25),
@@ -142,7 +143,7 @@ INSERT INTO `lotes_produccion` (`id`, `codigo`, `producto`, `icono`, `cantidad`,
 -- ----------------------------------------------------------------------------
 -- 11. POBLAR TABLA: estado_hornos
 -- ----------------------------------------------------------------------------
-INSERT INTO `estado_hornos` (`id`, `nombre`, `tipo`, `temperatura_actual`, `temperatura_objetivo`, `tiempo_restante`, `tiempo_total`, `estado`, `lote_id`) VALUES
+INSERT IGNORE INTO `estado_hornos` (`id`, `nombre`, `tipo`, `temperatura_actual`, `temperatura_objetivo`, `tiempo_restante`, `tiempo_total`, `estado`, `lote_id`) VALUES
 ('oven_01', 'Horno 1 (Giratorio A)', 'Giratorio Industrial', 220, 220, 255, 1200, 'baking', 'batch_042'),
 ('oven_02', 'Horno 2 (Convección B)', 'Convección Fina', 190, 190, 760, 900, 'baking', 'batch_043'),
 ('oven_03', 'Horno 3 (Piedra C)', 'Bóveda de Piedra', 240, 240, 0, 1500, 'ready', 'batch_044'),

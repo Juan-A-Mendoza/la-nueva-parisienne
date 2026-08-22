@@ -4,6 +4,16 @@ Todos los cambios significativos, nuevas funcionalidades y actualizaciones del s
 
 El formato está basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1.0.0/) y este proyecto se adhiere a [Semantic Versioning](https://semver.org/lang/es/).
 
+## [4.9.1] - 2026-08-22 (Solución a Error MySQL #1062 por Clave Duplicada en Impresiones SQL)
+
+### 🛢️ Compatibilidad e Idempotencia en Importaciones SQL ([database/seed_data.sql](file:///C:/Users/juana/.gemini/antigravity-ide/scratch/la-nueva-parisienne/database/seed_data.sql), [database/database.sql](file:///C:/Users/juana/.gemini/antigravity-ide/scratch/la-nueva-parisienne/database/database.sql))
+- **Inclusión de Limpieza para Tablas de Cocina**:
+  - Se añadieron `DELETE FROM estado_hornos;` y `DELETE FROM lotes_produccion;` en el bloque de deshabilitación temporal de claves foráneas de `seed_data.sql`.
+- **Sustitución de `INSERT INTO` por `INSERT IGNORE INTO`**:
+  - Se actualizaron las sentencias de inserción de datos iniciales a `INSERT IGNORE INTO`, garantizando que la importación de `seed_data.sql` o `database.sql` sea 100% libre de errores `#1062 - Duplicate entry`.
+
+---
+
 ## [4.9.0] - 2026-08-22 (Simulación Persistente de Inventario en localStorage para Módulo 3 POS)
 
 ### 📦 Gestión de Stock Persistente y Validación de Inventario ([js/modules/pos.js](file:///C:/Users/juana/.gemini/antigravity-ide/scratch/la-nueva-parisienne/js/modules/pos.js))
