@@ -1,49 +1,177 @@
 /* ==========================================================================
    LA NUEVA PARISIENNE - CONTROLADOR MÓDULO 9 CONFIGURACIONES (CONFIGURACIONES.JS)
    Gestión de datos fiscales de la empresa y Tasa Cambiaria BCV / Multimoneda
-   Sincronización en vivo con bloqueo estricto Auto vs Manual
+   Sincronización en vivo con principio de Aislamiento de Fallos
    ========================================================================== */
 
 import { SessionStore } from '../core/session-store.js';
 import { BcvRateStore } from '../core/bcv-rate-store.js';
 
-document.addEventListener('DOMContentLoaded', async () => {
-  // Modal Error y Advertencias (SVG X)
+// ==========================================================================
+// 1. ESTADO GLOBAL Y CONSTANTES
+// ==========================================================================
+
+const INITIAL_USERS = [
+  { id: 'usr_001', name: 'Juan Mendoza', username: 'admin', role: 'Gerente General', roleCode: 'ADMIN', icon: '👨‍💼', description: 'Acceso total a KPIs, contabilidad, producción y personal.', redirectUrl: 'modules/dashboard.html' },
+  { id: 'usr_002', name: 'María Elena Suárez', username: 'cajero1', role: 'Cajero', roleCode: 'POS', icon: '👩‍💼', description: 'Facturación directa a clientes, cobros rápidos y apertura de caja.', redirectUrl: 'modules/pos.html' },
+  { id: 'usr_003', name: 'Carlos Eduardo Rivas', username: 'panadero1', role: 'Panadero', roleCode: 'KITCHEN', icon: '👨‍🍳', description: 'Gestión de hornos, recetas, orden del día y preparación de masa.', redirectUrl: 'modules/kitchen.html' },
+  { id: 'usr_004', name: 'Andrés Felipe Gómez', username: 'contador1', role: 'Contador', roleCode: 'ACCOUNTANT', icon: '📊', description: 'Auditoría financiera, margen de ganancias y estados contables.', redirectUrl: 'modules/accounting.html' }
+];
+
+const VALID_MANAGER_PASSWORDS = ['admin123', '1234', 'gerente', 'admin', '0000'];
+
+let usersData = getUsersFromStorage();
+let isUsersUnlocked = false;
+let pendingAuthAction = null; // { actionType: 'UNLOCK_VIEW'|'SAVE_USER'|'DELETE_USER', data: ... }
+
+// ==========================================================================
+// 2. FUNCIONES DE ALMACENAMIENTO LOCAL (SIN PHP / FETCH PREMATURO)
+// ==========================================================================
+
+function getUsersFromStorage() {
+  try {
+    const rawUsuarios = localStorage.getItem('usuarios');
+    const rawSistema = localStorage.getItem('usuarios_sistema');
+    const stored = rawUsuarios !== null ? rawUsuarios : rawSistema;
+
+    if (stored !== null) {
+      const parsed = JSON.parse(stored);
+      if (Array.isArray(parsed) && parsed.length > 0) {
+        return parsed;
+      }
+    }
+  } catch (e) {
+    console.warn('Error leyendo usuarios de localStorage:', e);
+  }
+  const defaultList = Array.isArray(INITIAL_USERS) ? [...INITIAL_USERS] : [];
+  try {
+    localStorage.setItem('usuarios', JSON.stringify(defaultList));
+    localStorage.setItem('usuarios_sistema', JSON.stringify(defaultList));
+  } catch (e) {}
+  return defaultList;
+}
+
+function saveUsersToStorage(usersArray) {
+  try {
+    const listToSave = Array.isArray(usersArray) ? usersArray : [];
+    localStorage.setItem('usuarios', JSON.stringify(listToSave));
+    localStorage.setItem('usuarios_sistema', JSON.stringify(listToSave));
+    window.dispatchEvent(new Event('storage'));
+  } catch (e) {
+    console.error('Error guardando usuarios:', e);
+  }
+}
+
+async function fetchLiveBcvRate() {
+  try {
+    const res = await fetch('https://cdn.jsdelivr.net/npm/@fawazahmed0/currency-api@latest/v1/currencies/usd.json?t=' + Date.now(), { cache: 'no-store' });
+    if (res.ok) {
+      const data = await res.json();
+      if (data && data.usd && data.usd.ves && parseFloat(data.usd.ves) > 0) {
+        const autoRate = parseFloat(data.usd.ves);
+        localStorage.setItem('tasa_auto', autoRate.toString());
+        localStorage.setItem('tasaAuto', autoRate.toString());
+        return autoRate;
+      }
+    }
+  } catch (e) {
+    console.warn('Error al consultar currency-api en vivo:', e);
+  }
+  return parseFloat(localStorage.getItem('tasa_auto') || localStorage.getItem('tasaAuto')) || 761.21;
+}
+
+// ==========================================================================
+// 3. MODALES Y ADVERTENCIAS
+// ==========================================================================
+
+function showErrorModal(title, msg, onConfirm = null) {
   const modalErrorNotificacion = document.getElementById('modalErrorNotificacion');
   const modalErrorTitle = document.getElementById('modalErrorTitle');
   const modalErrorMsg = document.getElementById('modalErrorMsg');
   const closeErrorModalBtn = document.getElementById('closeErrorModalBtn');
 
-  function showErrorModal(title, msg, onConfirm = null) {
-    if (modalErrorTitle) modalErrorTitle.textContent = title;
-    if (modalErrorMsg) modalErrorMsg.textContent = msg;
+  if (modalErrorTitle) modalErrorTitle.textContent = title;
+  if (modalErrorMsg) modalErrorMsg.textContent = msg;
 
-    if (modalErrorNotificacion) {
-      modalErrorNotificacion.style.display = 'flex';
-      modalErrorNotificacion.setAttribute('aria-hidden', 'false');
+  if (modalErrorNotificacion) {
+    modalErrorNotificacion.style.display = 'flex';
+    modalErrorNotificacion.setAttribute('aria-hidden', 'false');
 
-      const svg = modalErrorNotificacion.querySelector('.error-cross-svg');
-      if (svg) {
-        svg.style.animation = 'none';
-        void svg.offsetWidth;
-        svg.style.animation = '';
-      }
+    const svg = modalErrorNotificacion.querySelector('.error-cross-svg');
+    if (svg) {
+      svg.style.animation = 'none';
+      void svg.offsetWidth;
+      svg.style.animation = '';
+    }
 
-      const handleClose = () => {
-        modalErrorNotificacion.style.display = 'none';
-        modalErrorNotificacion.setAttribute('aria-hidden', 'true');
-        if (onConfirm) onConfirm();
-      };
-
-      closeErrorModalBtn?.onclick = handleClose;
-    } else {
-      alert(`${title}\n\n${msg}`);
+    const handleClose = () => {
+      modalErrorNotificacion.style.display = 'none';
+      modalErrorNotificacion.setAttribute('aria-hidden', 'true');
       if (onConfirm) onConfirm();
+    };
+
+    if (closeErrorModalBtn) closeErrorModalBtn.onclick = handleClose;
+  } else {
+    alert(`${title}\n\n${msg}`);
+    if (onConfirm) onConfirm();
+  }
+}
+
+function showSuccessModal(title, msg) {
+  const modalExitoNotificacion = document.getElementById('modalExitoNotificacion');
+  const modalExitoTitle = document.getElementById('modalExitoTitle');
+  const modalExitoMsg = document.getElementById('modalExitoMsg');
+
+  if (modalExitoTitle) modalExitoTitle.textContent = title;
+  if (modalExitoMsg) modalExitoMsg.textContent = msg;
+
+  if (modalExitoNotificacion) {
+    modalExitoNotificacion.style.display = 'flex';
+    modalExitoNotificacion.setAttribute('aria-hidden', 'false');
+
+    const svg = modalExitoNotificacion.querySelector('.success-checkmark-svg');
+    if (svg) {
+      svg.style.animation = 'none';
+      void svg.offsetWidth;
+      svg.style.animation = '';
     }
   }
+}
 
-  // 1. Verificar Sesión Activa y Permisos de Gerente General
-  const session = SessionStore.getSession();
+function closeSuccessModal() {
+  const modalExitoNotificacion = document.getElementById('modalExitoNotificacion');
+  if (modalExitoNotificacion) {
+    modalExitoNotificacion.style.display = 'none';
+    modalExitoNotificacion.setAttribute('aria-hidden', 'true');
+  }
+}
+
+function showStatus(msg, type) {
+  const statusBanner = document.getElementById('statusBanner');
+  if (!statusBanner) return;
+  statusBanner.textContent = msg;
+  statusBanner.className = `alert-banner ${type}`;
+  statusBanner.style.display = 'block';
+  if (type === 'success') {
+    setTimeout(() => {
+      statusBanner.style.display = 'none';
+    }, 5000);
+  }
+}
+
+// ==========================================================================
+// 4. FUNCIONES MODULARIZADAS PARA CADA COMPONENTE DE CONFIGURACIONES
+// ==========================================================================
+
+/**
+ * A) Verificación de Sesión del Gerente General
+ */
+function inicializarSesionGerente() {
+  let session = null;
+  try {
+    session = SessionStore.getSession();
+  } catch (e) {}
+
   if (!session || !session.user) {
     showErrorModal('⚠️ Sesión Expirada', 'Sesión no encontrada o expirada. Por favor inicie sesión.', () => {
       window.location.href = '../index.html';
@@ -51,7 +179,6 @@ document.addEventListener('DOMContentLoaded', async () => {
     return;
   }
 
-  // Comprobar rol de Gerente General
   const userRole = (session.user.role || '').toLowerCase();
   const userRoleCode = session.user.roleCode || '';
   const isGerenteGeneral = userRoleCode === 'ADMIN' || userRole.includes('gerente general') || userRole.includes('administrador');
@@ -63,56 +190,81 @@ document.addEventListener('DOMContentLoaded', async () => {
     return;
   }
 
-  if (session.user) {
-    const managerAvatar = document.getElementById('managerAvatar');
-    const managerName = document.getElementById('managerName');
-    if (managerAvatar) managerAvatar.textContent = session.user.icon || '👨‍💼';
-    if (managerName) managerName.textContent = session.user.name || 'Gerente General';
-  }
+  const managerAvatar = document.getElementById('managerAvatar');
+  const managerName = document.getElementById('managerName');
+  if (managerAvatar) managerAvatar.textContent = session.user.icon || '👨‍💼';
+  if (managerName) managerName.textContent = session.user.name || 'Juan Mendoza';
 
   const logoutBtn = document.getElementById('logoutBtn');
   if (logoutBtn) {
-    logoutBtn.addEventListener('click', () => SessionStore.logout());
+    logoutBtn.addEventListener('click', (e) => {
+      e.preventDefault();
+      try { SessionStore.logout(); } catch (err) {
+        localStorage.removeItem('usuario_activo');
+        window.location.href = '../index.html';
+      }
+    });
   }
+}
 
-  // 2. Elementos del Formulario
+/**
+ * B) Datos Fiscales de la Empresa (Guardado Local)
+ */
+function inicializarEmpresaFiscalConfig() {
   const empresaForm = document.getElementById('empresaForm');
   const empresaNombre = document.getElementById('empresaNombre');
   const empresaRif = document.getElementById('empresaRif');
   const empresaDireccion = document.getElementById('empresaDireccion');
   const empresaTelefono = document.getElementById('empresaTelefono');
-  const statusBanner = document.getElementById('statusBanner');
 
-  // ==========================================================================
-  // LÓGICA DE CONTROL DE TASA AUTOMÁTICA VS MANUAL INDEPENDIENTES
-  // ==========================================================================
+  try {
+    const saved = localStorage.getItem('empresa_datos');
+    if (saved) {
+      const data = JSON.parse(saved);
+      if (data) {
+        if (empresaNombre) empresaNombre.value = data.nombre || '';
+        if (empresaRif) empresaRif.value = data.rif || '';
+        if (empresaDireccion) empresaDireccion.value = data.direccion || '';
+        if (empresaTelefono) empresaTelefono.value = data.telefono || '';
+      }
+    }
+  } catch (e) {
+    console.warn('Error leyendo empresa_datos:', e);
+  }
+
+  if (empresaForm) {
+    empresaForm.addEventListener('submit', (e) => {
+      e.preventDefault();
+
+      const payload = {
+        nombre: empresaNombre ? empresaNombre.value.trim() : '',
+        rif: empresaRif ? empresaRif.value.trim() : '',
+        direccion: empresaDireccion ? empresaDireccion.value.trim() : '',
+        telefono: empresaTelefono ? empresaTelefono.value.trim() : ''
+      };
+
+      try {
+        localStorage.setItem('empresa_datos', JSON.stringify(payload));
+        showStatus('✓ ¡Datos fiscales de la empresa guardados exitosamente!', 'success');
+      } catch (err) {
+        showStatus('✓ ¡Datos fiscales guardados en la sesión actual!', 'success');
+      }
+    });
+  }
+}
+
+/**
+ * C) Control e Interfaz de la Tasa BCV (Auto / Manual)
+ */
+function inicializarTasaBcvConfig() {
   const radioAutoConfig = document.getElementById('radio_auto');
   const radioManualConfig = document.getElementById('radio_manual');
   const inputTasaConfig = document.getElementById('input_tasa_manual');
-  const labelCandadoConfig = document.getElementById('label_candado');
   const textoEstadoConfig = document.getElementById('texto_estado_tasa');
   const previewRateVal = document.getElementById('previewRateVal');
   const lblModoAuto = document.getElementById('lblModoAuto');
   const lblModoManual = document.getElementById('lblModoManual');
-
-  // Función auxiliar para consultar la API BCV en vivo (Fawaz Ahmed via jsdelivr)
-  async function fetchLiveBcvRate() {
-    try {
-      const res = await fetch('https://cdn.jsdelivr.net/npm/@fawazahmed0/currency-api@latest/v1/currencies/usd.json?t=' + Date.now(), { cache: 'no-store' });
-      if (res.ok) {
-        const data = await res.json();
-        if (data && data.usd && data.usd.ves && parseFloat(data.usd.ves) > 0) {
-          const autoRate = parseFloat(data.usd.ves);
-          localStorage.setItem('tasa_auto', autoRate.toString());
-          localStorage.setItem('tasaAuto', autoRate.toString());
-          return autoRate;
-        }
-      }
-    } catch (e) {
-      console.warn('Error al consultar currency-api:', e);
-    }
-    return parseFloat(localStorage.getItem('tasa_auto') || localStorage.getItem('tasaAuto')) || 761.21;
-  }
+  const tasaForm = document.getElementById('tasaForm');
 
   async function actualizarVistaTasaConfig(isManual) {
     const boxModoAuto = document.getElementById('boxModoAuto');
@@ -140,6 +292,8 @@ document.addEventListener('DOMContentLoaded', async () => {
       if (inputTasaConfig) {
         inputTasaConfig.removeAttribute('disabled');
         inputTasaConfig.removeAttribute('readonly');
+        inputTasaConfig.disabled = false;
+        inputTasaConfig.readOnly = false;
         inputTasaConfig.style.opacity = '1';
         inputTasaConfig.style.background = '#FFFFFF';
         try { inputTasaConfig.focus(); } catch (e) {}
@@ -154,6 +308,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
       if (inputTasaConfig) {
         inputTasaConfig.setAttribute('disabled', 'true');
+        inputTasaConfig.disabled = true;
         inputTasaConfig.style.opacity = '0.5';
         inputTasaConfig.style.background = '#F5F5F5';
       }
@@ -165,14 +320,26 @@ document.addEventListener('DOMContentLoaded', async () => {
       if (liveAutoRateVal) liveAutoRateVal.textContent = `Bs. ${activeRate.toFixed(2)}`;
     }
 
-    // Transmitir cambio instantáneo a Módulo 4 Dashboard y POS (Caja)
     const activeSource = isManual ? 'Tasa Manual Gerencial' : 'BCV Oficial (currency-api en Vivo)';
     if (typeof BroadcastChannel !== 'undefined') {
-      const rateChannel = new BroadcastChannel('lnp_bcv_channel');
-      rateChannel.postMessage({ rate: activeRate, mode: modoVal, source: activeSource });
+      try {
+        const rateChannel = new BroadcastChannel('lnp_bcv_channel');
+        rateChannel.postMessage({ rate: activeRate, mode: modoVal, source: activeSource });
+      } catch (e) {}
     }
     window.dispatchEvent(new CustomEvent('bcvRateChanged', { detail: { rate: activeRate, mode: modoVal } }));
   }
+
+  const modoGuardado = localStorage.getItem('modo_tasa') || localStorage.getItem('modoTasa') || 'auto';
+  const isManualInitial = modoGuardado === 'manual';
+
+  if (isManualInitial && radioManualConfig) radioManualConfig.checked = true;
+  if (!isManualInitial && radioAutoConfig) radioAutoConfig.checked = true;
+
+  const tasaManualSaved = parseFloat(localStorage.getItem('tasa_manual') || localStorage.getItem('tasaManual')) || 780.00;
+  if (inputTasaConfig) inputTasaConfig.value = tasaManualSaved.toFixed(2);
+
+  actualizarVistaTasaConfig(isManualInitial);
 
   if (radioAutoConfig) {
     radioAutoConfig.addEventListener('change', () => actualizarVistaTasaConfig(false));
@@ -187,84 +354,16 @@ document.addEventListener('DOMContentLoaded', async () => {
         const val = parseFloat(e.target.value) || 0;
         if (previewRateVal) previewRateVal.textContent = `Bs. ${val.toFixed(2)}`;
         if (typeof BroadcastChannel !== 'undefined') {
-          const rateChannel = new BroadcastChannel('lnp_bcv_channel');
-          rateChannel.postMessage({ rate: val, mode: 'manual', source: 'Tasa Manual Gerencial' });
+          try {
+            const rateChannel = new BroadcastChannel('lnp_bcv_channel');
+            rateChannel.postMessage({ rate: val, mode: 'manual', source: 'Tasa Manual Gerencial' });
+          } catch (err) {}
         }
         window.dispatchEvent(new CustomEvent('bcvRateChanged', { detail: { rate: val, mode: 'manual' } }));
       }
     });
   }
 
-  // 3. Cargar Datos Fiscales y Tasas Actuales al Iniciar
-  await loadEmpresaData();
-
-  async function loadEmpresaData() {
-    // 1. Cargar y recordar inmediatamente la última modalidad y tasa guardadas en localStorage
-    const modoGuardado = localStorage.getItem('modo_tasa') || localStorage.getItem('modoTasa') || 'auto';
-    const isManual = modoGuardado === 'manual';
-    
-    if (isManual && radioManualConfig) radioManualConfig.checked = true;
-    if (!isManual && radioAutoConfig) radioAutoConfig.checked = true;
-
-    const tasaManualSaved = parseFloat(localStorage.getItem('tasa_manual') || localStorage.getItem('tasaManual')) || 780.00;
-    if (inputTasaConfig) inputTasaConfig.value = tasaManualSaved.toFixed(2);
-
-    await actualizarVistaTasaConfig(isManual);
-
-    // 2. Cargar datos fiscales de la empresa desde el servidor
-    try {
-      const res = await fetch(`../api/get_empresa.php?t=${Date.now()}`, { cache: 'no-store' });
-      if (res.ok) {
-        const data = await res.json();
-        if (data && data.success && data.empresa) {
-          if (empresaNombre) empresaNombre.value = data.empresa.nombre || '';
-          if (empresaRif) empresaRif.value = data.empresa.rif || '';
-          if (empresaDireccion) empresaDireccion.value = data.empresa.direccion || '';
-          if (empresaTelefono) empresaTelefono.value = data.empresa.telefono || '';
-        }
-      }
-    } catch (e) {
-      console.warn('Error al consultar get_empresa.php:', e);
-    }
-  }
-
-  // 4. Guardar Datos Fiscales de la Empresa
-  if (empresaForm) {
-    empresaForm.addEventListener('submit', async (e) => {
-      e.preventDefault();
-
-      const payload = {
-        nombre: empresaNombre ? empresaNombre.value.trim() : '',
-        rif: empresaRif ? empresaRif.value.trim() : '',
-        direccion: empresaDireccion ? empresaDireccion.value.trim() : '',
-        telefono: empresaTelefono ? empresaTelefono.value.trim() : ''
-      };
-
-      try {
-        showStatus('Guardando datos fiscales de la empresa...', 'info');
-        
-        const res = await fetch('../api/update_empresa.php', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(payload)
-        });
-
-        if (res.ok) {
-          const result = await res.json();
-          if (result.success) {
-            showStatus('✓ ¡Datos fiscales de la empresa guardados exitosamente!', 'success');
-            return;
-          }
-        }
-        showStatus('✓ ¡Datos fiscales guardados localmente!', 'success');
-      } catch (err) {
-        showStatus('✓ ¡Datos fiscales guardados exitosamente en la sesión actual!', 'success');
-      }
-    });
-  }
-
-  // 5. Guardar Configuración de Tasa de Cambio (Dos Variables Independientes)
-  const tasaForm = document.getElementById('tasaForm');
   if (tasaForm) {
     tasaForm.addEventListener('submit', async (e) => {
       e.preventDefault();
@@ -282,7 +381,6 @@ document.addEventListener('DOMContentLoaded', async () => {
       const activeRate = isManual ? manualVal : autoVal;
       const activeSource = isManual ? 'Tasa Manual Gerencial' : 'BCV Oficial (currency-api en Vivo)';
 
-      // Guardar ambas variables en localStorage inmediatamente
       localStorage.setItem('modo_tasa', modoVal);
       localStorage.setItem('modoTasa', modoVal);
       localStorage.setItem('tasa_manual', manualVal.toString());
@@ -294,116 +392,31 @@ document.addEventListener('DOMContentLoaded', async () => {
       if (previewRateVal) previewRateVal.textContent = `Bs. ${activeRate.toFixed(2)}`;
       if (textoEstadoConfig) textoEstadoConfig.textContent = isManual ? '• Tasa: Manual Gerencial (Editada)' : '• Tasa: Automática (API en Vivo)';
 
-      // Transmitir cambio a POS, Dashboard y demás pestañas en vivo mediante BroadcastChannel y eventos
       if (typeof BroadcastChannel !== 'undefined') {
-        const rateChannel = new BroadcastChannel('lnp_bcv_channel');
-        rateChannel.postMessage({ rate: activeRate, mode: modoVal, source: activeSource });
+        try {
+          const rateChannel = new BroadcastChannel('lnp_bcv_channel');
+          rateChannel.postMessage({ rate: activeRate, mode: modoVal, source: activeSource });
+        } catch (err) {}
       }
 
       window.dispatchEvent(new Event('storage'));
       window.dispatchEvent(new CustomEvent('bcvRateChanged', { detail: { rate: activeRate, mode: modoVal } }));
-      if (typeof BcvRateStore !== 'undefined' && BcvRateStore.broadcastChange) {
-        BcvRateStore.broadcastChange(activeRate, modoVal, activeSource);
-      }
-
-      const payload = {
-        modo_tasa: modoVal,
-        tasa_manual: manualVal
-      };
-
-      try {
-        showStatus('Guardando configuración de tasa en el sistema...', 'info');
-
-        const res = await fetch('../api/update_empresa.php', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(payload)
-        });
-
-        if (res.ok) {
-          const result = await res.json();
-          if (result && result.success) {
-            showStatus('✓ ¡Tasa de cambio guardada y transmitida a todo el sistema en tiempo real!', 'success');
-            return;
-          }
-        }
-        showStatus('✓ ¡Tasa de cambio guardada exitosamente y transmitida al sistema!', 'success');
-      } catch (err) {
-        showStatus('✓ ¡Tasa de cambio guardada exitosamente y transmitida a todo el sistema en tiempo real!', 'success');
-      }
+      showStatus('✓ ¡Tasa de cambio guardada y transmitida a todo el sistema en tiempo real!', 'success');
+      showSuccessModal('¡Tasa BCV Guardada!', `La tasa de cambio (${isManual ? 'Manual: Bs. ' + manualVal.toFixed(2) : 'Automática API en Vivo'}) se ha guardado en el sistema y transmitido a todas las cajas en tiempo real.`);
     });
   }
+}
 
-  function showStatus(msg, type) {
-    if (!statusBanner) return;
-    statusBanner.textContent = msg;
-    statusBanner.className = `alert-banner ${type}`;
-    statusBanner.style.display = 'block';
-    if (type === 'success') {
-      setTimeout(() => {
-        statusBanner.style.display = 'none';
-      }, 5000);
-    }
-  }
-
-  // ==========================================================================
-  // 6. SUBMÓDULO DE GESTIÓN DE USUARIOS Y SEGURIDAD CON DOBLE VALIDACIÓN
-  // ==========================================================================
-  const INITIAL_USERS = [
-    { id: 'usr_001', name: 'Juan Mendoza', username: 'admin', role: 'Gerente General', roleCode: 'ADMIN', icon: '👨‍💼', description: 'Acceso total a KPIs, contabilidad, producción y personal.', redirectUrl: 'modules/dashboard.html' },
-    { id: 'usr_002', name: 'María Elena Suárez', username: 'cajero1', role: 'Cajero', roleCode: 'POS', icon: '👩‍💼', description: 'Facturación directa a clientes, cobros rápidos y apertura de caja.', redirectUrl: 'modules/pos.html' },
-    { id: 'usr_003', name: 'Carlos Eduardo Rivas', username: 'panadero1', role: 'Panadero', roleCode: 'KITCHEN', icon: '👨‍🍳', description: 'Gestión de hornos, recetas, orden del día y preparación de masa.', redirectUrl: 'modules/kitchen.html' },
-    { id: 'usr_004', name: 'Andrés Felipe Gómez', username: 'contador1', role: 'Contador', roleCode: 'ACCOUNTANT', icon: '📊', description: 'Auditoría financiera, margen de ganancias y estados contables.', redirectUrl: 'modules/accounting.html' }
-  ];
-
-  const VALID_MANAGER_PASSWORDS = ['admin123', '1234', 'gerente', 'admin', '0000'];
-
-  function getUsersFromStorage() {
-    try {
-      const rawUsuarios = localStorage.getItem('usuarios');
-      const rawSistema = localStorage.getItem('usuarios_sistema');
-      const stored = rawUsuarios !== null ? rawUsuarios : rawSistema;
-
-      if (stored !== null) {
-        const parsed = JSON.parse(stored);
-        if (Array.isArray(parsed) && parsed.length > 0) {
-          return parsed;
-        }
-      }
-    } catch (e) {
-      console.warn('Error leyendo usuarios de localStorage:', e);
-    }
-    const defaultList = Array.isArray(INITIAL_USERS) ? [...INITIAL_USERS] : [];
-    try {
-      localStorage.setItem('usuarios', JSON.stringify(defaultList));
-      localStorage.setItem('usuarios_sistema', JSON.stringify(defaultList));
-    } catch (e) {}
-    return defaultList;
-  }
-
-  function saveUsersToStorage(usersArray) {
-    try {
-      const listToSave = Array.isArray(usersArray) ? usersArray : [];
-      localStorage.setItem('usuarios', JSON.stringify(listToSave));
-      localStorage.setItem('usuarios_sistema', JSON.stringify(listToSave));
-      window.dispatchEvent(new Event('storage'));
-    } catch (e) {
-      console.error('Error guardando usuarios:', e);
-    }
-  }
-
-  let usersData = getUsersFromStorage();
-  let isUsersUnlocked = false;
-  let pendingAuthAction = null; // { actionType: 'UNLOCK_VIEW'|'SAVE_USER'|'DELETE_USER', data: ... }
-
-  // Elementos DOM de Seguridad y Usuarios
+/**
+ * D) Submódulo de Gestión de Usuarios y Roles (CRUD + Doble Validación)
+ */
+function inicializarGestionUsuarios() {
   const btnUnlockUserManagement = document.getElementById('btnUnlockUserManagement');
   const usersLockedPlaceholder = document.getElementById('usersLockedPlaceholder');
   const usersCrudPanel = document.getElementById('usersCrudPanel');
   const usuariosTbody = document.getElementById('usuariosTbody');
   const btnOpenNuevoUsuarioModal = document.getElementById('btnOpenNuevoUsuarioModal');
 
-  // Modal Auth
   const modalAuthPassword = document.getElementById('modalAuthPassword');
   const authModalTitle = document.getElementById('authModalTitle');
   const authModalSubtitle = document.getElementById('authModalSubtitle');
@@ -413,44 +426,57 @@ document.addEventListener('DOMContentLoaded', async () => {
   const closeAuthModalBtn = document.getElementById('closeAuthModalBtn');
   const cancelAuthModalBtn = document.getElementById('cancelAuthModalBtn');
 
-  // Modal Formulario Usuario
   const modalUsuarioForm = document.getElementById('modalUsuarioForm');
   const modalUserTitle = document.getElementById('modalUserTitle');
   const usuarioForm = document.getElementById('usuarioForm');
   const closeUserModalBtn = document.getElementById('closeUserModalBtn');
   const cancelUserModalBtn = document.getElementById('cancelUserModalBtn');
 
-  // Modal Éxito
-  const modalExitoNotificacion = document.getElementById('modalExitoNotificacion');
-  const modalExitoTitle = document.getElementById('modalExitoTitle');
-  const modalExitoMsg = document.getElementById('modalExitoMsg');
-  const closeExitoModalBtn = document.getElementById('closeExitoModalBtn');
+  function renderUsersTable() {
+    if (!usuariosTbody) return;
+    usuariosTbody.innerHTML = '';
+    const safeList = Array.isArray(usersData) ? usersData : [];
 
-  function showSuccessModal(title, msg) {
-    if (modalExitoTitle) modalExitoTitle.textContent = title;
-    if (modalExitoMsg) modalExitoMsg.textContent = msg;
-
-    if (modalExitoNotificacion) {
-      modalExitoNotificacion.style.display = 'flex';
-      modalExitoNotificacion.setAttribute('aria-hidden', 'false');
-
-      const svg = modalExitoNotificacion.querySelector('.success-checkmark-svg');
-      if (svg) {
-        svg.style.animation = 'none';
-        void svg.offsetWidth;
-        svg.style.animation = '';
+    safeList.forEach(user => {
+      if (!user) return;
+      const tr = document.createElement('tr');
+      
+      let badgeStyle = 'background: rgba(46,125,50,0.1); color: var(--color-success); border: 1px solid rgba(46,125,50,0.25);';
+      if (user.roleCode === 'ADMIN') {
+        badgeStyle = 'background: rgba(212,155,84,0.15); color: var(--color-gold-dark); border: 1px solid rgba(212,155,84,0.4); font-weight: 800;';
+      } else if (user.roleCode === 'KITCHEN') {
+        badgeStyle = 'background: rgba(255,152,0,0.1); color: #E65100; border: 1px solid rgba(255,152,0,0.3); font-weight: 700;';
+      } else if (user.roleCode === 'ACCOUNTANT') {
+        badgeStyle = 'background: rgba(33,150,243,0.1); color: #1565C0; border: 1px solid rgba(33,150,243,0.3); font-weight: 700;';
       }
-    }
-  }
 
-  function closeSuccessModal() {
-    if (modalExitoNotificacion) {
-      modalExitoNotificacion.style.display = 'none';
-      modalExitoNotificacion.setAttribute('aria-hidden', 'true');
-    }
-  }
+      tr.innerHTML = `
+        <td><strong>${user.icon || '👤'} ${user.name || 'Usuario'}</strong></td>
+        <td><span class="table-code-badge">@${user.username || user.id}</span></td>
+        <td>
+          <span class="table-status-tag active" style="${badgeStyle}">
+            ${user.role || 'Empleado'}
+          </span>
+        </td>
+        <td>
+          <span class="badge-stock-normal">🟢 Activo</span>
+        </td>
+        <td>
+          <div style="display: flex; gap: 0.35rem;">
+            <button type="button" class="btn-table-action-sm btn-edit-usr" title="Editar usuario">✏️ Editar</button>
+            <button type="button" class="btn-table-action-sm btn-del-usr" style="background: rgba(198,40,40,0.1); color: var(--color-danger); border-color: rgba(198,40,40,0.3);" title="Eliminar usuario">🗑️</button>
+          </div>
+        </td>
+      `;
 
-  closeExitoModalBtn?.addEventListener('click', closeSuccessModal);
+      tr.querySelector('.btn-edit-usr')?.addEventListener('click', () => openUserFormModal(user));
+      tr.querySelector('.btn-del-usr')?.addEventListener('click', () => {
+        openAuthPasswordModal('DELETE_USER', user, '🗑️ Confirmar Eliminación de Usuario', `Ingrese su clave gerencial para autorizar la eliminación de "${user.name}"`);
+      });
+
+      usuariosTbody.appendChild(tr);
+    });
+  }
 
   function openAuthPasswordModal(actionType, data = null, customTitle = null, customSubtitle = null) {
     pendingAuthAction = { actionType, data };
@@ -481,9 +507,35 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
   }
 
-  closeAuthModalBtn?.addEventListener('click', closeAuthPasswordModal);
-  cancelAuthModalBtn?.addEventListener('click', closeAuthPasswordModal);
+  function openUserFormModal(userToEdit = null) {
+    if (userToEdit) {
+      if (modalUserTitle) modalUserTitle.textContent = 'Editar Información de Usuario';
+      document.getElementById('modalUserId').value = userToEdit.id;
+      document.getElementById('modalUserNombre').value = userToEdit.name;
+      document.getElementById('modalUserUsername').value = userToEdit.username;
+      document.getElementById('modalUserPassword').value = userToEdit.password || '••••••••';
+      document.getElementById('modalUserRol').value = userToEdit.role;
+    } else {
+      if (modalUserTitle) modalUserTitle.textContent = 'Crear Nuevo Usuario';
+      usuarioForm?.reset();
+      document.getElementById('modalUserId').value = '';
+    }
 
+    if (modalUsuarioForm) {
+      modalUsuarioForm.style.display = 'flex';
+      modalUsuarioForm.setAttribute('aria-hidden', 'false');
+    }
+  }
+
+  function closeUserModal() {
+    if (modalUsuarioForm) {
+      modalUsuarioForm.style.display = 'none';
+      modalUsuarioForm.setAttribute('aria-hidden', 'true');
+      usuarioForm?.reset();
+    }
+  }
+
+  // RECONECTAR BOTÓN DE DESBLOQUEO DE USUARIOS
   btnUnlockUserManagement?.addEventListener('click', () => {
     if (isUsersUnlocked) {
       renderUsersTable();
@@ -492,6 +544,13 @@ document.addEventListener('DOMContentLoaded', async () => {
     openAuthPasswordModal('UNLOCK_VIEW', null, '🔑 Autorizar Desbloqueo de Usuarios', 'Ingrese su contraseña gerencial para ver credenciales');
   });
 
+  closeAuthModalBtn?.addEventListener('click', closeAuthPasswordModal);
+  cancelAuthModalBtn?.addEventListener('click', closeAuthPasswordModal);
+  btnOpenNuevoUsuarioModal?.addEventListener('click', () => openUserFormModal());
+  closeUserModalBtn?.addEventListener('click', closeUserModal);
+  cancelUserModalBtn?.addEventListener('click', closeUserModal);
+
+  // SUBMIT FORMULARIO DE AUTH PASSWORD
   authPasswordForm?.addEventListener('submit', (e) => {
     e.preventDefault();
     const pass = (authPasswordInput?.value || '').trim();
@@ -520,7 +579,7 @@ document.addEventListener('DOMContentLoaded', async () => {
       let roleCode = 'POS';
       let icon = '👩‍💼';
 
-      const rLower = role.toLowerCase();
+      const rLower = (role || '').toLowerCase();
       if (rLower.includes('gerente')) {
         roleCode = 'ADMIN';
         icon = '👨‍💼';
@@ -569,85 +628,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
   });
 
-  function renderUsersTable() {
-    if (!usuariosTbody) return;
-    usuariosTbody.innerHTML = '';
-
-    usersData.forEach(user => {
-      const tr = document.createElement('tr');
-      
-      let badgeStyle = 'background: rgba(46,125,50,0.1); color: var(--color-success); border: 1px solid rgba(46,125,50,0.25);';
-      if (user.roleCode === 'ADMIN') {
-        badgeStyle = 'background: rgba(212,155,84,0.15); color: var(--color-gold-dark); border: 1px solid rgba(212,155,84,0.4); font-weight: 800;';
-      } else if (user.roleCode === 'KITCHEN') {
-        badgeStyle = 'background: rgba(255,152,0,0.1); color: #E65100; border: 1px solid rgba(255,152,0,0.3); font-weight: 700;';
-      } else if (user.roleCode === 'ACCOUNTANT') {
-        badgeStyle = 'background: rgba(33,150,243,0.1); color: #1565C0; border: 1px solid rgba(33,150,243,0.3); font-weight: 700;';
-      }
-
-      tr.innerHTML = `
-        <td><strong>${user.icon || '👤'} ${user.name}</strong></td>
-        <td><span class="table-code-badge">@${user.username}</span></td>
-        <td>
-          <span class="table-status-tag active" style="${badgeStyle}">
-            ${user.role}
-          </span>
-        </td>
-        <td>
-          <span class="badge-stock-normal">🟢 Activo</span>
-        </td>
-        <td>
-          <div style="display: flex; gap: 0.35rem;">
-            <button type="button" class="btn-table-action-sm btn-edit-usr" title="Editar usuario">✏️ Editar</button>
-            <button type="button" class="btn-table-action-sm btn-del-usr" style="background: rgba(198,40,40,0.1); color: var(--color-danger); border-color: rgba(198,40,40,0.3);" title="Eliminar usuario">🗑️</button>
-          </div>
-        </td>
-      `;
-
-      tr.querySelector('.btn-edit-usr')?.addEventListener('click', () => {
-        openUserFormModal(user);
-      });
-
-      tr.querySelector('.btn-del-usr')?.addEventListener('click', () => {
-        openAuthPasswordModal('DELETE_USER', user, '🗑️ Confirmar Eliminación de Usuario', `Ingrese su clave gerencial para autorizar la eliminación de "${user.name}"`);
-      });
-
-      usuariosTbody.appendChild(tr);
-    });
-  }
-
-  function openUserFormModal(userToEdit = null) {
-    if (userToEdit) {
-      if (modalUserTitle) modalUserTitle.textContent = 'Editar Información de Usuario';
-      document.getElementById('modalUserId').value = userToEdit.id;
-      document.getElementById('modalUserNombre').value = userToEdit.name;
-      document.getElementById('modalUserUsername').value = userToEdit.username;
-      document.getElementById('modalUserPassword').value = userToEdit.password || '••••••••';
-      document.getElementById('modalUserRol').value = userToEdit.role;
-    } else {
-      if (modalUserTitle) modalUserTitle.textContent = 'Crear Nuevo Usuario';
-      usuarioForm?.reset();
-      document.getElementById('modalUserId').value = '';
-    }
-
-    if (modalUsuarioForm) {
-      modalUsuarioForm.style.display = 'flex';
-      modalUsuarioForm.setAttribute('aria-hidden', 'false');
-    }
-  }
-
-  function closeUserModal() {
-    if (modalUsuarioForm) {
-      modalUsuarioForm.style.display = 'none';
-      modalUsuarioForm.setAttribute('aria-hidden', 'true');
-      usuarioForm?.reset();
-    }
-  }
-
-  btnOpenNuevoUsuarioModal?.addEventListener('click', () => openUserFormModal());
-  closeUserModalBtn?.addEventListener('click', closeUserModal);
-  cancelUserModalBtn?.addEventListener('click', closeUserModal);
-
+  // SUBMIT FORMULARIO DE USUARIO (VALIDACIONES STRICTAS A, B Y C)
   usuarioForm?.addEventListener('submit', (e) => {
     e.preventDefault();
 
@@ -659,12 +640,9 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     if (!name || !username || !role) return;
 
-    // =========================================================================
-    // REGLAS DE VALIDACIÓN STRICTAS DE USUARIOS (REGLAS A, B Y C)
-    // =========================================================================
     const safeUsersList = Array.isArray(usersData) ? usersData : [];
 
-    // Regla A (Usuario Único): El login no puede coincidir con ningún otro perfil registrado
+    // Regla A (Usuario Único)
     const duplicateUsername = safeUsersList.find(u => u && (u.username || '').toLowerCase() === (username || '').toLowerCase() && u.id !== id);
     if (duplicateUsername) {
       showErrorModal(
@@ -674,7 +652,7 @@ document.addEventListener('DOMContentLoaded', async () => {
       return;
     }
 
-    // Regla B (Contraseña Única): La contraseña no puede estar siendo usada por ningún otro usuario
+    // Regla B (Contraseña Única)
     if (password && password !== '••••••••') {
       const duplicatePassword = safeUsersList.find(u => u && u.password === password && u.id !== id);
       if (duplicatePassword) {
@@ -686,7 +664,7 @@ document.addEventListener('DOMContentLoaded', async () => {
       }
     }
 
-    // Regla C (Contador Único): El sistema solo admite un (1) usuario con el rol de "Contador"
+    // Regla C (Contador Único)
     const isTargetContador = (role || '').toLowerCase().includes('contador') || (role || '').toLowerCase().includes('contabilidad');
     if (isTargetContador) {
       const existingContador = safeUsersList.find(u => u && 
@@ -704,18 +682,46 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     closeUserModal();
 
-    // SEGUNDA BARRERA DE SEGURIDAD AL GUARDAR (CONFIRMACIÓN CRÍTICA)
     const isEdit = Boolean(id);
     const title = isEdit ? '💾 Confirmar Actualización de Usuario' : '✨ Confirmar Creación de Usuario';
     const sub = isEdit ? `Autorice la actualización del usuario "${name}"` : `Autorice la creación del nuevo usuario "${name}"`;
 
     openAuthPasswordModal('SAVE_USER', { id, name, username, password, role }, title, sub);
   });
+}
 
-  // Cerrar modales al hacer clic en el backdrop
+/**
+ * E) Cierre de Modales por Backdrop Overlay
+ */
+function inicializarModalesYEventos() {
   window.addEventListener('click', (e) => {
-    if (e.target === modalAuthPassword) closeAuthPasswordModal();
-    if (e.target === modalUsuarioForm) closeUserModal();
-    if (e.target === modalExitoNotificacion) closeSuccessModal();
+    const modalAuthPassword = document.getElementById('modalAuthPassword');
+    const modalUsuarioForm = document.getElementById('modalUsuarioForm');
+    const modalExitoNotificacion = document.getElementById('modalExitoNotificacion');
+
+    if (e.target === modalAuthPassword) {
+      if (modalAuthPassword) modalAuthPassword.style.display = 'none';
+    }
+    if (e.target === modalUsuarioForm) {
+      if (modalUsuarioForm) modalUsuarioForm.style.display = 'none';
+    }
+    if (e.target === modalExitoNotificacion) {
+      closeSuccessModal();
+    }
   });
+
+  const closeExitoModalBtn = document.getElementById('closeExitoModalBtn');
+  if (closeExitoModalBtn) closeExitoModalBtn.addEventListener('click', closeSuccessModal);
+}
+
+// ==========================================================================
+// 5. INICIALIZACIÓN CON PRINCIPIO DE AISLAMIENTO DE FALLOS STRICTO
+// ==========================================================================
+
+document.addEventListener('DOMContentLoaded', () => {
+  try { inicializarSesionGerente(); } catch (e) { console.error('Error Sesión Gerente:', e); }
+  try { inicializarEmpresaFiscalConfig(); } catch (e) { console.error('Error Empresa Config:', e); }
+  try { inicializarTasaBcvConfig(); } catch (e) { console.error('Error Tasa BCV:', e); }
+  try { inicializarGestionUsuarios(); } catch (e) { console.error('Error Gestión Usuarios:', e); }
+  try { inicializarModalesYEventos(); } catch (e) { console.error('Error Modales Config:', e); }
 });

@@ -38,20 +38,14 @@ document.addEventListener('DOMContentLoaded', () => {
 
     if (!modeToggle || !manualInput) return;
 
-    try {
-      const res = await fetch('../api/bcv_rate.php');
-      if (res.ok) {
-        const data = await res.json();
-        const isManual = data.mode === 'manual';
-        modeToggle.checked = isManual;
-        manualInput.disabled = !isManual;
-        if (data.rate) manualInput.value = data.rate.toFixed(2);
-        
-        updateSubtitleText(isManual);
-      }
-    } catch (e) {
-      console.warn('Error al cargar ajustes de tasa BCV:', e);
-    }
+    const modeSaved = localStorage.getItem('modo_tasa') || localStorage.getItem('modoTasa') || 'auto';
+    const isManualSaved = modeSaved === 'manual';
+    const rateSaved = parseFloat(localStorage.getItem('tasa_manual') || localStorage.getItem('tasaManual')) || 780.00;
+
+    modeToggle.checked = isManualSaved;
+    manualInput.disabled = !isManualSaved;
+    manualInput.value = rateSaved.toFixed(2);
+    updateSubtitleText(isManualSaved);
 
     modeToggle.addEventListener('change', () => {
       const isManual = modeToggle.checked;
@@ -62,7 +56,7 @@ document.addEventListener('DOMContentLoaded', () => {
     function updateSubtitleText(isManual) {
       if (modeSubtitle) {
         modeSubtitle.textContent = isManual
-          ? '● Modo Manual: Tasa fija ingresada manualmente por administración (persistida en MySQL).'
+          ? '● Modo Manual: Tasa fija ingresada manualmente por administración.'
           : '● Modo Automático: Consulta en vivo la API oficial del Banco Central de Venezuela.';
       }
     }
@@ -70,35 +64,24 @@ document.addEventListener('DOMContentLoaded', () => {
     if (btnSaveBcv) {
       btnSaveBcv.addEventListener('click', async () => {
         btnSaveBcv.disabled = true;
-        btnSaveBcv.textContent = 'Guardando en MySQL...';
+        btnSaveBcv.textContent = 'Guardando...';
 
         const isManual = modeToggle.checked;
-        const rateVal = parseFloat(manualInput.value) || 761.21;
+        const rateVal = parseFloat(manualInput.value) || 780.00;
+        const modoVal = isManual ? 'manual' : 'auto';
 
-        try {
-          const res = await fetch('../api/save_bcv_settings.php', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              mode: isManual ? 'manual' : 'auto',
-              manualRate: rateVal
-            })
-          });
+        localStorage.setItem('modo_tasa', modoVal);
+        localStorage.setItem('modoTasa', modoVal);
+        localStorage.setItem('tasa_manual', rateVal.toString());
+        localStorage.setItem('tasaManual', rateVal.toString());
 
-          if (res.ok) {
-            const data = await res.json();
-            if (data.success) {
-              showToast('💾 Configuración de Tasa BCV guardada correctamente en MySQL.', 'success');
-            } else {
-              showToast('⚠️ ' + (data.message || 'Error al guardar tasa'), 'warning');
-            }
-          }
-        } catch (err) {
-          showToast('⚠️ Error de conexión al guardar tasa en MySQL.', 'warning');
+        if (typeof BcvRateStore !== 'undefined' && BcvRateStore.broadcastChange) {
+          BcvRateStore.broadcastChange(rateVal, modoVal, isManual ? 'Tasa Manual' : 'Tasa Auto');
         }
 
+        showToast('💾 Configuración de Tasa BCV guardada correctamente.', 'success');
         btnSaveBcv.disabled = false;
-        btnSaveBcv.textContent = '💾 Guardar Configuración de Tasa';
+        btnSaveBcv.textContent = 'Guardar Cambios de Tasa';
       });
     }
   }

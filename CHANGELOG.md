@@ -4,6 +4,76 @@ Todos los cambios significativos, nuevas funcionalidades y actualizaciones del s
 
 El formato está basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1.0.0/) y este proyecto se adhiere a [Semantic Versioning](https://semver.org/lang/es/).
 
+## [5.9.8] - 2026-08-22 (Reconexión de Modal de Detalle, Persistencia Real de Inventario en localStorage y Animación Check en Tasa BCV)
+
+### 📦 Correcciones de Interacción y Flujos de Guardado ([js/modules/dashboard.js](file:///C:/Users/juana/.gemini/antigravity-ide/scratch/la-nueva-parisienne/js/modules/dashboard.js), [js/modules/configuraciones.js](file:///C:/Users/juana/.gemini/antigravity-ide/scratch/la-nueva-parisienne/js/modules/configuraciones.js))
+- **Modal de Detalle de Movimiento**:
+  - Se declaró la función `closeMovementDetailModal()` y se reasignaron los listeners para el botón superior "X" (`btnCerrarModalDetalle`), el botón inferior "Cerrar" (`btnCerrarModalDetalleFooter`) y el clic en el backdrop overlay.
+  - Se conectó el botón "Imprimir" (`btnImprimirComprobante`) a `window.print()`.
+  - Se conectó el botón "Copiar Referencia" (`btnCopiarRef`) a `navigator.clipboard.writeText()` para copiar el código de transacción (ej. `FAC-2026-1003`) con notificación inmediata.
+- **Persistencia en `localStorage` & Botón "Entendido"**:
+  - Se implementó la persistencia síncrona en `localStorage` para materias primas (`materias_primas`), productos terminados (`catalogo_pos`) y proveedores (`proveedores_list`).
+  - Al guardar o editar un producto/insumo, los datos se escriben en `localStorage` antes de lanzar la animación.
+  - El botón "Entendido" (`closeExitoModalBtn`) oculta el contenedor animado `#modalExitoNotificacion`, limpia los formularios activos y refresca visualmente las tablas del inventario.
+- **Animación Check en Tasa BCV**:
+  - Al guardar la Tasa de Cambio BCV en `configuraciones.js` (Manual o Auto), se dispara el modal `#modalExitoNotificacion` con la animación SVG del Checkmark verde.
+
+---
+
+## [5.9.7] - 2026-08-22 (Limpieza de Sintaxis y Corrección de Llaves Redundantes en settings.js)
+
+### 🧹 Corrección de Sintaxis ([js/modules/settings.js](file:///C:/Users/juana/.gemini/antigravity-ide/scratch/la-nueva-parisienne/js/modules/settings.js))
+- **Eliminación de Bloque de Cierre Redundante**:
+  - Se removieron las llaves duplicadas `}); }` en las líneas 87-89 de `settings.js` que cerraban prematuramente la función `DOMContentLoaded`.
+  - El archivo `settings.js` ahora compila con 0 errores de sintaxis en el linter.
+
+---
+
+## [5.9.6] - 2026-08-22 (Reconexión de Interfaz Tasa BCV, Modal Desbloquear Usuarios y Aislamiento de Fallos en Módulo 9)
+
+### ⚙️ Refactorización y Reconexión en Módulo 9 ([js/modules/configuraciones.js](file:///C:/Users/juana/.gemini/antigravity-ide/scratch/la-nueva-parisienne/js/modules/configuraciones.js))
+- **Eliminación Total de Fetch a PHP**:
+  - Se eliminaron las solicitudes `fetch('../api/get_empresa.php')` y `fetch('../api/update_empresa.php')` que generaban bloqueos de ejecución por `SyntaxError`.
+  - Los datos fiscales de la empresa y la configuración de tasa de cambio se persisten y leen 100% de forma local a través de `localStorage`.
+- **Reconexión de Interfaz Tasa BCV**:
+  - Se vincularon nuevamente los EventListeners de los radio buttons (`Auto` vs `Manual`).
+  - Al seleccionar el modo `Manual`, el input de tasa remueve los atributos `disabled` y `readonly`, recibe foco automático y actualiza la vista preliminar en vivo.
+- **Reconexión del Modal de Gestión de Usuarios**:
+  - Se reasignó el oyente `addEventListener('click')` al botón `btnUnlockUserManagement` ("Desbloquear Gestión de Usuarios") para desplegar el modal de seguridad `modalAuthPassword`.
+- **Aislamiento por Capas en `DOMContentLoaded`**:
+  - La inicialización del Módulo 9 se estructuró en funciones independientes enlazadas en bloques `try...catch` individuales (`inicializarSesionGerente`, `inicializarEmpresaFiscalConfig`, `inicializarTasaBcvConfig`, `inicializarGestionUsuarios`, `inicializarModalesYEventos`).
+
+---
+
+## [5.9.5] - 2026-08-22 (Deshabilitación de Fetch a Backend PHP Inexistente y Simulación Exclusiva Local)
+
+### 🛠️ Corrección de SyntaxError por Inexistencia de Servidor Backend PHP ([js/core/session-store.js](file:///C:/Users/juana/.gemini/antigravity-ide/scratch/la-nueva-parisienne/js/core/session-store.js))
+- **Eliminación de Solicitudes a PHP (`fetch('api/auth/get_profiles.php')` & `fetch('api/auth/login.php')`)**:
+  - Se removió la llamada fetch asíncrona a archivos PHP en `getProfilesAsync()` y `validatePinAsync()` que provocaban el error `SyntaxError: Unexpected token '<'` al recibir código PHP sin ejecutar en servidores de desarrollo estáticos.
+- **Simulación Exclusiva en `localStorage`**:
+  - El sistema lee la lista de perfiles y usuarios de forma 100% local a través de `localStorage.getItem('usuarios')` y `localStorage.getItem('usuarios_sistema')`.
+- **Respaldo de Seguridad Automático (Seed)**:
+  - Si el `localStorage` está totalmente vacío (`null`), el sistema inyecta la lista por defecto con el Gerente General original ("Juan Mendoza") de forma inmediata y sin requerir conexión a redes o servidores externos.
+
+---
+
+## [5.9.4] - 2026-08-22 (Refactorización con Principio de Aislamiento de Fallos en Módulo 4 Dashboard)
+
+### 🛡️ Modularización Estricta de Inicialización DOMContentLoaded ([js/modules/dashboard.js](file:///C:/Users/juana/.gemini/antigravity-ide/scratch/la-nueva-parisienne/js/modules/dashboard.js))
+- **Aislamiento Total por Capas de Funcionalidad**:
+  - Se dividió la carga del Dashboard Gerencial en 6 funciones modularizadas e independientes:
+    1. `inicializarSesionYBarraSuperior()`
+    2. `inicializarNavegacionTabs()`
+    3. `cargarTasaCambio()`
+    4. `renderizarGraficos()`
+    5. `cargarInventario()`
+    6. `inicializarBotonesGenerales()`
+- **Resiliencia ante Fallos Locales**:
+  - Cada llamada se invoca dentro de un bloque `try...catch` aislado durante el evento `DOMContentLoaded`.
+  - Ante cualquier eventualidad de red, falla en API externa o ausencia de elementos visuales, las demás áreas (navegación, tablas, modales y botón de cerrar sesión) continúan operando al 100%.
+
+---
+
 ## [5.9.3] - 2026-08-22 (Inicialización Segura de Usuarios 'Juan Mendoza', Semilla Estricta y 'usuario_activo' en localStorage)
 
 ### 🔐 Manejo de Estado de Sesión y Semilla de Usuarios ([js/core/session-store.js](file:///C:/Users/juana/.gemini/antigravity-ide/scratch/la-nueva-parisienne/js/core/session-store.js), [js/modules/dashboard.js](file:///C:/Users/juana/.gemini/antigravity-ide/scratch/la-nueva-parisienne/js/modules/dashboard.js), [modules/dashboard.html](file:///C:/Users/juana/.gemini/antigravity-ide/scratch/la-nueva-parisienne/modules/dashboard.html), [js/modules/configuraciones.js](file:///C:/Users/juana/.gemini/antigravity-ide/scratch/la-nueva-parisienne/js/modules/configuraciones.js))

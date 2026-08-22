@@ -212,7 +212,8 @@ export const ProductsStore = {
       console.warn('Error al sincronizar catalogo_pos desde localStorage:', err);
     }
 
-    // 2. Intentar API PHP/MySQL si está disponible
+    // 2. Intentar API PHP/MySQL si está disponible (deshabilitado en entorno local estático)
+    /*
     try {
       let response = await fetch('../api/pos/get_products.php');
       if (!response.ok) {
@@ -230,6 +231,7 @@ export const ProductsStore = {
     } catch (err) {
       console.warn('API get_products.php no disponible. Usando catálogo local por defecto:', err);
     }
+    */
 
     // 3. Fallback a catálogo base local
     localStorage.setItem('catalogo_pos', JSON.stringify(PRODUCTS_DATABASE));

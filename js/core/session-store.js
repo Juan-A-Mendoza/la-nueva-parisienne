@@ -88,21 +88,10 @@ export const SessionStore = {
   },
 
   /**
-   * Obtiene la lista de perfiles configurados de forma asíncrona desde MySQL
-   * con fallback a los perfiles locales si la API PHP no responde
+   * Obtiene la lista de perfiles de usuario exclusivamente desde localStorage (Simulación Local)
    */
   async getProfilesAsync() {
-    try {
-      const response = await fetch('api/auth/get_profiles.php');
-      if (response.ok) {
-        const result = await response.json();
-        if (result.success && Array.isArray(result.profiles) && result.profiles.length > 0) {
-          return result.profiles;
-        }
-      }
-    } catch (err) {
-      console.warn('API get_profiles.php no disponible. Cargando perfiles locales:', err);
-    }
+    // API PHP deshabilitada para evitar SyntaxError en entornos de desarrollo sin servidor PHP activo
     return this.getProfiles();
   },
 
@@ -168,32 +157,10 @@ export const SessionStore = {
   },
 
   /**
-   * Valida el PIN ingresado consultando la API PHP / MySQL (asíncrono)
-   * con fallback automático a la base local
+   * Valida el PIN ingresado de forma asíncrona usando la simulación local
    */
   async validatePinAsync(userId, inputPin) {
-    try {
-      const response = await fetch('api/auth/login.php', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ userId, inputPin })
-      });
-
-      if (response.ok) {
-        const result = await response.json();
-        if (result.success && result.user) {
-          this.setSession({
-            user: result.user,
-            token: result.token,
-            loginTimestamp: new Date().toISOString()
-          });
-          return { success: true, redirectUrl: result.user.redirectUrl, user: result.user };
-        }
-      }
-    } catch (err) {
-      console.warn('API PHP/MySQL no disponible. Fallback local:', err);
-    }
-    
+    // API PHP deshabilitada para entorno de desarrollo local sin servidor PHP activo
     return this.validatePin(userId, inputPin);
   },
 
