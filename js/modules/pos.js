@@ -89,6 +89,10 @@ document.addEventListener('DOMContentLoaded', async () => {
   const subtotalEl = document.getElementById('subtotalVal');
   const discountValEl = document.getElementById('discountVal');
   const discountSelect = document.getElementById('discountSelect');
+  const customDiscountWrapper = document.getElementById('customDiscountWrapper');
+  const customDiscountInput = document.getElementById('customDiscountInput');
+  const discountSavingsBadge = document.getElementById('discountSavingsBadge');
+  const discountBadgeAmount = document.getElementById('discountBadgeAmount');
   const taxValEl = document.getElementById('taxVal');
   const totalValEl = document.getElementById('totalVal');
   const totalVesEl = document.getElementById('totalVesVal');
@@ -251,7 +255,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   window.addEventListener('storage', async (e) => {
     await loadLiveBcvRate();
-    if (e.key === 'catalogo_pos' || e.key === 'inventario_simulado') {
+    if (e.key === 'catalogo_pos') {
       await loadProductsCatalog();
     }
   });
@@ -317,37 +321,26 @@ document.addEventListener('DOMContentLoaded', async () => {
   });
 
   // ==========================================================================
-  // PASO 1: CARGA AUTOMÁTICA DE PRODUCTOS DE LA BD (CON INVENTARIO SIMULADO EN LOCALSTORAGE)
   // ==========================================================================
-  function getSimulatedInventoryMap() {
-    let invMap = {};
-    const stored = localStorage.getItem('inventario_simulado');
-    if (stored) {
-      try {
-        invMap = JSON.parse(stored);
-      } catch (e) {
-        console.warn('Error al parsear inventario_simulado:', e);
+  // PASO 1: CARGA DE PRODUCTOS DESDE LA ÚNICA FUENTE DE VERDAD (catalogo_pos)
+  // ==========================================================================
+  function syncProductsWithPosCatalog() {
+    try {
+      const storedCatalog = localStorage.getItem('catalogo_pos');
+      if (storedCatalog) {
+        const catalogList = JSON.parse(storedCatalog);
+        if (Array.isArray(catalogList) && catalogList.length > 0) {
+          productsList.forEach(p => {
+            const match = catalogList.find(c => c.id === p.id || c.code === p.code || c.name === p.name);
+            if (match) {
+              p.stock = parseFloat(match.stock) || 0;
+              if (match.salePrice) p.price = parseFloat(match.salePrice);
+            }
+          });
+        }
       }
-    }
-    return invMap;
-  }
-
-  function syncProductsWithSimulatedInventory() {
-    const invMap = getSimulatedInventoryMap();
-    let updated = false;
-
-    productsList.forEach(p => {
-      if (invMap.hasOwnProperty(p.id)) {
-        p.stock = invMap[p.id];
-      } else {
-        invMap[p.id] = typeof p.stock === 'number' ? p.stock : 50;
-        p.stock = invMap[p.id];
-        updated = true;
-      }
-    });
-
-    if (updated || !localStorage.getItem('inventario_simulado')) {
-      localStorage.setItem('inventario_simulado', JSON.stringify(invMap));
+    } catch (e) {
+      console.warn('Error al sincronizar stock desde catalogo_pos:', e);
     }
   }
 
@@ -370,8 +363,8 @@ document.addEventListener('DOMContentLoaded', async () => {
       categoriesList = CATEGORIES;
     }
     
-    // 1. Inventario Inicial (localStorage: inventario_simulado)
-    syncProductsWithSimulatedInventory();
+    // Sincronización única con la clave 'catalogo_pos' en localStorage
+    syncProductsWithPosCatalog();
 
     renderCategoryTabs();
     renderProducts();
@@ -400,8 +393,8 @@ document.addEventListener('DOMContentLoaded', async () => {
     if (!productsGrid) return;
     productsGrid.innerHTML = '';
 
-    // Sincronizar stock dinámico desde localStorage
-    syncProductsWithSimulatedInventory();
+    // Sincronizar stock dinámico en tiempo real desde la Única Fuente de Verdad (catalogo_pos)
+    syncProductsWithPosCatalog();
 
     const filtered = productsList.filter(prod => {
       return currentCategory === 'todos' || prod.category === currentCategory;
@@ -437,8 +430,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   // GESTIÓN DEL CARRITO INTERACTIVO (PASO 1 Y PASO 2)
   // ==========================================================================
   function addToCart(product) {
-    const invMap = getSimulatedInventoryMap();
-    const currentStock = invMap.hasOwnProperty(product.id) ? invMap[product.id] : product.stock;
+    const currentStock = typeof product.stock === 'number' ? product.stock : 0;
 
     // 4. Prevención de Errores: Stock Insuficiente
     if (currentStock <= 0) {
@@ -446,7 +438,7 @@ document.addEventListener('DOMContentLoaded', async () => {
       return;
     }
 
-    const existing = cart.find(item => item.product.id === product.id);
+    const existing = cart.find(item => item.product.id === product.id || item.product.code === product.code);
     if (existing) {
       if (existing.quantity < currentStock) {
         existing.quantity += 1;
@@ -479,10 +471,10 @@ document.addEventListener('DOMContentLoaded', async () => {
           <span class="cart-item-name">${item.product.icon || '🥖'} ${item.product.name}</span>
           <span class="cart-item-unit-price">$${item.product.price.toFixed(2)} c/u</span>
         </div>
-        <div class="cart-item-controls">
-          <button type="button" class="btn-cart-qty btn-dec" title="Disminuir o eliminar">-</button>
+        <div class="cart-qty-controls">
+          <button type="button" class="btn-qty btn-dec">-</button>
           <span class="cart-qty-val">${item.quantity}</span>
-          <button type="button" class="btn-cart-qty btn-inc" title="Aumentar cantidad">+</button>
+          <button type="button" class="btn-qty btn-inc">+</button>
         </div>
         <span class="cart-item-total">$${(item.product.price * item.quantity).toFixed(2)}</span>
       `;
@@ -492,7 +484,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         if (item.quantity > 1) {
           item.quantity -= 1;
         } else {
-          cart = cart.filter(i => i.product.id !== item.product.id);
+          cart = cart.filter(i => (i.product.id && i.product.id !== item.product.id) || (i.product.code && i.product.code !== item.product.code));
         }
         updateCartTotals();
         renderStep1Cart();
@@ -500,8 +492,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
       row.querySelector('.btn-inc').addEventListener('click', (e) => {
         e.stopPropagation();
-        const invMap = getSimulatedInventoryMap();
-        const currentStock = invMap.hasOwnProperty(item.product.id) ? invMap[item.product.id] : item.product.stock;
+        const currentStock = typeof item.product.stock === 'number' ? item.product.stock : 0;
 
         if (item.quantity < currentStock) {
           item.quantity += 1;
@@ -558,6 +549,15 @@ document.addEventListener('DOMContentLoaded', async () => {
     if (totalValEl) totalValEl.textContent = `$${finalTotalUsd.toFixed(2)}`;
     if (totalVesEl) {
       totalVesEl.textContent = `Bs. ${finalTotalVes.toLocaleString('es-VE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+    }
+
+    if (discountSavingsBadge && discountBadgeAmount) {
+      if (discountAmount > 0) {
+        discountSavingsBadge.style.display = 'flex';
+        discountBadgeAmount.textContent = `-$${discountAmount.toFixed(2)} USD (-${currentDiscountPercent}%)`;
+      } else {
+        discountSavingsBadge.style.display = 'none';
+      }
     }
 
     // Actualizar Totales Prominentes Panel Tarjeta / Pago Móvil
@@ -641,11 +641,24 @@ document.addEventListener('DOMContentLoaded', async () => {
     });
   }
 
+  function handleDiscountChange() {
+    const val = discountSelect ? discountSelect.value : '0';
+    if (val === 'custom') {
+      if (customDiscountWrapper) customDiscountWrapper.style.display = 'flex';
+      const customVal = parseFloat(customDiscountInput?.value || 0);
+      currentDiscountPercent = Math.min(100, Math.max(0, customVal));
+    } else {
+      if (customDiscountWrapper) customDiscountWrapper.style.display = 'none';
+      currentDiscountPercent = parseFloat(val) || 0;
+    }
+    updateCartTotals();
+  }
+
   if (discountSelect) {
-    discountSelect.addEventListener('change', (e) => {
-      currentDiscountPercent = parseFloat(e.target.value) || 0;
-      updateCartTotals();
-    });
+    discountSelect.addEventListener('change', handleDiscountChange);
+  }
+  if (customDiscountInput) {
+    customDiscountInput.addEventListener('input', handleDiscountChange);
   }
 
   // ==========================================================================
@@ -917,20 +930,56 @@ document.addEventListener('DOMContentLoaded', async () => {
     btnCompleteSale.disabled = true;
     btnCompleteSale.textContent = 'Registrando Venta en MySQL...';
 
-    // 3. Deducción al Facturar: Restar cantidades vendidas del inventario_simulado en localStorage
-    const invMap = getSimulatedInventoryMap();
-    cart.forEach(item => {
-      const pId = item.product.id;
-      const qty = item.quantity;
-      if (invMap.hasOwnProperty(pId)) {
-        invMap[pId] = Math.max(0, invMap[pId] - qty);
-      } else {
-        invMap[pId] = Math.max(0, (item.product.stock || 50) - qty);
+    // 1. Deducción al Facturar en la Única Fuente de Verdad: catalogo_pos en localStorage
+    try {
+      const storedCatalog = localStorage.getItem('catalogo_pos');
+      let catalogList = storedCatalog ? JSON.parse(storedCatalog) : [];
+
+      if (!Array.isArray(catalogList) || catalogList.length === 0) {
+        catalogList = PRODUCTS_DATABASE.map(p => ({
+          id: p.id,
+          code: p.code,
+          name: p.name,
+          category: p.category,
+          unitCost: p.unitCost || 1.0,
+          salePrice: p.price,
+          unit: p.unit || 'Und',
+          stock: p.stock,
+          minStock: 10,
+          icon: p.icon,
+          showInPos: true,
+          description: p.description
+        }));
       }
-    });
-    localStorage.setItem('inventario_simulado', JSON.stringify(invMap));
-    syncProductsWithSimulatedInventory();
-    renderProducts();
+
+      // Restar la cantidad vendida exacta para cada producto en catalogo_pos
+      cart.forEach(item => {
+        const itemId = item.product.id;
+        const itemCode = item.product.code;
+        const itemName = item.product.name;
+        const qtySold = parseFloat(item.quantity) || 0;
+
+        const target = catalogList.find(p => p.id === itemId || p.code === itemCode || p.name === itemName);
+        if (target) {
+          target.stock = Math.max(0, (parseFloat(target.stock) || 0) - qtySold);
+        }
+      });
+
+      // Sobrescribir el localStorage con la fuente unificada
+      localStorage.setItem('catalogo_pos', JSON.stringify(catalogList));
+
+      // Emite eventos de sincronización en tiempo real
+      window.dispatchEvent(new Event('catalogoPosChanged'));
+      if (typeof BroadcastChannel !== 'undefined') {
+        const posChannel = new BroadcastChannel('lnp_pos_catalog_channel');
+        posChannel.postMessage({ type: 'catalog_updated', timestamp: Date.now() });
+      }
+    } catch (e) {
+      console.error('Error al descontar stock de catalogo_pos al facturar:', e);
+    }
+
+    // Refrescar lista de productos del POS
+    await loadProductsCatalog();
 
     try {
       const res = await fetch('../api/procesar_venta.php', {
@@ -1140,6 +1189,9 @@ document.addEventListener('DOMContentLoaded', async () => {
       clientRifInput.style.background = '#FFFFFF';
     }
     if (discountSelect) discountSelect.value = '0';
+    if (customDiscountInput) customDiscountInput.value = '';
+    if (customDiscountWrapper) customDiscountWrapper.style.display = 'none';
+    currentDiscountPercent = 0;
     orderCounter++;
     initOrderNumber();
     updateCartTotals();

@@ -4,6 +4,42 @@ Todos los cambios significativos, nuevas funcionalidades y actualizaciones del s
 
 El formato está basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1.0.0/) y este proyecto se adhiere a [Semantic Versioning](https://semver.org/lang/es/).
 
+## [5.15.0] - 2026-08-24 (Rediseño Corporativo de la Caja de Descuentos y Promociones en POS)
+
+### 🏷️ Nuevo Tarjetón de Descuentos y Porcentaje Manual ([modules/pos.html](file:///C:/Users/juana/.gemini/antigravity-ide/scratch/la-nueva-parisienne/modules/pos.html), [css/modules/pos.css](file:///C:/Users/juana/.gemini/antigravity-ide/scratch/la-nueva-parisienne/css/modules/pos.css), [js/modules/pos.js](file:///C:/Users/juana/.gemini/antigravity-ide/scratch/la-nueva-parisienne/js/modules/pos.js))
+- **Nuevo Componente `pos-discount-box`**:
+  - Se sustituyó el select plano por una tarjeta corporativa estilizada con cabecera de icono (`🏷️`), selector desplegable con badges de convenios (Cliente Frecuente 5%, Promoción 10%, Empleado 15%, Corporativo 20% y Personalizado).
+- **Entrada de Porcentaje Personalizado (% Manual)**:
+  - Al seleccionar *"✏️ Personalizado (% Manual)"*, se despliega dinámicamente una casilla numérica estilizada para ingresar cualquier porcentaje de descuento libre.
+- **Insignia Animada de Ahorro (`discountSavingsBadge`)**:
+  - Muestra en verde el monto exacto ahorrado en USD y el porcentaje aplicado con animación elástica al recalcular los totales de la venta.
+
+---
+
+## [5.14.1] - 2026-08-24 (Resolución de Referencia y Selección Fluida en Módulo POS)
+
+### 🛒 Corrección en `addToCart()` y Controles de Cantidad ([js/modules/pos.js](file:///C:/Users/juana/.gemini/antigravity-ide/scratch/la-nueva-parisienne/js/modules/pos.js))
+- **Remoción de Llamados a Función Obsoleta**:
+  - Se eliminaron las referencias remanentes a `getSimulatedInventoryMap()` en `addToCart()` y en el botón incremental `+`.
+- **Validación Directa contra la Fuente Unificada**:
+  - `addToCart()` lee directamente `product.stock` sincronizado en vivo desde `catalogo_pos`, permitiendo la selección fluida e instantánea de productos en la caja registradora.
+
+---
+
+## [5.14.0] - 2026-08-24 (Unificación de Fuente de Verdad y Sincronización en Tiempo Real POS ↔ Gerencia)
+
+### 🛒 Sincronización Estricta de Inventario POS y Productos Terminados ([js/modules/pos.js](file:///C:/Users/juana/.gemini/antigravity-ide/scratch/la-nueva-parisienne/js/modules/pos.js), [js/modules/dashboard.js](file:///C:/Users/juana/.gemini/antigravity-ide/scratch/la-nueva-parisienne/js/modules/dashboard.js))
+- **Única Fuente de Verdad (`catalogo_pos`)**:
+  - Se eliminó completamente la clave redundante `inventario_simulado`.
+  - Ahora tanto el POS (Módulo 3) como la tabla de "Productos Terminados" del Gerente (Módulo 4) leen y modifican de forma canónica la clave `catalogo_pos` en `localStorage`.
+- **Descuento de Stock en Cobro POS**:
+  - Al ejecutar una venta (`executeSaleProcess`), el POS lee `catalogo_pos`, descuenta las cantidades vendidas exactas por ID/código de producto y reescribe `catalogo_pos` en `localStorage`.
+- **Reactividad en Tiempo Real Cross-Tab & SPA**:
+  - Se unificó el sistema de eventos con `window.addEventListener('storage')`, `window.addEventListener('catalogoPosChanged')` y `BroadcastChannel('lnp_pos_catalog_channel')`.
+  - La tabla del Gerente se actualiza automáticamente de inmediato al cobrar un ticket en la caja.
+
+---
+
 ## [5.13.2] - 2026-08-24 (Firma Limpia de Gerente sin Username y Despliegue de Modal de Confirmación)
 
 ### 🏷️ Limpieza de Nombre Gerencial y Activación Modal ([js/modules/kitchen.js](file:///C:/Users/juana/.gemini/antigravity-ide/scratch/la-nueva-parisienne/js/modules/kitchen.js))

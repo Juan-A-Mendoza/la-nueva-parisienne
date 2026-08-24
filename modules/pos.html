@@ -185,6 +185,40 @@
               <!-- Renderizado dinámico del desglose -->
             </div>
 
+            <!-- CAJA DE DESCUENTO Y PROMOCIONES CORPORATIVAS -->
+            <div class="pos-discount-box">
+              <div class="discount-box-header">
+                <span class="discount-box-icon">🏷️</span>
+                <div class="discount-box-title-group">
+                  <label for="discountSelect" class="discount-box-label">Aplicar Descuento / Promoción</label>
+                  <span class="discount-box-sub">Seleccione convenio o ingrese % manual</span>
+                </div>
+              </div>
+
+              <div class="discount-box-controls">
+                <div class="discount-select-wrapper">
+                  <select id="discountSelect" class="discount-select-styled">
+                    <option value="0">🏷️ Sin Descuento (0%)</option>
+                    <option value="5">⭐ Cliente Frecuente (5%)</option>
+                    <option value="10">🔥 Promoción del Día (10%)</option>
+                    <option value="15">👨‍🍳 Descuento Empleado (15%)</option>
+                    <option value="20">👑 Convenio Corporativo (20%)</option>
+                    <option value="custom">✏️ Personalizado (% Manual)</option>
+                  </select>
+                </div>
+
+                <div id="customDiscountWrapper" class="custom-discount-wrapper" style="display: none;">
+                  <input type="number" id="customDiscountInput" class="custom-discount-input" min="0" max="100" placeholder="0" step="any">
+                  <span class="custom-discount-unit">%</span>
+                </div>
+              </div>
+
+              <div id="discountSavingsBadge" class="discount-savings-badge" style="display: none;">
+                <span>🎉 Ahorro Aplicado:</span>
+                <strong id="discountBadgeAmount">-$0.00 USD</strong>
+              </div>
+            </div>
+
             <!-- DESGLOSE FINANCIERO Y TOTALES BI-MONEDA -->
             <div class="checkout-financial-summary">
               <div class="summary-row">
@@ -193,14 +227,8 @@
               </div>
 
               <div class="summary-row">
-                <label for="discountSelect">Descuento Especial:</label>
-                <select id="discountSelect" class="discount-select">
-                  <option value="0">Sin Descuento (0%)</option>
-                  <option value="5">Cliente Frecuente (5%)</option>
-                  <option value="10">Promoción del Día (10%)</option>
-                  <option value="15">Descuento Empleado (15%)</option>
-                </select>
-                <span id="discountVal">-$0.00</span>
+                <span>Ahorro por Descuento:</span>
+                <span id="discountVal" class="discount-val-text">-$0.00</span>
               </div>
 
               <div class="summary-row">

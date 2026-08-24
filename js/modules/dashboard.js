@@ -747,6 +747,10 @@ function openMovementDetailModal(mov) {
 }
 
 function renderInventoryTables() {
+  rawMaterialsData = getRawMaterialsFromStorage();
+  finishedGoodsData = getPosCatalogFromStorage();
+  suppliersData = getSuppliersFromStorage();
+
   const rawTbody = document.getElementById('materiaPrimaTbody');
   const finishedTbody = document.getElementById('productosTerminadosTbody');
   const suppliersTbody = document.getElementById('proveedoresTbody');
@@ -893,6 +897,32 @@ function renderInventoryTables() {
 function cargarInventario() {
   renderMovementsTable();
   renderInventoryTables();
+
+  // Escuchar eventos de actualización en tiempo real desde la Caja (Módulo 3 POS -> Módulo 4 Gerencia)
+  window.addEventListener('storage', (e) => {
+    if (e.key === 'catalogo_pos' || e.key === 'materias_primas') {
+      finishedGoodsData = getPosCatalogFromStorage();
+      rawMaterialsData = getRawMaterialsFromStorage();
+      renderInventoryTables();
+    }
+  });
+
+  window.addEventListener('catalogoPosChanged', () => {
+    finishedGoodsData = getPosCatalogFromStorage();
+    rawMaterialsData = getRawMaterialsFromStorage();
+    renderInventoryTables();
+  });
+
+  if (typeof BroadcastChannel !== 'undefined') {
+    const posChannel = new BroadcastChannel('lnp_pos_catalog_channel');
+    posChannel.onmessage = (e) => {
+      if (e.data && e.data.type === 'catalog_updated') {
+        finishedGoodsData = getPosCatalogFromStorage();
+        rawMaterialsData = getRawMaterialsFromStorage();
+        renderInventoryTables();
+      }
+    };
+  }
 }
 
 /**

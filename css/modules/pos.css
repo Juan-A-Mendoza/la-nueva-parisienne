@@ -678,11 +678,154 @@
   border-top: 1px dashed var(--color-muted);
 }
 
-.discount-select {
-  padding: 0.25rem 0.45rem;
+/* CAJA DE DESCUENTO Y PROMOCIONES CORPORATIVAS */
+.pos-discount-box {
+  background: linear-gradient(135deg, rgba(212, 155, 84, 0.08) 0%, rgba(244, 235, 222, 0.4) 100%);
+  border: 1px solid rgba(212, 155, 84, 0.35);
+  border-radius: var(--radius-md);
+  padding: 0.85rem 1rem;
+  margin-top: 0.75rem;
+  margin-bottom: 0.75rem;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.03);
+  transition: all 0.25s ease;
+}
+
+.pos-discount-box:hover {
+  border-color: var(--color-gold);
+  box-shadow: 0 6px 16px rgba(212, 155, 84, 0.15);
+}
+
+.discount-box-header {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  margin-bottom: 0.65rem;
+}
+
+.discount-box-icon {
+  font-size: 1.2rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  background: #FFFFFF;
+  border-radius: 50%;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.08);
+}
+
+.discount-box-title-group {
+  display: flex;
+  flex-direction: column;
+}
+
+.discount-box-label {
+  font-family: var(--font-heading);
+  font-size: 0.85rem;
+  font-weight: 800;
+  color: var(--color-espresso);
+  cursor: pointer;
+}
+
+.discount-box-sub {
+  font-size: 0.73rem;
+  color: var(--color-muted);
+}
+
+.discount-box-controls {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+}
+
+.discount-select-wrapper {
+  flex: 1;
+  position: relative;
+}
+
+.discount-select-styled {
+  width: 100%;
+  height: 38px;
+  padding: 0 0.85rem;
   border-radius: var(--radius-sm);
-  border: var(--border-subtle);
+  border: 1px solid var(--border-subtle);
+  background: #FFFFFF;
+  font-family: var(--font-sans);
+  font-size: 0.84rem;
+  font-weight: 700;
+  color: var(--color-espresso);
+  cursor: pointer;
+  box-shadow: inset 0 1px 2px rgba(0,0,0,0.04);
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%237A6B5D' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 0.85rem center;
+}
+
+.discount-select-styled:focus {
+  outline: none;
+  border-color: var(--color-gold);
+  box-shadow: 0 0 0 3px rgba(212, 155, 84, 0.25);
+}
+
+.custom-discount-wrapper {
+  display: flex;
+  align-items: center;
+  gap: 0.2rem;
+  width: 95px;
+  height: 38px;
+  background: #FFFFFF;
+  border: 1px solid var(--color-gold);
+  border-radius: var(--radius-sm);
+  padding: 0 0.45rem;
+  box-shadow: 0 0 0 3px rgba(212, 155, 84, 0.2);
+}
+
+.custom-discount-input {
+  width: 100%;
+  border: none;
+  background: transparent;
+  font-family: var(--font-sans);
+  font-size: 0.9rem;
+  font-weight: 800;
+  color: var(--color-gold-dark);
+  text-align: center;
+}
+
+.custom-discount-input:focus {
+  outline: none;
+}
+
+.custom-discount-unit {
+  font-weight: 800;
+  color: var(--color-gold-dark);
+  font-size: 0.82rem;
+}
+
+.discount-savings-badge {
+  margin-top: 0.6rem;
+  padding: 0.4rem 0.75rem;
+  background: rgba(46, 125, 50, 0.1);
+  border: 1px solid rgba(46, 125, 50, 0.3);
+  border-radius: var(--radius-sm);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
   font-size: 0.8rem;
+  color: var(--color-success);
+  font-weight: 700;
+  animation: fadeInSavings 0.3s ease;
+}
+
+@keyframes fadeInSavings {
+  from { opacity: 0; transform: translateY(-4px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.discount-val-text {
+  color: var(--color-success);
+  font-weight: 800;
 }
 
 .total-row-main {
