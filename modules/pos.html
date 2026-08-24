@@ -462,73 +462,83 @@
   </div>
 
   <!-- MODAL DE DEVOLUCIÓN Y ANULACIÓN CON AUTORIZACIÓN GERENCIAL -->
-  <div id="modalDevolucionTicket" class="pin-modal-overlay no-print" style="display: none; z-index: 10500;">
-    <div class="pin-modal-card" style="max-width: 480px; width: 92%; padding: 1.75rem; border-radius: var(--radius-lg); background: #FFFFFF; box-shadow: var(--shadow-xl);">
+  <div id="modalDevolucionTicket" class="pin-modal-overlay no-print" style="display: none; z-index: 10500; background: rgba(18, 14, 10, 0.72); backdrop-filter: blur(8px);">
+    <div class="pin-modal-card" style="max-width: 500px; width: 92%; padding: 2.25rem 2rem 2rem 2rem; border-radius: 20px; background: #FFFFFF; box-shadow: 0 25px 60px rgba(0, 0, 0, 0.25), 0 2px 8px rgba(0, 0, 0, 0.06); position: relative; overflow: hidden; border: 1px solid rgba(225, 225, 230, 0.8);">
       
-      <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 1.25rem; border-bottom: 1px solid var(--border-subtle); padding-bottom: 0.75rem;">
-        <div style="display: flex; align-items: center; gap: 0.6rem;">
-          <span style="font-size: 1.4rem; background: rgba(230,81,0,0.1); color: #E65100; width: 42px; height: 42px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold;">↩️</span>
-          <div>
-            <h3 style="margin: 0; font-family: var(--font-heading); font-size: 1.1rem; color: var(--color-espresso);" id="devolucionModalTitle">Devolución / Anulación de Ticket</h3>
-            <span style="font-size: 0.76rem; color: var(--color-muted);" id="devolucionModalSub">Paso 1: Datos de la Transacción</span>
+      <!-- LÍNEA SUPERIOR DECORATIVA EN DEGRADADO CORPORATIVO -->
+      <div style="height: 6px; background: linear-gradient(90deg, #E65100 0%, #F57C00 50%, #EF6C00 100%); position: absolute; top: 0; left: 0; right: 0;"></div>
+
+      <button type="button" id="closeDevolucionModalBtn" style="position: absolute; top: 1.2rem; right: 1.2rem; width: 34px; height: 34px; border-radius: 50%; background: #F2F3F5; border: none; font-size: 1.1rem; color: #555555; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all 0.2s ease; line-height: 1;" aria-label="Cerrar modal">&times;</button>
+
+      <!-- ENCABEZADO CON BADGE Y PASOS -->
+      <div style="display: flex; align-items: center; gap: 0.95rem; margin-bottom: 1.5rem; padding-bottom: 1rem; border-bottom: 1px solid #ECEEEF;">
+        <div style="width: 50px; height: 50px; border-radius: 14px; background: linear-gradient(135deg, rgba(230,81,0,0.12) 0%, rgba(245,124,0,0.22) 100%); color: #E65100; display: flex; align-items: center; justify-content: center; font-size: 1.45rem; font-weight: bold; flex-shrink: 0; border: 1px solid rgba(230,81,0,0.25); box-shadow: inset 0 1px 2px rgba(255,255,255,0.8);">↩️</div>
+        <div>
+          <h3 style="margin: 0; font-family: 'Plus Jakarta Sans', var(--font-heading); font-weight: 800; font-size: 1.25rem; color: #1E1B18; letter-spacing: -0.01em;" id="devolucionModalTitle">Devolución / Anulación</h3>
+          <div style="display: flex; align-items: center; gap: 0.5rem; margin-top: 0.25rem;">
+            <span style="background: rgba(230,81,0,0.1); color: #E65100; padding: 2px 8px; border-radius: 99px; font-size: 0.73rem; font-weight: 700; text-transform: uppercase;" id="devolucionStepBadge">Paso 1 de 2</span>
+            <span style="font-size: 0.8rem; color: #6E6862; font-weight: 600;" id="devolucionModalSub">Datos de la Transacción</span>
           </div>
         </div>
-        <button type="button" id="closeDevolucionModalBtn" style="background: none; border: none; font-size: 1.3rem; color: var(--color-muted); cursor: pointer;">✕</button>
       </div>
 
       <!-- PASO 1: NÚMERO DE TICKET Y MOTIVO -->
       <form id="formDevolucionStep1">
-        <div style="display: flex; flex-direction: column; gap: 0.9rem; margin-bottom: 1.25rem;">
+        <div style="display: flex; flex-direction: column; gap: 1.15rem; margin-bottom: 1.5rem;">
           <div>
-            <label for="devolucionTicketCode" style="display: block; font-weight: 700; font-size: 0.84rem; color: var(--color-espresso); margin-bottom: 0.35rem;">N° de Factura / Ticket a Devolver *</label>
-            <input type="text" id="devolucionTicketCode" class="modal-input" placeholder="ej. FAC-2026-1003" required style="width: 100%; padding: 0.65rem 0.85rem; border-radius: var(--radius-sm); border: 1px solid var(--border-subtle); font-size: 0.95rem; font-weight: 700; text-transform: uppercase;">
+            <label for="devolucionTicketCode" style="display: block; font-weight: 700; font-size: 0.78rem; color: #3A342E; margin-bottom: 0.4rem; text-transform: uppercase; letter-spacing: 0.03em;">N° de Factura / Ticket a Devolver *</label>
+            <input type="text" id="devolucionTicketCode" placeholder="ej. FAC-2026-1003" required style="width: 100%; padding: 0.8rem 1rem; border-radius: 10px; border: 1.5px solid #DCE0E5; font-size: 0.98rem; font-weight: 700; text-transform: uppercase; background: #FAFAFB; color: #1E1B18; transition: all 0.2s ease; outline: none;">
           </div>
 
           <div>
-            <label for="devolucionMontoInput" style="display: block; font-weight: 700; font-size: 0.84rem; color: var(--color-espresso); margin-bottom: 0.35rem;">Monto Afectado / Devolución ($ USD) *</label>
-            <input type="number" id="devolucionMontoInput" class="modal-input" placeholder="0.00" step="0.01" min="0.01" required style="width: 100%; padding: 0.65rem 0.85rem; border-radius: var(--radius-sm); border: 1px solid var(--border-subtle); font-size: 0.95rem; font-weight: 700;">
+            <label for="devolucionMontoInput" style="display: block; font-weight: 700; font-size: 0.78rem; color: #3A342E; margin-bottom: 0.4rem; text-transform: uppercase; letter-spacing: 0.03em;">Monto Reembolsado ($ USD) *</label>
+            <input type="number" id="devolucionMontoInput" placeholder="0.00" step="0.01" min="0.01" required style="width: 100%; padding: 0.8rem 1rem; border-radius: 10px; border: 1.5px solid #DCE0E5; font-size: 0.98rem; font-weight: 700; background: #FAFAFB; color: #1E1B18; transition: all 0.2s ease; outline: none;">
           </div>
 
           <div>
-            <label for="devolucionMotivoSelect" style="display: block; font-weight: 700; font-size: 0.84rem; color: var(--color-espresso); margin-bottom: 0.35rem;">Motivo de la Devolución *</label>
-            <select id="devolucionMotivoSelect" class="modal-input" required style="width: 100%; padding: 0.65rem 0.85rem; border-radius: var(--radius-sm); border: 1px solid var(--border-subtle); font-size: 0.84rem; font-weight: 600;">
+            <label for="devolucionMotivoSelect" style="display: block; font-weight: 700; font-size: 0.78rem; color: #3A342E; margin-bottom: 0.4rem; text-transform: uppercase; letter-spacing: 0.03em;">Motivo de la Devolución *</label>
+            <select id="devolucionMotivoSelect" required style="width: 100%; padding: 0.8rem 1rem; border-radius: 10px; border: 1.5px solid #DCE0E5; font-size: 0.88rem; font-weight: 700; background: #FAFAFB; color: #1E1B18; transition: all 0.2s ease; outline: none; cursor: pointer;">
               <option value="Producto Defectuoso / Mal Estado">🍞 Producto Defectuoso / Mal Estado</option>
               <option value="Error de Digitación del Cajero">⌨️ Error de Digitación del Cajero</option>
               <option value="Cambio por Solicitud del Cliente">👤 Cambio por Solicitud del Cliente</option>
               <option value="Anulación por Duplicidad">📄 Anulación por Duplicidad de Factura</option>
-              <option value="Otro Motivo">📝 Otro Motivo</option>
+              <option value="Otro Motivo">📝 Otro Motivo (Especificar)</option>
             </select>
           </div>
 
           <div>
-            <label for="devolucionNotas" style="display: block; font-weight: 700; font-size: 0.84rem; color: var(--color-espresso); margin-bottom: 0.35rem;">Observaciones / Justificación Adicional</label>
-            <textarea id="devolucionNotas" rows="2" style="width: 100%; padding: 0.5rem 0.75rem; border-radius: var(--radius-sm); border: 1px solid var(--border-subtle); font-size: 0.84rem; font-family: var(--font-sans);" placeholder="Comentarios opcionales para la auditoría..."></textarea>
+            <label for="devolucionNotas" style="display: block; font-weight: 700; font-size: 0.78rem; color: #3A342E; margin-bottom: 0.4rem; text-transform: uppercase; letter-spacing: 0.03em;">Observaciones / Justificación Adicional</label>
+            <textarea id="devolucionNotas" rows="2" style="width: 100%; padding: 0.7rem 1rem; border-radius: 10px; border: 1.5px solid #DCE0E5; font-size: 0.86rem; font-family: inherit; background: #FAFAFB; color: #1E1B18; transition: all 0.2s ease; outline: none; resize: vertical;" placeholder="Comentarios opcionales para la auditoría..."></textarea>
           </div>
         </div>
 
-        <div style="display: flex; gap: 0.75rem; justify-content: flex-end;">
-          <button type="button" id="cancelDevolucionModalBtn" class="btn-modal-action secondary">Cancelar</button>
-          <button type="submit" class="btn-modal-action primary" style="background: #E65100; border-color: #E65100;">Continuar a Autorización →</button>
+        <div style="display: flex; gap: 0.85rem; justify-content: flex-end; border-top: 1px solid #ECEEEF; padding-top: 1.25rem;">
+          <button type="button" id="cancelDevolucionModalBtn" style="height: 46px; padding: 0 1.35rem; border-radius: 12px; border: 1.5px solid #D0D4DC; background: #FFFFFF; color: #4A4540; font-weight: 700; font-size: 0.88rem; cursor: pointer; transition: all 0.2s ease;">Cancelar</button>
+          <button type="submit" style="height: 46px; padding: 0 1.6rem; border-radius: 12px; border: none; background: linear-gradient(135deg, #E65100 0%, #D84315 100%); color: #FFFFFF; font-weight: 700; font-size: 0.88rem; cursor: pointer; box-shadow: 0 4px 12px rgba(230, 81, 0, 0.3); transition: all 0.2s ease; display: inline-flex; align-items: center; gap: 0.4rem;">
+            <span>Continuar a Autorización →</span>
+          </button>
         </div>
       </form>
 
       <!-- PASO 2: AUTORIZACIÓN CON CLAVE GERENCIAL -->
       <form id="formDevolucionStep2" style="display: none;">
-        <div style="background: rgba(230,81,0,0.06); border: 1px solid rgba(230,81,0,0.25); border-radius: var(--radius-md); padding: 0.85rem; margin-bottom: 1.25rem;">
-          <div style="font-size: 0.8rem; color: var(--color-espresso); margin-bottom: 0.3rem;"><strong>Resumen de Anulación a Autorizar:</strong></div>
-          <div style="font-size: 0.95rem; color: #E65100; font-weight: 800;" id="devolucionSummaryText">Ticket FAC-2026-1003 — $0.00 USD</div>
-          <div style="font-size: 0.78rem; color: var(--color-muted); margin-top: 0.2rem;" id="devolucionMotivoText">Motivo: Producto Defectuoso</div>
+        <div style="background: linear-gradient(135deg, rgba(230,81,0,0.05) 0%, rgba(245,124,0,0.09) 100%); border: 1.5px solid rgba(230,81,0,0.25); border-radius: 12px; padding: 1.1rem 1.2rem; margin-bottom: 1.5rem; box-shadow: 0 2px 6px rgba(230,81,0,0.04);">
+          <div style="font-size: 0.78rem; text-transform: uppercase; letter-spacing: 0.04em; color: #6E6862; font-weight: 700; margin-bottom: 0.35rem;">Resumen de Anulación a Autorizar:</div>
+          <div style="font-size: 1.1rem; color: #E65100; font-weight: 800; letter-spacing: -0.01em;" id="devolucionSummaryText">Ticket FAC-2026-1003 — $0.00 USD</div>
+          <div style="font-size: 0.84rem; color: #3A342E; margin-top: 0.3rem; font-weight: 600;" id="devolucionMotivoText">Motivo: Producto Defectuoso</div>
         </div>
 
-        <div style="margin-bottom: 1.25rem;">
-          <label for="devolucionManagerPass" style="display: block; font-weight: 700; font-size: 0.85rem; color: var(--color-espresso); margin-bottom: 0.35rem;">🔑 Contraseña de Gerente General *</label>
-          <input type="password" id="devolucionManagerPass" class="modal-input" placeholder="••••••••" required style="width: 100%; padding: 0.65rem 0.85rem; border-radius: var(--radius-sm); border: 1px solid var(--border-subtle); font-size: 1rem; text-align: center; letter-spacing: 0.2rem;">
-          <span style="font-size: 0.75rem; color: var(--color-muted); display: block; margin-top: 0.35rem; text-align: center;">Requiere firma digital de usuario con rol de Gerente General.</span>
+        <div style="margin-bottom: 1.5rem;">
+          <label for="devolucionManagerPass" style="display: block; font-weight: 700; font-size: 0.78rem; color: #3A342E; margin-bottom: 0.45rem; text-transform: uppercase; letter-spacing: 0.03em;">🔑 Contraseña de Gerente General *</label>
+          <input type="password" id="devolucionManagerPass" placeholder="••••••••" required style="width: 100%; padding: 0.85rem 1rem; border-radius: 10px; border: 1.5px solid #DCE0E5; font-size: 1.15rem; text-align: center; letter-spacing: 0.3rem; font-weight: 800; background: #FAFAFB; color: #1E1B18; transition: all 0.2s ease; outline: none;">
+          <span style="font-size: 0.78rem; color: #756E65; display: block; margin-top: 0.45rem; text-align: center; font-weight: 500;">Requiere firma digital de usuario con rol de Gerente General.</span>
         </div>
 
-        <div style="display: flex; gap: 0.75rem; justify-content: flex-end;">
-          <button type="button" id="backToDevolucionStep1Btn" class="btn-modal-action secondary">← Regresar</button>
-          <button type="submit" class="btn-modal-action primary" style="background: var(--color-danger); border-color: var(--color-danger);">⚠️ Confirmar y Registrar Anulación</button>
+        <div style="display: flex; gap: 0.85rem; justify-content: flex-end; border-top: 1px solid #ECEEEF; padding-top: 1.25rem;">
+          <button type="button" id="backToDevolucionStep1Btn" style="height: 46px; padding: 0 1.35rem; border-radius: 12px; border: 1.5px solid #D0D4DC; background: #FFFFFF; color: #4A4540; font-weight: 700; font-size: 0.88rem; cursor: pointer; transition: all 0.2s ease;">← Regresar</button>
+          <button type="submit" style="height: 46px; padding: 0 1.6rem; border-radius: 12px; border: none; background: linear-gradient(135deg, #C62828 0%, #B71C1C 100%); color: #FFFFFF; font-weight: 700; font-size: 0.88rem; cursor: pointer; box-shadow: 0 4px 12px rgba(198, 40, 40, 0.3); transition: all 0.2s ease; display: inline-flex; align-items: center; gap: 0.4rem;">
+            <span>⚠️ Confirmar y Registrar Anulación</span>
+          </button>
         </div>
       </form>
 

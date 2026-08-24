@@ -1279,7 +1279,9 @@ document.addEventListener('DOMContentLoaded', async () => {
       if (formDevolucionStep2) formDevolucionStep2.style.display = 'none';
 
       const titleSub = document.getElementById('devolucionModalSub');
-      if (titleSub) titleSub.textContent = 'Paso 1: Datos de la Transacción';
+      const stepBadge = document.getElementById('devolucionStepBadge');
+      if (titleSub) titleSub.textContent = 'Datos de la Transacción';
+      if (stepBadge) stepBadge.textContent = 'Paso 1 de 2';
 
       modalDevolucionTicket.style.display = 'flex';
       modalDevolucionTicket.classList.add('active');
@@ -1304,7 +1306,9 @@ document.addEventListener('DOMContentLoaded', async () => {
     if (formDevolucionStep1) formDevolucionStep1.style.display = 'block';
     if (formDevolucionStep2) formDevolucionStep2.style.display = 'none';
     const titleSub = document.getElementById('devolucionModalSub');
-    if (titleSub) titleSub.textContent = 'Paso 1: Datos de la Transacción';
+    const stepBadge = document.getElementById('devolucionStepBadge');
+    if (titleSub) titleSub.textContent = 'Datos de la Transacción';
+    if (stepBadge) stepBadge.textContent = 'Paso 1 de 2';
   });
 
   let pendingDevolucionData = null;
@@ -1336,7 +1340,9 @@ document.addEventListener('DOMContentLoaded', async () => {
     if (formDevolucionStep1) formDevolucionStep1.style.display = 'none';
     if (formDevolucionStep2) formDevolucionStep2.style.display = 'block';
     const titleSub = document.getElementById('devolucionModalSub');
-    if (titleSub) titleSub.textContent = 'Paso 2: Firma de Autorización Gerencial';
+    const stepBadge = document.getElementById('devolucionStepBadge');
+    if (titleSub) titleSub.textContent = 'Firma de Autorización Gerencial';
+    if (stepBadge) stepBadge.textContent = 'Paso 2 de 2';
   });
 
   function validateManagerPassword(enteredPassword) {

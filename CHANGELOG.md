@@ -4,6 +4,32 @@ Todos los cambios significativos, nuevas funcionalidades y actualizaciones del s
 
 El formato está basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1.0.0/) y este proyecto se adhiere a [Semantic Versioning](https://semver.org/lang/es/).
 
+## [5.18.2] - 2026-08-24 (Perfeccionamiento Visual Ultra-Premium del Modal de Devolución POS)
+
+### ✨ Rediseño Estético de Alta Fidelidad ([modules/pos.html](file:///C:/Users/juana/.gemini/antigravity-ide/scratch/la-nueva-parisienne/modules/pos.html), [js/modules/pos.js](file:///C:/Users/juana/.gemini/antigravity-ide/scratch/la-nueva-parisienne/js/modules/pos.js))
+- **Ajustes de Alineación y Capa (`modalDevolucionTicket`)**:
+  - Se corrigió la posición absoluta y centrado del botón de cierre `×` (`top: 1.2rem; right: 1.2rem; width: 34px; height: 34px`).
+  - Se añadió una franja superior decorativa en degradado naranja corporativo integrada al contenedor redondeado (`border-radius: 20px`).
+  - Se incorporó un efecto de fondo oscuro con desenfoque (`backdrop-filter: blur(8px)`).
+- **Insignia y Tipografía de Alta Fidelidad**:
+  - Badge de ícono `↩️` con fondo degradado y sombra interior.
+  - Indicador de pasos dinámico (`Paso 1 de 2` / `Paso 2 de 2`).
+  - Inputs con fondo limpio `#FAFAFB`, bordes definidos `#DCE0E5` e indicadores superiores en mayúscula.
+  - Botones de acción balanceados con 46px de altura, sombras proyectadas y degradados en el botón primario.
+
+---
+
+## [5.18.1] - 2026-08-24 (Rediseño Corporativo de Modal de Devolución POS e Inyección de Motivo en Auditoría Gerencial)
+
+### 🎨 Rediseño de Interfaz & Visualización de Motivo ([modules/pos.html](file:///C:/Users/juana/.gemini/antigravity-ide/scratch/la-nueva-parisienne/modules/pos.html), [js/modules/dashboard.js](file:///C:/Users/juana/.gemini/antigravity-ide/scratch/la-nueva-parisienne/js/modules/dashboard.js))
+- **Estilización Corporativa de Modal (`modalDevolucionTicket`)**:
+  - Se reescribió la estructura con contenedor `pin-modal-card`, borde superior acentuado `#E65100`, fondo en overlay oscuro, campos con bordes y tipografía en negrita, y botones primarios/secundarios alineados a las guías de diseño del sistema.
+- **Inyección de Motivo de Devolución en Auditoría Gerencial (Módulo 4)**:
+  - En la tabla de Movimientos Recientes, las devoluciones muestran la etiqueta roja `↩️ Devolución de Venta`, el motivo en texto resaltado y el nombre del gerente autorizante.
+  - En el modal de detalles (`openMovementDetailModal`), se inyecta una tarjeta destacada de advertencia en rojo (`.devolucion-reason-highlight`) exhibiendo el motivo exacto, el nombre del Gerente autorizante y observaciones registradas.
+
+---
+
 ## [5.18.0] - 2026-08-24 (Sistema de Devoluciones y Anulación de Ticket con Autorización Gerencial)
 
 ### ↩️ Módulo 3 POS & Auditoría Módulo 4 ([modules/pos.html](file:///C:/Users/juana/.gemini/antigravity-ide/scratch/la-nueva-parisienne/modules/pos.html), [css/modules/pos.css](file:///C:/Users/juana/.gemini/antigravity-ide/scratch/la-nueva-parisienne/css/modules/pos.css), [js/modules/pos.js](file:///C:/Users/juana/.gemini/antigravity-ide/scratch/la-nueva-parisienne/js/modules/pos.js))

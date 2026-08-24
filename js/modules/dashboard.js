@@ -676,6 +676,7 @@ function renderMovementsTable() {
     const tr = document.createElement('tr');
     const isPositive = mov.amount > 0;
     const isNegative = mov.amount < 0;
+    const isDevolucion = mov.type?.includes('Devolución') || mov.type?.includes('Anulación');
 
     let formattedAmount = `$${Math.abs(mov.amount).toFixed(2)}`;
     let amountClass = 'neutral';
@@ -688,17 +689,28 @@ function renderMovementsTable() {
     }
 
     let categoryBadge = `<span class="table-status-tag completado" style="background: rgba(46,125,50,0.12); color: var(--color-success); font-weight: 700; border: 1px solid rgba(46,125,50,0.3);">🟢 ${mov.type || 'Venta POS'}</span>`;
-    if (mov.category === 'gasto' || isNegative) {
+    if (isDevolucion) {
+      categoryBadge = `<span class="table-status-tag" style="background: rgba(198,40,40,0.14); color: #C62828; border: 1px solid rgba(198,40,40,0.35); font-weight: 800;">↩️ Devolución de Venta</span>`;
+    } else if (mov.category === 'gasto' || isNegative) {
       categoryBadge = `<span class="table-status-tag" style="background: rgba(198,40,40,0.12); color: var(--color-danger); border: 1px solid rgba(198,40,40,0.3); font-weight: 700;">🔴 ${mov.type || 'Egreso / Compra'}</span>`;
     } else if (mov.category === 'ajuste' || mov.type?.includes('Requisición') || mov.amount === 0) {
       categoryBadge = `<span class="table-status-tag" style="background: rgba(255,152,0,0.12); color: #E65100; border: 1px solid rgba(255,152,0,0.3); font-weight: 700;">🟡 ${mov.type || 'Transferencia'}</span>`;
     }
 
+    const reasonText = mov.reason || mov.motivo || (mov.breakdown && mov.breakdown.find(b => b.name?.includes('Motivo:'))?.name?.replace('Motivo:', '').trim());
+    const typeCellContent = isDevolucion && reasonText
+      ? `${categoryBadge}<div style="font-size: 0.76rem; color: #C62828; font-weight: 700; margin-top: 3px;">Motivo: ${reasonText}</div>`
+      : categoryBadge;
+
+    const userCellContent = mov.authorizedBy
+      ? `<strong>${mov.user}</strong><br><small style="color: #E65100; font-weight: 700;">(Gerente: ${mov.authorizedBy})</small>`
+      : mov.user;
+
     tr.innerHTML = `
       <td class="table-code-badge">${mov.code}</td>
       <td style="color: var(--color-muted); font-size: 0.85rem;">${mov.timestamp}</td>
-      <td>${categoryBadge}</td>
-      <td>${mov.user}</td>
+      <td>${typeCellContent}</td>
+      <td>${userCellContent}</td>
       <td style="color: var(--color-muted);">${mov.paymentMethod}</td>
       <td><span class="table-status-tag completado">${mov.status || 'Completado'}</span></td>
       <td class="amount-text ${amountClass}">${formattedAmount}</td>
@@ -740,7 +752,8 @@ function openMovementDetailModal(mov) {
 
   const iconEl = document.getElementById('modalDetalleIcon');
   if (iconEl) {
-    if (mov.category === 'venta') iconEl.textContent = '🛍️';
+    if (mov.type?.includes('Devolución') || mov.type?.includes('Anulación')) iconEl.textContent = '↩️';
+    else if (mov.category === 'venta') iconEl.textContent = '🛍️';
     else if (mov.category === 'gasto') iconEl.textContent = '📦';
     else iconEl.textContent = '📊';
   }
@@ -762,7 +775,7 @@ function openMovementDetailModal(mov) {
   if (mUsd) mUsd.textContent = amountUsdText;
   if (mVes) mVes.textContent = amountVesText;
   if (tOp) tOp.textContent = mov.type;
-  if (resp) resp.textContent = mov.user;
+  if (resp) resp.textContent = mov.authorizedBy ? `${mov.user} (Autorizado por ${mov.authorizedBy})` : mov.user;
   if (mPago) mPago.textContent = mov.paymentMethod;
   if (mFec) mFec.textContent = mov.timestamp;
   if (mTasa) mTasa.textContent = `Bs. ${activeRate.toFixed(2)} / USD`;
@@ -796,6 +809,21 @@ function openMovementDetailModal(mov) {
         <span class="breakdown-item-price">-${mov.discount}</span>
       `;
       listContainer.appendChild(discRow);
+    }
+
+    const reasonText = mov.reason || mov.motivo || (mov.breakdown && mov.breakdown.find(b => b.name?.includes('Motivo:'))?.name?.replace('Motivo:', '').trim());
+    if (mov.type?.includes('Devolución') || mov.type?.includes('Anulación') || reasonText) {
+      const reasonCard = document.createElement('div');
+      reasonCard.style.cssText = 'background: rgba(198,40,40,0.08); border: 1.5px solid rgba(198,40,40,0.3); border-radius: var(--radius-md); padding: 0.85rem 1rem; margin-top: 0.85rem; color: #C62828;';
+      reasonCard.innerHTML = `
+        <div style="font-size: 0.8rem; font-weight: 800; text-transform: uppercase; margin-bottom: 0.25rem; display: flex; align-items: center; gap: 0.35rem;">
+          <span>⚠️</span> <span>Motivo de la Devolución / Anulación:</span>
+        </div>
+        <div style="font-size: 0.95rem; font-weight: 700;">${reasonText || 'Producto Defectuoso / Solicitud del Cliente'}</div>
+        ${mov.authorizedBy ? `<div style="font-size: 0.8rem; color: var(--color-espresso); margin-top: 0.35rem;"><strong>Autorizado por Gerencia:</strong> ${mov.authorizedBy}</div>` : ''}
+        ${mov.notes ? `<div style="font-size: 0.78rem; color: var(--color-muted); margin-top: 0.2rem; font-style: italic;">Observaciones: ${mov.notes}</div>` : ''}
+      `;
+      listContainer.appendChild(reasonCard);
     }
   }
 
