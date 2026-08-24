@@ -968,11 +968,57 @@ document.addEventListener('DOMContentLoaded', async () => {
       // Sobrescribir el localStorage con la fuente unificada
       localStorage.setItem('catalogo_pos', JSON.stringify(catalogList));
 
-      // Emite eventos de sincronización en tiempo real
-      window.dispatchEvent(new Event('catalogoPosChanged'));
-      if (typeof BroadcastChannel !== 'undefined') {
-        const posChannel = new BroadcastChannel('lnp_pos_catalog_channel');
-        posChannel.postMessage({ type: 'catalog_updated', timestamp: Date.now() });
+      // 2. Registro Global de Auditoría (localStorage: 'movimientos_inventario')
+      try {
+        const now = new Date();
+        const pad = (n) => String(n).padStart(2, '0');
+        const formattedTimestamp = `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())} ${pad(now.getHours())}:${pad(now.getMinutes())}`;
+
+        const session = SessionStore.getSession();
+        const activeUser = session?.user?.name || document.getElementById('cashierName')?.textContent || 'Élodie Martin';
+
+        let formattedPaymentMethod = 'Efectivo';
+        if (selectedPaymentMethod === 'debito') formattedPaymentMethod = 'Tarjeta Débito';
+        else if (selectedPaymentMethod === 'credito') formattedPaymentMethod = 'Tarjeta Crédito';
+        else if (selectedPaymentMethod === 'pagomovil') formattedPaymentMethod = 'Pago Móvil';
+        else if (selectedPaymentMethod === 'efectivo') formattedPaymentMethod = 'Efectivo';
+
+        const orderCodeText = salePayload.orderNumber || document.getElementById('orderNumber')?.textContent?.replace('🧾 Comprobante:', '')?.trim() || `FAC-2026-${Math.floor(1000 + Math.random() * 9000)}`;
+
+        const newMovement = {
+          id: `mov_${Date.now()}`,
+          code: orderCodeText,
+          timestamp: formattedTimestamp,
+          type: 'Venta POS',
+          category: 'venta',
+          user: activeUser,
+          paymentMethod: formattedPaymentMethod,
+          status: 'Completado',
+          amount: parseFloat(salePayload.totalUsd || 0),
+          itemsCount: cart.reduce((sum, i) => sum + i.quantity, 0),
+          breakdown: cart.map(i => ({
+            name: `${i.product.icon || '🥖'} ${i.product.name} (x${i.quantity})`,
+            price: `$${(i.product.price * i.quantity).toFixed(2)} USD`
+          }))
+        };
+
+        const rawMovs = localStorage.getItem('movimientos_inventario');
+        let movsList = rawMovs ? JSON.parse(rawMovs) : [];
+        movsList.unshift(newMovement);
+        localStorage.setItem('movimientos_inventario', JSON.stringify(movsList));
+
+        // Disparar eventos de inventario y auditoría en tiempo real (Módulo 3 -> Módulo 4)
+        window.dispatchEvent(new Event('catalogoPosChanged'));
+        window.dispatchEvent(new Event('movimientosChanged'));
+        if (typeof BroadcastChannel !== 'undefined') {
+          const posChannel = new BroadcastChannel('lnp_pos_catalog_channel');
+          posChannel.postMessage({ type: 'catalog_updated', timestamp: Date.now() });
+
+          const movChannel = new BroadcastChannel('lnp_movements_channel');
+          movChannel.postMessage({ type: 'movement_added', timestamp: Date.now() });
+        }
+      } catch (errMov) {
+        console.error('Error registrando auditoría en movimientos_inventario:', errMov);
       }
     } catch (e) {
       console.error('Error al descontar stock de catalogo_pos al facturar:', e);

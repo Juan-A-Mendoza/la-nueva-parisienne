@@ -4,6 +4,19 @@ Todos los cambios significativos, nuevas funcionalidades y actualizaciones del s
 
 El formato está basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1.0.0/) y este proyecto se adhiere a [Semantic Versioning](https://semver.org/lang/es/).
 
+## [5.16.0] - 2026-08-24 (Sincronización en Tiempo Real de Transacciones Financieras y Auditoría POS ↔ Gerencia)
+
+### 📊 Inyección de Ventas en Registro de Auditoría Gerencial ([js/modules/pos.js](file:///C:/Users/juana/.gemini/antigravity-ide/scratch/la-nueva-parisienne/js/modules/pos.js), [js/modules/dashboard.js](file:///C:/Users/juana/.gemini/antigravity-ide/scratch/la-nueva-parisienne/js/modules/dashboard.js))
+- **Registro Global de Auditoría (`movimientos_inventario`)**:
+  - Se unificó la clave `movimientos_inventario` en `localStorage` como repositorio central de auditoría financiera para todas las ventas y operaciones de la panadería.
+- **Inyección Automática desde la Caja POS**:
+  - Al completar la venta en el POS (`executeSaleProcess`), el sistema genera e inserta (`unshift`) un objeto de transacción con: Código de Factura/Comprobante, Fecha y Hora exacta, Tipo (`'Venta POS'`), Nombre del Cajero Activo en Sesión, Método de Pago (Efectivo, Débito, Crédito, Pago Móvil), Monto Total ($) y desglose de ítems vendidos.
+- **Reactividad Instantánea Cross-Tab & SPA**:
+  - Se configuró la escucha de eventos `window.addEventListener('storage')`, `window.addEventListener('movimientosChanged')` y `BroadcastChannel('lnp_movements_channel')` en el Módulo 4.
+  - La tabla *"Movimientos Recientes y Registro de Auditoría"* del gerente se actualiza en tiempo real al cobrar en la caja sin necesidad de recargar la página.
+
+---
+
 ## [5.15.0] - 2026-08-24 (Rediseño Corporativo de la Caja de Descuentos y Promociones en POS)
 
 ### 🏷️ Nuevo Tarjetón de Descuentos y Porcentaje Manual ([modules/pos.html](file:///C:/Users/juana/.gemini/antigravity-ide/scratch/la-nueva-parisienne/modules/pos.html), [css/modules/pos.css](file:///C:/Users/juana/.gemini/antigravity-ide/scratch/la-nueva-parisienne/css/modules/pos.css), [js/modules/pos.js](file:///C:/Users/juana/.gemini/antigravity-ide/scratch/la-nueva-parisienne/js/modules/pos.js))

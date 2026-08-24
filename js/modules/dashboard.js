@@ -201,18 +201,35 @@ const UomConverter = {
   }
 };
 
+function getMovementsFromStorage() {
+  try {
+    const raw = localStorage.getItem('movimientos_inventario');
+    if (raw) {
+      const parsed = JSON.parse(raw);
+      if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+    }
+  } catch (e) {
+    console.warn('Error leyendo movimientos_inventario:', e);
+  }
+  try {
+    if (typeof RECENT_MOVEMENTS !== 'undefined') {
+      localStorage.setItem('movimientos_inventario', JSON.stringify(RECENT_MOVEMENTS));
+    }
+  } catch (e) {}
+  return typeof RECENT_MOVEMENTS !== 'undefined' ? RECENT_MOVEMENTS : [];
+}
+
 function registrarMovimientoAuditInventario(movData) {
   try {
     const raw = localStorage.getItem('movimientos_inventario');
-    const list = raw ? JSON.parse(raw) : [];
+    const list = raw ? JSON.parse(raw) : (Array.isArray(RECENT_MOVEMENTS) ? [...RECENT_MOVEMENTS] : []);
     list.unshift(movData);
     localStorage.setItem('movimientos_inventario', JSON.stringify(list));
-    try {
-      if (typeof RECENT_MOVEMENTS !== 'undefined' && Array.isArray(RECENT_MOVEMENTS)) {
-        RECENT_MOVEMENTS.unshift(movData);
-        if (typeof renderMovementsTable === 'function') renderMovementsTable();
-      }
-    } catch (e) {}
+    window.dispatchEvent(new Event('movimientosChanged'));
+    if (typeof BroadcastChannel !== 'undefined') {
+      const movChannel = new BroadcastChannel('lnp_movements_channel');
+      movChannel.postMessage({ type: 'movement_added', timestamp: Date.now() });
+    }
   } catch (e) {
     console.warn('Error registrando movimiento de auditoría:', e);
   }
@@ -641,10 +658,17 @@ function renderMovementsTable() {
   if (!tbody) return;
   tbody.innerHTML = '';
 
-  const filtered = RECENT_MOVEMENTS.filter(mov => {
+  const allMovs = getMovementsFromStorage();
+
+  const filtered = allMovs.filter(mov => {
     if (currentCategoryFilter === 'todos') return true;
     return mov.category === currentCategoryFilter;
   });
+
+  if (filtered.length === 0) {
+    tbody.innerHTML = `<tr><td colspan="8" style="text-align: center; color: var(--color-muted); padding: 1.5rem;">No hay movimientos registrados.</td></tr>`;
+    return;
+  }
 
   filtered.forEach(mov => {
     const tr = document.createElement('tr');
@@ -727,9 +751,11 @@ function openMovementDetailModal(mov) {
   const listContainer = document.getElementById('modalBreakdownList');
   if (listContainer) {
     listContainer.innerHTML = '';
-    const items = BREAKDOWN_MAP[mov.code] || [
-      { name: `Concepto General: ${mov.type}`, price: `$${Math.abs(mov.amount).toFixed(2)} USD` }
-    ];
+    const items = (mov.breakdown && Array.isArray(mov.breakdown) && mov.breakdown.length > 0)
+      ? mov.breakdown
+      : (BREAKDOWN_MAP[mov.code] || [
+          { name: `Concepto General: ${mov.type}`, price: `$${Math.abs(mov.amount).toFixed(2)} USD` }
+        ]);
 
     items.forEach(it => {
       const row = document.createElement('div');
@@ -905,12 +931,19 @@ function cargarInventario() {
       rawMaterialsData = getRawMaterialsFromStorage();
       renderInventoryTables();
     }
+    if (e.key === 'movimientos_inventario') {
+      renderMovementsTable();
+    }
   });
 
   window.addEventListener('catalogoPosChanged', () => {
     finishedGoodsData = getPosCatalogFromStorage();
     rawMaterialsData = getRawMaterialsFromStorage();
     renderInventoryTables();
+  });
+
+  window.addEventListener('movimientosChanged', () => {
+    renderMovementsTable();
   });
 
   if (typeof BroadcastChannel !== 'undefined') {
@@ -920,6 +953,13 @@ function cargarInventario() {
         finishedGoodsData = getPosCatalogFromStorage();
         rawMaterialsData = getRawMaterialsFromStorage();
         renderInventoryTables();
+      }
+    };
+
+    const movChannel = new BroadcastChannel('lnp_movements_channel');
+    movChannel.onmessage = (e) => {
+      if (e.data && e.data.type === 'movement_added') {
+        renderMovementsTable();
       }
     };
   }
