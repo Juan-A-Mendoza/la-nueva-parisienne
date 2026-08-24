@@ -4,6 +4,21 @@ Todos los cambios significativos, nuevas funcionalidades y actualizaciones del s
 
 El formato está basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1.0.0/) y este proyecto se adhiere a [Semantic Versioning](https://semver.org/lang/es/).
 
+## [5.18.0] - 2026-08-24 (Sistema de Devoluciones y Anulación de Ticket con Autorización Gerencial)
+
+### ↩️ Módulo 3 POS & Auditoría Módulo 4 ([modules/pos.html](file:///C:/Users/juana/.gemini/antigravity-ide/scratch/la-nueva-parisienne/modules/pos.html), [css/modules/pos.css](file:///C:/Users/juana/.gemini/antigravity-ide/scratch/la-nueva-parisienne/css/modules/pos.css), [js/modules/pos.js](file:///C:/Users/juana/.gemini/antigravity-ide/scratch/la-nueva-parisienne/js/modules/pos.js))
+- **Botón Corporativo de Devolución (`btn-pos-devolucion`)**:
+  - Se añadió en la barra superior del POS el botón *"↩️ Devolución / Anular Ticket"* con estética naranja de advertencia y efecto hover.
+- **Asistente Modal de 2 Pasos (`modalDevolucionTicket`)**:
+  - **Paso 1**: Captura del Número de Factura/Ticket (ej: `FAC-2026-1003`), Monto afectado ($ USD), Motivo desplegable (Producto Defectuoso, Error de Cajero, Solicitud Cliente, Duplicidad) y Observaciones.
+  - **Paso 2**: Solicitud de Contraseña de Autorización Gerencial. La función `validateManagerPassword()` verifica las credenciales en `localStorage` (`usuarios_sistema`) o claves maestras gerenciales (`admin123`, `1234`, `gerente`, `admin`, `0000`).
+- **Registro de Auditoría e Inyección de Reembolso Negativo**:
+  - Al validarse la clave gerencial, se inyecta en `movimientos_inventario` la transacción con `type: 'Devolución de Venta'`, `category: 'gasto'`, monto negativo (`-$XX.XX`), número del ticket original y firma digital `authorizedBy: managerName`.
+- **Feedback Animado de Éxito**:
+  - Muestra el modal con la animación Checkmark SVG confirmando el nombre del gerente autorizante y notificando en tiempo real al Dashboard Gerencial.
+
+---
+
 ## [5.17.1] - 2026-08-24 (Resolución de Error Sintáctico y Normalización de dashboard.js)
 
 ### 🛠️ Reparación Estructural y Eliminación de Cierre Huérfano ([js/modules/dashboard.js](file:///C:/Users/juana/.gemini/antigravity-ide/scratch/la-nueva-parisienne/js/modules/dashboard.js))
