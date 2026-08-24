@@ -4,6 +4,18 @@ Todos los cambios significativos, nuevas funcionalidades y actualizaciones del s
 
 El formato está basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1.0.0/) y este proyecto se adhiere a [Semantic Versioning](https://semver.org/lang/es/).
 
+## [5.10.0] - 2026-08-24 (Selector de Emoji Avatar Personalizado para Usuarios en Módulo 9)
+
+### 🎨 Selección de Emoji Avatar de Perfil ([modules/configuraciones.html](file:///C:/Users/juana/.gemini/antigravity-ide/scratch/la-nueva-parisienne/modules/configuraciones.html), [js/modules/configuraciones.js](file:///C:/Users/juana/.gemini/antigravity-ide/scratch/la-nueva-parisienne/js/modules/configuraciones.js))
+- **Grilla de Selección Visual en Modal de Formulario**:
+  - Se incorporó la grilla interactiva `emojiPickerGrid` dentro de `modalUsuarioForm` con 12 emojis curados (👨‍💼, 👩‍💼, 👨‍🍳, 👩‍🍳, 📊, 💼, 🥖, 🍰, ☕, 👨‍💻, 👩‍💻, 👑).
+- **Auto-Sugerencia Inteligente por Rol**:
+  - Al seleccionar un rol (Gerente General, Cajero, Panadero, Contador), el formulario auto-selecciona el emoji sugerido si se trata de un nuevo usuario.
+- **Persistencia en `localStorage` & Sincronización en Lobby y Header**:
+  - El emoji seleccionado se guarda en el objeto `icon` del perfil dentro de `localStorage` (`usuarios` y `usuarios_sistema`), reflejándose en las tarjetas del Lobby y en el avatar de la barra superior.
+
+---
+
 ## [5.9.9] - 2026-08-24 (Integración Estricta con API BCV Oficial ve.dolarapi.com y Lectura de Campo 'promedio')
 
 ### 🇻🇪 Sincronización Directa de Tasa Oficial BCV ([api/bcv_rate.php](file:///C:/Users/juana/.gemini/antigravity-ide/scratch/la-nueva-parisienne/api/bcv_rate.php), [js/core/bcv-rate-store.js](file:///C:/Users/juana/.gemini/antigravity-ide/scratch/la-nueva-parisienne/js/core/bcv-rate-store.js), [js/modules/configuraciones.js](file:///C:/Users/juana/.gemini/antigravity-ide/scratch/la-nueva-parisienne/js/modules/configuraciones.js), [js/modules/dashboard.js](file:///C:/Users/juana/.gemini/antigravity-ide/scratch/la-nueva-parisienne/js/modules/dashboard.js), [js/modules/pos.js](file:///C:/Users/juana/.gemini/antigravity-ide/scratch/la-nueva-parisienne/js/modules/pos.js))

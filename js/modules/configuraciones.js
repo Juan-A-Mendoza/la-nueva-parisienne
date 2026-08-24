@@ -515,6 +515,19 @@ function inicializarGestionUsuarios() {
     }
   }
 
+  function updateActiveEmojiButton(selectedEmoji) {
+    const hiddenInput = document.getElementById('modalUserIcon');
+    if (hiddenInput) hiddenInput.value = selectedEmoji;
+
+    document.querySelectorAll('#emojiPickerGrid .emoji-option-btn').forEach(btn => {
+      if (btn.dataset.emoji === selectedEmoji) {
+        btn.classList.add('active');
+      } else {
+        btn.classList.remove('active');
+      }
+    });
+  }
+
   function openUserFormModal(userToEdit = null) {
     if (userToEdit) {
       if (modalUserTitle) modalUserTitle.textContent = 'Editar Información de Usuario';
@@ -523,10 +536,12 @@ function inicializarGestionUsuarios() {
       document.getElementById('modalUserUsername').value = userToEdit.username;
       document.getElementById('modalUserPassword').value = userToEdit.password || '••••••••';
       document.getElementById('modalUserRol').value = userToEdit.role;
+      updateActiveEmojiButton(userToEdit.icon || '👨‍💼');
     } else {
       if (modalUserTitle) modalUserTitle.textContent = 'Crear Nuevo Usuario';
       usuarioForm?.reset();
       document.getElementById('modalUserId').value = '';
+      updateActiveEmojiButton('👨‍💼');
     }
 
     if (modalUsuarioForm) {
@@ -543,13 +558,32 @@ function inicializarGestionUsuarios() {
     }
   }
 
-  // RECONECTAR BOTÓN DE DESBLOQUEO DE USUARIOS
+  // RECONECTAR BOTÓN DE DESBLOQUEO DE USUARIOS Y SELECTOR DE EMOJI
   btnUnlockUserManagement?.addEventListener('click', () => {
     if (isUsersUnlocked) {
       renderUsersTable();
       return;
     }
     openAuthPasswordModal('UNLOCK_VIEW', null, '🔑 Autorizar Desbloqueo de Usuarios', 'Ingrese su contraseña gerencial para ver credenciales');
+  });
+
+  document.querySelectorAll('#emojiPickerGrid .emoji-option-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const emoji = btn.dataset.emoji || '👨‍💼';
+      updateActiveEmojiButton(emoji);
+    });
+  });
+
+  document.getElementById('modalUserRol')?.addEventListener('change', (e) => {
+    const isNewUser = !document.getElementById('modalUserId')?.value;
+    if (isNewUser) {
+      const role = e.target.value;
+      let suggestedEmoji = '👨‍💼';
+      if (role === 'Cajero') suggestedEmoji = '👩‍💼';
+      else if (role === 'Panadero') suggestedEmoji = '👨‍🍳';
+      else if (role === 'Contador') suggestedEmoji = '📊';
+      updateActiveEmojiButton(suggestedEmoji);
+    }
   });
 
   closeAuthModalBtn?.addEventListener('click', closeAuthPasswordModal);
@@ -583,23 +617,19 @@ function inicializarGestionUsuarios() {
       renderUsersTable();
       showSuccessModal('¡Acceso Autorizado!', 'Gestión de Usuarios y Roles desbloqueada exitosamente.');
     } else if (actionType === 'SAVE_USER') {
-      const { id, name, username, password, role } = data;
+      const { id, name, username, password, role, icon } = data;
       let roleCode = 'POS';
-      let icon = '👩‍💼';
+      let finalIcon = icon || '👨‍💼';
 
       const rLower = (role || '').toLowerCase();
       if (rLower.includes('gerente')) {
         roleCode = 'ADMIN';
-        icon = '👨‍💼';
       } else if (rLower.includes('panadero') || rLower.includes('cocina')) {
         roleCode = 'KITCHEN';
-        icon = '👨‍🍳';
       } else if (rLower.includes('contador') || rLower.includes('contabilidad')) {
         roleCode = 'ACCOUNTANT';
-        icon = '📊';
       } else if (rLower.includes('cajero')) {
         roleCode = 'POS';
-        icon = '👩‍💼';
       }
 
       if (id) {
@@ -610,7 +640,7 @@ function inicializarGestionUsuarios() {
           if (password && password !== '••••••••') existing.password = password;
           existing.role = role;
           existing.roleCode = roleCode;
-          existing.icon = icon;
+          existing.icon = finalIcon;
         }
       } else {
         const newId = `usr_${String(usersData.length + 1).padStart(3, '0')}`;
@@ -621,13 +651,13 @@ function inicializarGestionUsuarios() {
           password: password || '123456',
           role,
           roleCode,
-          icon
+          icon: finalIcon
         });
       }
 
       saveUsersToStorage(usersData);
       renderUsersTable();
-      showSuccessModal('¡Usuario Guardado!', `El usuario "${name}" (@${username}) fue guardado y sincronizado con éxito.`);
+      showSuccessModal('¡Usuario Guardado!', `El usuario "${name}" (@${username}) con perfil ${finalIcon} fue guardado y sincronizado con éxito.`);
     } else if (actionType === 'DELETE_USER') {
       usersData = usersData.filter(u => u.id !== data.id);
       saveUsersToStorage(usersData);
@@ -645,6 +675,7 @@ function inicializarGestionUsuarios() {
     const username = document.getElementById('modalUserUsername')?.value?.trim();
     const password = document.getElementById('modalUserPassword')?.value;
     const role = document.getElementById('modalUserRol')?.value;
+    const icon = document.getElementById('modalUserIcon')?.value || '👨‍💼';
 
     if (!name || !username || !role) return;
 
@@ -694,7 +725,7 @@ function inicializarGestionUsuarios() {
     const title = isEdit ? '💾 Confirmar Actualización de Usuario' : '✨ Confirmar Creación de Usuario';
     const sub = isEdit ? `Autorice la actualización del usuario "${name}"` : `Autorice la creación del nuevo usuario "${name}"`;
 
-    openAuthPasswordModal('SAVE_USER', { id, name, username, password, role }, title, sub);
+    openAuthPasswordModal('SAVE_USER', { id, name, username, password, role, icon }, title, sub);
   });
 }
 

@@ -10,6 +10,42 @@
   <link rel="stylesheet" href="../css/main.css">
   <link rel="stylesheet" href="../css/modules/dashboard.css">
   <style>
+    .emoji-picker-grid {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+      background: rgba(44, 29, 17, 0.04);
+      padding: 0.75rem;
+      border-radius: 12px;
+      border: 1px solid var(--border-subtle);
+    }
+    .emoji-option-btn {
+      width: 42px;
+      height: 42px;
+      font-size: 1.45rem;
+      border-radius: 10px;
+      border: 1.5px solid transparent;
+      background: #FFFFFF;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+      box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+    }
+    .emoji-option-btn:hover {
+      transform: translateY(-2px) scale(1.1);
+      border-color: var(--color-gold);
+      box-shadow: 0 4px 10px rgba(212, 155, 84, 0.25);
+    }
+    .emoji-option-btn.active {
+      border-color: var(--color-gold);
+      background: rgba(212, 155, 84, 0.18);
+      transform: scale(1.12);
+      box-shadow: 0 4px 12px rgba(212, 155, 84, 0.4);
+      outline: 2px solid var(--color-gold-dark);
+    }
+
     .config-card {
       background: #FFFFFF;
       border-radius: var(--radius-md);
@@ -388,6 +424,25 @@
               <option value="Panadero">🥖 Panadero (Módulo 2 Cocina & Hornos)</option>
               <option value="Contador">📊 Contador (Módulo 5 Contabilidad & Finanzas)</option>
             </select>
+          </div>
+
+          <div class="form-group-custom">
+            <label class="form-label-custom">🎨 Seleccionar Icono / Emoji de Perfil *</label>
+            <input type="hidden" id="modalUserIcon" value="👨‍💼" />
+            <div id="emojiPickerGrid" class="emoji-picker-grid">
+              <button type="button" class="emoji-option-btn active" data-emoji="👨‍💼" title="Gerente Masculino">👨‍💼</button>
+              <button type="button" class="emoji-option-btn" data-emoji="👩‍💼" title="Gerente Femenino">👩‍💼</button>
+              <button type="button" class="emoji-option-btn" data-emoji="👨‍🍳" title="Panadero / Chef">👨‍🍳</button>
+              <button type="button" class="emoji-option-btn" data-emoji="👩‍🍳" title="Panadera / Chef">👩‍🍳</button>
+              <button type="button" class="emoji-option-btn" data-emoji="📊" title="Contador / Finanzas">📊</button>
+              <button type="button" class="emoji-option-btn" data-emoji="💼" title="Ejecutivo / Empresa">💼</button>
+              <button type="button" class="emoji-option-btn" data-emoji="🥖" title="Panadería">🥖</button>
+              <button type="button" class="emoji-option-btn" data-emoji="🍰" title="Pastelería">🍰</button>
+              <button type="button" class="emoji-option-btn" data-emoji="☕" title="Cafetería">☕</button>
+              <button type="button" class="emoji-option-btn" data-emoji="👨‍💻" title="Desarrollador / IT">👨‍💻</button>
+              <button type="button" class="emoji-option-btn" data-emoji="👩‍💻" title="Desarrolladora / IT">👩‍💻</button>
+              <button type="button" class="emoji-option-btn" data-emoji="👑" title="Administración Máxima">👑</button>
+            </div>
           </div>
 
         </div>
