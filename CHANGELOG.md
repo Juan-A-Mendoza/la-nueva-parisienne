@@ -4,6 +4,26 @@ Todos los cambios significativos, nuevas funcionalidades y actualizaciones del s
 
 El formato está basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1.0.0/) y este proyecto se adhiere a [Semantic Versioning](https://semver.org/lang/es/).
 
+## [5.11.0] - 2026-08-24 (Sistema de Tickets de Requisición de Materia Prima entre Cocina y Gerencia)
+
+### 🎫 Módulo 2 - Producción y Cocina ([modules/kitchen.html](file:///C:/Users/juana/.gemini/antigravity-ide/scratch/la-nueva-parisienne/modules/kitchen.html), [js/modules/kitchen.js](file:///C:/Users/juana/.gemini/antigravity-ide/scratch/la-nueva-parisienne/js/modules/kitchen.js))
+- **Botón y Modal de Requisición Directa**:
+  - Se creó la barra superior de acciones con el botón corporativo `"🎫 Solicitar Materia Prima"`.
+  - Al presionar, abre el modal `#modalSolicitarMp` con selector dinámico de insumos (basado en el catálogo de materias primas), cantidad, unidad de medida (UoM) y campo de notas.
+- **Sección "Mis Solicitudes de Materia Prima"**:
+  - Se implementó la tabla del historial de tickets enviados con estados en vivo (`🟡 Pendiente`, `🟢 Aprobado`, `🔴 Rechazado`) y el motivo de respuesta gerencial.
+
+### 📨 Módulo 4 - Panel Gerencial de Inventarios ([modules/dashboard.html](file:///C:/Users/juana/.gemini/antigravity-ide/scratch/la-nueva-parisienne/modules/dashboard.html), [js/modules/dashboard.js](file:///C:/Users/juana/.gemini/antigravity-ide/scratch/la-nueva-parisienne/js/modules/dashboard.js))
+- **Pestaña "📨 Tickets de Producción"**:
+  - Se agregó la 4ta pestaña a la barra de inventario con badge dinámico de solicitudes pendientes.
+- **Acciones Gerenciales de Auditoría**:
+  - Botón `[✅ Aprobar]`: Aprueba la solicitud, ajusta el stock del insumo de forma automática y notifica con el modal de éxito.
+  - Botón `[❌ Rechazar]`: Abre el modal `#modalRechazarTicket` para ingresar un motivo justificado que se sincroniza inmediatamente con el Módulo de Cocina.
+- **Aislamiento de Fallos**:
+  - Toda la lógica fue encapsulada en funciones `inicializarRequisicionCocina()` e `inicializarTicketsProduccionGerencia()` con bloques `try...catch`.
+
+---
+
 ## [5.10.0] - 2026-08-24 (Selector de Emoji Avatar Personalizado para Usuarios en Módulo 9)
 
 ### 🎨 Selección de Emoji Avatar de Perfil ([modules/configuraciones.html](file:///C:/Users/juana/.gemini/antigravity-ide/scratch/la-nueva-parisienne/modules/configuraciones.html), [js/modules/configuraciones.js](file:///C:/Users/juana/.gemini/antigravity-ide/scratch/la-nueva-parisienne/js/modules/configuraciones.js))

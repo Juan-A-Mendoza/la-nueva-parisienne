@@ -310,15 +310,19 @@ function inicializarNavegacionTabs() {
   const panelMateriaPrima = document.getElementById('panelMateriaPrima');
   const panelProductosTerminados = document.getElementById('panelProductosTerminados');
   const panelProveedores = document.getElementById('panelProveedores');
+  const panelTicketsProduccion = document.getElementById('panelTicketsProduccion');
+  const tabBtnTicketsProduccion = document.getElementById('tabBtnTicketsProduccion');
 
   function switchInventoryTab(tabName) {
     tabBtnMateriaPrima?.classList.remove('active');
     tabBtnProductosTerminados?.classList.remove('active');
     tabBtnProveedores?.classList.remove('active');
+    tabBtnTicketsProduccion?.classList.remove('active');
 
     if (panelMateriaPrima) panelMateriaPrima.style.display = 'none';
     if (panelProductosTerminados) panelProductosTerminados.style.display = 'none';
     if (panelProveedores) panelProveedores.style.display = 'none';
+    if (panelTicketsProduccion) panelTicketsProduccion.style.display = 'none';
 
     if (tabName === 'finished') {
       tabBtnProductosTerminados?.classList.add('active');
@@ -326,6 +330,9 @@ function inicializarNavegacionTabs() {
     } else if (tabName === 'suppliers') {
       tabBtnProveedores?.classList.add('active');
       if (panelProveedores) panelProveedores.style.display = 'block';
+    } else if (tabName === 'tickets') {
+      tabBtnTicketsProduccion?.classList.add('active');
+      if (panelTicketsProduccion) panelTicketsProduccion.style.display = 'block';
     } else {
       tabBtnMateriaPrima?.classList.add('active');
       if (panelMateriaPrima) panelMateriaPrima.style.display = 'block';
@@ -335,6 +342,7 @@ function inicializarNavegacionTabs() {
   tabBtnMateriaPrima?.addEventListener('click', () => switchInventoryTab('raw'));
   tabBtnProductosTerminados?.addEventListener('click', () => switchInventoryTab('finished'));
   tabBtnProveedores?.addEventListener('click', () => switchInventoryTab('suppliers'));
+  tabBtnTicketsProduccion?.addEventListener('click', () => switchInventoryTab('tickets'));
 
   document.querySelectorAll('.filter-pill-btn').forEach(btn => {
     btn.addEventListener('click', () => {
@@ -1274,6 +1282,208 @@ function closeConfirmEliminarModal() {
   }
 }
 
+function inicializarTicketsProduccionGerencia() {
+  try {
+    const DEFAULT_TICKETS = [
+      {
+        id: 'REQ-001',
+        date: '24/08/2026 14:30',
+        baker: 'Jean-Luc Dubois',
+        itemCode: 'MAT-001',
+        itemName: 'Harina de Trigo Todo Uso',
+        qty: 50,
+        unit: 'kg',
+        notes: 'Amasado urgente de baguettes para el turno tarde.',
+        status: 'Pendiente',
+        reason: ''
+      },
+      {
+        id: 'REQ-002',
+        date: '24/08/2026 11:15',
+        baker: 'Jean-Luc Dubois',
+        itemCode: 'MAT-002',
+        itemName: 'Mantequilla Sin Sal 82%',
+        qty: 15,
+        unit: 'kg',
+        notes: 'Para lamine de masa hojaldrada de Croissants.',
+        status: 'Aprobado',
+        reason: 'Aprobado por Gerencia General'
+      },
+      {
+        id: 'REQ-003',
+        date: '24/08/2026 09:00',
+        baker: 'Jean-Luc Dubois',
+        itemCode: 'MAT-003',
+        itemName: 'Azúcar Refinada Extra',
+        qty: 100,
+        unit: 'kg',
+        notes: 'Reserva para pastelería y brioches.',
+        status: 'Rechazado',
+        reason: 'Excede límite por turno. Solicitar máx 25 kg.'
+      }
+    ];
+
+    function getTicketsFromStorage() {
+      try {
+        const raw = localStorage.getItem('tickets_requisicion');
+        if (!raw) {
+          localStorage.setItem('tickets_requisicion', JSON.stringify(DEFAULT_TICKETS));
+          return DEFAULT_TICKETS;
+        }
+        const parsed = JSON.parse(raw);
+        return Array.isArray(parsed) ? parsed : DEFAULT_TICKETS;
+      } catch (e) {
+        console.warn('Error leyendo tickets_requisicion:', e);
+        return DEFAULT_TICKETS;
+      }
+    }
+
+    function saveTicketsToStorage(tickets) {
+      try {
+        localStorage.setItem('tickets_requisicion', JSON.stringify(tickets));
+        window.dispatchEvent(new CustomEvent('ticketsUpdated'));
+      } catch (e) {
+        console.error('Error guardando tickets_requisicion:', e);
+      }
+    }
+
+    function renderTicketsTable() {
+      const tbody = document.getElementById('ticketsProduccionTbody');
+      const badgeCount = document.getElementById('badgeTicketsProduccionCount');
+      if (!tbody) return;
+
+      const tickets = getTicketsFromStorage();
+      const pendingCount = tickets.filter(t => t.status === 'Pendiente').length;
+
+      if (badgeCount) {
+        badgeCount.textContent = pendingCount;
+        badgeCount.style.background = pendingCount > 0 ? 'var(--color-terracotta)' : 'rgba(0,0,0,0.15)';
+      }
+
+      tbody.innerHTML = '';
+      if (tickets.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="8" style="text-align: center; color: var(--color-muted); padding: 1.5rem;">No hay tickets de requisición registrados.</td></tr>`;
+        return;
+      }
+
+      tickets.forEach(ticket => {
+        const tr = document.createElement('tr');
+        
+        let statusTag = `<span class="badge-stock-normal" style="background: rgba(255,152,0,0.15); color: #E65100; border: 1px solid rgba(255,152,0,0.3); font-weight: 700;">🟡 Pendiente</span>`;
+        if (ticket.status === 'Aprobado') {
+          statusTag = `<span class="badge-stock-normal" style="background: rgba(46,125,50,0.15); color: var(--color-success); border: 1px solid rgba(46,125,50,0.3); font-weight: 700;">🟢 Aprobado</span>`;
+        } else if (ticket.status === 'Rechazado') {
+          statusTag = `<span class="badge-stock-normal" style="background: rgba(198,40,40,0.15); color: var(--color-danger); border: 1px solid rgba(198,40,40,0.3); font-weight: 700;">🔴 Rechazado</span>`;
+        }
+
+        let actionBtns = `<span style="font-size: 0.82rem; color: var(--color-muted); font-style: italic;">${ticket.reason || 'Procesado'}</span>`;
+        if (ticket.status === 'Pendiente') {
+          actionBtns = `
+            <div style="display: flex; gap: 0.4rem;">
+              <button type="button" class="btn-table-action-sm btn-approve-ticket" style="background: rgba(46,125,50,0.12); color: var(--color-success); border-color: rgba(46,125,50,0.3); font-weight: 700;" title="Aprobar despacho">✅ Aprobar</button>
+              <button type="button" class="btn-table-action-sm btn-reject-ticket" style="background: rgba(198,40,40,0.12); color: var(--color-danger); border-color: rgba(198,40,40,0.3); font-weight: 700;" title="Rechazar solicitud">❌ Rechazar</button>
+            </div>
+          `;
+        }
+
+        tr.innerHTML = `
+          <td><span class="table-code-badge" style="font-weight: 800;">${ticket.id}</span></td>
+          <td style="font-size: 0.85rem;">${ticket.date}</td>
+          <td><strong>👨‍🍳 ${ticket.baker}</strong></td>
+          <td><strong>${ticket.itemName}</strong></td>
+          <td><strong style="color: var(--color-gold-dark);">${ticket.qty} ${ticket.unit}</strong></td>
+          <td style="font-size: 0.85rem; color: var(--color-muted);">${ticket.notes || '-'}</td>
+          <td>${statusTag}</td>
+          <td>${actionBtns}</td>
+        `;
+
+        if (ticket.status === 'Pendiente') {
+          tr.querySelector('.btn-approve-ticket')?.addEventListener('click', () => aprovarTicket(ticket.id));
+          tr.querySelector('.btn-reject-ticket')?.addEventListener('click', () => abrirModalRechazar(ticket.id));
+        }
+
+        tbody.appendChild(tr);
+      });
+    }
+
+    function aprovarTicket(ticketId) {
+      const tickets = getTicketsFromStorage();
+      const target = tickets.find(t => t.id === ticketId);
+      if (!target) return;
+
+      target.status = 'Aprobado';
+      target.reason = 'Aprobado por Gerencia General';
+
+      const rawMaterials = getRawMaterialsFromStorage();
+      const mat = rawMaterials.find(m => m.code === target.itemCode || m.name === target.itemName);
+      if (mat) {
+        mat.stock = Math.max(0, mat.stock - target.qty);
+        saveRawMaterialsToStorage(rawMaterials);
+        renderInventoryTables();
+      }
+
+      saveTicketsToStorage(tickets);
+      renderTicketsTable();
+      showSuccessModal('¡Requisición Aprobada!', `Se autorizó el despacho de ${target.qty} ${target.unit} de "${target.itemName}" para Cocina.`);
+    }
+
+    const modalRechazarTicket = document.getElementById('modalRechazarTicket');
+    const closeRechazarTicketModalBtn = document.getElementById('closeRechazarTicketModalBtn');
+    const cancelRechazarTicketBtn = document.getElementById('cancelRechazarTicketBtn');
+    const rechazarTicketForm = document.getElementById('rechazarTicketForm');
+
+    function abrirModalRechazar(ticketId) {
+      document.getElementById('rechazarTicketId').value = ticketId;
+      document.getElementById('motivoRechazarInput').value = '';
+      if (modalRechazarTicket) {
+        modalRechazarTicket.style.display = 'flex';
+        modalRechazarTicket.setAttribute('aria-hidden', 'false');
+      }
+    }
+
+    function cerrarModalRechazar() {
+      if (modalRechazarTicket) {
+        modalRechazarTicket.style.display = 'none';
+        modalRechazarTicket.setAttribute('aria-hidden', 'true');
+        rechazarTicketForm?.reset();
+      }
+    }
+
+    closeRechazarTicketModalBtn?.addEventListener('click', cerrarModalRechazar);
+    cancelRechazarTicketBtn?.addEventListener('click', cerrarModalRechazar);
+    modalRechazarTicket?.addEventListener('click', (e) => {
+      if (e.target === modalRechazarTicket) cerrarModalRechazar();
+    });
+
+    rechazarTicketForm?.addEventListener('submit', (e) => {
+      e.preventDefault();
+      const ticketId = document.getElementById('rechazarTicketId')?.value;
+      const motivo = document.getElementById('motivoRechazarInput')?.value?.trim();
+      if (!ticketId || !motivo) return;
+
+      const tickets = getTicketsFromStorage();
+      const target = tickets.find(t => t.id === ticketId);
+      if (!target) return;
+
+      target.status = 'Rechazado';
+      target.reason = motivo;
+
+      saveTicketsToStorage(tickets);
+      renderTicketsTable();
+      cerrarModalRechazar();
+      showSuccessModal('Ticket Rechazado', `Se notificó la justificación del rechazo ("${motivo}") a Cocina.`);
+    });
+
+    renderTicketsTable();
+    window.addEventListener('ticketsUpdated', renderTicketsTable);
+    window.addEventListener('storage', (e) => {
+      if (e.key === 'tickets_requisicion') renderTicketsTable();
+    });
+  } catch (err) {
+    console.error('Error inicializando tickets de producción en Gerencia:', err);
+  }
+}
+
 // ==========================================================================
 // 4. INICIALIZACIÓN DOMCONTENTLOADED CON AISLAMIENTO DE FALLOS STRICTO
 // ==========================================================================
@@ -1284,5 +1494,6 @@ document.addEventListener('DOMContentLoaded', () => {
   try { cargarTasaCambio(); } catch (e) { console.error('Error Tasa:', e); }
   try { renderizarGraficos(); } catch (e) { console.error('Error Graficos:', e); }
   try { cargarInventario(); } catch (e) { console.error('Error Inventario:', e); }
+  try { inicializarTicketsProduccionGerencia(); } catch (e) { console.error('Error Tickets Producción:', e); }
   try { inicializarBotonesGenerales(); } catch (e) { console.error('Error Botones:', e); }
 });

@@ -456,4 +456,234 @@ document.addEventListener('DOMContentLoaded', () => {
       ovenDetailModal.classList.remove('active');
     }
   });
+
+  // 9. SISTEMA DE REQUISICIÓN DE MATERIA PRIMA (MÓDULO 2 COCINA <-> MÓDULO 4 GERENCIA)
+  function inicializarRequisicionCocina() {
+    try {
+      const DEFAULT_TICKETS = [
+        {
+          id: 'REQ-001',
+          date: '24/08/2026 14:30',
+          baker: session?.user?.name || 'Jean-Luc Dubois',
+          itemCode: 'MAT-001',
+          itemName: 'Harina de Trigo Todo Uso',
+          qty: 50,
+          unit: 'kg',
+          notes: 'Amasado urgente de baguettes para el turno tarde.',
+          status: 'Pendiente',
+          reason: ''
+        },
+        {
+          id: 'REQ-002',
+          date: '24/08/2026 11:15',
+          baker: session?.user?.name || 'Jean-Luc Dubois',
+          itemCode: 'MAT-002',
+          itemName: 'Mantequilla Sin Sal 82%',
+          qty: 15,
+          unit: 'kg',
+          notes: 'Para lamine de masa hojaldrada de Croissants.',
+          status: 'Aprobado',
+          reason: 'Aprobado por Gerencia General'
+        },
+        {
+          id: 'REQ-003',
+          date: '24/08/2026 09:00',
+          baker: session?.user?.name || 'Jean-Luc Dubois',
+          itemCode: 'MAT-003',
+          itemName: 'Azúcar Refinada Extra',
+          qty: 100,
+          unit: 'kg',
+          notes: 'Reserva para pastelería y brioches.',
+          status: 'Rechazado',
+          reason: 'Excede límite por turno. Solicitar máx 25 kg.'
+        }
+      ];
+
+      function getTicketsFromStorage() {
+        try {
+          const raw = localStorage.getItem('tickets_requisicion');
+          if (!raw) {
+            localStorage.setItem('tickets_requisicion', JSON.stringify(DEFAULT_TICKETS));
+            return DEFAULT_TICKETS;
+          }
+          const parsed = JSON.parse(raw);
+          return Array.isArray(parsed) ? parsed : DEFAULT_TICKETS;
+        } catch (e) {
+          console.warn('Error leyendo tickets_requisicion:', e);
+          return DEFAULT_TICKETS;
+        }
+      }
+
+      function saveTicketsToStorage(tickets) {
+        try {
+          localStorage.setItem('tickets_requisicion', JSON.stringify(tickets));
+          window.dispatchEvent(new CustomEvent('ticketsUpdated'));
+        } catch (e) {
+          console.error('Error guardando tickets_requisicion:', e);
+        }
+      }
+
+      function getRawMaterialsFromStorage() {
+        try {
+          const raw = localStorage.getItem('materias_primas');
+          if (raw) {
+            const parsed = JSON.parse(raw);
+            if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+          }
+        } catch (e) {}
+        return [
+          { code: 'MAT-001', name: 'Harina de Trigo Todo Uso', unit: 'kg' },
+          { code: 'MAT-002', name: 'Mantequilla Sin Sal 82%', unit: 'kg' },
+          { code: 'MAT-003', name: 'Azúcar Refinada Extra', unit: 'kg' },
+          { code: 'MAT-004', name: 'Levadura Fresca Instantánea', unit: 'kg' },
+          { code: 'MAT-005', name: 'Leche Entera Pasteurizada', unit: 'L' },
+          { code: 'MAT-006', name: 'Sal Marina Fina', unit: 'kg' }
+        ];
+      }
+
+      function populateRawMaterialsSelect() {
+        const solicitarMpSelect = document.getElementById('solicitarMpSelect');
+        const solicitarMpUom = document.getElementById('solicitarMpUom');
+        if (!solicitarMpSelect) return;
+
+        const items = getRawMaterialsFromStorage();
+        solicitarMpSelect.innerHTML = '';
+        items.forEach(item => {
+          const opt = document.createElement('option');
+          opt.value = item.code || item.id;
+          opt.textContent = `${item.name} (${item.unit || 'kg'})`;
+          opt.dataset.unit = item.unit || 'kg';
+          opt.dataset.name = item.name;
+          solicitarMpSelect.appendChild(opt);
+        });
+
+        if (items.length > 0 && solicitarMpUom) {
+          solicitarMpUom.value = items[0].unit || 'kg';
+        }
+
+        solicitarMpSelect.addEventListener('change', () => {
+          const selectedOption = solicitarMpSelect.options[solicitarMpSelect.selectedIndex];
+          if (selectedOption && solicitarMpUom) {
+            solicitarMpUom.value = selectedOption.dataset.unit || 'kg';
+          }
+        });
+      }
+
+      function renderMyTicketsTable() {
+        const tbody = document.getElementById('kitchenMyTicketsTbody');
+        const badgeCount = document.getElementById('kitchenTicketsBadgeCount');
+        if (!tbody) return;
+
+        const tickets = getTicketsFromStorage();
+        if (badgeCount) badgeCount.textContent = `${tickets.length} Ticket(s) Registrado(s)`;
+
+        tbody.innerHTML = '';
+        if (tickets.length === 0) {
+          tbody.innerHTML = `<tr><td colspan="7" style="text-align: center; color: var(--color-muted); padding: 1.5rem;">No has realizado solicitudes de materia prima aún.</td></tr>`;
+          return;
+        }
+
+        tickets.forEach(ticket => {
+          const tr = document.createElement('tr');
+          tr.style.borderBottom = '1px solid var(--border-subtle)';
+
+          let statusBadge = `<span class="badge-stock-normal" style="background: rgba(255,152,0,0.15); color: #E65100; border: 1px solid rgba(255,152,0,0.3); font-weight: 700;">🟡 Pendiente</span>`;
+          if (ticket.status === 'Aprobado') {
+            statusBadge = `<span class="badge-stock-normal" style="background: rgba(46,125,50,0.15); color: var(--color-success); border: 1px solid rgba(46,125,50,0.3); font-weight: 700;">🟢 Aprobado</span>`;
+          } else if (ticket.status === 'Rechazado') {
+            statusBadge = `<span class="badge-stock-normal" style="background: rgba(198,40,40,0.15); color: var(--color-danger); border: 1px solid rgba(198,40,40,0.3); font-weight: 700;">🔴 Rechazado</span>`;
+          }
+
+          tr.innerHTML = `
+            <td style="padding: 0.75rem 1rem;"><span class="table-code-badge" style="font-weight: 800;">${ticket.id}</span></td>
+            <td style="padding: 0.75rem 1rem; font-size: 0.85rem;">${ticket.date}</td>
+            <td style="padding: 0.75rem 1rem;"><strong>${ticket.itemName}</strong></td>
+            <td style="padding: 0.75rem 1rem;"><strong style="color: var(--color-gold-dark);">${ticket.qty} ${ticket.unit}</strong></td>
+            <td style="padding: 0.75rem 1rem; font-size: 0.85rem; color: var(--color-muted);">${ticket.notes || '-'}</td>
+            <td style="padding: 0.75rem 1rem;">${statusBadge}</td>
+            <td style="padding: 0.75rem 1rem; font-size: 0.85rem; color: ${ticket.status === 'Rechazado' ? 'var(--color-danger)' : 'var(--color-espresso)'}; font-weight: 600;">${ticket.reason || '-'}</td>
+          `;
+          tbody.appendChild(tr);
+        });
+      }
+
+      const modalSolicitarMp = document.getElementById('modalSolicitarMp');
+      const btnOpenSolicitarMpModal = document.getElementById('btnOpenSolicitarMpModal');
+      const closeSolicitarMpModalBtn = document.getElementById('closeSolicitarMpModalBtn');
+      const cancelSolicitarMpModalBtn = document.getElementById('cancelSolicitarMpModalBtn');
+      const solicitarMpForm = document.getElementById('solicitarMpForm');
+
+      btnOpenSolicitarMpModal?.addEventListener('click', () => {
+        populateRawMaterialsSelect();
+        if (modalSolicitarMp) {
+          modalSolicitarMp.style.display = 'flex';
+          modalSolicitarMp.classList.add('active');
+        }
+      });
+
+      function closeSolicitarMpModal() {
+        if (modalSolicitarMp) {
+          modalSolicitarMp.style.display = 'none';
+          modalSolicitarMp.classList.remove('active');
+          solicitarMpForm?.reset();
+        }
+      }
+
+      closeSolicitarMpModalBtn?.addEventListener('click', closeSolicitarMpModal);
+      cancelSolicitarMpModalBtn?.addEventListener('click', closeSolicitarMpModal);
+      modalSolicitarMp?.addEventListener('click', (e) => {
+        if (e.target === modalSolicitarMp) closeSolicitarMpModal();
+      });
+
+      solicitarMpForm?.addEventListener('submit', (e) => {
+        e.preventDefault();
+        const select = document.getElementById('solicitarMpSelect');
+        const qtyVal = parseFloat(document.getElementById('solicitarMpCantidad')?.value || 0);
+        const notesVal = document.getElementById('solicitarMpNotas')?.value?.trim() || '';
+        const uomVal = document.getElementById('solicitarMpUom')?.value || 'kg';
+
+        if (!select || qtyVal <= 0) return;
+
+        const selectedOption = select.options[select.selectedIndex];
+        const itemCode = select.value;
+        const itemName = selectedOption ? (selectedOption.dataset.name || selectedOption.textContent.split(' (')[0]) : itemCode;
+
+        const tickets = getTicketsFromStorage();
+        const nextNum = tickets.length + 1;
+        const newId = `REQ-${String(nextNum).padStart(3, '0')}`;
+
+        const now = new Date();
+        const dateFormatted = `${String(now.getDate()).padStart(2, '0')}/${String(now.getMonth() + 1).padStart(2, '0')}/${now.getFullYear()} ${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
+
+        const newTicket = {
+          id: newId,
+          date: dateFormatted,
+          baker: session?.user?.name || 'Jean-Luc Dubois',
+          itemCode,
+          itemName,
+          qty: qtyVal,
+          unit: uomVal,
+          notes: notesVal,
+          status: 'Pendiente',
+          reason: ''
+        };
+
+        tickets.unshift(newTicket);
+        saveTicketsToStorage(tickets);
+        renderMyTicketsTable();
+        closeSolicitarMpModal();
+        alert(`¡Requisición Enviada con Éxito!\n\nSe generó el ticket #${newId} para ${qtyVal} ${uomVal} de "${itemName}". El estado cambió a Pendiente de aprobación por Gerencia.`);
+      });
+
+      renderMyTicketsTable();
+      window.addEventListener('ticketsUpdated', renderMyTicketsTable);
+      window.addEventListener('storage', (e) => {
+        if (e.key === 'tickets_requisicion') renderMyTicketsTable();
+      });
+    } catch (err) {
+      console.error('Error inicializando requisición en Cocina:', err);
+    }
+  }
+
+  inicializarRequisicionCocina();
 });

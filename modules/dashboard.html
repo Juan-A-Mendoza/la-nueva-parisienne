@@ -230,6 +230,10 @@
               <span>🚚 Proveedores</span>
               <span id="badgeProveedoresCount" class="inventory-tab-count">4</span>
             </button>
+            <button id="tabBtnTicketsProduccion" type="button" class="inventory-tab-pill">
+              <span>📨 Tickets de Producción</span>
+              <span id="badgeTicketsProduccionCount" class="inventory-tab-count" style="background: var(--color-terracotta); color: white;">0</span>
+            </button>
           </div>
 
           <!-- BARRA DE BÚSQUEDA Y FILTRADO RÁPIDO -->
@@ -336,6 +340,37 @@
                 </tr>
               </thead>
               <tbody id="proveedoresTbody">
+                <!-- Renderizado dinámico vía dashboard.js -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- VISTA DE TABLA 4: TICKETS DE PRODUCCIÓN / REQUISICIÓN DE COCINA -->
+        <div id="panelTicketsProduccion" class="inventory-tab-panel" style="display: none;">
+          <div class="inventory-panel-subhead">
+            <div class="inventory-title-group">
+              <h3 style="font-size: 1.1rem; color: var(--color-espresso); font-weight: 800;">📨 Requisiciones de Materia Prima (Tickets de Producción)</h3>
+              <p style="font-size: 0.82rem; color: var(--color-muted);">Solicitudes de insumos enviadas por los panaderos para aprobación gerencial y control de stock.</p>
+            </div>
+            <span class="column-badge" style="background: linear-gradient(135deg, #D49B54 0%, #C48B44 100%); color: white; padding: 6px 14px; border-radius: 20px; font-weight: 800; font-size: 0.8rem;">Auditoría en Tiempo Real</span>
+          </div>
+
+          <div class="table-responsive-container">
+            <table class="dashboard-table inventory-table">
+              <thead>
+                <tr>
+                  <th>Código Ticket</th>
+                  <th>Fecha / Hora</th>
+                  <th>Solicitante / Panadero</th>
+                  <th>Materia Prima / Insumo</th>
+                  <th>Cantidad Requerida</th>
+                  <th>Notas de Producción</th>
+                  <th>Estado</th>
+                  <th>Acciones Gerenciales</th>
+                </tr>
+              </thead>
+              <tbody id="ticketsProduccionTbody">
                 <!-- Renderizado dinámico vía dashboard.js -->
               </tbody>
             </table>
@@ -767,6 +802,35 @@
           <span>✓ Entendido</span>
         </button>
       </div>
+    </div>
+  </div>
+
+  <!-- MODAL GERENCIAL PARA RECHAZAR TICKET DE PRODUCCIÓN -->
+  <div id="modalRechazarTicket" class="modal-overlay" aria-hidden="true" style="display: none;">
+    <div class="modal-card-container" style="max-width: 480px; width: 92%;">
+      <div class="modal-card-header">
+        <div class="modal-header-title">
+          <span class="modal-header-icon" style="color: var(--color-danger);">❌</span>
+          <div>
+            <h2 class="modal-title-text">Rechazar Requisición</h2>
+            <span class="modal-subtitle-text">Justificación de Rechazo Gerencial</span>
+          </div>
+        </div>
+        <button id="closeRechazarTicketModalBtn" type="button" class="btn-modal-close" aria-label="Cerrar ventana">✕</button>
+      </div>
+      <form id="rechazarTicketForm">
+        <input type="hidden" id="rechazarTicketId" value="" />
+        <div class="modal-card-body" style="gap: 1rem; padding: 1.25rem;">
+          <div class="form-group-custom">
+            <label for="motivoRechazarInput" class="form-label-custom" style="display: block; margin-bottom: 0.4rem; font-weight: 700; font-size: 0.85rem; color: var(--color-espresso);">💬 Motivo breve de rechazo *</label>
+            <textarea id="motivoRechazarInput" class="form-control-custom" rows="3" placeholder="Ej: Stock insuficiente en almacén / Consultar con Gerencia" required style="width: 100%; padding: 0.6rem 0.85rem; border-radius: var(--radius-sm); border: 1px solid var(--border-subtle); resize: vertical; font-family: inherit;"></textarea>
+          </div>
+        </div>
+        <div class="modal-card-footer" style="padding: 1rem 1.25rem; background: var(--bg-surface); border-top: 1px solid var(--border-subtle); display: flex; justify-content: flex-end; gap: 0.75rem;">
+          <button id="cancelRechazarTicketBtn" type="button" class="btn-modal-action secondary" style="padding: 0.6rem 1.15rem; border-radius: var(--radius-sm); border: 1px solid var(--border-subtle); background: white; cursor: pointer;">Cancelar</button>
+          <button type="submit" class="btn-modal-action danger" style="padding: 0.6rem 1.25rem; border-radius: var(--radius-sm); border: none; background: #C62828; color: white; font-weight: 700; cursor: pointer;">Confirmar Rechazo</button>
+        </div>
+      </form>
     </div>
   </div>
 

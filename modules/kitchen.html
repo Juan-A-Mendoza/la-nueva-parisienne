@@ -38,16 +38,24 @@
       </div>
     </header>
 
-    <!-- NAVEGACIÓN POR MIGAS DE PAN (BREADCRUMBS) - Apunta al Dashboard Central -->
-    <nav class="breadcrumbs-container" aria-label="Migas de pan">
-      <ol class="breadcrumbs-list">
-        <li class="breadcrumb-item">
-          <a href="dashboard.html">🏠 Inicio (Panel Central)</a>
-        </li>
-        <li class="breadcrumb-separator">/</li>
-        <li class="breadcrumb-item active" aria-current="page">Producción y Cocina</li>
-      </ol>
-    </nav>
+    <!-- NAVEGACIÓN POR MIGAS DE PAN & ACCIÓN DE REQUISICIÓN DE MATERIA PRIMA -->
+    <div style="display: flex; justify-content: space-between; align-items: center; padding: 0.75rem 2rem 0.25rem 2rem; flex-wrap: wrap; gap: 1rem;">
+      <nav class="breadcrumbs-container" aria-label="Migas de pan" style="padding: 0; background: none; margin: 0;">
+        <ol class="breadcrumbs-list">
+          <li class="breadcrumb-item">
+            <a href="dashboard.html">🏠 Inicio (Panel Central)</a>
+          </li>
+          <li class="breadcrumb-separator">/</li>
+          <li class="breadcrumb-item active" aria-current="page">Producción y Cocina</li>
+        </ol>
+      </nav>
+
+      <!-- BOTÓN PRINCIPAL 1: SOLICITAR MATERIA PRIMA -->
+      <button id="btnOpenSolicitarMpModal" type="button" class="btn-primary-action gold-variant" style="background: linear-gradient(135deg, #D49B54 0%, #C48B44 100%); color: #FFFFFF; font-weight: 800; padding: 0.65rem 1.35rem; border-radius: var(--radius-pill); border: none; cursor: pointer; display: inline-flex; align-items: center; gap: 0.6rem; box-shadow: 0 4px 12px rgba(212,155,84,0.35); font-size: 0.92rem; transition: all 0.2s ease;">
+        <span style="font-size: 1.1rem;">🎫</span>
+        <span>Solicitar Materia Prima</span>
+      </button>
+    </div>
 
     <!-- BARRA DE MÉTRICAS RÁPIDAS (KPI BAR) -->
     <section class="kitchen-kpi-bar" aria-label="Métricas en tiempo real de producción">
@@ -131,6 +139,94 @@
 
     </main>
 
+    <!-- SECCIÓN DE REQUISICIÓN DE MATERIA PRIMA (MIS SOLICITUDES) -->
+    <section style="padding: 0 2rem 2rem 2rem;">
+      <div style="background: #FFFFFF; border-radius: var(--radius-md); padding: 1.25rem 1.5rem; border: var(--border-subtle); box-shadow: var(--shadow-subtle);">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; padding-bottom: 0.75rem; border-bottom: 1px solid var(--border-subtle); flex-wrap: wrap; gap: 0.5rem;">
+          <div style="display: flex; align-items: center; gap: 0.6rem;">
+            <span style="font-size: 1.3rem;">📋</span>
+            <div>
+              <h3 style="margin: 0; font-size: 1.05rem; color: var(--color-espresso); font-weight: 800;">Mis Solicitudes de Materia Prima (Requisición Cocina)</h3>
+              <span style="font-size: 0.8rem; color: var(--color-muted);">Historial de tickets enviados a Gerencia para reabastecimiento de insumos</span>
+            </div>
+          </div>
+          <span id="kitchenTicketsBadgeCount" class="column-badge" style="background: rgba(212,155,84,0.15); color: var(--color-gold-dark); border: 1px solid rgba(212,155,84,0.3); font-weight: 700;">0 Tickets Registrados</span>
+        </div>
+
+        <div class="table-responsive-container" style="overflow-x: auto;">
+          <table class="dashboard-table inventory-table" style="width: 100%; border-collapse: collapse;">
+            <thead>
+              <tr style="background: rgba(0,0,0,0.02); text-align: left;">
+                <th style="padding: 0.75rem 1rem;">Código Ticket</th>
+                <th style="padding: 0.75rem 1rem;">Fecha / Hora</th>
+                <th style="padding: 0.75rem 1rem;">Materia Prima / Insumo</th>
+                <th style="padding: 0.75rem 1rem;">Cantidad Requerida</th>
+                <th style="padding: 0.75rem 1rem;">Notas del Panadero</th>
+                <th style="padding: 0.75rem 1rem;">Estado del Ticket</th>
+                <th style="padding: 0.75rem 1rem;">Respuesta / Motivo Gerencial</th>
+              </tr>
+            </thead>
+            <tbody id="kitchenMyTicketsTbody">
+              <!-- Renderizado dinámico vía js/modules/kitchen.js -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+  </div>
+
+  <!-- MODAL DE SOLICITUD DE MATERIA PRIMA (REQUISICIÓN DE COCINA) -->
+  <div id="modalSolicitarMp" class="pin-modal-overlay" role="dialog" aria-modal="true" aria-labelledby="modalSolicitarMpTitle" style="display: none;">
+    <div class="modal-card-container" style="max-width: 500px; width: 92%;">
+      <div class="modal-card-header">
+        <div class="modal-header-title">
+          <span class="modal-header-icon">🎫</span>
+          <div>
+            <h2 id="modalSolicitarMpTitle" class="modal-title-text">Solicitar Materia Prima</h2>
+            <span class="modal-subtitle-text">Requisición Interna para Cocina y Panadería</span>
+          </div>
+        </div>
+        <button id="closeSolicitarMpModalBtn" type="button" class="btn-modal-close" aria-label="Cerrar modal">✕</button>
+      </div>
+
+      <form id="solicitarMpForm">
+        <div class="modal-card-body" style="gap: 1.15rem; padding: 1.25rem;">
+          
+          <div>
+            <label for="solicitarMpSelect" class="form-label-custom" style="display: block; margin-bottom: 0.4rem; font-weight: 700; font-size: 0.85rem; color: var(--color-espresso);">🌾 Seleccionar Materia Prima / Insumo *</label>
+            <select id="solicitarMpSelect" class="form-control-custom" required style="width: 100%; height: 42px; padding: 0 0.85rem; border-radius: var(--radius-sm); border: 1px solid var(--border-subtle); font-family: inherit;">
+              <!-- Opciones dinámicas de materias primas -->
+            </select>
+          </div>
+
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+            <div>
+              <label for="solicitarMpCantidad" class="form-label-custom" style="display: block; margin-bottom: 0.4rem; font-weight: 700; font-size: 0.85rem; color: var(--color-espresso);">📦 Cantidad Requerida *</label>
+              <input type="number" id="solicitarMpCantidad" class="form-control-custom" placeholder="Ej: 50" min="0.1" step="any" required style="width: 100%; height: 42px; padding: 0 0.85rem; border-radius: var(--radius-sm); border: 1px solid var(--border-subtle);" />
+            </div>
+
+            <div>
+              <label for="solicitarMpUom" class="form-label-custom" style="display: block; margin-bottom: 0.4rem; font-weight: 700; font-size: 0.85rem; color: var(--color-espresso);">📏 Unidad de Medida (UoM)</label>
+              <input type="text" id="solicitarMpUom" class="form-control-custom" value="kg" readonly style="width: 100%; height: 42px; padding: 0 0.85rem; border-radius: var(--radius-sm); border: 1px solid var(--border-subtle); background: rgba(0,0,0,0.03);" />
+            </div>
+          </div>
+
+          <div>
+            <label for="solicitarMpNotas" class="form-label-custom" style="display: block; margin-bottom: 0.4rem; font-weight: 700; font-size: 0.85rem; color: var(--color-espresso);">📝 Notas u Observaciones (Opcional)</label>
+            <textarea id="solicitarMpNotas" class="form-control-custom" rows="2" placeholder="Ej: Urgente para amasado de Baguettes del turno tarde" style="width: 100%; padding: 0.6rem 0.85rem; border-radius: var(--radius-sm); border: 1px solid var(--border-subtle); resize: vertical; font-family: inherit;"></textarea>
+          </div>
+
+        </div>
+
+        <div class="modal-card-footer" style="padding: 1rem 1.25rem; background: var(--bg-surface); border-top: 1px solid var(--border-subtle); display: flex; justify-content: flex-end; gap: 0.75rem;">
+          <button id="cancelSolicitarMpModalBtn" type="button" class="btn-modal-action secondary" style="padding: 0.6rem 1.15rem; border-radius: var(--radius-sm); border: 1px solid var(--border-subtle); background: white; cursor: pointer;">Cancelar</button>
+          <button type="submit" class="btn-modal-action primary" style="padding: 0.6rem 1.25rem; border-radius: var(--radius-sm); border: none; background: linear-gradient(135deg, #D49B54 0%, #C48B44 100%); color: white; font-weight: 700; cursor: pointer; display: flex; align-items: center; gap: 0.5rem;">
+            <span>🚀 Enviar Solicitud a Gerencia</span>
+          </button>
+        </div>
+      </form>
+    </div>
   </div>
 
   <!-- MODAL 1: ASIGNACIÓN DE LOTE A HORNO INDUSTRIAL -->
