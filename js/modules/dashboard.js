@@ -119,6 +119,105 @@ function saveSuppliersToStorage(suppliersArray) {
   }
 }
 
+// ==========================================================================
+// MOTOR DE CONVERSIÓN DE UNIDADES DE MEDIDA (UOM CONVERTER) & AUDITORÍA
+// ==========================================================================
+
+const UomConverter = {
+  toBaseUnit(qty, unitStr, category = '') {
+    const q = parseFloat(qty) || 0;
+    const u = (unitStr || '').toLowerCase().trim();
+
+    if (u.includes('saco')) return { baseQty: q * 50000, baseUnit: 'g', type: 'mass' };
+    if (u.includes('caja')) {
+      if (category.toLowerCase().includes('líquido') || category.toLowerCase().includes('bebida') || u.includes('litro')) {
+        return { baseQty: q * 12000, baseUnit: 'ml', type: 'volume' };
+      }
+      return { baseQty: q * 20000, baseUnit: 'g', type: 'mass' };
+    }
+    if (u.includes('kg') || u.includes('kilo')) return { baseQty: q * 1000, baseUnit: 'g', type: 'mass' };
+    if (u.includes('g') && !u.includes('kg')) return { baseQty: q * 1, baseUnit: 'g', type: 'mass' };
+    if (u === 'l' || u.includes('litro')) return { baseQty: q * 1000, baseUnit: 'ml', type: 'volume' };
+    if (u.includes('ml') || u.includes('mililitro')) return { baseQty: q * 1, baseUnit: 'ml', type: 'volume' };
+    if (u.includes('docena')) return { baseQty: q * 12, baseUnit: 'ud', type: 'count' };
+    if (u.includes('carton') || u.includes('cartón')) return { baseQty: q * 30, baseUnit: 'ud', type: 'count' };
+
+    return { baseQty: q * 1, baseUnit: u || 'ud', type: 'count' };
+  },
+
+  convertQty(qty, fromUnit, toUnit, category = '') {
+    const fromBase = this.toBaseUnit(qty, fromUnit, category);
+    const toBase = this.toBaseUnit(1, toUnit, category);
+    if (toBase.baseQty <= 0) return qty;
+    return fromBase.baseQty / toBase.baseQty;
+  },
+
+  formatFriendlyStock(stockQty, unitStr, category = '') {
+    const { baseQty, baseUnit } = this.toBaseUnit(stockQty, unitStr, category);
+
+    if (baseUnit === 'g') {
+      const sacos = Math.floor(baseQty / 50000);
+      const remG = baseQty % 50000;
+      const remKg = remG / 1000;
+
+      if (sacos > 0) {
+        if (remKg > 0) {
+          return `📦 ${sacos} Saco${sacos > 1 ? 's' : ''} + ${remKg.toFixed(1)} kg`;
+        }
+        return `📦 ${sacos} Saco${sacos > 1 ? 's' : ''} (${(baseQty / 1000).toFixed(0)} kg)`;
+      }
+
+      if (baseQty >= 1000) {
+        return `⚖️ ${(baseQty / 1000).toFixed(1)} kg`;
+      }
+      return `⚖️ ${Math.round(baseQty)} g`;
+    }
+
+    if (baseUnit === 'ml') {
+      if (baseQty >= 1000) {
+        return `🥛 ${(baseQty / 1000).toFixed(1)} L`;
+      }
+      return `🥛 ${Math.round(baseQty)} ml`;
+    }
+
+    return `${stockQty} ${unitStr}`;
+  },
+
+  deductStock(currentStock, currentUnit, requestedQty, requestedUnit, category = '') {
+    const currentBase = this.toBaseUnit(currentStock, currentUnit, category);
+    const requestedBase = this.toBaseUnit(requestedQty, requestedUnit, category);
+
+    let newBaseQty = currentBase.baseQty - requestedBase.baseQty;
+    if (newBaseQty < 0) newBaseQty = 0;
+
+    const toBase = this.toBaseUnit(1, currentUnit, category);
+    const newStock = toBase.baseQty > 0 ? newBaseQty / toBase.baseQty : newBaseQty;
+
+    return {
+      newStock,
+      baseQtyDeducted: requestedBase.baseQty,
+      baseUnit: currentBase.baseUnit
+    };
+  }
+};
+
+function registrarMovimientoAuditInventario(movData) {
+  try {
+    const raw = localStorage.getItem('movimientos_inventario');
+    const list = raw ? JSON.parse(raw) : [];
+    list.unshift(movData);
+    localStorage.setItem('movimientos_inventario', JSON.stringify(list));
+    try {
+      if (typeof RECENT_MOVEMENTS !== 'undefined' && Array.isArray(RECENT_MOVEMENTS)) {
+        RECENT_MOVEMENTS.unshift(movData);
+        if (typeof renderMovementsTable === 'function') renderMovementsTable();
+      }
+    } catch (e) {}
+  } catch (e) {
+    console.warn('Error registrando movimiento de auditoría:', e);
+  }
+}
+
 let rawMaterialsData = getRawMaterialsFromStorage();
 let finishedGoodsData = getPosCatalogFromStorage();
 let suppliersData = getSuppliersFromStorage();
@@ -669,6 +768,7 @@ function renderInventoryTables() {
 
     filteredRaw.forEach(item => {
       const isLow = item.stock < item.minStock;
+      const friendlyStock = UomConverter.formatFriendlyStock(item.stock, item.unit, item.category);
       const tr = document.createElement('tr');
       tr.innerHTML = `
         <td class="table-code-badge">${item.code}</td>
@@ -676,7 +776,10 @@ function renderInventoryTables() {
         <td style="color: var(--color-muted);">${item.category}</td>
         <td><span class="table-status-tag" style="background: rgba(0,0,0,0.06); color: var(--color-espresso); font-weight: 700;">${item.unit}</span></td>
         <td style="font-weight: 700; color: var(--color-gold-dark);">$${item.unitCost.toFixed(2)} / ${item.unit}</td>
-        <td style="font-weight: 800; font-size: 0.95rem;">${item.stock.toFixed(2)} ${item.unit}</td>
+        <td style="font-weight: 800; font-size: 0.92rem; color: var(--color-espresso);" title="Stock Interno Base: ${item.stock} ${item.unit}">
+          <div>${friendlyStock}</div>
+          <small style="font-weight: 600; color: var(--color-muted); font-size: 0.78rem;">(${item.stock.toFixed(1)} ${item.unit})</small>
+        </td>
         <td>
           <span class="${isLow ? 'badge-stock-low' : 'badge-stock-normal'}">
             ${isLow ? `🔴 ALERTA: Stock Bajo (Min: ${item.minStock} ${item.unit})` : `🟢 Normal (Min: ${item.minStock} ${item.unit})`}
@@ -849,16 +952,32 @@ function inicializarBotonesGenerales() {
     }
 
     if (targetItem) {
-      targetItem.stock += qty;
-      targetItem.unit = selectedUom;
-      targetItem.unitCost = totalCost / qty;
+      const incomingConverted = UomConverter.convertQty(qty, selectedUom, targetItem.unit, targetItem.category || '');
+      targetItem.stock += incomingConverted;
+      targetItem.unitCost = totalCost / (qty || 1);
+
+      const timestamp = getFormattedTimestamp ? getFormattedTimestamp() : new Date().toLocaleString();
+      const managerInfo = getActiveManagerInfo ? getActiveManagerInfo() : 'Gerencia';
+
+      registrarMovimientoAuditInventario({
+        code: `FAC-${numFactura}`,
+        timestamp: timestamp,
+        type: `Ingreso de Mercancía (${targetItem.name})`,
+        user: managerInfo,
+        paymentMethod: `Factura #${numFactura}`,
+        status: 'Completado',
+        amount: totalCost,
+        category: 'gasto',
+        item: `${targetItem.name} (+${qty} ${selectedUom})`,
+        notes: `Ingreso de almacén por factura #${numFactura}`
+      });
     }
 
     saveRawMaterialsToStorage(rawMaterialsData);
     savePosCatalogToStorage(finishedGoodsData);
     renderInventoryTables();
     closeIngresoMercanciaModal();
-    showSuccessModal('¡Ingreso Registrado!', `Se sumaron +${qty} ${selectedUom} a "${targetItem ? targetItem.name : selectedCode}" de Factura N°: ${numFactura}.`);
+    showSuccessModal('¡Ingreso Registrado!', `Se ingresaron +${qty} ${selectedUom} a "${targetItem ? targetItem.name : selectedCode}" (Factura N°: ${numFactura}).`);
   });
 
   // Modal Proveedores
@@ -1347,25 +1466,6 @@ function inicializarTicketsProduccionGerencia() {
       }
     }
 
-    function renderTicketsTable() {
-      const tbody = document.getElementById('ticketsProduccionTbody');
-      const badgeCount = document.getElementById('badgeTicketsProduccionCount');
-      if (!tbody) return;
-
-      const tickets = getTicketsFromStorage();
-      const pendingCount = tickets.filter(t => t.status === 'Pendiente').length;
-
-      if (badgeCount) {
-        badgeCount.textContent = pendingCount;
-        badgeCount.style.background = pendingCount > 0 ? 'var(--color-terracotta)' : 'rgba(0,0,0,0.15)';
-      }
-
-      tbody.innerHTML = '';
-      if (tickets.length === 0) {
-        tbody.innerHTML = `<tr><td colspan="8" style="text-align: center; color: var(--color-muted); padding: 1.5rem;">No hay tickets de requisición registrados.</td></tr>`;
-        return;
-      }
-
     function getActiveManagerInfo() {
       try {
         const raw = localStorage.getItem('usuario_activo');
@@ -1480,14 +1580,30 @@ function inicializarTicketsProduccionGerencia() {
       const rawMaterials = getRawMaterialsFromStorage();
       const mat = rawMaterials.find(m => m.code === target.itemCode || m.name === target.itemName);
       if (mat) {
-        mat.stock = Math.max(0, mat.stock - target.qty);
+        const deductResult = UomConverter.deductStock(mat.stock, mat.unit, target.qty, target.unit, mat.category || '');
+        mat.stock = deductResult.newStock;
         saveRawMaterialsToStorage(rawMaterials);
         renderInventoryTables();
       }
 
       saveTicketsToStorage(tickets);
       renderTicketsTable();
-      showSuccessModal('¡Requisición Aprobada!', `Se autorizó el despacho por ${managerInfo} (${timestamp}) para ${target.qty} ${target.unit} de "${target.itemName}".`);
+
+      // Registro de Auditoría Inmutable en el Historial General de Movimientos
+      registrarMovimientoAuditInventario({
+        code: target.id,
+        timestamp: timestamp,
+        type: `Despacho a Cocina (${target.itemName})`,
+        user: managerInfo,
+        paymentMethod: 'Requisición Interna',
+        status: 'Completado',
+        amount: 0,
+        category: 'gasto',
+        item: `${target.itemName} (${target.qty} ${target.unit})`,
+        notes: `Requisición de Cocina autorizada para ${target.baker}`
+      });
+
+      showSuccessModal('¡Requisición Aprobada!', `Se autorizó el despacho por ${managerInfo} (${timestamp}) para ${target.qty} ${target.unit} de "${target.itemName}". El stock fue actualizado y registrado en auditoría.`);
     }
 
     const modalRechazarTicket = document.getElementById('modalRechazarTicket');

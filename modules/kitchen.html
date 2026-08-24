@@ -345,6 +345,26 @@
     </div>
   </div>
 
+  <!-- MODAL DE NOTIFICACIÓN DE ÉXITO Y CONFIRMACIÓN ANIMADO CON CHECKMARK -->
+  <div id="modalExitoNotificacion" class="pin-modal-overlay" role="dialog" aria-modal="true" aria-labelledby="modalExitoTitle" style="display: none; z-index: 10500;">
+    <div class="modal-card-container success-modal-card" style="max-width: 440px; text-align: center; border-radius: var(--radius-lg); padding: 2.2rem 1.8rem; background: var(--bg-card); box-shadow: 0 25px 50px -12px rgba(0,0,0,0.35);">
+      <div class="success-checkmark-wrapper" style="margin: 0 auto 1.2rem auto; width: 80px; height: 80px; background: rgba(46, 125, 50, 0.1); border-radius: 50%; display: flex; align-items: center; justify-content: center; border: 2px solid var(--color-success);">
+        <svg class="success-checkmark-svg" viewBox="0 0 52 52" style="width: 44px; height: 44px; fill: none; stroke: var(--color-success); stroke-width: 4; stroke-linecap: round; stroke-linejoin: round;">
+          <path d="M14 27l7 7 17-17"/>
+        </svg>
+      </div>
+
+      <h2 id="modalExitoTitle" style="font-family: var(--font-heading); font-size: 1.4rem; font-weight: 800; color: var(--color-espresso); margin-bottom: 0.5rem;">¡Requisición Enviada con Éxito!</h2>
+      <p id="modalExitoMsg" style="font-size: 0.92rem; color: var(--color-muted); line-height: 1.5; margin-bottom: 1.5rem;">
+        Se generó el ticket correctamente. El estado cambió a Pendiente de aprobación por Gerencia.
+      </p>
+
+      <button id="closeSuccessModalBtn" type="button" class="btn-modal-action primary" style="width: 100%; padding: 0.75rem 1.5rem; font-size: 0.95rem; border-radius: var(--radius-md); background: linear-gradient(135deg, #D49B54 0%, #C48B44 100%); color: white; font-weight: 700; border: none; cursor: pointer; box-shadow: 0 4px 12px rgba(212, 155, 84, 0.35); transition: transform 0.2s ease;">
+        👍 Entendido / Continuar
+      </button>
+    </div>
+  </div>
+
   <!-- SCRIPT MODULAR COCINA -->
   <script type="module" src="../js/modules/kitchen.js"></script>
 

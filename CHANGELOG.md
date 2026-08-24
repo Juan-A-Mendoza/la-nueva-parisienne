@@ -4,6 +4,60 @@ Todos los cambios significativos, nuevas funcionalidades y actualizaciones del s
 
 El formato está basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1.0.0/) y este proyecto se adhiere a [Semantic Versioning](https://semver.org/lang/es/).
 
+## [5.13.2] - 2026-08-24 (Firma Limpia de Gerente sin Username y Despliegue de Modal de Confirmación)
+
+### 🏷️ Limpieza de Nombre Gerencial y Activación Modal ([js/modules/kitchen.js](file:///C:/Users/juana/.gemini/antigravity-ide/scratch/la-nueva-parisienne/js/modules/kitchen.js))
+- **Formato "Rechazado/Aprobado por Gerencia: Nombre"**:
+  - Se incorporó la función `cleanManagerName()` para remover cualquier patrón `(@usuario)` de la respuesta gerencial, desplegando únicamente `"Rechazado por Gerencia: Juan Mendoza — Motivo: ..."` o `"Aprobado por Gerencia: Juan Mendoza"`.
+- **Despliegue Garantizado del Modal de Confirmación**:
+  - Se agregó la clase `.active` a `modalExitoNotificacion.classList` en `showSuccessModal()`, permitiendo que pase de `opacity: 0` / `visibility: hidden` a visibilidad completa en pantalla con animación de checkmark elástica.
+
+---
+
+## [5.13.1] - 2026-08-24 (Animación de Checkmark y Corrección de Jerarquía Modal en Cocina)
+
+### 🎨 Corrección de Jerarquía Modal y Animación CSS ([modules/kitchen.html](file:///C:/Users/juana/.gemini/antigravity-ide/scratch/la-nueva-parisienne/modules/kitchen.html), [css/modules/kitchen.css](file:///C:/Users/juana/.gemini/antigravity-ide/scratch/la-nueva-parisienne/css/modules/kitchen.css))
+- **Reorganización Estructural en HTML**:
+  - Se corrigió el anidamiento erróneo del modal `#modalExitoNotificacion`, independizándolo como hijo directo del `<body>` para garantizar su visibilidad por encima del resto de la interfaz.
+- **Animación de Checkmark (`scaleCheckWrapper` & `checkmarkDraw`)**:
+  - Se agregaron las animaciones CSS keyframes para la expansión elástica del círculo verde y el trazado animado del ícono del check al confirmar el envío del ticket.
+
+---
+
+## [5.13.0] - 2026-08-24 (Modal de Notificación de Éxito Estilizado en Módulo de Cocina)
+
+### ✨ Modal de Confirmación Estilizado y Animado ([modules/kitchen.html](file:///C:/Users/juana/.gemini/antigravity-ide/scratch/la-nueva-parisienne/modules/kitchen.html), [js/modules/kitchen.js](file:///C:/Users/juana/.gemini/antigravity-ide/scratch/la-nueva-parisienne/js/modules/kitchen.js))
+- **Reemplazo del `alert()` Nativo por Modal Corporativo**:
+  - Se eliminó el `alert()` básico del navegador al enviar una requisición de materia prima.
+  - Se integró el modal `#modalExitoNotificacion` con el diseño premium de la panadería, incluyendo checkmark animado, badge terracota con el número de ticket (`#REQ-XXX`), resumen de insumos solicitados y botón corporativo `👍 Entendido / Continuar`.
+
+---
+
+## [5.12.1] - 2026-08-24 (Corrección de Sintaxis y Desbloqueo de Ejecución en Módulo Gerente)
+
+### 🛠️ Reparación Estructural y Aisle de Errores ([js/modules/dashboard.js](file:///C:/Users/juana/.gemini/antigravity-ide/scratch/la-nueva-parisienne/js/modules/dashboard.js))
+- **Eliminación de Redefinición Anidada Duplicada**:
+  - Se eliminó una declaración de función redefinida incompletamente dentro de `inicializarTicketsProduccionGerencia()`.
+- **Restauración de Ejecución en `DOMContentLoaded`**:
+  - Se garantizó el correcto alcance de variables e inicializadores unificados con aislamiento estricto mediante bloques `try...catch`.
+  - El Dashboard Gerencial vuelve a responder fluidamente a clics, pestañas, modales e interacciones de inventario.
+
+---
+
+## [5.12.0] - 2026-08-24 (Motor de Conversión UoM, Renderizado Inteligente de Stock y Registro de Auditoría Inmutable)
+
+### ⚖️ Motor de Conversión UoM y Matemática de Descuento ([js/modules/dashboard.js](file:///C:/Users/juana/.gemini/antigravity-ide/scratch/la-nueva-parisienne/js/modules/dashboard.js))
+- **Objeto `UomConverter`**:
+  - Implementación de conversiones estándar (1 Saco = 50 kg = 50,000 g, 1 Caja = 20 kg = 20,000 g / 12 L = 12,000 ml, 1 kg = 1,000 g, 1 L = 1,000 ml).
+  - Normalización de cantidades a su unidad base estándar (Gramos, Mililitros, Unidades).
+  - Método `deductStock()` para calcular restas exactas entre diferentes unidades de medida (ej. ticket en Kg descontado de stock en Sacos).
+- **Renderizado Inteligente Amigable**:
+  - Formato amigable en la tabla de inventario del Gerente (ej. `55,000 g` se muestra como `"📦 1 Saco + 5.0 kg"`).
+- **Auditoría Inmutable en el Historial General**:
+  - Cada aprobación de requisición genera automáticamente un registro inmutable en el historial general de movimientos (`movimientos_inventario` en `localStorage`) especificando el ticket ID, insumo, cantidad, gerente autorizante y marca temporal.
+
+---
+
 ## [5.11.1] - 2026-08-24 (Auditoría Gerencial y Registro de Marca Temporal en Tickets)
 
 ### 📋 Registro de Auditoría y Trazabilidad ([js/modules/dashboard.js](file:///C:/Users/juana/.gemini/antigravity-ide/scratch/la-nueva-parisienne/js/modules/dashboard.js), [js/modules/kitchen.js](file:///C:/Users/juana/.gemini/antigravity-ide/scratch/la-nueva-parisienne/js/modules/kitchen.js))

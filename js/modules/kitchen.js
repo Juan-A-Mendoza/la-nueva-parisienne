@@ -569,6 +569,11 @@ document.addEventListener('DOMContentLoaded', () => {
         });
       }
 
+      function cleanManagerName(rawName) {
+        if (!rawName) return '';
+        return rawName.replace(/\s*\(@[^)]+\)/gi, '').trim();
+      }
+
       function renderMyTicketsTable() {
         const tbody = document.getElementById('kitchenMyTicketsTbody');
         const badgeCount = document.getElementById('kitchenTicketsBadgeCount');
@@ -596,9 +601,14 @@ document.addEventListener('DOMContentLoaded', () => {
 
           let responseText = '<span style="color: var(--color-muted); font-style: italic;">Esperando revisión gerencial...</span>';
           if (ticket.status === 'Aprobado') {
-            responseText = `<span style="color: var(--color-success); font-weight: 700;">✅ Aprobado por ${ticket.processedBy || 'Gerencia'}</span> <br/><span style="font-size: 0.76rem; color: var(--color-muted);">⏱️ ${ticket.processedAt || ticket.date}</span>`;
+            const mgr = cleanManagerName(ticket.processedBy);
+            const mgrLabel = mgr ? `: ${mgr}` : '';
+            responseText = `<span style="color: var(--color-success); font-weight: 700;">✅ Aprobado por Gerencia${mgrLabel}</span> <br/><span style="font-size: 0.76rem; color: var(--color-muted);">⏱️ ${ticket.processedAt || ticket.date}</span>`;
           } else if (ticket.status === 'Rechazado') {
-            responseText = `<span style="color: var(--color-danger); font-weight: 700;">❌ Rechazado por ${ticket.processedBy || 'Gerencia'}</span> <br/><span style="font-size: 0.76rem; color: var(--color-muted);">⏱️ ${ticket.processedAt || ticket.date} — Motivo: "${ticket.reason || 'Sin motivo'}"</span>`;
+            const mgr = cleanManagerName(ticket.processedBy);
+            const mgrLabel = mgr ? `: ${mgr}` : '';
+            const motivoText = ticket.reason ? ` — Motivo: "${ticket.reason}"` : '';
+            responseText = `<span style="color: var(--color-danger); font-weight: 700;">🔴 Rechazado por Gerencia${mgrLabel}</span>${motivoText} <br/><span style="font-size: 0.76rem; color: var(--color-muted);">⏱️ ${ticket.processedAt || ticket.date}</span>`;
           }
 
           tr.innerHTML = `
@@ -642,6 +652,48 @@ document.addEventListener('DOMContentLoaded', () => {
         if (e.target === modalSolicitarMp) closeSolicitarMpModal();
       });
 
+      function showSuccessModal(title, message) {
+        const modal = document.getElementById('modalExitoNotificacion');
+        const titleEl = document.getElementById('modalExitoTitle');
+        const msgEl = document.getElementById('modalExitoMsg');
+
+        if (titleEl) titleEl.textContent = title;
+        if (msgEl) msgEl.innerHTML = message;
+
+        if (modal) {
+          modal.style.display = 'flex';
+          modal.classList.add('active');
+          modal.setAttribute('aria-hidden', 'false');
+
+          const svg = modal.querySelector('.success-checkmark-svg');
+          const wrapper = modal.querySelector('.success-checkmark-wrapper');
+          if (wrapper) {
+            wrapper.style.animation = 'none';
+            void wrapper.offsetWidth;
+            wrapper.style.animation = '';
+          }
+          if (svg) {
+            svg.style.animation = 'none';
+            void svg.offsetWidth;
+            svg.style.animation = '';
+          }
+        }
+      }
+
+      function closeSuccessModal() {
+        const modal = document.getElementById('modalExitoNotificacion');
+        if (modal) {
+          modal.style.display = 'none';
+          modal.classList.remove('active');
+          modal.setAttribute('aria-hidden', 'true');
+        }
+      }
+
+      document.getElementById('closeSuccessModalBtn')?.addEventListener('click', closeSuccessModal);
+      document.getElementById('modalExitoNotificacion')?.addEventListener('click', (e) => {
+        if (e.target.id === 'modalExitoNotificacion') closeSuccessModal();
+      });
+
       solicitarMpForm?.addEventListener('submit', (e) => {
         e.preventDefault();
         const select = document.getElementById('solicitarMpSelect');
@@ -679,7 +731,11 @@ document.addEventListener('DOMContentLoaded', () => {
         saveTicketsToStorage(tickets);
         renderMyTicketsTable();
         closeSolicitarMpModal();
-        alert(`¡Requisición Enviada con Éxito!\n\nSe generó el ticket #${newId} para ${qtyVal} ${uomVal} de "${itemName}". El estado cambió a Pendiente de aprobación por Gerencia.`);
+
+        showSuccessModal(
+          '¡Requisición Enviada con Éxito!',
+          `Se generó el ticket <strong style="color: var(--color-gold-dark); font-size: 1.05rem;">#${newId}</strong> para <strong>${qtyVal} ${uomVal}</strong> de <strong>"${itemName}"</strong>.<br/><br/><span style="font-size: 0.88rem; color: var(--color-muted);">El estado cambió a <strong>🟡 Pendiente de aprobación por Gerencia</strong>.</span>`
+        );
       });
 
       renderMyTicketsTable();
