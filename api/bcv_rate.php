@@ -152,13 +152,15 @@ function parseNumericRateFromJson($data) {
 }
 
 echo json_encode([
-    'success'   => true,
-    'mode'      => $mode,
-    'rate'      => round($currentRate, 2),
-    'currency'  => 'VES',
-    'symbol'    => 'Bs.',
-    'source'    => $source,
-    'date'      => $fecha,
-    'warning'   => $warning,
-    'formatted' => 'Bs. ' . number_format($currentRate, 2, ',', '.') . ' / $1.00 USD'
+    'success'            => true,
+    'mode'               => $mode,
+    'promedio'           => floatval($currentRate),
+    'rate'               => round($currentRate, 2),
+    'currency'           => 'VES',
+    'symbol'             => 'Bs.',
+    'source'             => $source,
+    'date'               => $fecha,
+    'fechaActualizacion' => date('c'),
+    'warning'            => $warning,
+    'formatted'          => 'Bs. ' . number_format($currentRate, 2, ',', '.') . ' / $1.00 USD'
 ], JSON_UNESCAPED_UNICODE);

@@ -4,6 +4,18 @@ Todos los cambios significativos, nuevas funcionalidades y actualizaciones del s
 
 El formato está basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1.0.0/) y este proyecto se adhiere a [Semantic Versioning](https://semver.org/lang/es/).
 
+## [5.9.9] - 2026-08-24 (Integración Estricta con API BCV Oficial ve.dolarapi.com y Lectura de Campo 'promedio')
+
+### 🇻🇪 Sincronización Directa de Tasa Oficial BCV ([api/bcv_rate.php](file:///C:/Users/juana/.gemini/antigravity-ide/scratch/la-nueva-parisienne/api/bcv_rate.php), [js/core/bcv-rate-store.js](file:///C:/Users/juana/.gemini/antigravity-ide/scratch/la-nueva-parisienne/js/core/bcv-rate-store.js), [js/modules/configuraciones.js](file:///C:/Users/juana/.gemini/antigravity-ide/scratch/la-nueva-parisienne/js/modules/configuraciones.js), [js/modules/dashboard.js](file:///C:/Users/juana/.gemini/antigravity-ide/scratch/la-nueva-parisienne/js/modules/dashboard.js), [js/modules/pos.js](file:///C:/Users/juana/.gemini/antigravity-ide/scratch/la-nueva-parisienne/js/modules/pos.js))
+- **Consumo Directo del Endpoint Oficial**:
+  - Se configuró la API externa primaria a `https://ve.dolarapi.com/v1/dolares/oficial` en todos los controladores PHP y JavaScript del sistema.
+- **Lectura del Campo 'promedio'**:
+  - Tanto el backend (`bcv_rate.php`) como el frontend (`BcvRateStore`, `configuraciones.js`, `dashboard.js`, `pos.js`) leen directamente el atributo `"promedio"` retornado por la API (ej. `784.6633` Bs./USD).
+- **Consistencia y Resguardo**:
+  - La respuesta JSON incluye tanto la precisión completa (`promedio`) como el redondeo oficial a 2 decimales (`rate`) y la fecha de actualización devuelta por la API.
+
+---
+
 ## [5.9.8] - 2026-08-22 (Reconexión de Modal de Detalle, Persistencia Real de Inventario en localStorage y Animación Check en Tasa BCV)
 
 ### 📦 Correcciones de Interacción y Flujos de Guardado ([js/modules/dashboard.js](file:///C:/Users/juana/.gemini/antigravity-ide/scratch/la-nueva-parisienne/js/modules/dashboard.js), [js/modules/configuraciones.js](file:///C:/Users/juana/.gemini/antigravity-ide/scratch/la-nueva-parisienne/js/modules/configuraciones.js))

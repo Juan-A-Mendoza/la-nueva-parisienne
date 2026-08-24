@@ -63,21 +63,29 @@ function saveUsersToStorage(usersArray) {
 }
 
 async function fetchLiveBcvRate() {
-  try {
-    const res = await fetch('https://cdn.jsdelivr.net/npm/@fawazahmed0/currency-api@latest/v1/currencies/usd.json?t=' + Date.now(), { cache: 'no-store' });
-    if (res.ok) {
-      const data = await res.json();
-      if (data && data.usd && data.usd.ves && parseFloat(data.usd.ves) > 0) {
-        const autoRate = parseFloat(data.usd.ves);
-        localStorage.setItem('tasa_auto', autoRate.toString());
-        localStorage.setItem('tasaAuto', autoRate.toString());
-        return autoRate;
+  const apis = [
+    'https://ve.dolarapi.com/v1/dolares/oficial',
+    'https://bcv-api.vercel.app/api/bcv'
+  ];
+
+  for (const url of apis) {
+    try {
+      const res = await fetch(`${url}?t=${Date.now()}`, { cache: 'no-store' });
+      if (res.ok) {
+        const data = await res.json();
+        const autoRate = parseFloat(data.promedio || data.precio || data.monto || data.rate);
+        if (autoRate && autoRate > 0) {
+          localStorage.setItem('tasa_auto', autoRate.toString());
+          localStorage.setItem('tasaAuto', autoRate.toString());
+          localStorage.setItem('bcv_current_rate', autoRate.toString());
+          return autoRate;
+        }
       }
+    } catch (e) {
+      console.warn(`Error al consultar ${url}:`, e);
     }
-  } catch (e) {
-    console.warn('Error al consultar currency-api en vivo:', e);
   }
-  return parseFloat(localStorage.getItem('tasa_auto') || localStorage.getItem('tasaAuto')) || 761.21;
+  return parseFloat(localStorage.getItem('tasa_auto') || localStorage.getItem('tasaAuto')) || 784.66;
 }
 
 // ==========================================================================

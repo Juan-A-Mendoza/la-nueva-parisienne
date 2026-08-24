@@ -371,22 +371,30 @@ function cargarTasaCambio() {
       }
     }
 
-    try {
-      const res = await fetch('https://cdn.jsdelivr.net/npm/@fawazahmed0/currency-api@latest/v1/currencies/usd.json', { cache: 'no-store' });
-      if (res.ok) {
-        const data = await res.json();
-        if (data && data.usd && data.usd.ves && parseFloat(data.usd.ves) > 0) {
-          const liveRate = parseFloat(data.usd.ves);
-          localStorage.setItem('tasa_auto', liveRate.toString());
-          updateDashboardRateBadge(liveRate, 'Tasa: Automática (En Vivo)', false);
-          return liveRate;
+    const apis = [
+      'https://ve.dolarapi.com/v1/dolares/oficial',
+      'https://bcv-api.vercel.app/api/bcv'
+    ];
+
+    for (const url of apis) {
+      try {
+        const res = await fetch(`${url}?t=${Date.now()}`, { cache: 'no-store' });
+        if (res.ok) {
+          const data = await res.json();
+          const liveRate = parseFloat(data.promedio || data.precio || data.monto || data.rate);
+          if (liveRate && liveRate > 0) {
+            localStorage.setItem('tasa_auto', liveRate.toString());
+            localStorage.setItem('bcv_current_rate', liveRate.toString());
+            updateDashboardRateBadge(liveRate, 'Tasa: BCV Oficial (En Vivo)', false);
+            return liveRate;
+          }
         }
+      } catch (e) {
+        console.warn(`Error consultando API ${url}:`, e);
       }
-    } catch (e) {
-      console.warn('Error consultando API de Tasa BCV:', e);
     }
 
-    const fallbackRate = parseFloat(localStorage.getItem('tasa_manual') || localStorage.getItem('tasaManual')) || 761.21;
+    const fallbackRate = parseFloat(localStorage.getItem('tasa_manual') || localStorage.getItem('tasaManual')) || 784.66;
     updateDashboardRateBadge(fallbackRate, 'Tasa: Resguardo', true);
     return fallbackRate;
   }
