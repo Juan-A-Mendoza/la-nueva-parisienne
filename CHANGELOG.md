@@ -4,6 +4,18 @@ Todos los cambios significativos, nuevas funcionalidades y actualizaciones del s
 
 El formato está basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1.0.0/) y este proyecto se adhiere a [Semantic Versioning](https://semver.org/lang/es/).
 
+## [5.11.1] - 2026-08-24 (Auditoría Gerencial y Registro de Marca Temporal en Tickets)
+
+### 📋 Registro de Auditoría y Trazabilidad ([js/modules/dashboard.js](file:///C:/Users/juana/.gemini/antigravity-ide/scratch/la-nueva-parisienne/js/modules/dashboard.js), [js/modules/kitchen.js](file:///C:/Users/juana/.gemini/antigravity-ide/scratch/la-nueva-parisienne/js/modules/kitchen.js))
+- **Identificación del Gerente Responsable**:
+  - Al aprobar o rechazar una requisición, el sistema captura el nombre completo y usuario del gerente en la propiedad `processedBy` (ej. `"Juan Mendoza (@jmendoza)"`).
+- **Marca Temporal Exacta (Timestamp)**:
+  - Se registra la fecha y hora precisa del procesamiento en `processedAt` (ej. `"24/08/2026 18:17"`).
+- **Despliegue de Evidencia en Tablas de Cocina y Gerencia**:
+  - Las tablas de ambos módulos muestran claramente la firma del gerente que resolvió cada ticket junto a la fecha/hora y el motivo registrado, garantizando responsabilidad multi-gerencial.
+
+---
+
 ## [5.11.0] - 2026-08-24 (Sistema de Tickets de Requisición de Materia Prima entre Cocina y Gerencia)
 
 ### 🎫 Módulo 2 - Producción y Cocina ([modules/kitchen.html](file:///C:/Users/juana/.gemini/antigravity-ide/scratch/la-nueva-parisienne/modules/kitchen.html), [js/modules/kitchen.js](file:///C:/Users/juana/.gemini/antigravity-ide/scratch/la-nueva-parisienne/js/modules/kitchen.js))

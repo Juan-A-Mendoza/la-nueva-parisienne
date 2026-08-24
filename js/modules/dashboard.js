@@ -1366,6 +1366,50 @@ function inicializarTicketsProduccionGerencia() {
         return;
       }
 
+    function getActiveManagerInfo() {
+      try {
+        const raw = localStorage.getItem('usuario_activo');
+        if (raw) {
+          const u = JSON.parse(raw);
+          if (u && (u.nombre || u.name)) {
+            const name = u.nombre || u.name;
+            const username = u.username || u.usuario || '';
+            return username ? `${name} (@${username})` : name;
+          }
+        }
+      } catch (e) {}
+      return 'Juan Mendoza (@jmendoza)';
+    }
+
+    function getFormattedTimestamp() {
+      const now = new Date();
+      const day = String(now.getDate()).padStart(2, '0');
+      const month = String(now.getMonth() + 1).padStart(2, '0');
+      const year = now.getFullYear();
+      const hours = String(now.getHours()).padStart(2, '0');
+      const mins = String(now.getMinutes()).padStart(2, '0');
+      return `${day}/${month}/${year} ${hours}:${mins}`;
+    }
+
+    function renderTicketsTable() {
+      const tbody = document.getElementById('ticketsProduccionTbody');
+      const badgeCount = document.getElementById('badgeTicketsProduccionCount');
+      if (!tbody) return;
+
+      const tickets = getTicketsFromStorage();
+      const pendingCount = tickets.filter(t => t.status === 'Pendiente').length;
+
+      if (badgeCount) {
+        badgeCount.textContent = pendingCount;
+        badgeCount.style.background = pendingCount > 0 ? 'var(--color-terracotta)' : 'rgba(0,0,0,0.15)';
+      }
+
+      tbody.innerHTML = '';
+      if (tickets.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="8" style="text-align: center; color: var(--color-muted); padding: 1.5rem;">No hay tickets de requisición registrados.</td></tr>`;
+        return;
+      }
+
       tickets.forEach(ticket => {
         const tr = document.createElement('tr');
         
@@ -1376,12 +1420,26 @@ function inicializarTicketsProduccionGerencia() {
           statusTag = `<span class="badge-stock-normal" style="background: rgba(198,40,40,0.15); color: var(--color-danger); border: 1px solid rgba(198,40,40,0.3); font-weight: 700;">🔴 Rechazado</span>`;
         }
 
-        let actionBtns = `<span style="font-size: 0.82rem; color: var(--color-muted); font-style: italic;">${ticket.reason || 'Procesado'}</span>`;
+        let actionBtns = '';
         if (ticket.status === 'Pendiente') {
           actionBtns = `
             <div style="display: flex; gap: 0.4rem;">
               <button type="button" class="btn-table-action-sm btn-approve-ticket" style="background: rgba(46,125,50,0.12); color: var(--color-success); border-color: rgba(46,125,50,0.3); font-weight: 700;" title="Aprobar despacho">✅ Aprobar</button>
               <button type="button" class="btn-table-action-sm btn-reject-ticket" style="background: rgba(198,40,40,0.12); color: var(--color-danger); border-color: rgba(198,40,40,0.3); font-weight: 700;" title="Rechazar solicitud">❌ Rechazar</button>
+            </div>
+          `;
+        } else if (ticket.status === 'Aprobado') {
+          actionBtns = `
+            <div style="font-size: 0.8rem; color: var(--color-success); font-weight: 600; line-height: 1.3;">
+              <span>✅ Aprobado por <strong>${ticket.processedBy || 'Gerencia'}</strong></span><br/>
+              <span style="font-size: 0.75rem; color: var(--color-muted); font-weight: 400;">⏱️ ${ticket.processedAt || ticket.date}</span>
+            </div>
+          `;
+        } else if (ticket.status === 'Rechazado') {
+          actionBtns = `
+            <div style="font-size: 0.8rem; color: var(--color-danger); font-weight: 600; line-height: 1.3;">
+              <span>❌ Rechazado por <strong>${ticket.processedBy || 'Gerencia'}</strong></span><br/>
+              <span style="font-size: 0.75rem; color: var(--color-muted); font-weight: 400;">⏱️ ${ticket.processedAt || ticket.date} — ${ticket.reason || ''}</span>
             </div>
           `;
         }
@@ -1411,8 +1469,13 @@ function inicializarTicketsProduccionGerencia() {
       const target = tickets.find(t => t.id === ticketId);
       if (!target) return;
 
+      const managerInfo = getActiveManagerInfo();
+      const timestamp = getFormattedTimestamp();
+
       target.status = 'Aprobado';
-      target.reason = 'Aprobado por Gerencia General';
+      target.processedBy = managerInfo;
+      target.processedAt = timestamp;
+      target.reason = `Aprobado por ${managerInfo} a las ${timestamp}`;
 
       const rawMaterials = getRawMaterialsFromStorage();
       const mat = rawMaterials.find(m => m.code === target.itemCode || m.name === target.itemName);
@@ -1424,7 +1487,7 @@ function inicializarTicketsProduccionGerencia() {
 
       saveTicketsToStorage(tickets);
       renderTicketsTable();
-      showSuccessModal('¡Requisición Aprobada!', `Se autorizó el despacho de ${target.qty} ${target.unit} de "${target.itemName}" para Cocina.`);
+      showSuccessModal('¡Requisición Aprobada!', `Se autorizó el despacho por ${managerInfo} (${timestamp}) para ${target.qty} ${target.unit} de "${target.itemName}".`);
     }
 
     const modalRechazarTicket = document.getElementById('modalRechazarTicket');
@@ -1465,13 +1528,18 @@ function inicializarTicketsProduccionGerencia() {
       const target = tickets.find(t => t.id === ticketId);
       if (!target) return;
 
+      const managerInfo = getActiveManagerInfo();
+      const timestamp = getFormattedTimestamp();
+
       target.status = 'Rechazado';
+      target.processedBy = managerInfo;
+      target.processedAt = timestamp;
       target.reason = motivo;
 
       saveTicketsToStorage(tickets);
       renderTicketsTable();
       cerrarModalRechazar();
-      showSuccessModal('Ticket Rechazado', `Se notificó la justificación del rechazo ("${motivo}") a Cocina.`);
+      showSuccessModal('Ticket Rechazado', `Se registró el rechazo por ${managerInfo} (${timestamp}). Motivo: "${motivo}".`);
     });
 
     renderTicketsTable();

@@ -594,6 +594,13 @@ document.addEventListener('DOMContentLoaded', () => {
             statusBadge = `<span class="badge-stock-normal" style="background: rgba(198,40,40,0.15); color: var(--color-danger); border: 1px solid rgba(198,40,40,0.3); font-weight: 700;">🔴 Rechazado</span>`;
           }
 
+          let responseText = '<span style="color: var(--color-muted); font-style: italic;">Esperando revisión gerencial...</span>';
+          if (ticket.status === 'Aprobado') {
+            responseText = `<span style="color: var(--color-success); font-weight: 700;">✅ Aprobado por ${ticket.processedBy || 'Gerencia'}</span> <br/><span style="font-size: 0.76rem; color: var(--color-muted);">⏱️ ${ticket.processedAt || ticket.date}</span>`;
+          } else if (ticket.status === 'Rechazado') {
+            responseText = `<span style="color: var(--color-danger); font-weight: 700;">❌ Rechazado por ${ticket.processedBy || 'Gerencia'}</span> <br/><span style="font-size: 0.76rem; color: var(--color-muted);">⏱️ ${ticket.processedAt || ticket.date} — Motivo: "${ticket.reason || 'Sin motivo'}"</span>`;
+          }
+
           tr.innerHTML = `
             <td style="padding: 0.75rem 1rem;"><span class="table-code-badge" style="font-weight: 800;">${ticket.id}</span></td>
             <td style="padding: 0.75rem 1rem; font-size: 0.85rem;">${ticket.date}</td>
@@ -601,7 +608,7 @@ document.addEventListener('DOMContentLoaded', () => {
             <td style="padding: 0.75rem 1rem;"><strong style="color: var(--color-gold-dark);">${ticket.qty} ${ticket.unit}</strong></td>
             <td style="padding: 0.75rem 1rem; font-size: 0.85rem; color: var(--color-muted);">${ticket.notes || '-'}</td>
             <td style="padding: 0.75rem 1rem;">${statusBadge}</td>
-            <td style="padding: 0.75rem 1rem; font-size: 0.85rem; color: ${ticket.status === 'Rechazado' ? 'var(--color-danger)' : 'var(--color-espresso)'}; font-weight: 600;">${ticket.reason || '-'}</td>
+            <td style="padding: 0.75rem 1rem; font-size: 0.84rem;">${responseText}</td>
           `;
           tbody.appendChild(tr);
         });
