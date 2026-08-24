@@ -888,15 +888,19 @@ document.addEventListener('DOMContentLoaded', async () => {
         }))
       };
 
+      // Redondeo de punto flotante a 2 decimales para comparación matemática exacta
+      const tenderRound = Math.round((currentTenderAmount || 0) * 100) / 100;
+      const totalUsdRound = Math.round((totalUsd || 0) * 100) / 100;
+
       // 1. VALIDACIÓN: MONTO ENTREGADO INSUFICIENTE EN EFECTIVO
-      if (selectedPaymentMethod === 'efectivo' && currentTenderAmount < totalUsd) {
-        const missingUsd = totalUsd - currentTenderAmount;
+      if (selectedPaymentMethod === 'efectivo' && tenderRound < totalUsdRound) {
+        const missingUsd = totalUsdRound - tenderRound;
         const missingVes = missingUsd * bcvRate;
 
         showCustomConfirm({
           icon: '⚠️',
           title: 'Monto Recibido Insuficiente',
-          text: `El monto entregado ($${currentTenderAmount.toFixed(2)}) es menor al total de la venta ($${totalUsd.toFixed(2)}).\n\nFalta por recibir: $${missingUsd.toFixed(2)} USD (Bs. ${missingVes.toLocaleString('es-VE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} VES).`,
+          text: `El monto entregado ($${tenderRound.toFixed(2)}) es menor al total de la venta ($${totalUsdRound.toFixed(2)}).\n\nFalta por recibir: $${missingUsd.toFixed(2)} USD (Bs. ${missingVes.toLocaleString('es-VE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} VES).`,
           acceptText: 'Entendido / Ajustar Monto',
           singleAction: true
         });
@@ -904,14 +908,14 @@ document.addEventListener('DOMContentLoaded', async () => {
       }
 
       // 2. VALIDACIÓN: MONTO ENTREGADO SUPERIOR (CONFIRMACIÓN DE VUELTO)
-      if (selectedPaymentMethod === 'efectivo' && currentTenderAmount > totalUsd) {
-        const changeUsd = currentTenderAmount - totalUsd;
+      if (selectedPaymentMethod === 'efectivo' && tenderRound > totalUsdRound) {
+        const changeUsd = tenderRound - totalUsdRound;
         const changeVes = changeUsd * bcvRate;
 
         showCustomConfirm({
           icon: '💵',
           title: '¿Confirmar Cobro y Vuelto?',
-          text: `Monto Recibido: $${currentTenderAmount.toFixed(2)} USD\nTotal de Venta: $${totalUsd.toFixed(2)} USD\n\nVuelto a Entregar: $${changeUsd.toFixed(2)} USD (Bs. ${changeVes.toLocaleString('es-VE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} VES).\n\n¿Desea procesar la venta y emitir la factura?`,
+          text: `Monto Recibido: $${tenderRound.toFixed(2)} USD\nTotal de Venta: $${totalUsdRound.toFixed(2)} USD\n\nVuelto a Entregar: $${changeUsd.toFixed(2)} USD (Bs. ${changeVes.toLocaleString('es-VE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} VES).\n\n¿Desea procesar la venta y emitir la factura?`,
           acceptText: 'Sí, Procesar Venta',
           singleAction: false,
           onAccept: () => {
@@ -985,6 +989,8 @@ document.addEventListener('DOMContentLoaded', async () => {
 
         const orderCodeText = salePayload.orderNumber || document.getElementById('orderNumber')?.textContent?.replace('🧾 Comprobante:', '')?.trim() || `FAC-2026-${Math.floor(1000 + Math.random() * 9000)}`;
 
+        const discountLabel = currentDiscountPercent > 0 ? `${currentDiscountPercent}%` : null;
+
         const newMovement = {
           id: `mov_${Date.now()}`,
           code: orderCodeText,
@@ -995,6 +1001,8 @@ document.addEventListener('DOMContentLoaded', async () => {
           paymentMethod: formattedPaymentMethod,
           status: 'Completado',
           amount: parseFloat(salePayload.totalUsd || 0),
+          discount: discountLabel,
+          discountPercent: currentDiscountPercent,
           itemsCount: cart.reduce((sum, i) => sum + i.quantity, 0),
           breakdown: cart.map(i => ({
             name: `${i.product.icon || '🥖'} ${i.product.name} (x${i.quantity})`,

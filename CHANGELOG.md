@@ -4,6 +4,31 @@ Todos los cambios significativos, nuevas funcionalidades y actualizaciones del s
 
 El formato está basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1.0.0/) y este proyecto se adhiere a [Semantic Versioning](https://semver.org/lang/es/).
 
+## [5.17.1] - 2026-08-24 (Resolución de Error Sintáctico y Normalización de dashboard.js)
+
+### 🛠️ Reparación Estructural y Eliminación de Cierre Huérfano ([js/modules/dashboard.js](file:///C:/Users/juana/.gemini/antigravity-ide/scratch/la-nueva-parisienne/js/modules/dashboard.js))
+- **Remoción de Declaración Duplicada Huérfana**:
+  - Se eliminaron las líneas residuales fuera de ámbito tras `printMovementVoucher()`, corrigiendo el `SyntaxError` que bloqueaba la carga de eventos en el Módulo de Gerente.
+- **Restablecimiento Total de Funcionalidad**:
+  - Se verificó la apertura fluida de modales, actualización de tablas de inventario, cambio de tasas BCV y renderizado de movimientos de auditoría sin interrupciones.
+
+---
+
+## [5.17.0] - 2026-08-24 (Precisión Matemática en POS, Botones de Logout Unificados, Voucher Impreso 80mm y Distinción de Movimientos)
+
+### 🛠️ Corrección de Bugs Lógicos y Mejoras Visuales ([js/modules/pos.js](file:///C:/Users/juana/.gemini/antigravity-ide/scratch/la-nueva-parisienne/js/modules/pos.js), [css/main.css](file:///C:/Users/juana/.gemini/antigravity-ide/scratch/la-nueva-parisienne/css/main.css), [js/modules/dashboard.js](file:///C:/Users/juana/.gemini/antigravity-ide/scratch/la-nueva-parisienne/js/modules/dashboard.js))
+- **Precisión Matemática en Pagos POS (`tenderRound` & `totalUsdRound`)**:
+  - Se implementó el redondeo exacto `Math.round(val * 100) / 100` en montos entregados y totales antes de la validación de efectivo en caja, eliminando fallas por imprecisión de punto flotante en JS.
+  - El objeto de auditoría ahora almacena explícitamente si se aplicó descuento (ej: `discount: '5%'`).
+- **Estilos Globales para Botones "Cerrar Sesión" (`.btn-pos-logout`)**:
+  - Se incorporaron las reglas CSS corporativas en `main.css`, restaurando bordes, padding, colores y efectos hover para los botones de salida en todos los módulos (Cocina M2, Dashboard Gerente M4, POS M3, etc.).
+- **Impresión Exclusiva de Voucher de Caja 80mm (`@media print`)**:
+  - Se diseñó el formato de ticket térmico de 80mm (`#ticketPrintArea`) con tipografía monoespaciada, encabezado institucional, desglose de productos, descuento aplicado, BCV y mensaje de agradecimiento. Se oculta el resto de la interfaz al imprimir.
+- **Categorización Visual de Movimientos**:
+  - Se aplicaron etiquetas distintivas con código de color: 🟢 **Venta POS** (Ingresos), 🔴 **Compra de Insumos / Egreso** (Gastos) y 🟡 **Requisición / Transferencia** (Ajustes de inventario).
+
+---
+
 ## [5.16.0] - 2026-08-24 (Sincronización en Tiempo Real de Transacciones Financieras y Auditoría POS ↔ Gerencia)
 
 ### 📊 Inyección de Ventas en Registro de Auditoría Gerencial ([js/modules/pos.js](file:///C:/Users/juana/.gemini/antigravity-ide/scratch/la-nueva-parisienne/js/modules/pos.js), [js/modules/dashboard.js](file:///C:/Users/juana/.gemini/antigravity-ide/scratch/la-nueva-parisienne/js/modules/dashboard.js))

@@ -653,6 +653,8 @@ function renderizarGraficos() {
 /**
  * 5. Carga y Renderizado de Tablas de Inventario y Movimientos
  */
+let currentInspectedMovement = null;
+
 function renderMovementsTable() {
   const tbody = document.getElementById('recentMovementsBody');
   if (!tbody) return;
@@ -672,17 +674,33 @@ function renderMovementsTable() {
 
   filtered.forEach(mov => {
     const tr = document.createElement('tr');
-    const isPositive = mov.amount >= 0;
-    const formattedAmount = isPositive ? `+$${mov.amount.toFixed(2)}` : `-$${Math.abs(mov.amount).toFixed(2)}`;
-    const amountClass = isPositive ? 'positive' : 'negative';
+    const isPositive = mov.amount > 0;
+    const isNegative = mov.amount < 0;
+
+    let formattedAmount = `$${Math.abs(mov.amount).toFixed(2)}`;
+    let amountClass = 'neutral';
+    if (isPositive) {
+      formattedAmount = `+$${mov.amount.toFixed(2)}`;
+      amountClass = 'positive';
+    } else if (isNegative) {
+      formattedAmount = `-$${Math.abs(mov.amount).toFixed(2)}`;
+      amountClass = 'negative';
+    }
+
+    let categoryBadge = `<span class="table-status-tag completado" style="background: rgba(46,125,50,0.12); color: var(--color-success); font-weight: 700; border: 1px solid rgba(46,125,50,0.3);">🟢 ${mov.type || 'Venta POS'}</span>`;
+    if (mov.category === 'gasto' || isNegative) {
+      categoryBadge = `<span class="table-status-tag" style="background: rgba(198,40,40,0.12); color: var(--color-danger); border: 1px solid rgba(198,40,40,0.3); font-weight: 700;">🔴 ${mov.type || 'Egreso / Compra'}</span>`;
+    } else if (mov.category === 'ajuste' || mov.type?.includes('Requisición') || mov.amount === 0) {
+      categoryBadge = `<span class="table-status-tag" style="background: rgba(255,152,0,0.12); color: #E65100; border: 1px solid rgba(255,152,0,0.3); font-weight: 700;">🟡 ${mov.type || 'Transferencia'}</span>`;
+    }
 
     tr.innerHTML = `
       <td class="table-code-badge">${mov.code}</td>
       <td style="color: var(--color-muted); font-size: 0.85rem;">${mov.timestamp}</td>
-      <td><strong>${mov.type}</strong></td>
+      <td>${categoryBadge}</td>
       <td>${mov.user}</td>
       <td style="color: var(--color-muted);">${mov.paymentMethod}</td>
-      <td><span class="table-status-tag completado">${mov.status}</span></td>
+      <td><span class="table-status-tag completado">${mov.status || 'Completado'}</span></td>
       <td class="amount-text ${amountClass}">${formattedAmount}</td>
       <td><button type="button" class="btn-table-action">Ver Detalle</button></td>
     `;
@@ -696,6 +714,7 @@ function renderMovementsTable() {
 }
 
 function openMovementDetailModal(mov) {
+  currentInspectedMovement = mov;
   const modal = document.getElementById('modalMovimientoDetalle');
   if (!modal) return;
 
@@ -766,10 +785,108 @@ function openMovementDetailModal(mov) {
       `;
       listContainer.appendChild(row);
     });
+
+    if (mov.discount) {
+      const discRow = document.createElement('div');
+      discRow.className = 'breakdown-item-row';
+      discRow.style.fontWeight = 'bold';
+      discRow.style.color = 'var(--color-success)';
+      discRow.innerHTML = `
+        <span class="breakdown-item-name">🎉 Descuento Especial Aplicado</span>
+        <span class="breakdown-item-price">-${mov.discount}</span>
+      `;
+      listContainer.appendChild(discRow);
+    }
   }
 
   modal.style.display = 'flex';
   modal.setAttribute('aria-hidden', 'false');
+}
+
+function printMovementVoucher(mov) {
+  if (!mov) return;
+  let ticketPrintArea = document.getElementById('ticketPrintArea');
+  if (!ticketPrintArea) {
+    ticketPrintArea = document.createElement('div');
+    ticketPrintArea.id = 'ticketPrintArea';
+    ticketPrintArea.className = 'ticket-print-area';
+    document.body.appendChild(ticketPrintArea);
+  }
+
+  const modoGuardado = localStorage.getItem('modo_tasa') || localStorage.getItem('modoTasa');
+  let activeRate = 761.21;
+  if (modoGuardado === 'manual') {
+    activeRate = parseFloat(localStorage.getItem('tasa_manual') || localStorage.getItem('tasaManual')) || 780.00;
+  } else {
+    activeRate = parseFloat(localStorage.getItem('tasa_auto') || localStorage.getItem('tasaAuto')) || 761.21;
+  }
+
+  const isPositive = mov.amount >= 0;
+  const amountUsdText = isPositive ? `$${mov.amount.toFixed(2)} USD` : `-$${Math.abs(mov.amount).toFixed(2)} USD`;
+  const amountVesVal = Math.abs(mov.amount) * activeRate;
+  const amountVesText = `Bs. ${amountVesVal.toLocaleString('es-VE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} VES`;
+
+  const items = (mov.breakdown && Array.isArray(mov.breakdown) && mov.breakdown.length > 0)
+    ? mov.breakdown
+    : (BREAKDOWN_MAP[mov.code] || [
+        { name: `Concepto: ${mov.type}`, price: `$${Math.abs(mov.amount).toFixed(2)} USD` }
+      ]);
+
+  let itemsHtml = '';
+  items.forEach(it => {
+    itemsHtml += `
+      <div style="display: flex; justify-content: space-between; margin-bottom: 2px;">
+        <span>${it.name}</span>
+        <span>${it.price}</span>
+      </div>`;
+  });
+
+  const discountRow = mov.discount ? `
+    <div style="display: flex; justify-content: space-between; font-weight: bold; margin-top: 4px; padding-top: 2px; border-top: 1px dashed #000;">
+      <span>DESCUENTO APLICADO:</span>
+      <span>-${mov.discount}</span>
+    </div>` : '';
+
+  ticketPrintArea.innerHTML = `
+    <div style="text-align: center; border-bottom: 1px dashed #000; padding-bottom: 6px; margin-bottom: 6px;">
+      <h2 style="margin: 0; font-size: 14px; font-weight: bold; text-transform: uppercase;">La Nueva Parisienne</h2>
+      <p style="margin: 2px 0 0 0; font-size: 10px;">Boulangerie & Pâtisserie Artesanal</p>
+      <p style="margin: 2px 0 0 0; font-size: 9px;">RIF: J-50123456-7 • Caracas, VE</p>
+    </div>
+
+    <div style="border-bottom: 1px dashed #000; padding-bottom: 6px; margin-bottom: 6px; font-size: 10px;">
+      <div><strong>N° COMPROBANTE:</strong> ${mov.code}</div>
+      <div><strong>FECHA Y HORA:</strong> ${mov.timestamp}</div>
+      <div><strong>OPERACIÓN:</strong> ${mov.type}</div>
+      <div><strong>RESPONSABLE:</strong> ${mov.user}</div>
+      <div><strong>MÉTODO PAGO:</strong> ${mov.paymentMethod}</div>
+    </div>
+
+    <div style="border-bottom: 1px dashed #000; padding-bottom: 6px; margin-bottom: 6px; font-size: 10px;">
+      <div style="font-weight: bold; margin-bottom: 4px; text-decoration: underline;">DESGLOSE DE ITEMS:</div>
+      ${itemsHtml}
+      ${discountRow}
+    </div>
+
+    <div style="border-top: 1px solid #000; padding-top: 6px; margin-top: 6px; font-size: 11px;">
+      <div style="display: flex; justify-content: space-between; font-weight: bold; font-size: 12px;">
+        <span>TOTAL IMPORTE ($):</span>
+        <span>${amountUsdText}</span>
+      </div>
+      <div style="display: flex; justify-content: space-between; font-weight: bold; font-size: 10px; margin-top: 3px;">
+        <span>EQUIVALENTE BCV (VES):</span>
+        <span>${amountVesText}</span>
+      </div>
+      <div style="font-size: 9px; text-align: center; margin-top: 4px; color: #333;">Tasa Referencial BCV: Bs. ${activeRate.toFixed(2)} / USD</div>
+    </div>
+
+    <div style="text-align: center; margin-top: 10px; font-size: 9px; border-top: 1px dashed #000; padding-top: 6px;">
+      <p style="margin: 0;">¡Gracias por su compra en La Nueva Parisienne!</p>
+      <p style="margin: 2px 0 0 0; font-weight: bold;">*** COMPROBANTE OFICIAL DE AUDITORÍA ***</p>
+    </div>
+  `;
+
+  window.print();
 }
 
 function renderInventoryTables() {
@@ -1247,7 +1364,11 @@ function inicializarBotonesGenerales() {
   });
 
   document.getElementById('btnImprimirComprobante')?.addEventListener('click', () => {
-    window.print();
+    if (currentInspectedMovement) {
+      printMovementVoucher(currentInspectedMovement);
+    } else {
+      window.print();
+    }
   });
 
   document.getElementById('btnCopiarRef')?.addEventListener('click', () => {
