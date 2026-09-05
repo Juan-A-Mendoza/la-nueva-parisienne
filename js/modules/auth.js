@@ -204,7 +204,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     if (!deptUsersList || deptUsersList.length === 0) {
       deptUsersGrid.innerHTML = `
-        <div style="grid-column: 1/-1; text-align: center; padding: 3rem 1.5rem; background: #FFFFFF; border-radius: var(--radius-lg); border: 2px dashed rgba(212,155,84,0.3); color: var(--color-muted);">
+        <div style="grid-column: 1/-1; text-align: center; padding: 2.5rem 1.5rem; background: #FFFFFF; border-radius: var(--radius-lg); border: 2px dashed rgba(212,155,84,0.3); color: var(--color-muted); max-width: 450px; margin: 0 auto;">
           <div style="font-size: 2.5rem; margin-bottom: 0.5rem;">👤</div>
           <h3 style="font-size: 1.1rem; color: var(--color-espresso); font-weight: 700; margin-bottom: 0.25rem;">Sin Usuarios Registrados</h3>
           <p style="font-size: 0.85rem;">No existen usuarios asignados actualmente a este departamento.</p>
@@ -215,21 +215,16 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     deptUsersList.forEach(profile => {
       const card = document.createElement('article');
-      card.className = 'profile-card user-card';
+      card.className = 'user-character-card';
       card.dataset.userId = profile.id;
       card.setAttribute('role', 'button');
       card.setAttribute('tabindex', '0');
       card.setAttribute('aria-label', `Ingresar como ${profile.name}`);
 
       card.innerHTML = `
-        <div class="profile-avatar-wrapper">
-          <div class="profile-avatar user-avatar">${profile.icon || '👤'}</div>
-          <span class="status-dot"></span>
-        </div>
-        <h3 class="profile-name user-name">${profile.name}</h3>
-        <span class="profile-role user-role">${profile.role}</span>
-        <p class="profile-desc user-desc">${profile.description || `@${profile.username || profile.id}`}</p>
-        <button type="button" class="btn-select-user profile-action-btn">Seleccionar Perfil ➔</button>
+        <div class="character-status-dot" title="Estado: Activo"></div>
+        <div class="character-avatar">${profile.icon || '👤'}</div>
+        <span class="character-name" title="${profile.name}">${profile.name}</span>
       `;
 
       const selectUser = (e) => {
