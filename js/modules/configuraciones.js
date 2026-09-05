@@ -757,10 +757,59 @@ function inicializarModalesYEventos() {
 // 5. INICIALIZACIÓN CON PRINCIPIO DE AISLAMIENTO DE FALLOS STRICTO
 // ==========================================================================
 
+/**
+ * Control de Modalidad de Acceso / Login (Modo POS vs Modo Tradicional)
+ */
+function inicializarModoLoginConfig() {
+  const radioPos = document.getElementById('radio_modo_pos');
+  const radioTradicional = document.getElementById('radio_modo_tradicional');
+  const lblModoPos = document.getElementById('lblModoPos');
+  const lblModoTradicional = document.getElementById('lblModoTradicional');
+  const modoLoginForm = document.getElementById('modoLoginForm');
+
+  function actualizarEstiloRadioModoLogin(modo) {
+    const isPos = modo === 'pos';
+    if (lblModoPos) {
+      lblModoPos.style.borderColor = isPos ? 'var(--color-gold)' : 'var(--border-subtle)';
+      lblModoPos.style.background = isPos ? 'rgba(212, 155, 84, 0.08)' : '#FFFFFF';
+    }
+    if (lblModoTradicional) {
+      lblModoTradicional.style.borderColor = isPos ? 'var(--border-subtle)' : 'var(--color-gold)';
+      lblModoTradicional.style.background = isPos ? '#FFFFFF' : 'rgba(212, 155, 84, 0.08)';
+    }
+  }
+
+  const modoGuardado = localStorage.getItem('modo_login') || 'pos';
+  if (modoGuardado === 'tradicional') {
+    if (radioTradicional) radioTradicional.checked = true;
+  } else {
+    if (radioPos) radioPos.checked = true;
+  }
+  actualizarEstiloRadioModoLogin(modoGuardado);
+
+  radioPos?.addEventListener('change', () => actualizarEstiloRadioModoLogin('pos'));
+  radioTradicional?.addEventListener('change', () => actualizarEstiloRadioModoLogin('tradicional'));
+
+  if (modoLoginForm) {
+    modoLoginForm.addEventListener('submit', (e) => {
+      e.preventDefault();
+      const seleccionado = radioTradicional && radioTradicional.checked ? 'tradicional' : 'pos';
+      localStorage.setItem('modo_login', seleccionado);
+      window.dispatchEvent(new Event('storage'));
+      showStatus('✓ ¡Modalidad de inicio de sesión actualizada correctamente!', 'success');
+      showSuccessModal(
+        '¡Preferencia de Acceso Guardada!',
+        `La pantalla de login operará en ${seleccionado === 'tradicional' ? 'Modo Tradicional (Credenciales)' : 'Modo POS (Visual por Departamentos)'}.`
+      );
+    });
+  }
+}
+
 document.addEventListener('DOMContentLoaded', () => {
   try { inicializarSesionGerente(); } catch (e) { console.error('Error Sesión Gerente:', e); }
   try { inicializarEmpresaFiscalConfig(); } catch (e) { console.error('Error Empresa Config:', e); }
   try { inicializarTasaBcvConfig(); } catch (e) { console.error('Error Tasa BCV:', e); }
+  try { inicializarModoLoginConfig(); } catch (e) { console.error('Error Modo Login Config:', e); }
   try { inicializarGestionUsuarios(); } catch (e) { console.error('Error Gestión Usuarios:', e); }
   try { inicializarModalesYEventos(); } catch (e) { console.error('Error Modales Config:', e); }
 });

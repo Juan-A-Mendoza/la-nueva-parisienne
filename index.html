@@ -23,16 +23,133 @@
       <span class="academic-badge">Proyecto Académico Multidisciplinario</span>
     </header>
 
-    <!-- SECCIÓN: SELECCIÓN DE PERFIL DE USUARIO -->
-    <section class="profiles-section" aria-labelledby="profilesHeading">
-      <h2 id="profilesHeading" class="profiles-title">
-        <span>👤</span> Seleccione su Perfil de Usuario para Iniciar Sesión
-      </h2>
+    <!-- SECCIÓN DE AUTENTICACIÓN DINÁMICA -->
+    <section class="profiles-section" aria-labelledby="mainAuthTitle">
+      
+      <!-- ====================================================================
+           MODO POS: VISTA 1 - TARJETAS PRINCIPALES POR DEPARTAMENTO
+           ==================================================================== -->
+      <div id="deptView" class="auth-view-container active">
+        <h2 id="mainAuthTitle" class="profiles-title">
+          <span>🏢</span> Seleccione un Departamento para Iniciar Sesión
+        </h2>
 
-      <!-- Rejilla Dinámica de Perfiles (Renderizada por JS) -->
-      <div id="profilesGrid" class="profiles-grid">
-        <!-- Renderizado dinámico vía js/modules/auth.js -->
+        <!-- REJILLA DE 4 DEPARTAMENTOS PRINCIPALES -->
+        <div class="departments-grid">
+          
+          <!-- DEPARTAMENTO 1: GERENCIA -->
+          <article class="dept-card" data-dept="gerencia" tabindex="0" role="button" aria-label="Ingresar al Departamento de Gerencia General">
+            <div class="dept-card-header">
+              <div class="dept-card-icon-badge">🏢</div>
+              <span class="dept-user-count" id="count_gerencia">1 Usuario</span>
+            </div>
+            <h3 class="dept-card-title">Gerencia General</h3>
+            <p class="dept-card-desc">Control gerencial total, KPIs de ventas, auditoría global y administración de personal.</p>
+            <div class="dept-card-footer">
+              <span>Acceder a Usuarios</span>
+              <span class="dept-card-arrow">➔</span>
+            </div>
+          </article>
+
+          <!-- DEPARTAMENTO 2: CAJA -->
+          <article class="dept-card" data-dept="caja" tabindex="0" role="button" aria-label="Ingresar al Departamento de Caja y Facturación">
+            <div class="dept-card-header">
+              <div class="dept-card-icon-badge">💰</div>
+              <span class="dept-user-count" id="count_caja">1 Usuario</span>
+            </div>
+            <h3 class="dept-card-title">Caja y Facturación</h3>
+            <p class="dept-card-desc">Operación del Punto de Venta (POS), cobros multimoneda, tickets y devoluciones.</p>
+            <div class="dept-card-footer">
+              <span>Acceder a Usuarios</span>
+              <span class="dept-card-arrow">➔</span>
+            </div>
+          </article>
+
+          <!-- DEPARTAMENTO 3: PRODUCCIÓN -->
+          <article class="dept-card" data-dept="cocina" tabindex="0" role="button" aria-label="Ingresar al Departamento de Producción y Cocina">
+            <div class="dept-card-header">
+              <div class="dept-card-icon-badge">👨‍🍳</div>
+              <span class="dept-user-count" id="count_cocina">1 Usuario</span>
+            </div>
+            <h3 class="dept-card-title">Producción y Cocina</h3>
+            <p class="dept-card-desc">Control de hornos, recetas panaderas, orden del día y recepción de insumos.</p>
+            <div class="dept-card-footer">
+              <span>Acceder a Usuarios</span>
+              <span class="dept-card-arrow">➔</span>
+            </div>
+          </article>
+
+          <!-- DEPARTAMENTO 4: CONTABILIDAD -->
+          <article class="dept-card" data-dept="contabilidad" tabindex="0" role="button" aria-label="Ingresar al Departamento de Contabilidad y Finanzas">
+            <div class="dept-card-header">
+              <div class="dept-card-icon-badge">📊</div>
+              <span class="dept-user-count" id="count_contabilidad">1 Usuario</span>
+            </div>
+            <h3 class="dept-card-title">Contabilidad & Finanzas</h3>
+            <p class="dept-card-desc">Auditoría contable, márgenes de ganancia, libros de compras y estados financieros.</p>
+            <div class="dept-card-footer">
+              <span>Acceder a Usuarios</span>
+              <span class="dept-card-arrow">➔</span>
+            </div>
+          </article>
+
+        </div>
       </div>
+
+      <!-- ====================================================================
+           MODO POS: VISTA 2 - USUARIOS FILTRADOS DEL DEPARTAMENTO SELECCIONADO
+           ==================================================================== -->
+      <div id="deptUsersView" class="auth-view-container hidden">
+        <div class="dept-users-header">
+          <button id="btnBackToDepts" type="button" class="btn-back-dept">
+            <span>⬅️ Volver a Departamentos</span>
+          </button>
+          <div class="dept-users-title-badge">
+            <span id="selectedDeptIcon" class="selected-dept-icon">🏢</span>
+            <div>
+              <h2 id="selectedDeptTitle" class="selected-dept-title">Usuarios del Departamento</h2>
+              <span id="selectedDeptSubtitle" class="selected-dept-subtitle">Seleccione su perfil de usuario</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- REJILLA DE USUARIOS DEL DEPARTAMENTO -->
+        <div id="deptUsersGrid" class="profiles-grid">
+          <!-- Renderizado dinámico vía js/modules/auth.js -->
+        </div>
+      </div>
+
+      <!-- ====================================================================
+           MODO TRADICIONAL: FORMULARIO MINIMALISTA CENTRADO DE CREDENCIALES
+           ==================================================================== -->
+      <div id="tradicionalView" class="auth-view-container hidden">
+        <div class="traditional-login-card">
+          <div class="traditional-card-header">
+            <div class="traditional-header-icon">🔑</div>
+            <h2 class="traditional-card-title">Inicio de Sesión Centralizado</h2>
+            <p class="traditional-card-subtitle">Ingrese sus credenciales corporativas para acceder al sistema</p>
+          </div>
+
+          <form id="traditionalLoginForm" class="traditional-login-form">
+            <div id="traditionalErrorAlert" class="traditional-error-alert" style="display: none;"></div>
+
+            <div class="traditional-form-group">
+              <label for="tradUsernameInput" class="traditional-label">👤 Nombre de Usuario</label>
+              <input type="text" id="tradUsernameInput" class="traditional-input" placeholder="Ej. admin, cajero1, panadero1" required autocomplete="username" />
+            </div>
+
+            <div class="traditional-form-group">
+              <label for="tradPasswordInput" class="traditional-label">🔒 Contraseña / PIN</label>
+              <input type="password" id="tradPasswordInput" class="traditional-input" placeholder="••••••••" required autocomplete="current-password" />
+            </div>
+
+            <button type="submit" id="btnSubmitTraditional" class="btn-traditional-submit">
+              <span>🔑 Iniciar Sesión</span>
+            </button>
+          </form>
+        </div>
+      </div>
+
     </section>
 
     <!-- PIE DE PÁGINA / NOTA ACADÉMICA -->
@@ -42,12 +159,14 @@
 
   </main>
 
-  <!-- MODAL / OVERLAY DE INGRESO DE PIN -->
+  <!-- ====================================================================
+       MODAL / OVERLAY DE INGRESO DE CLAVE / PIN (MODO POS)
+       ==================================================================== -->
   <div id="pinModal" class="pin-modal-overlay" role="dialog" aria-modal="true" aria-labelledby="selectedUserName">
     <div class="pin-modal-card">
       
-      <!-- Botón de Cierre -->
-      <button id="closeModalBtn" class="modal-close-btn" aria-label="Cerrar modal de PIN">&times;</button>
+      <!-- Botón de Cierre / Volver -->
+      <button id="closeModalBtn" class="modal-close-btn" aria-label="Volver a lista de usuarios">&times;</button>
 
       <!-- Cabecera del Usuario Seleccionado -->
       <div class="selected-user-header">
@@ -65,7 +184,7 @@
       </div>
 
       <!-- Mensaje de Estado / Alerta -->
-      <div id="pinErrorAlert" class="auth-message">Ingrese su PIN de 4 dígitos</div>
+      <div id="pinErrorAlert" class="auth-message">Ingrese su PIN de 4 dígitos o Contraseña</div>
 
       <!-- Teclado Numérico Táctil (Keypad) -->
       <div id="pinKeypad" class="keypad-grid">
@@ -84,6 +203,13 @@
         <button type="button" class="keypad-btn key-btn action-btn" data-action="clear" title="Borrar todo">C</button>
         <button type="button" class="keypad-btn key-btn" data-value="0">0</button>
         <button type="button" class="keypad-btn key-btn action-btn delete-btn" data-action="backspace" title="Borrar último dígito">⌫</button>
+      </div>
+
+      <!-- BOTÓN VOLVER DENTRO DEL MODAL -->
+      <div style="margin-top: 1.25rem;">
+        <button id="btnModalBack" type="button" class="btn-modal-back">
+          <span>⬅️ Volver a Usuarios</span>
+        </button>
       </div>
 
     </div>

@@ -95,11 +95,9 @@ try {
 
     // 2. Insertar Renglones de Detalle e Inventario
     $sqlDetalle1 = "INSERT INTO ventas_detalle (venta_id, producto_id, cantidad, precio_unitario, subtotal_linea) VALUES (:vid, :pid, :qty, :precio, :subtotal)";
-    $sqlDetalle2 = "INSERT INTO detalles_venta (venta_id, producto_id, cantidad, precio_unitario, subtotal_linea) VALUES (:vid, :pid, :qty, :precio, :subtotal)";
     $sqlUpdateStock = "UPDATE productos SET stock_actual = GREATEST(0, stock_actual - :qty) WHERE id = :pid";
 
     $stmtD1 = $pdo->prepare($sqlDetalle1);
-    $stmtD2 = $pdo->prepare($sqlDetalle2);
     $stmtStock = $pdo->prepare($sqlUpdateStock);
 
     foreach ($items as $item) {
@@ -110,15 +108,6 @@ try {
 
         // Insertar renglón en ventas_detalle
         $stmtD1->execute([
-            ':vid' => $saleId,
-            ':pid' => $pid,
-            ':qty' => $qty,
-            ':precio' => $price,
-            ':subtotal' => $subtotalLinea
-        ]);
-
-        // Insertar renglón en detalles_venta
-        $stmtD2->execute([
             ':vid' => $saleId,
             ':pid' => $pid,
             ':qty' => $qty,

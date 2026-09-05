@@ -2,6 +2,7 @@
 -- LA NUEVA PARISIENNE - SCRIPT DE POBLADO DE DATOS (SEED DATA MOCK MIGRATION)
 -- Inserta datos de prueba para usuarios, perfiles, PINs, catálogo e inventario
 -- Compatible con MySQL / MariaDB (InnoDB) mediante DELETE sin restricciones FK
+-- REFACTORIZADO: Coincide 100% con la estructura normalizada (1FN, 2FN)
 -- ============================================================================
 
 USE `la_nueva_parisienne`;
@@ -9,52 +10,70 @@ USE `la_nueva_parisienne`;
 -- 1. DESHABILITAR RESTRICCIONES TEMPORALMENTE Y LIMPIAR CON DELETE
 SET FOREIGN_KEY_CHECKS = 0;
 DELETE FROM `comandas_cocina`;
-DELETE FROM `hornos`;
 DELETE FROM `estado_hornos`;
 DELETE FROM `lotes_produccion`;
 DELETE FROM `asientos_detalle`;
 DELETE FROM `asientos_contables`;
 DELETE FROM `plan_cuentas`;
+DELETE FROM `ventas_detalle`;
+DELETE FROM `ventas`;
+DELETE FROM `ordenes_compra_detalle`;
 DELETE FROM `ordenes_compra`;
 DELETE FROM `proveedores`;
 DELETE FROM `productos`;
 DELETE FROM `categorias_producto`;
 DELETE FROM `usuarios`;
 DELETE FROM `roles`;
+DELETE FROM `configuracion_empresa`;
+DELETE FROM `configuraciones`;
 SET FOREIGN_KEY_CHECKS = 1;
 
 -- ----------------------------------------------------------------------------
--- 2. POBLAR TABLA: roles
+-- 2. POBLAR TABLA: configuracion_empresa (Sin columnas modo_tasa ni tasa_manual)
 -- ----------------------------------------------------------------------------
-INSERT IGNORE INTO `roles` (`id`, `codigo`, `nombre`, `descripcion`) VALUES
-('rol_admin', 'ADMIN', 'Gerente General / Administrador', 'Acceso total a KPIs, contabilidad, personal, inventario y configuración.'),
-('rol_baker', 'BAKER', 'Maestro Panadero / Chef de Cuisine', 'Gestión de hornos industriales, comandas KDS e insumos de masa.'),
-('rol_cashier', 'CASHIER', 'Personal de Caja / POS', 'Facturación directa, cobro en efectivo/tarjeta y arqueo de caja.'),
-('rol_accountant', 'ACCOUNTANT', 'Contador & Administrador', 'Auditoría financiera, balance de comprobación y órdenes de compra.');
+INSERT INTO `configuracion_empresa` (`id`, `nombre`, `rif`, `direccion`, `telefono`) VALUES
+(1, 'La Nueva Parisienne Panadería & Pastelería C.A.', 'J-40123456-7', 'Av. Lara con Calle 8, Barquisimeto, Edo. Lara', '(0251) 555-1234');
 
 -- ----------------------------------------------------------------------------
--- 3. POBLAR TABLA: usuarios (TODOS CON PIN '1234')
+-- 3. POBLAR TABLA: configuraciones
 -- ----------------------------------------------------------------------------
-INSERT IGNORE INTO `usuarios` (`id`, `rol_id`, `codigo`, `nombre`, `email`, `telefono`, `pin`, `icono`, `turno`, `redirect_url`, `estado`) VALUES
-('usr_carlos', 'rol_baker', 'EMP-001', 'Carlos Mendoza', 'carlos.mendoza@parisienne.com', '(01) 555-CARLOS', '1234', '👨‍🍳', 'Mañana (05:00 - 13:00)', 'modules/kitchen.html', 'active'),
-('usr_ana', 'rol_cashier', 'EMP-002', 'Ana Ramírez', 'ana.ramirez@parisienne.com', '(01) 555-ANA', '1234', '👩‍💼', 'Tarde (13:00 - 21:00)', 'modules/pos.html', 'active'),
-('usr_manager', 'rol_admin', 'EMP-003', 'Juan', 'juan.gerente@parisienne.com', '(01) 555-JUAN', '1234', '👨‍💼', 'Turno Completo', 'modules/dashboard.html', 'active'),
-('usr_baker', 'rol_baker', 'EMP-004', 'Enrique', 'enrique.chef@parisienne.com', '(01) 555-ENRIQUE', '1234', '👨‍🍳', 'Mañana (05:00 - 13:00)', 'modules/kitchen.html', 'active'),
-('usr_cashier', 'rol_cashier', 'EMP-005', 'Henry', 'henry.pos@parisienne.com', '(01) 555-HENRY', '1234', '👨‍💼', 'Mañana (07:00 - 15:00)', 'modules/pos.html', 'active'),
-('usr_accountant', 'rol_accountant', 'EMP-006', 'Sebastian', 'sebastian.finanzas@parisienne.com', '(01) 555-SEBASTIAN', '1234', '📊', 'Horario Oficina (08:00 - 17:00)', 'modules/accounting.html', 'active');
+INSERT INTO `configuraciones` (`clave`, `valor`, `descripcion`) VALUES
+('bcv_rate_mode', 'auto', 'Modo de obtención de la tasa BCV: auto o manual'),
+('bcv_manual_rate', '761.21', 'Valor de la tasa de cambio ingresado manualmente'),
+('modo_login', 'pos', 'Modalidad de inicio de sesión en index.html: pos o tradicional');
 
 -- ----------------------------------------------------------------------------
--- 4. POBLAR TABLA: categorias_producto
+-- 4. POBLAR TABLA: roles (Con columna redirect_url - 2FN Aplicada)
+-- ----------------------------------------------------------------------------
+INSERT IGNORE INTO `roles` (`id`, `codigo`, `nombre`, `descripcion`, `redirect_url`) VALUES
+('rol_admin', 'ADMIN', 'Gerente General / Administrador', 'Acceso total a KPIs, contabilidad, personal, inventario y configuración.', 'modules/dashboard.html'),
+('rol_baker', 'BAKER', 'Maestro Panadero / Chef de Cuisine', 'Gestión de hornos industriales, comandas KDS e insumos de masa.', 'modules/kitchen.html'),
+('rol_cashier', 'CASHIER', 'Personal de Caja / POS', 'Facturación directa, cobro en efectivo/tarjeta y arqueo de caja.', 'modules/pos.html'),
+('rol_accountant', 'ACCOUNTANT', 'Contador & Administrador', 'Auditoría financiera, balance de comprobación y órdenes de compra.', 'modules/accounting.html');
+
+-- ----------------------------------------------------------------------------
+-- 5. POBLAR TABLA: usuarios (Sin columna redirect_url - 2FN Aplicada)
+-- ----------------------------------------------------------------------------
+INSERT IGNORE INTO `usuarios` (`id`, `rol_id`, `codigo`, `nombre`, `email`, `telefono`, `pin`, `icono`, `turno`, `estado`) VALUES
+('usr_carlos', 'rol_baker', 'EMP-001', 'Carlos Mendoza', 'carlos.mendoza@parisienne.com', '(01) 555-CARLOS', '1234', '👨‍🍳', 'Mañana (05:00 - 13:00)', 'active'),
+('usr_ana', 'rol_cashier', 'EMP-002', 'Ana Ramírez', 'ana.ramirez@parisienne.com', '(01) 555-ANA', '1234', '👩‍💼', 'Tarde (13:00 - 21:00)', 'active'),
+('usr_manager', 'rol_admin', 'EMP-003', 'Juan Mendoza', 'juan.gerente@parisienne.com', '(01) 555-JUAN', '1234', '👨‍💼', 'Turno Completo', 'active'),
+('usr_baker', 'rol_baker', 'EMP-004', 'Enrique Chef', 'enrique.chef@parisienne.com', '(01) 555-ENRIQUE', '1234', '👨‍🍳', 'Mañana (05:00 - 13:00)', 'active'),
+('usr_cashier', 'rol_cashier', 'EMP-005', 'Henry POS', 'henry.pos@parisienne.com', '(01) 555-HENRY', '1234', '👨‍💼', 'Mañana (07:00 - 15:00)', 'active'),
+('usr_accountant', 'rol_accountant', 'EMP-006', 'Sebastian Finanzas', 'sebastian.finanzas@parisienne.com', '(01) 555-SEBASTIAN', '1234', '📊', 'Horario Oficina (08:00 - 17:00)', 'active');
+
+-- ----------------------------------------------------------------------------
+-- 6. POBLAR TABLA: categorias_producto
 -- ----------------------------------------------------------------------------
 INSERT IGNORE INTO `categorias_producto` (`id`, `nombre`, `descripcion`) VALUES
 ('cat_insumos', 'Materias Primas', 'Harinas, mantequillas, levaduras y cacao para horneado.'),
 ('cat_panaderia', 'Panadería Artesanal', 'Baguettes, brioches y panes de especialidad.'),
 ('cat_pasteleria', 'Pastelería & Repostería', 'Éclairs, tartas de limón, macarons y milhojas.'),
 ('cat_cafeteria', 'Cafetería & Bebidas', 'Café espresso, cappuccino, café au lait y jugos.'),
-('cat_especialidades', 'Especialidades & Desayunos', 'Croque-Monsieur, quiches y desyunos artesanales.');
+('cat_especialidades', 'Especialidades & Desayunos', 'Croque-Monsieur, quiches y desayunos artesanales.');
 
 -- ----------------------------------------------------------------------------
--- 5. POBLAR TABLA: productos (INVENTARIO E ÍTEMS DEL PUNTO DE VENTA POS)
+-- 7. POBLAR TABLA: productos
 -- ----------------------------------------------------------------------------
 INSERT IGNORE INTO `productos` (`id`, `categoria_id`, `codigo`, `nombre`, `unidad_medida`, `stock_actual`, `stock_minimo`, `precio_unitario`, `tipo`, `ubicacion`, `icono`, `descripcion`) VALUES
 ('inv_001', 'cat_insumos', 'MAT-001', 'Harina de Trigo Tradicional T55', 'kg', 18.00, 50.00, 1.80, 'raw_material', 'Almacén Principal A-1', '🌾', 'Harina refinada para panadería francesa.'),
@@ -84,7 +103,7 @@ INSERT IGNORE INTO `productos` (`id`, `categoria_id`, `codigo`, `nombre`, `unida
 ('prod_015', 'cat_especialidades', 'ESP-002', 'Quiche Lorraine de Bacon', 'ud', 16.00, 8.00, 6.80, 'finished_product', 'Cocina POS', '🥧', 'Tarta salada con tocino ahumado, crema de leche y queso.');
 
 -- ----------------------------------------------------------------------------
--- 6. POBLAR TABLA: proveedores
+-- 8. POBLAR TABLA: proveedores
 -- ----------------------------------------------------------------------------
 INSERT IGNORE INTO `proveedores` (`id`, `codigo`, `nombre`, `categoria`, `contacto`, `telefono`, `email`, `rif`, `direccion`, `condicion_pago`, `calificacion`, `icono`) VALUES
 ('sup_01', 'PROV-001', 'Molinos del Sur, C.A.', 'Harinas y Cereales', 'Carlos Mendoza', '(01) 555-MOLINO', 'ventas@molinosdelsur.com', 'J-30819283-4', 'Zona Industrial Sur, Parcela 14, Caracas', 'Crédito 30 días', 4.9, '🌾'),
@@ -93,16 +112,22 @@ INSERT IGNORE INTO `proveedores` (`id`, `codigo`, `nombre`, `categoria`, `contac
 ('sup_04', 'PROV-004', 'Chocolates del Rey', 'Coberturas y Cacao Belga', 'Jean-Philippe Laurent', '(01) 555-CACAO', 'info@chocolatesdelrey.com', 'J-50192834-6', 'Calle Los Artesanos, Qta. Cacao, Los Teques', 'Crédito 15 días', 5.0, '🍫');
 
 -- ----------------------------------------------------------------------------
--- 7. POBLAR TABLA: ordenes_compra
+-- 9. POBLAR TABLAS: ordenes_compra y ordenes_compra_detalle (1FN Normalizada)
 -- ----------------------------------------------------------------------------
-INSERT IGNORE INTO `ordenes_compra` (`id`, `codigo`, `proveedor_id`, `resumen_insumos`, `fecha_pedido`, `fecha_entrega`, `estado`, `monto_total`) VALUES
-('po_001', 'OC-2026-0089', 'sup_01', '1,000 kg Harina de Trigo Tradicional T55', '2026-08-10', '2026-08-12', 'in_transit', 1800.00),
-('po_002', 'OC-2026-0090', 'sup_02', '200 kg Mantequilla de Normandía 84%', '2026-08-11', '2026-08-11', 'in_transit', 1700.00),
-('po_003', 'OC-2026-0088', 'sup_04', '50 kg Cobertura de Chocolate Belga 60%', '2026-08-05', '2026-08-07', 'received', 600.00),
-('po_004', 'OC-2026-0087', 'sup_03', '500 Cajas de Pastelería + 1,000 Bolsas', '2026-08-02', '2026-08-04', 'received', 350.00);
+INSERT IGNORE INTO `ordenes_compra` (`id`, `codigo`, `proveedor_id`, `fecha_pedido`, `fecha_entrega`, `estado`, `monto_total`) VALUES
+('po_001', 'OC-2026-0089', 'sup_01', '2026-08-10', '2026-08-12', 'in_transit', 1800.00),
+('po_002', 'OC-2026-0090', 'sup_02', '2026-08-11', '2026-08-11', 'in_transit', 1700.00),
+('po_003', 'OC-2026-0088', 'sup_04', '2026-08-05', '2026-08-07', 'received', 600.00),
+('po_004', 'OC-2026-0087', 'sup_03', '2026-08-02', '2026-08-04', 'received', 350.00);
+
+INSERT IGNORE INTO `ordenes_compra_detalle` (`orden_id`, `producto_id`, `cantidad`, `precio`) VALUES
+('po_001', 'inv_001', 1000.00, 1.80),
+('po_002', 'inv_002', 200.00, 8.50),
+('po_003', 'inv_004', 50.00, 12.00),
+('po_004', 'inv_005', 100.00, 1.50);
 
 -- ----------------------------------------------------------------------------
--- 8. POBLAR TABLA: plan_cuentas (PUC)
+-- 10. POBLAR TABLA: plan_cuentas (PUC)
 -- ----------------------------------------------------------------------------
 INSERT IGNORE INTO `plan_cuentas` (`codigo`, `nombre`, `tipo`, `naturaleza`) VALUES
 ('1105', 'Caja General', 'Activo', 'Deudor'),
@@ -118,7 +143,7 @@ INSERT IGNORE INTO `plan_cuentas` (`codigo`, `nombre`, `tipo`, `naturaleza`) VAL
 ('6135', 'Costo de Ventas Producción', 'Costo', 'Deudor');
 
 -- ----------------------------------------------------------------------------
--- 9. POBLAR TABLAS: asientos_contables y asientos_detalle
+-- 11. POBLAR TABLAS: asientos_contables y asientos_detalle
 -- ----------------------------------------------------------------------------
 INSERT IGNORE INTO `asientos_contables` (`id`, `codigo`, `fecha_hora`, `concepto`, `modulo_origen`, `icono`, `total_debe`, `total_haber`) VALUES
 ('as_001', 'AS-2026-001', '2026-08-11 16:42:00', 'Venta POS Mostrador (Comprobante FAC-2026-1003)', 'Punto de Venta (POS)', '🛒', 1485.50, 1485.50),
@@ -132,7 +157,7 @@ INSERT IGNORE INTO `asientos_detalle` (`asiento_id`, `cuenta_codigo`, `debe`, `h
 ('as_002', '2205', 0.00, 1800.00);
 
 -- ----------------------------------------------------------------------------
--- 10. POBLAR TABLA: lotes_produccion
+-- 12. POBLAR TABLA: lotes_produccion
 -- ----------------------------------------------------------------------------
 INSERT IGNORE INTO `lotes_produccion` (`id`, `codigo`, `producto`, `icono`, `cantidad`, `estado_leudado`, `temperatura_recomendada`, `tiempo_recomendado_min`) VALUES
 ('batch_042', 'Lote #042', 'Baguette Tradicional Parisina', '🥖', 50, 'En Horneado Activo', 220, 20),
@@ -143,10 +168,18 @@ INSERT IGNORE INTO `lotes_produccion` (`id`, `codigo`, `producto`, `icono`, `can
 ('stage_047', 'Lote #047', 'Masa de Éclairs (Choux)', '⚡', 35, 'Reposo en Bandeja (15 min)', 200, 18);
 
 -- ----------------------------------------------------------------------------
--- 11. POBLAR TABLA: estado_hornos
+-- 13. POBLAR TABLA: estado_hornos (Única Tabla Canónica de Hornos)
 -- ----------------------------------------------------------------------------
 INSERT IGNORE INTO `estado_hornos` (`id`, `nombre`, `tipo`, `temperatura_actual`, `temperatura_objetivo`, `tiempo_restante`, `tiempo_total`, `estado`, `lote_id`) VALUES
 ('oven_01', 'Horno 1 (Giratorio A)', 'Giratorio Industrial', 220, 220, 255, 1200, 'baking', 'batch_042'),
 ('oven_02', 'Horno 2 (Convección B)', 'Convección Fina', 190, 190, 760, 900, 'baking', 'batch_043'),
 ('oven_03', 'Horno 3 (Piedra C)', 'Bóveda de Piedra', 240, 240, 0, 1500, 'ready', 'batch_044'),
 ('oven_04', 'Horno 4 (Pastelero D)', 'Convección Digital', 160, 175, 0, 0, 'preheating', NULL);
+
+-- ----------------------------------------------------------------------------
+-- 14. POBLAR TABLA: comandas_cocina
+-- ----------------------------------------------------------------------------
+INSERT IGNORE INTO `comandas_cocina` (`id`, `numero_factura`, `detalles_pedido`, `estado_preparacion`, `fecha_hora`) VALUES
+('com_1002', 'FAC-2026-1002', '2x Croissant de Mantequilla, 1x Pain au Chocolat', 'in_progress', '2026-08-22 15:50:00'),
+('com_1003', 'FAC-2026-1003', '2x Croque-Monsieur Tradicional, 2x Café au Lait Parisien', 'pending', '2026-08-22 15:53:00'),
+('com_1001', 'FAC-2026-1001', '3x Baguette Tradicional Parisina, 2x Éclair de Chocolate Belga', 'ready', '2026-08-22 15:35:00');

@@ -62,7 +62,7 @@ try {
         require_once __DIR__ . '/api/config/conexion.php';
     }
 
-    $stmt = $pdo->query("SELECT id, nombre_horno, temperatura_actual, tiempo_restante, estado, lote_actual, hora_inicio FROM hornos ORDER BY id ASC");
+    $stmt = $pdo->query("SELECT h.id, h.nombre AS nombre_horno, h.temperatura_actual, h.tiempo_restante, h.estado, l.producto AS lote_actual FROM estado_hornos h LEFT JOIN lotes_produccion l ON h.lote_id = l.id ORDER BY h.id ASC");
     $dbHornos = $stmt->fetchAll();
 
     if (!empty($dbHornos)) {
