@@ -663,6 +663,25 @@
   border: var(--border-glass);
 }
 
+/* MODAL DE CREDENCIALES POR DEPARTAMENTO */
+.department-login-modal-card {
+  max-width: 460px;
+  text-align: left;
+}
+
+.department-login-modal-card .traditional-card-header {
+  text-align: center;
+  margin-bottom: 1.75rem;
+}
+
+.department-login-modal-card .traditional-header-icon {
+  font-size: 1.6rem;
+}
+
+body.auth-modal-open {
+  overflow: hidden;
+}
+
 .pin-modal-overlay.active .pin-modal-card {
   transform: scale(1) translateY(0);
 }
