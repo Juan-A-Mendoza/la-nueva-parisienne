@@ -9,6 +9,7 @@
   <!-- Hojas de Estilos Separadas (CSS3 Estricto) -->
   <link rel="stylesheet" href="../css/main.css">
   <link rel="stylesheet" href="../css/modules/dashboard.css">
+  <link rel="stylesheet" href="../css/modules/caja-reportes.css?v=20260930">
 </head>
 <body>
 
@@ -70,6 +71,9 @@
         </button>
         <button id="navBtnInventory" type="button" class="dashboard-nav-tab">
           <span>📦 Control de Inventario & Almacén</span>
+        </button>
+        <button id="navBtnCashReports" type="button" class="dashboard-nav-tab">
+          <span>📂 Reportes de Caja</span>
         </button>
       </div>
     </nav>
@@ -378,6 +382,13 @@
         </div>
 
       </div> <!-- FIN DE VISTA 2: INVENTARIO -->
+
+      <!-- VISTA 3: REPORTES DE CAJA EN MODO SOLO LECTURA -->
+      <div id="cashReportsView" class="dashboard-view-section" style="display: none;" aria-label="Reportes de Caja">
+        <section id="managerCashReportsSection" class="cash-reports-section" data-report-context="gerente">
+          <div id="managerCashReportsApp"></div>
+        </section>
+      </div>
 
     </main>
 
@@ -861,6 +872,7 @@
   <!-- LIBRERÍA CHART.JS CDN Y SCRIPT MODULAR -->
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <script type="module" src="../js/modules/dashboard.js"></script>
+  <script type="module" src="../js/modules/caja-reportes.js?v=20260930-6"></script>
 
 </body>
 </html>

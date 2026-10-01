@@ -861,9 +861,11 @@ document.addEventListener('DOMContentLoaded', async () => {
       const clientName = (clientNameInput && clientNameInput.value.trim()) ? clientNameInput.value.trim() : 'Consumidor Final';
       const clientRif = rawRif;
       const bankName = (bankSelect && bankSelect.value.trim()) ? bankSelect.value.trim() : '';
+      const activeSessionUser = SessionStore.getSession()?.user || {};
 
       const salePayload = {
         order_number: `FAC-2026-${orderCounter}`,
+        user_id: activeSessionUser.id || '',
         client_name: clientName,
         client_rif: clientRif,
         order_type: currentOrderType,
@@ -881,6 +883,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         reference_code: referenceInput ? referenceInput.value.trim() : '',
         items: cart.map(i => ({
           product_id: i.product.id,
+          product_code: i.product.code,
           product_name: i.product.name,
           quantity: i.quantity,
           unit_price: i.product.price,
@@ -1041,12 +1044,22 @@ document.addEventListener('DOMContentLoaded', async () => {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(salePayload)
       });
-
-      if (res.ok) {
-        await res.json();
+      const persistenceResult = await res.json().catch(() => ({ success: false, message: 'Respuesta inválida del servidor.' }));
+      if (!res.ok || !persistenceResult.success) {
+        throw new Error(persistenceResult.message || 'La venta no pudo registrarse en MySQL.');
       }
     } catch (err) {
-      console.warn('Persistencia MySQL:', err);
+      console.error('Persistencia MySQL:', err);
+      btnCompleteSale.disabled = false;
+      btnCompleteSale.textContent = '✓ Finalizar Venta e Imprimir Ticket';
+      showCustomConfirm({
+        icon: '⚠️',
+        title: 'Venta no registrada',
+        text: `La venta no se guardó en MySQL y no se emitirá el ticket.\n\n${err.message}`,
+        acceptText: 'Entendido',
+        singleAction: true
+      });
+      return;
     }
 
     // MUESTRA EL MODAL ANIMADO DE ÉXITO CON CHECKMARK SVG ANTES DEL TICKET

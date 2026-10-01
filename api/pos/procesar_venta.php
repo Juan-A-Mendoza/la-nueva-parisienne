@@ -34,16 +34,16 @@ if (empty($data)) {
 }
 
 // Extraer parámetros del pedido
-$orderNumber = isset($data['orderNumber']) ? trim($data['orderNumber']) : (isset($data['codigo']) ? trim($data['codigo']) : 'FAC-2026-' . rand(1000, 9999));
-$userId = isset($data['userId']) ? trim($data['userId']) : 'usr_cashier';
+$orderNumber = isset($data['orderNumber']) ? trim($data['orderNumber']) : (isset($data['order_number']) ? trim($data['order_number']) : (isset($data['codigo']) ? trim($data['codigo']) : 'FAC-2026-' . rand(1000, 9999)));
+$userId = isset($data['userId']) ? trim($data['userId']) : (isset($data['user_id']) ? trim($data['user_id']) : 'usr_cashier');
 $subtotal = isset($data['subtotal']) ? (float)$data['subtotal'] : 0.0;
 $tax = isset($data['tax']) ? (float)$data['tax'] : (isset($data['iva']) ? (float)$data['iva'] : 0.0);
 $discount = isset($data['discount']) ? (float)$data['discount'] : (isset($data['descuento']) ? (float)$data['descuento'] : 0.0);
-$total = isset($data['total']) ? (float)$data['total'] : 0.0;
-$paymentMethod = isset($data['paymentMethod']) ? trim($data['paymentMethod']) : (isset($data['metodo_pago']) ? trim($data['metodo_pago']) : 'Efectivo');
-$tenderAmount = isset($data['tenderAmount']) ? (float)$data['tenderAmount'] : (isset($data['monto_pagado']) ? (float)$data['monto_pagado'] : $total);
-$changeDue = isset($data['changeDue']) ? (float)$data['changeDue'] : (isset($data['cambio']) ? (float)$data['cambio'] : 0.0);
-$orderType = isset($data['orderType']) ? trim($data['orderType']) : 'Para Llevar';
+$total = isset($data['total']) ? (float)$data['total'] : (isset($data['total_usd']) ? (float)$data['total_usd'] : 0.0);
+$paymentMethod = isset($data['paymentMethod']) ? trim($data['paymentMethod']) : (isset($data['payment_method']) ? trim($data['payment_method']) : (isset($data['metodo_pago']) ? trim($data['metodo_pago']) : 'Efectivo'));
+$tenderAmount = isset($data['tenderAmount']) ? (float)$data['tenderAmount'] : (isset($data['tender_amount']) ? (float)$data['tender_amount'] : (isset($data['monto_pagado']) ? (float)$data['monto_pagado'] : $total));
+$changeDue = isset($data['changeDue']) ? (float)$data['changeDue'] : (isset($data['change_due']) ? (float)$data['change_due'] : (isset($data['cambio']) ? (float)$data['cambio'] : 0.0));
+$orderType = isset($data['orderType']) ? trim($data['orderType']) : (isset($data['order_type']) ? trim($data['order_type']) : 'Para Llevar');
 $items = isset($data['items']) ? $data['items'] : (isset($data['cart']) ? $data['cart'] : []);
 
 if (empty($items)) {
@@ -99,12 +99,32 @@ try {
 
     $stmtD1 = $pdo->prepare($sqlDetalle1);
     $stmtStock = $pdo->prepare($sqlUpdateStock);
+    $stmtProduct = $pdo->prepare(
+        "SELECT id FROM productos
+         WHERE id = :id OR codigo = :codigo OR nombre = :nombre
+         ORDER BY CASE WHEN id = :preferred_id THEN 0 WHEN codigo = :preferred_code THEN 1 ELSE 2 END
+         LIMIT 1"
+    );
 
     foreach ($items as $item) {
-        $pid = isset($item['id']) ? $item['id'] : (isset($item['productId']) ? $item['productId'] : (isset($item['product']) && isset($item['product']['id']) ? $item['product']['id'] : 'prod_001'));
+        $candidateId = trim((string)($item['id'] ?? $item['productId'] ?? $item['product_id'] ?? ($item['product']['id'] ?? '')));
+        $candidateCode = trim((string)($item['code'] ?? $item['productCode'] ?? $item['product_code'] ?? ($item['product']['code'] ?? '')));
+        $candidateName = trim((string)($item['name'] ?? $item['productName'] ?? $item['product_name'] ?? ($item['product']['name'] ?? '')));
+        $stmtProduct->execute([
+            ':id' => $candidateId,
+            ':codigo' => $candidateCode,
+            ':nombre' => $candidateName,
+            ':preferred_id' => $candidateId,
+            ':preferred_code' => $candidateCode
+        ]);
+        $productRow = $stmtProduct->fetch();
+        if (!$productRow) {
+            throw new RuntimeException('El producto no existe en el catálogo MySQL: ' . ($candidateName ?: $candidateId ?: $candidateCode));
+        }
+        $pid = $productRow['id'];
         $qty = isset($item['quantity']) ? (int)$item['quantity'] : (isset($item['qty']) ? (int)$item['qty'] : 1);
-        $price = isset($item['price']) ? (float)$item['price'] : (isset($item['product']) && isset($item['product']['price']) ? (float)$item['product']['price'] : 0.0);
-        $subtotalLinea = $qty * $price;
+        $price = isset($item['price']) ? (float)$item['price'] : (isset($item['unit_price']) ? (float)$item['unit_price'] : (isset($item['product']['price']) ? (float)$item['product']['price'] : 0.0));
+        $subtotalLinea = isset($item['subtotal']) ? (float)$item['subtotal'] : ($qty * $price);
 
         // Insertar renglón en ventas_detalle
         $stmtD1->execute([

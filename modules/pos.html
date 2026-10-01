@@ -9,6 +9,7 @@
   <!-- Hojas de Estilos Separadas (CSS3 Estricto) -->
   <link rel="stylesheet" href="../css/main.css">
   <link rel="stylesheet" href="../css/modules/pos.css">
+  <link rel="stylesheet" href="../css/modules/caja-reportes.css?v=20260930">
 </head>
 <body>
 
@@ -36,8 +37,12 @@
             <span id="cashierName" class="cashier-name">Personal de Caja</span>
             <span class="shift-status">● Caja Activa</span>
           </div>
+        </div>
         <button id="btnOpenDevolucionModal" type="button" class="btn-pos-devolucion" title="Procesar devolución o anulación de ticket con autorización gerencial">
           <span>↩️ Devolución / Anular Ticket</span>
+        </button>
+        <button id="btnOpenCashReports" type="button" class="btn-pos-reports" title="Abrir reportes y cierre de caja">
+          <span>📊 Reportes de Caja</span>
         </button>
         <button id="logoutBtn" type="button" class="btn-pos-logout" title="Cerrar sesión activa">Cerrar Sesión</button>
       </div>
@@ -403,6 +408,11 @@
 
   </div>
 
+  <!-- REPORTES EXCLUSIVOS DE CAJA: no intervienen en ventas ni cobros -->
+  <section id="cashReportsSection" class="cash-reports-section cash-reports-caja-overlay no-print" data-report-context="caja" aria-label="Reportes de Caja" hidden>
+    <div id="cashReportsApp"></div>
+  </section>
+
   <!-- MODAL ANIMADO DE VENTA COMPLETADA CON CHECKMARK SVG (POS) -->
   <div id="posSuccessModal" class="pin-modal-overlay no-print" role="dialog" aria-modal="true" style="display: none; z-index: 9999;">
     <div class="pin-modal-card pos-success-card">
@@ -546,7 +556,8 @@
   </div>
 
   <!-- SCRIPT MODULAR POS -->
-  <script type="module" src="../js/modules/pos.js"></script>
+  <script type="module" src="../js/modules/pos.js?v=20260930"></script>
+  <script type="module" src="../js/modules/caja-reportes.js?v=20260930-6"></script>
 
 </body>
 </html>
