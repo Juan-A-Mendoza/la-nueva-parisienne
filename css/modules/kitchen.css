@@ -13,10 +13,8 @@
 
 /* NAVBAR Y BARRA SUPERIOR */
 .kitchen-navbar {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 1rem 2rem;
+  width: 100%;
+  padding: 0;
   background: var(--bg-surface);
   border-bottom: var(--border-subtle);
   box-shadow: var(--shadow-subtle);
@@ -46,8 +44,11 @@
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
   gap: 1.25rem;
+  max-width: 1440px;
+  width: 100%;
+  margin: 0 auto;
   padding: 1.25rem 2rem;
-  background: var(--bg-main);
+  box-sizing: border-box;
 }
 
 .kpi-card-mini {
@@ -91,9 +92,13 @@
   display: grid;
   grid-template-columns: 1.2fr 1fr 0.8fr;
   gap: 1.5rem;
+  max-width: 1440px;
+  width: 100%;
+  margin: 0 auto;
   padding: 0 2rem 2.5rem;
   flex: 1;
   align-items: start;
+  box-sizing: border-box;
 }
 
 @media (max-width: 1200px) {
@@ -688,4 +693,516 @@
   stroke-dasharray: 50;
   stroke-dashoffset: 50;
   animation: checkmarkDraw 0.5s ease-in-out 0.15s forwards;
+}
+
+/* ==========================================================================
+   RECETARIO MAESTRO & CALCULADORA VISUAL DE HORNEADO (KITCHEN RECIPE CALCULATOR)
+   ========================================================================== */
+
+.recetario-modal-card {
+  max-width: 1120px;
+  width: 95%;
+  max-height: 92vh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  background: #FFFFFF;
+  border-radius: var(--radius-lg);
+  box-shadow: 0 25px 60px -15px rgba(44, 29, 17, 0.4);
+  border: 1px solid rgba(212, 155, 84, 0.25);
+}
+
+.recetario-modal-header {
+  padding: 1.1rem 1.6rem;
+  background: linear-gradient(135deg, #FAF7F2 0%, #FFFFFF 100%);
+  border-bottom: 1px solid rgba(44, 29, 17, 0.08);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.recetario-modal-body {
+  padding: 1.25rem 1.6rem;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 1.15rem;
+  flex: 1;
+}
+
+/* 1. CUADRÍCULA VISUAL DE SELECCIÓN DE PANES */
+.bread-grid-container {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(170px, 1fr));
+  gap: 0.75rem;
+  max-height: 245px;
+  overflow-y: auto;
+  padding: 0.25rem 0.25rem 0.5rem 0.25rem;
+  scrollbar-width: thin;
+}
+
+.bread-grid-card {
+  background: #FFFFFF;
+  border: 1.5px solid rgba(44, 29, 17, 0.12);
+  border-radius: var(--radius-md);
+  padding: 0.85rem 0.75rem;
+  cursor: pointer;
+  text-align: center;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.35rem;
+  user-select: none;
+  position: relative;
+}
+
+.bread-grid-card:hover {
+  border-color: var(--color-gold);
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(44, 29, 17, 0.08);
+}
+
+.bread-grid-card.active {
+  border-color: var(--color-gold-dark);
+  background: linear-gradient(180deg, rgba(212, 155, 84, 0.08) 0%, #FFFFFF 100%);
+  box-shadow: 0 4px 16px rgba(212, 155, 84, 0.25);
+  border-width: 2px;
+}
+
+.bread-grid-card.active::after {
+  content: '✓';
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: var(--color-gold-dark);
+  color: #FFFFFF;
+  font-size: 0.7rem;
+  font-weight: 800;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.bread-grid-icon-box {
+  width: 52px;
+  height: 52px;
+  border-radius: 50%;
+  background: #FAF7F2;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.9rem;
+  transition: transform 0.2s ease;
+}
+
+.bread-grid-card:hover .bread-grid-icon-box {
+  transform: scale(1.08);
+}
+
+.bread-grid-name {
+  font-size: 0.86rem;
+  font-weight: 800;
+  color: var(--color-espresso);
+  line-height: 1.25;
+  text-align: center;
+  min-height: 2.2em;
+  display: flex;
+  align-items: center;
+}
+
+.bread-grid-meta {
+  font-size: 0.72rem;
+  color: var(--color-muted);
+  font-weight: 700;
+  display: flex;
+  gap: 0.4rem;
+  background: rgba(44, 29, 17, 0.03);
+  padding: 0.2rem 0.5rem;
+  border-radius: var(--radius-pill);
+}
+
+/* 2. BARRA HERO DE CANTIDAD Y MÉTRICAS CLAVE (DESPEJADA Y VISUAL) */
+.recipe-hero-summary-bar {
+  background: #FAF8F5;
+  border: 1px solid rgba(212, 155, 84, 0.25);
+  border-radius: var(--radius-md);
+  padding: 1rem 1.4rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 1.2rem;
+}
+
+.recipe-hero-product {
+  display: flex;
+  align-items: center;
+  gap: 0.85rem;
+}
+
+.recipe-hero-icon {
+  font-size: 2.2rem;
+  line-height: 1;
+}
+
+.recipe-hero-title {
+  font-size: 1.15rem;
+  font-weight: 800;
+  color: var(--color-espresso);
+  margin: 0;
+}
+
+.recipe-hero-category {
+  font-size: 0.78rem;
+  color: var(--color-gold-dark);
+  font-weight: 700;
+}
+
+/* Control táctil de cantidad */
+.recipe-hero-stepper-box {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.recipe-stepper-row {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+}
+
+.qty-stepper-btn {
+  width: 36px;
+  height: 36px;
+  border-radius: var(--radius-sm);
+  border: 1px solid rgba(44, 29, 17, 0.2);
+  background: #FFFFFF;
+  color: var(--color-espresso);
+  font-size: 1.15rem;
+  font-weight: 800;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.15s ease;
+}
+
+.qty-stepper-btn:hover {
+  background: var(--color-espresso);
+  color: #FFFFFF;
+}
+
+.qty-number-input {
+  width: 85px;
+  height: 38px;
+  border-radius: var(--radius-sm);
+  border: 2px solid var(--color-gold);
+  text-align: center;
+  font-size: 1.15rem;
+  font-weight: 800;
+  color: var(--color-espresso);
+  font-family: inherit;
+  background: #FFFFFF;
+}
+
+.qty-presets-compact {
+  display: flex;
+  gap: 0.3rem;
+}
+
+.qty-preset-btn {
+  padding: 0.25rem 0.6rem;
+  font-size: 0.75rem;
+  font-weight: 700;
+  border-radius: var(--radius-pill);
+  border: 1px solid rgba(44, 29, 17, 0.15);
+  background: #FFFFFF;
+  color: var(--color-espresso);
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.qty-preset-btn:hover, .qty-preset-btn.active {
+  background: var(--color-gold-dark);
+  color: #FFFFFF;
+  border-color: var(--color-gold-dark);
+}
+
+/* Pills de métricas clave */
+.recipe-hero-metrics {
+  display: flex;
+  gap: 0.6rem;
+  flex-wrap: wrap;
+}
+
+.recipe-metric-pill {
+  background: #FFFFFF;
+  border: 1px solid rgba(44, 29, 17, 0.08);
+  border-radius: var(--radius-sm);
+  padding: 0.45rem 0.8rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  min-width: 80px;
+}
+
+.recipe-metric-pill .metric-lbl {
+  font-size: 0.68rem;
+  color: var(--color-muted);
+  font-weight: 700;
+  text-transform: uppercase;
+}
+
+.recipe-metric-pill .metric-val {
+  font-size: 0.95rem;
+  font-weight: 800;
+  color: var(--color-espresso);
+}
+
+/* 3. PESTAÑAS DE NAVEGACIÓN VISUAL */
+.recipe-tabs-nav {
+  display: flex;
+  gap: 0.5rem;
+  border-bottom: 2px solid rgba(44, 29, 17, 0.08);
+  padding-bottom: 0.35rem;
+  margin-top: 0.2rem;
+}
+
+.recipe-tab-btn {
+  padding: 0.55rem 1.15rem;
+  font-size: 0.88rem;
+  font-weight: 700;
+  border: none;
+  background: none;
+  color: var(--color-muted);
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  transition: all 0.15s ease;
+}
+
+.recipe-tab-btn:hover {
+  color: var(--color-espresso);
+  background: rgba(44, 29, 17, 0.04);
+}
+
+.recipe-tab-btn.active {
+  color: var(--color-espresso);
+  background: rgba(212, 155, 84, 0.15);
+  font-weight: 800;
+}
+
+/* 4. TARJETAS VISUALES DE INSUMOS (TILES EN CUADRÍCULA) */
+.ingredients-tiles-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(215px, 1fr));
+  gap: 0.85rem;
+  margin-top: 0.75rem;
+}
+
+.ingredient-tile-card {
+  background: #FFFFFF;
+  border: 1px solid rgba(44, 29, 17, 0.1);
+  border-radius: var(--radius-md);
+  padding: 0.95rem 1.05rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+  transition: all 0.2s ease;
+  box-shadow: 0 2px 6px rgba(44, 29, 17, 0.03);
+  position: relative;
+}
+
+.ingredient-tile-card:hover {
+  border-color: var(--color-gold);
+  transform: translateY(-2px);
+  box-shadow: 0 5px 14px rgba(44, 29, 17, 0.06);
+}
+
+.ingredient-tile-card.shortage {
+  border-color: rgba(198, 40, 40, 0.35);
+  background: linear-gradient(180deg, #FFFFFF 0%, rgba(198, 40, 40, 0.02) 100%);
+}
+
+.ingredient-tile-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.ingredient-tile-icon {
+  font-size: 1.6rem;
+  line-height: 1;
+}
+
+.ingredient-tile-name {
+  font-size: 0.86rem;
+  font-weight: 700;
+  color: var(--color-espresso);
+  line-height: 1.25;
+}
+
+.ingredient-tile-amount {
+  font-size: 1.35rem;
+  font-weight: 800;
+  color: var(--color-espresso);
+  letter-spacing: -0.02em;
+  margin: 0.1rem 0;
+}
+
+.ingredient-tile-stock {
+  font-size: 0.76rem;
+  color: var(--color-muted);
+  border-top: 1px solid rgba(44, 29, 17, 0.06);
+  padding-top: 0.4rem;
+  margin-top: auto;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.badge-stock-ok {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 0.2rem 0.5rem;
+  border-radius: var(--radius-pill);
+  font-size: 0.72rem;
+  font-weight: 700;
+  background: rgba(46, 125, 50, 0.12);
+  color: var(--color-success);
+  border: 1px solid rgba(46, 125, 50, 0.3);
+}
+
+.badge-stock-danger {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 0.2rem 0.5rem;
+  border-radius: var(--radius-pill);
+  font-size: 0.72rem;
+  font-weight: 700;
+  background: rgba(198, 40, 40, 0.12);
+  color: var(--color-danger);
+  border: 1px solid rgba(198, 40, 40, 0.3);
+}
+
+/* 5. PARÁMETROS DE HORNEADO & GUÍA (PESTAÑA 2) */
+.baking-guide-layout {
+  display: grid;
+  grid-template-columns: 1fr 1.2fr;
+  gap: 1.25rem;
+}
+
+@media (max-width: 820px) {
+  .baking-guide-layout {
+    grid-template-columns: 1fr;
+  }
+}
+
+.baking-specs-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 0.75rem;
+  margin-bottom: 1.15rem;
+}
+
+.baking-spec-item {
+  background: #FAF8F5;
+  border: 1px solid rgba(44, 29, 17, 0.06);
+  border-radius: var(--radius-sm);
+  padding: 0.75rem 0.85rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+}
+
+.baking-spec-label {
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  color: var(--color-muted);
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+.baking-spec-value {
+  font-size: 1.05rem;
+  font-weight: 800;
+  color: var(--color-espresso);
+}
+
+.recipe-steps-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.65rem;
+}
+
+.recipe-step-item {
+  display: flex;
+  gap: 0.75rem;
+  align-items: flex-start;
+  font-size: 0.84rem;
+  line-height: 1.45;
+  background: #FAF8F5;
+  padding: 0.7rem 0.85rem;
+  border-radius: var(--radius-sm);
+  border: 1px solid rgba(44, 29, 17, 0.05);
+}
+
+.recipe-step-num {
+  flex: 0 0 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: var(--color-espresso);
+  color: #FFFFFF;
+  font-size: 0.75rem;
+  font-weight: 800;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-top: 0.1rem;
+}
+
+.recipe-step-text strong {
+  color: var(--color-espresso);
+}
+
+.chef-tip-banner {
+  background: rgba(212, 155, 84, 0.1);
+  border: 1px dashed var(--color-gold);
+  border-radius: var(--radius-sm);
+  padding: 0.85rem 1rem;
+  font-size: 0.84rem;
+  color: #4A3320;
+  line-height: 1.4;
+  margin-top: 1rem;
+}
+
+/* Print styling */
+@media print {
+  body.printing-recipe * {
+    visibility: hidden;
+  }
+  body.printing-recipe #recetarioPrintContainer,
+  body.printing-recipe #recetarioPrintContainer * {
+    visibility: visible;
+  }
+  body.printing-recipe #recetarioPrintContainer {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 100%;
+    margin: 0;
+    padding: 20px;
+    background: #FFFFFF !important;
+  }
 }

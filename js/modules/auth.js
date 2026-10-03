@@ -11,28 +11,28 @@ document.addEventListener('DOMContentLoaded', async () => {
     {
       id: 'gerencia',
       name: 'Gerencia General',
-      icon: '\u{1F3E2}',
+      icon: 'shield-check',
       roles: ['gerente general', 'admin'],
-      subtitle: 'KPIs, auditor\u00eda y gesti\u00f3n de personal'
+      subtitle: 'KPIs, auditoría y gestión de personal'
     },
     {
       id: 'caja',
-      name: 'Caja y Facturaci\u00f3n',
-      icon: '\u{1F4B0}',
+      name: 'Caja y Facturación',
+      icon: 'banknote',
       roles: ['cajero', 'pos', 'cashier'],
       subtitle: 'Punto de Venta POS y cobros'
     },
     {
       id: 'cocina',
-      name: 'Producci\u00f3n y Cocina',
-      icon: '\u{1F468}\u200D\u{1F373}',
+      name: 'Producción y Cocina',
+      icon: 'chef-hat',
       roles: ['panadero', 'kitchen', 'baker'],
-      subtitle: 'Hornos, recetas y producci\u00f3n'
+      subtitle: 'Hornos, recetas y producción'
     },
     {
       id: 'contabilidad',
       name: 'Contabilidad & Finanzas',
-      icon: '\u{1F4CA}',
+      icon: 'bar-chart-3',
       roles: ['contador', 'contabilidad', 'accountant'],
       subtitle: 'Estados financieros y comprobantes'
     }
@@ -68,8 +68,10 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   function showError(message) {
     if (!errorAlert) return;
-    errorAlert.textContent = `\u274C ${message}`;
-    errorAlert.style.display = 'block';
+    errorAlert.innerHTML = `<i data-lucide="alert-circle" class="icon-sm" style="margin-right: 0.35rem;"></i> ${message}`;
+    errorAlert.style.display = 'flex';
+    errorAlert.style.alignItems = 'center';
+    window.LucideIcons?.refresh();
   }
 
   function clearError() {
@@ -83,7 +85,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     clearError();
     if (loginButton) loginButton.disabled = false;
     const buttonText = loginButton?.querySelector('span');
-    if (buttonText) buttonText.textContent = 'Iniciar Sesi\u00f3n';
+    if (buttonText) buttonText.textContent = 'Iniciar Sesión';
   }
 
   function showDepartmentLogin(departmentId) {
@@ -91,8 +93,11 @@ document.addEventListener('DOMContentLoaded', async () => {
     if (!department) return;
 
     currentDepartment = department;
-    if (selectedDeptIcon) selectedDeptIcon.textContent = department.icon;
-    if (selectedDeptTitle) selectedDeptTitle.textContent = `Inicio de sesi\u00f3n \u2014 ${department.name}`;
+    if (selectedDeptIcon) {
+      selectedDeptIcon.innerHTML = window.LucideIcons ? window.LucideIcons.render(department.icon, 'icon-xl') : '';
+      window.LucideIcons?.refresh();
+    }
+    if (selectedDeptTitle) selectedDeptTitle.textContent = `Inicio de sesión — ${department.name}`;
     if (selectedDeptSubtitle) selectedDeptSubtitle.textContent = `${department.subtitle}. Ingrese sus credenciales para continuar.`;
 
     resetLoginForm();
@@ -139,9 +144,29 @@ document.addEventListener('DOMContentLoaded', async () => {
     const password = passwordInput?.value || '';
     if (!username || !password || !currentDepartment) return;
 
-    const selectedProfile = allProfiles.find(profile =>
-      normalize(profile.username) === normalize(username)
+    const normUser = normalize(username);
+
+    // Buscar perfil coincidente por usuario, código, ID, nombre o email
+    let selectedProfile = allProfiles.find(profile =>
+      normalize(profile.username) === normUser ||
+      normalize(profile.code) === normUser ||
+      normalize(profile.id) === normUser ||
+      normalize(profile.email) === normUser ||
+      normalize(profile.name) === normUser
     );
+
+    // Si ingresó una palabra clave genérica como 'admin', 'cajero', 'panadero', 'contador'
+    if (!selectedProfile) {
+      if (normUser === 'admin' || normUser === 'gerente') {
+        selectedProfile = allProfiles.find(p => normalize(p.roleCode) === 'admin' || normalize(p.role).includes('gerente'));
+      } else if (normUser === 'cajero' || normUser === 'cajera' || normUser === 'cajero1' || normUser === 'pos') {
+        selectedProfile = allProfiles.find(p => normalize(p.roleCode) === 'cashier' || normalize(p.roleCode) === 'pos');
+      } else if (normUser === 'panadero' || normUser === 'chef' || normUser === 'panadero1' || normUser === 'cocina') {
+        selectedProfile = allProfiles.find(p => normalize(p.roleCode) === 'baker' || normalize(p.roleCode) === 'kitchen');
+      } else if (normUser === 'contador' || normUser === 'contador1' || normUser === 'finanzas') {
+        selectedProfile = allProfiles.find(p => normalize(p.roleCode) === 'accountant');
+      }
+    }
 
     if (!selectedProfile) {
       showError('Usuario no encontrado o no registrado.');
@@ -158,7 +183,8 @@ document.addEventListener('DOMContentLoaded', async () => {
     if (buttonText) buttonText.textContent = 'Validando...';
 
     try {
-      const result = await SessionStore.validateCredentialsAsync(username, password);
+      const loginIdentifier = selectedProfile.id || selectedProfile.username || username;
+      const result = await SessionStore.validateCredentialsAsync(loginIdentifier, password);
       if (result.success) {
         window.location.href = result.redirectUrl;
       } else {

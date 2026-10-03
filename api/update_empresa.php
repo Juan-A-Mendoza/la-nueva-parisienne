@@ -8,7 +8,7 @@ header("Access-Control-Allow-Origin: *");
 header("Content-Type: application/json; charset=UTF-8");
 header("Access-Control-Allow-Methods: POST, OPTIONS");
 
-if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
+if (($_SERVER['REQUEST_METHOD'] ?? '') === 'OPTIONS') {
     http_response_code(200);
     exit();
 }
@@ -30,23 +30,24 @@ try {
     $pdo = getDbConnection();
 
     // Obtener valores actuales de la base de datos
-    $stmtCur = $pdo->query("SELECT nombre, rif, direccion, telefono, modo_tasa, tasa_manual FROM configuracion_empresa WHERE id = 1 LIMIT 1");
-    $currentConfig = $stmtCur->fetch(PDO::FETCH_ASSOC) ?: [
+    $stmtCur = $pdo->query("SELECT nombre, rif, direccion, telefono FROM configuracion_empresa WHERE id = 1 LIMIT 1");
+    $currentEmpresa = $stmtCur->fetch(PDO::FETCH_ASSOC) ?: [
         'nombre' => 'La Nueva Parisienne C.A.',
         'rif' => 'J-40123456-7',
         'direccion' => 'Barquisimeto, Edo. Lara',
-        'telefono' => '(0251) 555-1234',
-        'modo_tasa' => 'auto',
-        'tasa_manual' => 761.21
+        'telefono' => '(0251) 555-1234'
     ];
 
-    $nombre = !empty($data['nombre']) ? trim($data['nombre']) : $currentConfig['nombre'];
-    $rif = !empty($data['rif']) ? trim($data['rif']) : $currentConfig['rif'];
-    $direccion = isset($data['direccion']) ? trim($data['direccion']) : $currentConfig['direccion'];
-    $telefono = isset($data['telefono']) ? trim($data['telefono']) : $currentConfig['telefono'];
-    $modoTasa = isset($data['modo_tasa']) ? strtolower(trim($data['modo_tasa'])) : $currentConfig['modo_tasa'];
+    $stmtConf = $pdo->query("SELECT clave, valor FROM configuraciones WHERE clave IN ('bcv_rate_mode', 'bcv_manual_rate')");
+    $confPairs = $stmtConf->fetchAll(PDO::FETCH_KEY_PAIR);
+
+    $nombre = !empty($data['nombre']) ? trim($data['nombre']) : $currentEmpresa['nombre'];
+    $rif = !empty($data['rif']) ? trim($data['rif']) : $currentEmpresa['rif'];
+    $direccion = isset($data['direccion']) ? trim($data['direccion']) : $currentEmpresa['direccion'];
+    $telefono = isset($data['telefono']) ? trim($data['telefono']) : $currentEmpresa['telefono'];
+    $modoTasa = isset($data['modo_tasa']) ? strtolower(trim($data['modo_tasa'])) : ($confPairs['bcv_rate_mode'] ?? 'auto');
     
-    $tasaManual = $currentConfig['tasa_manual'];
+    $tasaManual = isset($confPairs['bcv_manual_rate']) ? floatval(str_replace(',', '.', $confPairs['bcv_manual_rate'])) : 761.21;
     if (isset($data['tasa_manual'])) {
         $rawManual = str_replace(',', '.', (string)$data['tasa_manual']);
         if (is_numeric($rawManual) && floatval($rawManual) > 0) {
@@ -54,30 +55,33 @@ try {
         }
     }
 
-    $sql = "INSERT INTO configuracion_empresa (id, nombre, rif, direccion, telefono, modo_tasa, tasa_manual) 
-            VALUES (1, :nombre, :rif, :direccion, :telefono, :modo_tasa, :tasa_manual)
+    // 1. Guardar datos fiscales en configuracion_empresa (2FN)
+    $sql = "INSERT INTO configuracion_empresa (id, nombre, rif, direccion, telefono) 
+            VALUES (1, :nombre, :rif, :direccion, :telefono)
             ON DUPLICATE KEY UPDATE 
                 nombre = VALUES(nombre),
                 rif = VALUES(rif),
                 direccion = VALUES(direccion),
-                telefono = VALUES(telefono),
-                modo_tasa = VALUES(modo_tasa),
-                tasa_manual = VALUES(tasa_manual)";
+                telefono = VALUES(telefono)";
     
     $stmt = $pdo->prepare($sql);
     $stmt->execute([
         ':nombre' => $nombre,
         ':rif' => $rif,
         ':direccion' => $direccion,
-        ':telefono' => $telefono,
-        ':modo_tasa' => $modoTasa,
-        ':tasa_manual' => $tasaManual
+        ':telefono' => $telefono
     ]);
 
-    // Actualizar tabla auxiliar de configuraciones si existe
-    try {
-        $pdo->exec("INSERT INTO configuraciones (clave, valor) VALUES ('bcv_rate_mode', '$modoTasa'), ('bcv_manual_rate', '$tasaManual') ON DUPLICATE KEY UPDATE valor = VALUES(valor)");
-    } catch (Exception $ex) {}
+    // 2. Guardar configuración de tasa de forma segura con prepared statement
+    $stmtRate = $pdo->prepare("
+        INSERT INTO configuraciones (clave, valor) 
+        VALUES ('bcv_rate_mode', :mode), ('bcv_manual_rate', :rate) 
+        ON DUPLICATE KEY UPDATE valor = VALUES(valor)
+    ");
+    $stmtRate->execute([
+        ':mode' => $modoTasa,
+        ':rate' => strval($tasaManual)
+    ]);
 
     http_response_code(200);
     echo json_encode([

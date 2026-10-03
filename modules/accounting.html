@@ -17,39 +17,31 @@
 
     <!-- NAVBAR SUPERIOR -->
     <header class="accounting-navbar">
-      <div class="accounting-brand-group">
-        <div class="accounting-brand-icon" aria-hidden="true">⚖️</div>
-        <div>
-          <h1 class="brand-title" style="font-size: 1.3rem;">La Nueva Parisienne</h1>
-          <span class="sub-title">Módulo 7: Contabilidad, Libro Diario/Mayor & Balance de Comprobación</span>
-        </div>
-      </div>
-
-      <div style="display: flex; align-items: center; gap: 1.25rem;">
-        <div class="cashier-badge">
-          <span id="userAvatar" class="cashier-avatar">📊</span>
-          <div class="cashier-info">
-            <span id="userName" class="cashier-name">Sebastian / Sophie Laurent</span>
-            <span class="shift-status" style="color: var(--color-gold-dark);">● Contadora & Administradora</span>
+      <div class="navbar-container">
+        <div class="accounting-brand-group">
+          <div class="accounting-brand-icon" aria-hidden="true"><i data-lucide="scale"></i></div>
+          <div>
+            <h1 class="brand-title">La Nueva Parisienne</h1>
+            <span class="sub-title">Módulo 7 &bull; Contabilidad, Libro Diario &amp; Mayor</span>
           </div>
         </div>
-        <!-- Botón Dedicado Exclusivo para Cerrar Sesión -->
-        <button id="logoutBtn" class="btn-pos-logout" title="Cerrar sesión activa y volver al login">Cerrar Sesión</button>
+
+        <div class="navbar-controls">
+          <div class="cashier-badge">
+            <span id="userAvatar" class="cashier-avatar"><i data-lucide="bar-chart-3"></i></span>
+            <div class="cashier-info">
+              <span id="userName" class="cashier-name">Andrés Felipe Gómez</span>
+              <span class="shift-status">● Contador General</span>
+            </div>
+          </div>
+
+          <button id="logoutBtn" class="btn-pos-logout" title="Cerrar sesión activa y volver al login" onclick="if(window.SessionStore){window.SessionStore.logout();}else{try{localStorage.removeItem('usuario_activo');sessionStorage.clear();}catch(e){}window.location.href='../index.html';}">
+            <i data-lucide="log-out" class="icon-sm"></i> <span>Salir</span>
+          </button>
+        </div>
       </div>
     </header>
 
-    <!-- NAVEGACIÓN POR MIGAS DE PAN (BREADCRUMBS) -->
-    <nav class="breadcrumbs-container" aria-label="Migas de pan">
-      <ol class="breadcrumbs-list">
-        <li class="breadcrumb-item">
-          <a href="dashboard.html">🏠 Inicio (Panel Central)</a>
-        </li>
-        <li class="breadcrumb-separator">/</li>
-        <li class="breadcrumb-item">Contabilidad</li>
-        <li class="breadcrumb-separator">/</li>
-        <li class="breadcrumb-item active" aria-current="page">Salud Financiera & Balance</li>
-      </ol>
-    </nav>
 
     <!-- BARRA DE ACCIONES PRINCIPALES (BOTONES TÁCTILES MIN 48X48PX) -->
     <section class="accounting-action-toolbar" aria-label="Acciones Contables">
@@ -59,13 +51,13 @@
         </button>
 
         <button id="btnPrintBalance" type="button" class="btn-acc-action secondary">
-          <span>📊 Balance de Comprobación</span>
+          <i data-lucide="bar-chart-3" class="icon-sm"></i> <span>Balance de Comprobación</span>
         </button>
       </div>
 
       <div style="font-size: 0.85rem; color: var(--color-muted); font-weight: 600;">
         <span>Estado Auditoría Contable:</span>
-        <strong style="color: var(--color-success);">✓ Ecuación Patrimonial Verificada</strong>
+        <strong style="color: var(--color-success);" class="badge-clean-icon"><i data-lucide="check-circle-2" class="icon-xs"></i> Ecuación Patrimonial Verificada</strong>
       </div>
     </section>
 
@@ -75,7 +67,7 @@
       <!-- SECCIÓN DE KPIS FINANCIEROS -->
       <section class="inventory-kpi-grid" aria-label="Resumen Financiero">
         <div class="inventory-kpi-card">
-          <div class="kpi-icon-container">🏦</div>
+          <div class="kpi-icon-container"><i data-lucide="landmark"></i></div>
           <div class="kpi-details">
             <h3>Activos Circulantes</h3>
             <div class="kpi-number">$28,450.00</div>
@@ -83,7 +75,7 @@
         </div>
 
         <div class="inventory-kpi-card">
-          <div class="kpi-icon-container" style="color: var(--color-success);">💰</div>
+          <div class="kpi-icon-container" style="color: var(--color-success);"><i data-lucide="banknote"></i></div>
           <div class="kpi-details">
             <h3>Ventas del Mes (Abono)</h3>
             <div class="kpi-number" style="color: var(--color-success);">$18,920.00</div>
@@ -91,7 +83,7 @@
         </div>
 
         <div class="inventory-kpi-card">
-          <div class="kpi-icon-container" style="color: var(--color-terracotta);">📉</div>
+          <div class="kpi-icon-container" style="color: var(--color-terracotta);"><i data-lucide="trending-down"></i></div>
           <div class="kpi-details">
             <h3>Gastos & Costos (Débito)</h3>
             <div class="kpi-number" style="color: var(--color-terracotta);">$11,480.00</div>
@@ -99,10 +91,10 @@
         </div>
 
         <div class="inventory-kpi-card">
-          <div class="kpi-icon-container" style="color: var(--color-gold-dark);">⚖️</div>
+          <div class="kpi-icon-container" style="color: var(--color-gold-dark);"><i data-lucide="scale"></i></div>
           <div class="kpi-details">
             <h3>Estado del Balance</h3>
-            <div class="kpi-number" style="font-size: 1.1rem; color: var(--color-success);">✓ Debe = Haber</div>
+            <div class="kpi-number badge-clean-icon" style="font-size: 1.1rem; color: var(--color-success);"><i data-lucide="check" class="icon-xs"></i> Debe = Haber</div>
           </div>
         </div>
       </section>
@@ -117,7 +109,7 @@
       <!-- PANEL 1: ASIENTOS CONTABLES AUTOMÁTICOS -->
       <section id="tabVouchers" class="tab-panel-content">
         <div class="section-title-group" style="margin-bottom: 1.25rem;">
-          <h2>🧾 Asientos Contables Automáticos (Vouchers de Partida Doble)</h2>
+          <h2><i data-lucide="receipt" class="icon-sm"></i> Asientos Contables Automáticos (Vouchers de Partida Doble)</h2>
           <p>Comprobantes generados en tiempo real por transacciones de POS, recepción de insumos y mermas.</p>
         </div>
 
@@ -130,7 +122,7 @@
       <!-- PANEL 2: LIBRO MAYOR (CUENTAS T) -->
       <section id="tabLedger" class="tab-panel-content" style="display: none;">
         <div class="section-title-group" style="margin-bottom: 1.25rem;">
-          <h2>📚 Libro Mayor General (Esquema de Cuentas T)</h2>
+          <h2><i data-lucide="book-open" class="icon-sm"></i> Libro Mayor General (Esquema de Cuentas T)</h2>
           <p>Resumen analítico por cuenta PUC mostrando débitos, créditos y saldos netos.</p>
         </div>
 
@@ -144,7 +136,7 @@
       <section id="tabBalance" class="tab-panel-content" style="display: none;">
         <div class="orders-section-card">
           <div class="section-title-group" style="margin-bottom: 1rem;">
-            <h2>📊 Balance de Comprobación de Sumas y Saldos</h2>
+            <h2><i data-lucide="bar-chart-3" class="icon-sm"></i> Balance de Comprobación de Sumas y Saldos</h2>
             <p>Verificación matemática del principio de Partida Doble (Total Sumas Debe = Total Sumas Haber).</p>
           </div>
 
@@ -187,7 +179,7 @@
       <button id="closeEntryModalBtn" class="modal-close-btn" aria-label="Cerrar modal">&times;</button>
 
       <div class="selected-user-header" style="margin-bottom: 1.25rem;">
-        <div class="selected-user-avatar">✍️</div>
+        <div class="selected-user-avatar"><i data-lucide="file-edit"></i></div>
         <h3 id="entryModalTitle" class="selected-user-name">Registro de Asiento Manual</h3>
         <span class="selected-user-role">Comprobante de Diario / Ajuste de Auditoría</span>
       </div>
@@ -232,14 +224,45 @@
         </div>
 
         <button type="submit" class="btn-process-payment" style="margin-top: 0.5rem;">
-          <span>✓ Registrar Asiento en Diario</span>
+          <i data-lucide="save" class="icon-sm"></i> <span>Registrar Asiento en Diario</span>
         </button>
       </form>
     </div>
   </div>
 
 
+    <!-- MODAL DE BALANCE DE COMPROBACIÓN IMPRIMIBLE -->
+  <div id="balanceReportModal" class="pin-modal-overlay" role="dialog" aria-modal="true" aria-labelledby="balanceModalTitle" aria-hidden="true" style="display: none;">
+    <div class="pin-modal-card report-modal-card">
+      
+      <!-- BARRA DE ACCIONES SUPERIOR (HERRAMIENTAS NO IMPRIMIBLES) -->
+      <div class="report-modal-toolbar no-print">
+        <div class="report-modal-toolbar-title">
+          <i data-lucide="scale" class="icon-md" style="color: var(--color-gold);"></i>
+          <span id="balanceModalTitle">Balance de Comprobación Contable</span>
+        </div>
+        <div class="report-modal-actions">
+          <button id="btnPrintBalanceModal" type="button" class="btn-primary-action gold-variant" style="padding: 0.5rem 1.1rem; font-size: 0.85rem; display: inline-flex; align-items: center; gap: 0.4rem; cursor: pointer; border: none; border-radius: var(--radius-pill); font-weight: 700; color: #FFFFFF; background: linear-gradient(135deg, #D49B54 0%, #C48B44 100%);">
+            <i data-lucide="printer" class="icon-sm"></i> <span>Imprimir / PDF</span>
+          </button>
+          <button id="btnExportBalanceCsv" type="button" class="btn-acc-action secondary" style="padding: 0.5rem 1rem; font-size: 0.85rem; display: inline-flex; align-items: center; gap: 0.4rem; cursor: pointer; border: 1px solid rgba(44, 29, 17, 0.2); border-radius: var(--radius-pill); background: #FFFFFF; font-weight: 700; color: var(--color-espresso);">
+            <i data-lucide="download" class="icon-sm"></i> <span>Exportar CSV</span>
+          </button>
+          <button id="btnCloseBalanceModal" type="button" class="modal-close-btn" style="position: static; font-size: 1.5rem; cursor: pointer;" aria-label="Cerrar modal">&times;</button>
+        </div>
+      </div>
+
+      <!-- HOJA IMPRIMIBLE FORMAL DE BALANCE DE COMPROBACIÓN -->
+      <div id="balanceReportSheet" class="printable-report-sheet">
+        <!-- Renderizado dinámico desde accounting.js -->
+      </div>
+
+    </div>
+  </div>
+
   <!-- SCRIPT MODULAR CONTABILIDAD -->
+  <script src="../js/vendor/lucide.min.js"></script>
+  <script src="../js/core/icons.js"></script>
   <script type="module" src="../js/modules/accounting.js"></script>
 
 </body>

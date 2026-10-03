@@ -142,13 +142,7 @@ button:active {
    Enrutamiento semántico hacia el Panel Principal (Dashboard) sin alterar la sesión
    ========================================================================== */
 .breadcrumbs-container {
-  display: flex;
-  align-items: center;
-  padding: 0.65rem 2rem;
-  background: var(--bg-surface);
-  border-bottom: 1px dashed rgba(44, 29, 17, 0.08);
-  font-size: 0.85rem;
-  z-index: 8;
+  display: none !important;
 }
 
 .breadcrumbs-list {
@@ -228,15 +222,48 @@ button:active {
 }
 
 @media print {
-  body * {
+  /* Caso 1: Impresión de Reportes Ejecutivos o Contables (Hoja Completa Carta/A4) */
+  body.printing-report * {
     visibility: hidden !important;
   }
 
-  #ticketPrintArea, #ticketPrintArea * {
+  body.printing-report .printable-report-sheet,
+  body.printing-report .printable-report-sheet * {
     visibility: visible !important;
   }
 
-  #ticketPrintArea {
+  body.printing-report .printable-report-sheet {
+    display: block !important;
+    position: absolute !important;
+    left: 0 !important;
+    top: 0 !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    margin: 0 !important;
+    padding: 10mm 15mm !important;
+    background: #FFFFFF !important;
+    color: #1a1a1a !important;
+    box-shadow: none !important;
+    border: none !important;
+  }
+
+  body.printing-report .no-print,
+  body.printing-report .report-modal-toolbar,
+  body.printing-report .modal-close-btn {
+    display: none !important;
+  }
+
+  /* Caso 2: Impresión Térmica de Tickets POS (80mm) */
+  body:not(.printing-report) * {
+    visibility: hidden !important;
+  }
+
+  body:not(.printing-report) #ticketPrintArea,
+  body:not(.printing-report) #ticketPrintArea * {
+    visibility: visible !important;
+  }
+
+  body:not(.printing-report) #ticketPrintArea {
     display: block !important;
     position: absolute !important;
     left: 0 !important;
@@ -251,9 +278,658 @@ button:active {
     color: #000000 !important;
     background: #FFFFFF !important;
   }
+}
 
-  @page {
-    size: 80mm auto;
-    margin: 0;
-  }
+/* ==========================================================================
+   SISTEMA DE ICONOGRAFÍA VECTORIAL PULCRA (LUCIDE ICONS)
+   Sustitución de emojis por iconografía profesional, elegante y nítida
+   ========================================================================== */
+.lucide, svg.lucide {
+  display: inline-flex;
+  align-self: center;
+  vertical-align: -0.15em;
+  width: 1.2em;
+  height: 1.2em;
+  stroke: currentColor;
+  stroke-width: 1.85;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  fill: none;
+  flex-shrink: 0;
+  transition: transform var(--transition-fast, 0.2s ease), stroke 0.2s ease;
+}
+
+.icon-xs { width: 0.85rem !important; height: 0.85rem !important; }
+.icon-sm { width: 1.05rem !important; height: 1.05rem !important; }
+.icon-md { width: 1.35rem !important; height: 1.35rem !important; }
+.icon-lg { width: 1.75rem !important; height: 1.75rem !important; }
+.icon-xl { width: 2.25rem !important; height: 2.25rem !important; }
+.icon-2xl { width: 3rem !important; height: 3rem !important; }
+
+/* Contenedores de iconos de badges, KPIs y tarjetas */
+.kpi-icon-container, 
+.card-icon, 
+.department-icon, 
+.avatar-icon-box, 
+.settings-brand-icon,
+.staff-brand-icon,
+.suppliers-brand-icon,
+.inventory-brand-icon,
+.kitchen-brand-icon,
+.accounting-brand-icon,
+.cashier-avatar,
+.selected-user-avatar {
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+}
+
+.kpi-icon-container .lucide, 
+.card-icon .lucide {
+  width: 1.75rem;
+  height: 1.75rem;
+}
+
+.department-icon .lucide {
+  width: 2.25rem;
+  height: 2.25rem;
+}
+
+.cashier-avatar .lucide,
+.selected-user-avatar .lucide {
+  width: 1.35rem;
+  height: 1.35rem;
+}
+
+.settings-brand-icon .lucide,
+.staff-brand-icon .lucide,
+.suppliers-brand-icon .lucide,
+.inventory-brand-icon .lucide,
+.kitchen-brand-icon .lucide,
+.accounting-brand-icon .lucide {
+  width: 2rem;
+  height: 2rem;
+}
+
+button .lucide,
+.btn-primary .lucide,
+.btn-secondary .lucide,
+.inv-action-btn .lucide,
+.inv-filter-btn .lucide,
+.action-btn .lucide {
+  margin-right: 0.4rem;
+}
+
+.badge-clean-icon {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+/* ==========================================================================
+   SISTEMA DE BARRA DE NAVEGACIÓN SUPERIOR UNIFICADA (NAVBAR ARQUITECTURA)
+   Cuadrada, centrada, armónica y perfectamente alineada con el grid de la página
+   ========================================================================== */
+
+/* 1. Header exterior (Barra completa de extremo a extremo) */
+.dashboard-navbar,
+.pos-navbar,
+.kitchen-navbar,
+.accounting-navbar,
+.inventory-navbar,
+.suppliers-navbar,
+.staff-navbar,
+.settings-navbar {
+  width: 100% !important;
+  background: #FFFFFF !important;
+  border-bottom: 1px solid rgba(44, 29, 17, 0.08) !important;
+  box-shadow: 0 2px 10px rgba(44, 29, 17, 0.03) !important;
+  position: relative !important;
+  z-index: 50 !important;
+  padding: 0 !important; /* Delegado al contenedor interno */
+}
+
+/* 2. Contenedor interno perfectamente centrado y cuadrado con el contenido */
+.navbar-container {
+  max-width: 1440px;
+  width: 100%;
+  margin: 0 auto;
+  padding: 0.75rem 2rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1.5rem;
+  min-height: 64px;
+  box-sizing: border-box;
+}
+
+/* 3. Grupo de Marca (Logo + Título + Módulo) */
+.dashboard-brand-group,
+.pos-brand-group,
+.kitchen-brand-group,
+.accounting-brand-group,
+.inventory-brand-group,
+.suppliers-brand-group,
+.staff-brand-group,
+.settings-brand-group,
+.navbar-brand-group {
+  display: flex !important;
+  align-items: center !important;
+  gap: 0.95rem !important;
+  text-decoration: none !important;
+  flex-shrink: 0 !important;
+}
+
+/* Icono de Marca estilizado y artesanal */
+.dashboard-brand-icon,
+.pos-brand-icon,
+.kitchen-brand-icon,
+.accounting-brand-icon,
+.inventory-brand-icon,
+.suppliers-brand-icon,
+.staff-brand-icon,
+.settings-brand-icon {
+  width: 44px !important;
+  height: 44px !important;
+  border-radius: 12px !important;
+  background: var(--gradient-espresso) !important;
+  color: var(--color-gold) !important;
+  border: 1px solid rgba(212, 155, 84, 0.35) !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  box-shadow: 0 4px 14px rgba(44, 29, 17, 0.12) !important;
+  flex-shrink: 0 !important;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.dashboard-brand-icon .lucide,
+.pos-brand-icon .lucide,
+.kitchen-brand-icon .lucide,
+.accounting-brand-icon .lucide,
+.inventory-brand-icon .lucide,
+.suppliers-brand-icon .lucide,
+.staff-brand-icon .lucide,
+.settings-brand-icon .lucide {
+  width: 1.45rem !important;
+  height: 1.45rem !important;
+  stroke-width: 2px !important;
+}
+
+/* Tipografía de Marca y Subtítulo */
+.brand-title {
+  font-family: var(--font-serif) !important;
+  font-size: 1.3rem !important;
+  font-weight: 700 !important;
+  color: var(--color-espresso) !important;
+  line-height: 1.15 !important;
+  margin: 0 !important;
+  letter-spacing: -0.01em !important;
+}
+
+.sub-title,
+.navbar-sub-title,
+.pos-title-text span {
+  display: flex !important;
+  align-items: center !important;
+  gap: 0.4rem !important;
+  font-size: 0.78rem !important;
+  color: var(--color-muted) !important;
+  font-weight: 500 !important;
+  line-height: 1.2 !important;
+  margin-top: 0.15rem !important;
+}
+
+/* 4. Grupo de Controles a la derecha (Completamente armónico con altura uniforme) */
+.dashboard-controls,
+.pos-user-bar,
+.navbar-controls {
+  display: flex !important;
+  align-items: center !important;
+  gap: 0.65rem !important;
+  flex-wrap: nowrap !important;
+  flex-shrink: 0 !important;
+}
+
+/* Altura uniforme estricta de 38px para todos los elementos del header */
+.bcv-rate-badge,
+.cashier-badge,
+.period-select-btn,
+.btn-export-report,
+.btn-pos-reports,
+.btn-pos-logout,
+.btn-navbar-config {
+  height: 38px !important;
+  box-sizing: border-box !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  white-space: nowrap !important;
+  line-height: 1 !important;
+}
+
+/* Badge de Tasa BCV */
+.bcv-rate-badge {
+  gap: 0.4rem !important;
+  padding: 0 0.85rem !important;
+  background: rgba(46, 125, 50, 0.08) !important;
+  border: 1px solid rgba(46, 125, 50, 0.25) !important;
+  border-radius: var(--radius-pill) !important;
+  color: var(--color-success) !important;
+  font-size: 0.8rem !important;
+  font-weight: 600 !important;
+}
+.bcv-rate-badge strong {
+  font-weight: 800 !important;
+  color: var(--color-success) !important;
+}
+
+/* Cápsula de Usuario / Perfil */
+.cashier-badge {
+  gap: 0.55rem !important;
+  padding: 0 0.85rem 0 0.35rem !important;
+  background: var(--bg-main, #FAF7F2) !important;
+  border: 1px solid rgba(44, 29, 17, 0.12) !important;
+  border-radius: var(--radius-pill) !important;
+  box-shadow: 0 1px 3px rgba(44, 29, 17, 0.03) !important;
+}
+
+.cashier-avatar {
+  width: 28px !important;
+  height: 28px !important;
+  border-radius: 50% !important;
+  background: var(--gradient-espresso) !important;
+  color: var(--color-gold) !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  flex-shrink: 0 !important;
+  padding: 0 !important;
+  margin: 0 !important;
+}
+.cashier-avatar .lucide {
+  width: 0.95rem !important;
+  height: 0.95rem !important;
+}
+
+.cashier-info {
+  display: flex !important;
+  flex-direction: column !important;
+  justify-content: center !important;
+  line-height: 1.15 !important;
+}
+
+.cashier-name {
+  font-size: 0.82rem !important;
+  font-weight: 700 !important;
+  color: var(--color-espresso) !important;
+}
+
+.shift-status {
+  font-size: 0.7rem !important;
+  font-weight: 600 !important;
+  color: var(--color-gold-dark) !important;
+}
+
+/* Botones de acción en Navbar */
+.period-select-btn {
+  padding: 0 0.85rem !important;
+  border-radius: var(--radius-pill) !important;
+  background: var(--bg-main, #FAF7F2) !important;
+  border: 1px solid rgba(44, 29, 17, 0.14) !important;
+  font-size: 0.8rem !important;
+  font-weight: 600 !important;
+  color: var(--color-espresso) !important;
+  cursor: pointer !important;
+  gap: 0.4rem !important;
+  transition: all 0.2s ease !important;
+}
+.period-select-btn:hover {
+  background: #FFFFFF !important;
+  border-color: var(--color-gold) !important;
+  box-shadow: 0 2px 6px rgba(44, 29, 17, 0.06) !important;
+}
+
+.btn-export-report {
+  padding: 0 0.95rem !important;
+  border-radius: var(--radius-pill) !important;
+  background: var(--gradient-gold) !important;
+  border: 1px solid rgba(181, 123, 54, 0.4) !important;
+  color: var(--color-espresso) !important;
+  font-size: 0.8rem !important;
+  font-weight: 700 !important;
+  cursor: pointer !important;
+  gap: 0.4rem !important;
+  transition: all 0.2s ease !important;
+}
+.btn-export-report:hover {
+  box-shadow: var(--shadow-gold) !important;
+  transform: translateY(-1px) !important;
+}
+
+.btn-navbar-config {
+  padding: 0 0.95rem !important;
+  border-radius: var(--radius-pill) !important;
+  background: var(--color-espresso) !important;
+  border: 1px solid var(--color-gold) !important;
+  color: #FFFFFF !important;
+  text-decoration: none !important;
+  font-size: 0.8rem !important;
+  font-weight: 700 !important;
+  gap: 0.4rem !important;
+  transition: all 0.2s ease !important;
+}
+.btn-navbar-config:hover {
+  background: var(--color-espresso-dark) !important;
+  box-shadow: 0 2px 8px rgba(44, 29, 17, 0.25) !important;
+  transform: translateY(-1px) !important;
+}
+
+.btn-pos-reports {
+  padding: 0 0.95rem !important;
+  border-radius: var(--radius-pill) !important;
+  background: var(--bg-main, #FAF7F2) !important;
+  border: 1px solid rgba(44, 29, 17, 0.14) !important;
+  color: var(--color-espresso) !important;
+  font-size: 0.8rem !important;
+  font-weight: 700 !important;
+  cursor: pointer !important;
+  gap: 0.4rem !important;
+  transition: all 0.2s ease !important;
+}
+.btn-pos-reports:hover {
+  background: #FFFFFF !important;
+  border-color: var(--color-gold) !important;
+}
+
+/* Botón de Cerrar Sesión */
+.btn-pos-logout {
+  padding: 0 0.95rem !important;
+  background: rgba(198, 40, 40, 0.08) !important;
+  color: var(--color-danger, #C62828) !important;
+  border: 1px solid rgba(198, 40, 40, 0.25) !important;
+  border-radius: var(--radius-pill) !important;
+  font-size: 0.8rem !important;
+  font-weight: 700 !important;
+  cursor: pointer !important;
+  gap: 0.35rem !important;
+  transition: all 0.2s ease !important;
+}
+.btn-pos-logout:hover {
+  background: var(--color-danger, #C62828) !important;
+  color: #FFFFFF !important;
+  border-color: var(--color-danger, #C62828) !important;
+  box-shadow: 0 3px 8px rgba(198, 40, 40, 0.25) !important;
+  transform: translateY(-1px) !important;
+}
+
+/* 5. Migas de Pan (Breadcrumbs) perfectamente cuadradas con el grid */
+.breadcrumbs-container {
+  width: 100% !important;
+  background: #FFFFFF !important;
+  border-bottom: 1px dashed rgba(44, 29, 17, 0.08) !important;
+  padding: 0 !important;
+}
+
+.breadcrumbs-list {
+  max-width: 1440px !important;
+  width: 100% !important;
+  margin: 0 auto !important;
+  padding: 0.65rem 2rem !important;
+  display: flex !important;
+  align-items: center !important;
+  gap: 0.5rem !important;
+  list-style: none !important;
+  box-sizing: border-box !important;
+}
+
+/* 6. Pestañas y Barras de Acciones perfectamente cuadradas */
+.dashboard-tabs-bar {
+  width: 100% !important;
+  background: #FFFFFF !important;
+  border-bottom: 1px solid rgba(44, 29, 17, 0.08) !important;
+}
+.dashboard-tabs-bar .tabs-container {
+  max-width: 1440px !important;
+  width: 100% !important;
+  margin: 0 auto !important;
+  padding: 0 2rem !important;
+  box-sizing: border-box !important;
+}
+
+.kitchen-action-toolbar,
+.settings-action-toolbar,
+.accounting-action-toolbar,
+.suppliers-action-toolbar,
+.staff-action-toolbar,
+.inventory-action-toolbar {
+  max-width: 1440px !important;
+  width: 100% !important;
+  margin: 0 auto !important;
+  padding-left: 2rem !important;
+  padding-right: 2rem !important;
+  box-sizing: border-box !important;
+}
+
+/* 7. Cuadrado simétrico del contenido principal de todas las vistas */
+.dashboard-content,
+.accounting-content,
+.inventory-content,
+.suppliers-content,
+.staff-content,
+.kitchen-content,
+.settings-content {
+  max-width: 1440px !important;
+  width: 100% !important;
+  margin: 0 auto !important;
+  padding-left: 2rem !important;
+  padding-right: 2rem !important;
+  box-sizing: border-box !important;
+}
+
+/* ==========================================================================
+   ESTILOS DE REPORTES EJECUTIVOS Y CONTABLES IMPRIMIBLES
+   ========================================================================== */
+.report-modal-card {
+  max-width: 960px !important;
+  width: 95% !important;
+  max-height: 92vh !important;
+  overflow-y: auto !important;
+  padding: 0 !important;
+  background: #FDFBF7 !important;
+  border-radius: var(--radius-lg) !important;
+  box-shadow: 0 20px 45px rgba(44, 29, 17, 0.3) !important;
+  border: 1px solid rgba(212, 155, 84, 0.25) !important;
+}
+
+.report-modal-toolbar {
+  position: sticky;
+  top: 0;
+  z-index: 20;
+  background: #FFFFFF;
+  padding: 1rem 1.75rem;
+  border-bottom: 1px solid rgba(44, 29, 17, 0.1);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 1rem;
+}
+
+.report-modal-toolbar-title {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  font-size: 1.1rem;
+  font-weight: 800;
+  color: var(--color-espresso);
+}
+
+.report-modal-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.printable-report-sheet {
+  background: #FFFFFF;
+  padding: 2.5rem;
+  margin: 1.5rem;
+  border-radius: 8px;
+  border: 1px solid rgba(44, 29, 17, 0.12);
+  box-shadow: 0 4px 16px rgba(44, 29, 17, 0.04);
+  font-family: inherit;
+  color: #2C1D11;
+}
+
+.report-header-banner {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  padding-bottom: 1.25rem;
+  border-bottom: 2px solid var(--color-gold);
+  margin-bottom: 1.5rem;
+}
+
+.report-brand-title {
+  font-size: 1.35rem;
+  font-weight: 900;
+  color: var(--color-espresso);
+  margin: 0 0 0.25rem 0;
+}
+
+.report-brand-sub {
+  font-size: 0.85rem;
+  color: var(--color-muted);
+  line-height: 1.4;
+}
+
+.report-meta-box {
+  text-align: right;
+  font-size: 0.85rem;
+  color: var(--color-muted);
+  line-height: 1.5;
+}
+
+.report-meta-badge {
+  display: inline-block;
+  background: rgba(212, 155, 84, 0.15);
+  color: var(--color-espresso);
+  font-weight: 700;
+  padding: 0.25rem 0.65rem;
+  border-radius: var(--radius-pill);
+  font-size: 0.8rem;
+  margin-bottom: 0.35rem;
+}
+
+.report-section-heading {
+  font-size: 1rem;
+  font-weight: 800;
+  color: var(--color-espresso);
+  margin: 1.5rem 0 0.85rem 0;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  border-left: 3px solid var(--color-gold);
+  padding-left: 0.65rem;
+}
+
+.report-kpi-summary-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+.report-kpi-box {
+  background: var(--bg-surface);
+  border: 1px solid rgba(44, 29, 17, 0.08);
+  border-radius: 8px;
+  padding: 1rem;
+  text-align: left;
+}
+
+.report-kpi-box-label {
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: var(--color-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  margin-bottom: 0.35rem;
+}
+
+.report-kpi-box-value {
+  font-size: 1.3rem;
+  font-weight: 900;
+  color: var(--color-espresso);
+}
+
+.report-kpi-box-sub {
+  font-size: 0.75rem;
+  color: var(--color-success);
+  margin-top: 0.25rem;
+  font-weight: 600;
+}
+
+.report-data-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.85rem;
+  margin-bottom: 1.5rem;
+}
+
+.report-data-table th {
+  background: #F8F5EE;
+  color: var(--color-espresso);
+  font-weight: 800;
+  padding: 0.65rem 0.85rem;
+  border: 1px solid rgba(44, 29, 17, 0.1);
+  text-align: left;
+}
+
+.report-data-table td {
+  padding: 0.6rem 0.85rem;
+  border: 1px solid rgba(44, 29, 17, 0.08);
+  color: #3D2B1F;
+}
+
+.report-data-table tr:nth-child(even) td {
+  background: rgba(253, 251, 247, 0.7);
+}
+
+.report-data-table tfoot td {
+  background: #F1ECE1;
+  font-weight: 800;
+  color: var(--color-espresso);
+  border-top: 2px solid var(--color-gold);
+}
+
+.report-signatures-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 3rem;
+  margin-top: 3rem;
+  padding-top: 1rem;
+}
+
+.report-signature-block {
+  text-align: center;
+}
+
+.report-signature-line {
+  border-top: 1px dashed #7A6A5A;
+  margin-bottom: 0.5rem;
+  width: 80%;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.report-signature-name {
+  font-weight: 800;
+  font-size: 0.9rem;
+  color: var(--color-espresso);
+}
+
+.report-signature-role {
+  font-size: 0.8rem;
+  color: var(--color-muted);
 }

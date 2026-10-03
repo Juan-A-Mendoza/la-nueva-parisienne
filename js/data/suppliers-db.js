@@ -16,7 +16,7 @@ export const SUPPLIERS_DATABASE = [
     address: 'Zona Industrial Sur, Parcela 14, Caracas',
     paymentTerms: 'Crédito 30 días',
     rating: 4.9,
-    icon: '🌾'
+    icon: 'wheat'
   },
   {
     id: 'sup_02',
@@ -30,7 +30,7 @@ export const SUPPLIERS_DATABASE = [
     address: 'Av. Las Acacias, Edif. La Granja, Valencia',
     paymentTerms: 'Contado / 15 días',
     rating: 4.8,
-    icon: '🧈'
+    icon: 'milk'
   },
   {
     id: 'sup_03',
@@ -44,7 +44,7 @@ export const SUPPLIERS_DATABASE = [
     address: 'Av. Principal Norte, Bodega 5, Maracay',
     paymentTerms: 'Crédito 30 días',
     rating: 4.7,
-    icon: '📦'
+    icon: 'package'
   },
   {
     id: 'sup_04',
@@ -58,7 +58,7 @@ export const SUPPLIERS_DATABASE = [
     address: 'Calle Los Artesanos, Qta. Cacao, Los Teques',
     paymentTerms: 'Crédito 15 días',
     rating: 5.0,
-    icon: '🍫'
+    icon: 'sparkles'
   }
 ];
 
@@ -72,7 +72,7 @@ export const PURCHASE_ORDERS_DATABASE = [
     orderDate: '2026-08-10',
     deliveryDate: '2026-08-12',
     status: 'in_transit', // 'in_transit' | 'received' | 'pending'
-    statusText: '🚚 En Tránsito',
+    statusText: 'En Tránsito',
     totalAmount: 1800.00
   },
   {
@@ -84,7 +84,7 @@ export const PURCHASE_ORDERS_DATABASE = [
     orderDate: '2026-08-11',
     deliveryDate: '2026-08-11',
     status: 'in_transit',
-    statusText: '🚚 En Tránsito',
+    statusText: 'En Tránsito',
     totalAmount: 1700.00
   },
   {
@@ -96,7 +96,7 @@ export const PURCHASE_ORDERS_DATABASE = [
     orderDate: '2026-08-05',
     deliveryDate: '2026-08-07',
     status: 'received',
-    statusText: '✓ Recibido en Almacén',
+    statusText: 'Recibido en Almacén',
     totalAmount: 600.00
   },
   {
@@ -108,7 +108,7 @@ export const PURCHASE_ORDERS_DATABASE = [
     orderDate: '2026-08-02',
     deliveryDate: '2026-08-04',
     status: 'received',
-    statusText: '✓ Recibido en Almacén',
+    statusText: 'Recibido en Almacén',
     totalAmount: 350.00
   }
 ];

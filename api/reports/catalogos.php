@@ -39,14 +39,12 @@ try {
     $categories = $pdo->query(
         "SELECT id, nombre AS name
          FROM categorias_producto
-         WHERE id <> 'cat_insumos'
          ORDER BY nombre ASC"
     )->fetchAll();
 
     $products = $pdo->query(
         "SELECT p.id, p.nombre AS name, p.categoria_id
          FROM productos p
-         WHERE p.tipo = 'finished_product'
          ORDER BY p.nombre ASC"
     )->fetchAll();
 

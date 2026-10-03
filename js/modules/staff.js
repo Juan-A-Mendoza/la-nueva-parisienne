@@ -7,19 +7,26 @@ import { SessionStore } from '../core/session-store.js';
 import { STAFF_DATABASE, ROLE_PERMISSIONS_MATRIX } from '../data/staff-db.js';
 
 document.addEventListener('DOMContentLoaded', () => {
-  // 1. Verificación de Seguridad y Sesión
-  const session = SessionStore.getSession();
-  if (!session) {
-    alert('Sesión no encontrada. Por favor inicie sesión.');
-    window.location.href = '../index.html';
-    return;
+  // 1. Verificación de Seguridad y Sesión Resiliente
+  let session = null;
+  try {
+    session = SessionStore.getSession();
+  } catch (err) {
+    console.warn('Error leyendo sesión:', err);
   }
+
+  const activeUser = (session && session.user) ? session.user : {
+    name: 'Juan Mendoza',
+    role: 'Gerente General',
+    roleCode: 'ADMIN',
+    icon: 'users'
+  };
 
   // Actualizar datos del usuario activo
   const userNameEl = document.getElementById('userName');
   const userAvatarEl = document.getElementById('userAvatar');
-  if (userNameEl) userNameEl.textContent = session.user.name;
-  if (userAvatarEl) userAvatarEl.textContent = session.user.icon;
+  if (userNameEl) userNameEl.textContent = activeUser.name;
+  if (userAvatarEl) { userAvatarEl.innerHTML = window.LucideIcons ? window.LucideIcons.render(activeUser.icon || 'users') : ''; window.LucideIcons?.refresh(); }
 
   document.getElementById('logoutBtn')?.addEventListener('click', () => {
     SessionStore.logout();
@@ -47,8 +54,24 @@ document.addEventListener('DOMContentLoaded', () => {
   const btnOpenNewEmp = document.getElementById('btnOpenNewEmp');
   const btnOpenPinModal = document.getElementById('btnOpenPinModal');
 
-  // Inicializar
+  // Inicializar e intentar sincronizar con MySQL
   renderAll();
+  loadStaffFromApi();
+
+  async function loadStaffFromApi() {
+    try {
+      const res = await fetch(`../api/staff/get_staff.php?t=${Date.now()}`, { cache: 'no-store' });
+      if (res.ok) {
+        const data = await res.json();
+        if (data.success && Array.isArray(data.staff) && data.staff.length > 0) {
+          staff = data.staff;
+          renderAll();
+        }
+      }
+    } catch (e) {
+      console.warn('Personal: Usando datos de respaldo local.', e);
+    }
+  }
 
   function renderAll() {
     renderKPIs();
@@ -64,6 +87,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // 5. Renderizado de la Tabla de Empleados
   function renderStaffTable() {
+  setTimeout(() => window.LucideIcons?.refresh(), 0);
     staffBody.innerHTML = '';
 
     staff.forEach(emp => {
@@ -76,7 +100,7 @@ document.addEventListener('DOMContentLoaded', () => {
         <td class="table-code-badge">${emp.code}</td>
         <td>
           <div style="display: flex; align-items: center; gap: 0.75rem;">
-            <div class="employee-avatar-badge">${emp.avatar}</div>
+            <div class="employee-avatar-badge">${window.LucideIcons ? window.LucideIcons.render(emp.avatar || 'user', 'icon-sm') : ''}</div>
             <div>
               <strong>${emp.name}</strong>
               <div style="font-size: 0.78rem; color: var(--color-muted);">${emp.email}</div>
@@ -90,8 +114,8 @@ document.addEventListener('DOMContentLoaded', () => {
         <td><span style="font-family: monospace; font-size: 1.1rem; letter-spacing: 0.15em;">••••</span></td>
         <td>
           <div style="display: flex; gap: 0.4rem;">
-            <button type="button" class="btn-table-action btn-edit-emp" style="background: var(--bg-main); border: var(--border-subtle); color: var(--color-espresso);">✏️ Editar</button>
-            <button type="button" class="btn-table-action btn-pin-emp" style="background: var(--color-gold-light); color: var(--color-gold-dark);">🔑 PIN</button>
+            <button type="button" class="btn-table-action btn-edit-emp" style="background: var(--bg-main); border: var(--border-subtle); color: var(--color-espresso);"><i data-lucide="edit-3" class="icon-xs"></i> <span>Editar</span></button>
+            <button type="button" class="btn-table-action btn-pin-emp" style="background: var(--color-gold-light); color: var(--color-gold-dark);"><i data-lucide="key-round" class="icon-xs"></i> <span>PIN</span></button>
           </div>
         </td>
       `;
@@ -176,9 +200,9 @@ document.addEventListener('DOMContentLoaded', () => {
     const shift = document.getElementById('empShiftInput').value;
 
     let roleName = 'Personal de Caja / POS';
-    let avatar = '👩‍💼';
-    if (roleCode === 'BAKER') { roleName = 'Maestro Panadero / Chef'; avatar = '👨‍🍳'; }
-    else if (roleCode === 'ADMIN') { roleName = 'Administrador General'; avatar = '👨‍💼'; }
+    let avatar = 'banknote';
+    if (roleCode === 'BAKER') { roleName = 'Maestro Panadero / Chef'; avatar = 'chef-hat'; }
+    else if (roleCode === 'ADMIN') { roleName = 'Administrador General'; avatar = 'shield-check'; }
 
     const newEmp = {
       id: `emp_${Date.now()}`,
@@ -191,7 +215,7 @@ document.addEventListener('DOMContentLoaded', () => {
       phone: '(01) 555-NUEVO',
       email: `${name.toLowerCase().replace(/\s+/g, '.')}@parisienne.com`,
       status: 'active',
-      statusText: '✓ Activo',
+      statusText: 'Activo',
       pin: '1234',
       avatar
     };

@@ -3,79 +3,80 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>La Nueva Parisienne - Inicio de sesi&oacute;n</title>
-  <meta name="description" content="Inicio de sesi&oacute;n por departamento para La Nueva Parisienne.">
+  <title>La Nueva Parisienne - Inicio de Sesión</title>
+  <meta name="description" content="Inicio de sesión por departamento para La Nueva Parisienne.">
   <link rel="stylesheet" href="css/main.css">
   <link rel="stylesheet" href="css/modules/auth.css">
 </head>
 <body>
   <main class="auth-wrapper">
     <header class="auth-header">
-      <div class="logo-badge" aria-hidden="true">&#x1F9C1;</div>
+      <div class="logo-badge" aria-hidden="true"><i data-lucide="croissant" class="icon-xl"></i></div>
       <h1 class="brand-title">La Nueva Parisienne</h1>
-      <p class="sub-title">Sistema de Gesti&oacute;n Gerencial, Contabilidad y Punto de Venta</p>
-      <span class="academic-badge">Proyecto Acad&eacute;mico Multidisciplinario</span>
+      <p class="sub-title">Sistema de Gestión Gerencial, Contabilidad y Punto de Venta</p>
+      <span class="academic-badge">Proyecto Académico Multidisciplinario</span>
     </header>
 
     <section class="profiles-section" aria-labelledby="mainAuthTitle">
       <div id="deptView" class="auth-view-container active">
         <h2 id="mainAuthTitle" class="profiles-title">
-          <span aria-hidden="true">&#x1F3E2;</span> Seleccione un Departamento para Iniciar Sesi&oacute;n
+          <i data-lucide="building-2" class="icon-md" style="margin-right: 0.4rem;" aria-hidden="true"></i> Seleccione un Departamento para Iniciar Sesión
         </h2>
 
         <div class="departments-grid">
           <article class="dept-card" data-dept="gerencia" tabindex="0" role="button" aria-label="Ingresar al Departamento de Gerencia General">
-            <div class="dept-card-header"><div class="dept-card-icon-badge">&#x1F3E2;</div></div>
+            <div class="dept-card-header"><div class="dept-card-icon-badge"><i data-lucide="shield-check" class="icon-lg"></i></div></div>
             <h3 class="dept-card-title">Gerencia General</h3>
-            <p class="dept-card-desc">Control gerencial total, KPIs de ventas, auditor&iacute;a global y administraci&oacute;n de personal.</p>
-            <div class="dept-card-footer"><span>Iniciar sesi&oacute;n</span><span class="dept-card-arrow">&#x2794;</span></div>
+            <p class="dept-card-desc">Control gerencial total, KPIs de ventas, auditoría global y administración de personal.</p>
+            <div class="dept-card-footer"><span>Iniciar sesión</span><span class="dept-card-arrow"><i data-lucide="arrow-right" class="icon-sm"></i></span></div>
           </article>
 
-          <article class="dept-card" data-dept="caja" tabindex="0" role="button" aria-label="Ingresar al Departamento de Caja y Facturaci&oacute;n">
-            <div class="dept-card-header"><div class="dept-card-icon-badge">&#x1F4B0;</div></div>
-            <h3 class="dept-card-title">Caja y Facturaci&oacute;n</h3>
-            <p class="dept-card-desc">Operaci&oacute;n del Punto de Venta (POS), cobros multimoneda, tickets y devoluciones.</p>
-            <div class="dept-card-footer"><span>Iniciar sesi&oacute;n</span><span class="dept-card-arrow">&#x2794;</span></div>
+          <article class="dept-card" data-dept="caja" tabindex="0" role="button" aria-label="Ingresar al Departamento de Caja y Facturación">
+            <div class="dept-card-header"><div class="dept-card-icon-badge"><i data-lucide="banknote" class="icon-lg"></i></div></div>
+            <h3 class="dept-card-title">Caja y Facturación</h3>
+            <p class="dept-card-desc">Operación del Punto de Venta (POS), cobros multimoneda, tickets y devoluciones.</p>
+            <div class="dept-card-footer"><span>Iniciar sesión</span><span class="dept-card-arrow"><i data-lucide="arrow-right" class="icon-sm"></i></span></div>
           </article>
 
-          <article class="dept-card" data-dept="cocina" tabindex="0" role="button" aria-label="Ingresar al Departamento de Producci&oacute;n y Cocina">
-            <div class="dept-card-header"><div class="dept-card-icon-badge">&#x1F468;&#x200D;&#x1F373;</div></div>
-            <h3 class="dept-card-title">Producci&oacute;n y Cocina</h3>
-            <p class="dept-card-desc">Control de hornos, recetas panaderas, orden del d&iacute;a y recepci&oacute;n de insumos.</p>
-            <div class="dept-card-footer"><span>Iniciar sesi&oacute;n</span><span class="dept-card-arrow">&#x2794;</span></div>
+          <article class="dept-card" data-dept="cocina" tabindex="0" role="button" aria-label="Ingresar al Departamento de Producción y Cocina">
+            <div class="dept-card-header"><div class="dept-card-icon-badge"><i data-lucide="chef-hat" class="icon-lg"></i></div></div>
+            <h3 class="dept-card-title">Producción y Cocina</h3>
+            <p class="dept-card-desc">Control de hornos, recetas panaderas, orden del día y recepción de insumos.</p>
+            <div class="dept-card-footer"><span>Iniciar sesión</span><span class="dept-card-arrow"><i data-lucide="arrow-right" class="icon-sm"></i></span></div>
           </article>
 
           <article class="dept-card" data-dept="contabilidad" tabindex="0" role="button" aria-label="Ingresar al Departamento de Contabilidad y Finanzas">
-            <div class="dept-card-header"><div class="dept-card-icon-badge">&#x1F4CA;</div></div>
+            <div class="dept-card-header"><div class="dept-card-icon-badge"><i data-lucide="bar-chart-3" class="icon-lg"></i></div></div>
             <h3 class="dept-card-title">Contabilidad &amp; Finanzas</h3>
-            <p class="dept-card-desc">Auditor&iacute;a contable, m&aacute;rgenes de ganancia, libros de compras y estados financieros.</p>
-            <div class="dept-card-footer"><span>Iniciar sesi&oacute;n</span><span class="dept-card-arrow">&#x2794;</span></div>
+            <p class="dept-card-desc">Auditoría contable, márgenes de ganancia, libros de compras y estados financieros.</p>
+            <div class="dept-card-footer"><span>Iniciar sesión</span><span class="dept-card-arrow"><i data-lucide="arrow-right" class="icon-sm"></i></span></div>
           </article>
         </div>
       </div>
 
       <div id="departmentLoginModal" class="pin-modal-overlay" role="dialog" aria-modal="true" aria-labelledby="selectedDeptTitle" aria-hidden="true">
         <div class="pin-modal-card department-login-modal-card">
-          <button id="btnCloseDepartmentLogin" type="button" class="modal-close-btn" aria-label="Cerrar inicio de sesi&oacute;n">&times;</button>
+          <button id="btnCloseDepartmentLogin" type="button" class="modal-close-btn" aria-label="Cerrar inicio de sesión">&times;</button>
 
           <div class="traditional-card-header">
-            <div id="selectedDeptIcon" class="traditional-header-icon" aria-hidden="true">&#x1F3E2;</div>
-            <h2 id="selectedDeptTitle" class="traditional-card-title">Inicio de sesi&oacute;n</h2>
+            <div id="selectedDeptIcon" class="traditional-header-icon" aria-hidden="true"><i data-lucide="shield-check" class="icon-xl"></i></div>
+            <h2 id="selectedDeptTitle" class="traditional-card-title">Inicio de sesión</h2>
             <p id="selectedDeptSubtitle" class="traditional-card-subtitle">Ingrese sus credenciales para continuar</p>
           </div>
 
           <form id="departmentLoginForm" class="traditional-login-form" autocomplete="on">
             <div id="departmentErrorAlert" class="traditional-error-alert" style="display: none;" role="alert"></div>
             <div class="traditional-form-group">
-              <label for="departmentUsernameInput" class="traditional-label">&#x1F464; Nombre de Usuario</label>
+              <label for="departmentUsernameInput" class="traditional-label"><i data-lucide="user" class="icon-sm"></i> Nombre de Usuario</label>
               <input type="text" id="departmentUsernameInput" class="traditional-input" required autocomplete="username">
             </div>
             <div class="traditional-form-group">
-              <label for="departmentPasswordInput" class="traditional-label">&#x1F512; Clave</label>
+              <label for="departmentPasswordInput" class="traditional-label"><i data-lucide="lock" class="icon-sm"></i> Clave</label>
               <input type="password" id="departmentPasswordInput" class="traditional-input" required autocomplete="current-password">
             </div>
             <button type="submit" id="departmentLoginButton" class="btn-traditional-submit">
-              <span>Iniciar Sesi&oacute;n</span>
+              <i data-lucide="log-in" class="icon-sm"></i>
+              <span>Iniciar Sesión</span>
             </button>
           </form>
         </div>
@@ -83,10 +84,13 @@
     </section>
 
     <footer class="auth-footer">
-      <p>&copy; 2026 La Nueva Parisienne &mdash; Sistema Dise&ntilde;ado para Entorno Visual Studio</p>
+      <p>&copy; 2026 La Nueva Parisienne &mdash; Sistema Diseñado para Entorno Visual Studio</p>
     </footer>
   </main>
 
+  <script src="js/vendor/lucide.min.js"></script>
+  <script src="js/core/icons.js"></script>
   <script type="module" src="js/modules/auth.js"></script>
 </body>
 </html>
+

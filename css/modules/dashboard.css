@@ -12,10 +12,8 @@
 
 /* NAVBAR GERENCIAL */
 .dashboard-navbar {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 1.25rem 2.25rem;
+  width: 100%;
+  padding: 0;
   background: var(--bg-surface);
   border-bottom: var(--border-subtle);
   box-shadow: var(--shadow-subtle);
@@ -96,13 +94,14 @@
 
 /* CONTENEDOR DE CONTENIDO PRINCIPAL */
 .dashboard-content {
-  padding: 2rem 2.25rem 3rem;
+  padding: 2rem 2rem 3rem;
   display: flex;
   flex-direction: column;
   gap: 2rem;
-  max-width: 1400px;
+  max-width: 1440px;
   width: 100%;
   margin: 0 auto;
+  box-sizing: border-box;
 }
 
 /* 1. TARJETAS KPI SUPERIORES (KPI CARDS GRID) */
@@ -711,13 +710,19 @@ select.form-control-custom {
 .dashboard-view-nav {
   background: var(--bg-surface);
   border-bottom: 1px solid var(--color-gold-light);
-  padding: 0 2.25rem;
+  width: 100%;
+  padding: 0;
 }
 
 .view-nav-container {
+  max-width: 1440px;
+  width: 100%;
+  margin: 0 auto;
+  padding: 0 2rem;
   display: flex;
   align-items: center;
   gap: 0.75rem;
+  box-sizing: border-box;
 }
 
 .dashboard-nav-tab {

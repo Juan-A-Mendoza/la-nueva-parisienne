@@ -17,37 +17,31 @@
 
     <!-- NAVBAR SUPERIOR -->
     <header class="inventory-navbar">
-      <div class="inventory-brand-group">
-        <div class="inventory-brand-icon" aria-hidden="true">📦</div>
-        <div>
-          <h1 class="brand-title" style="font-size: 1.3rem;">La Nueva Parisienne</h1>
-          <span class="sub-title">Módulo 5: Inventario y Control de Stock (Materias Primas & Productos)</span>
-        </div>
-      </div>
-
-      <div style="display: flex; align-items: center; gap: 1.25rem;">
-        <div class="cashier-badge">
-          <span id="userAvatar" class="cashier-avatar">📊</span>
-          <div class="cashier-info">
-            <span id="userName" class="cashier-name">Sophie Laurent</span>
-            <span class="shift-status" style="color: var(--color-gold-dark);">● Control Almacén Central</span>
+      <div class="navbar-container">
+        <div class="inventory-brand-group">
+          <div class="inventory-brand-icon" aria-hidden="true"><i data-lucide="package"></i></div>
+          <div>
+            <h1 class="brand-title">La Nueva Parisienne</h1>
+            <span class="sub-title">Módulo 5 &bull; Inventario y Control de Stock</span>
           </div>
         </div>
-        <!-- Botón Dedicado Exclusivo para Cerrar Sesión -->
-        <button id="logoutBtn" class="btn-pos-logout" title="Cerrar sesión activa y volver al login">Cerrar Sesión</button>
+
+        <div class="navbar-controls">
+          <div class="cashier-badge">
+            <span id="userAvatar" class="cashier-avatar"><i data-lucide="shield-check"></i></span>
+            <div class="cashier-info">
+              <span id="userName" class="cashier-name">Sophie Laurent</span>
+              <span class="shift-status">● Almacén Central</span>
+            </div>
+          </div>
+
+          <button id="logoutBtn" class="btn-pos-logout" title="Cerrar sesión activa y volver al login">
+            <i data-lucide="log-out" class="icon-sm"></i> <span>Salir</span>
+          </button>
+        </div>
       </div>
     </header>
 
-    <!-- NAVEGACIÓN POR MIGAS DE PAN (BREADCRUMBS) -->
-    <nav class="breadcrumbs-container" aria-label="Migas de pan">
-      <ol class="breadcrumbs-list">
-        <li class="breadcrumb-item">
-          <a href="dashboard.html">🏠 Inicio (Panel Central)</a>
-        </li>
-        <li class="breadcrumb-separator">/</li>
-        <li class="breadcrumb-item active" aria-current="page">Inventario y Control de Stock</li>
-      </ol>
-    </nav>
 
     <!-- BARRA DE ACCIONES PRINCIPALES (BOTONES TÁCTILES MIN 48X48PX) -->
     <section class="inventory-action-toolbar" aria-label="Acciones de Almacén">
@@ -57,7 +51,7 @@
         </button>
 
         <button id="btnOpenMerma" type="button" class="btn-inventory-action danger">
-          <span>⚠️ Registrar Merma de Almacén</span>
+          <i data-lucide="alert-triangle" class="icon-sm"></i> <span>Registrar Merma de Almacén</span>
         </button>
       </div>
 
@@ -73,7 +67,7 @@
       <!-- SECCIÓN 1: KPIS Y ALERTAS DE STOCK MÍNIMO -->
       <section class="inventory-kpi-grid" aria-label="Resumen de Existencias">
         <div class="inventory-kpi-card">
-          <div class="kpi-icon-container">📦</div>
+          <div class="kpi-icon-container"><i data-lucide="package"></i></div>
           <div class="kpi-details">
             <h3>Total de Existencias</h3>
             <div id="kpiTotalItems" class="kpi-number">28 ítems</div>
@@ -81,7 +75,7 @@
         </div>
 
         <div class="inventory-kpi-card alert-card">
-          <div class="kpi-icon-container" style="background: rgba(200, 90, 50, 0.1); color: var(--color-terracotta);">🚨</div>
+          <div class="kpi-icon-container" style="background: rgba(200, 90, 50, 0.1); color: var(--color-terracotta);"><i data-lucide="alert-octagon"></i></div>
           <div class="kpi-details">
             <h3>Alertas de Stock Mínimo</h3>
             <div id="kpiStockAlerts" class="kpi-number" style="color: var(--color-terracotta);">3 Alertas</div>
@@ -89,7 +83,7 @@
         </div>
 
         <div class="inventory-kpi-card">
-          <div class="kpi-icon-container">💵</div>
+          <div class="kpi-icon-container"><i data-lucide="dollar-sign"></i></div>
           <div class="kpi-details">
             <h3>Valor Total Estimado</h3>
             <div id="kpiTotalValue" class="kpi-number">$12,450.00</div>
@@ -97,7 +91,7 @@
         </div>
 
         <div class="inventory-kpi-card">
-          <div class="kpi-icon-container">🗑️</div>
+          <div class="kpi-icon-container"><i data-lucide="trash-2"></i></div>
           <div class="kpi-details">
             <h3>Mermas del Mes</h3>
             <div id="kpiMonthlyWaste" class="kpi-number" style="color: var(--color-danger);">$145.20</div>
@@ -112,7 +106,7 @@
             <button type="button" class="inv-filter-btn active" data-filter="todos">Todos los Ítems</button>
             <button type="button" class="inv-filter-btn" data-filter="raw_material">Materias Primas (Insumos)</button>
             <button type="button" class="inv-filter-btn" data-filter="finished_product">Productos Terminados</button>
-            <button type="button" class="inv-filter-btn" data-filter="alerts" style="color: var(--color-terracotta);">🚨 Solo Alertas Críticas</button>
+            <button type="button" class="inv-filter-btn" data-filter="alerts" style="color: var(--color-terracotta);"><i data-lucide="alert-triangle" class="icon-xs"></i> <span>Solo Alertas Críticas</span></button>
           </div>
 
           <input type="text" id="inventorySearch" class="inv-search-input" placeholder="Buscar por insumo o código (ej: Harina, MAT-001)...">
@@ -151,7 +145,7 @@
       <button id="closeAdjustModalBtn" class="modal-close-btn" aria-label="Cerrar modal">&times;</button>
 
       <div class="selected-user-header" style="margin-bottom: 1.25rem;">
-        <div class="selected-user-avatar">📝</div>
+        <div class="selected-user-avatar"><i data-lucide="file-edit"></i></div>
         <h3 id="adjustModalTitle" class="selected-user-name">Ajuste Manual de Inventario</h3>
         <span class="selected-user-role">Recuento Físico / Corrección de Existencias</span>
       </div>
@@ -180,7 +174,7 @@
         </div>
 
         <button type="submit" class="btn-process-payment" style="margin-top: 0.5rem;">
-          <span>✓ Guardar Ajuste de Stock</span>
+          <i data-lucide="save" class="icon-sm"></i> <span>Guardar Ajuste de Stock</span>
         </button>
       </form>
     </div>
@@ -193,7 +187,7 @@
       <button id="closeMermaModalBtn" class="modal-close-btn" aria-label="Cerrar modal">&times;</button>
 
       <div class="selected-user-header" style="margin-bottom: 1.25rem;">
-        <div class="selected-user-avatar" style="background: rgba(200, 90, 50, 0.15); border-color: var(--color-terracotta);">⚠️</div>
+        <div class="selected-user-avatar" style="background: rgba(200, 90, 50, 0.15); border-color: var(--color-terracotta);"><i data-lucide="alert-triangle"></i></div>
         <h3 id="mermaModalTitle" class="selected-user-name" style="color: var(--color-terracotta);">Registro de Merma de Almacén</h3>
         <span class="selected-user-role">Descarte de Insumo o Producto Dañado</span>
       </div>
@@ -224,7 +218,7 @@
         </div>
 
         <button type="submit" class="btn-process-payment" style="background: linear-gradient(135deg, #C85A32 0%, #A03D1B 100%); color: white; margin-top: 0.5rem;">
-          <span>⚠️ Confirmar Registro de Merma</span>
+          <i data-lucide="alert-triangle" class="icon-sm"></i> <span>Confirmar Registro de Merma</span>
         </button>
       </form>
     </div>
@@ -232,6 +226,8 @@
 
 
   <!-- SCRIPT MODULAR INVENTARIO -->
+  <script src="../js/vendor/lucide.min.js"></script>
+  <script src="../js/core/icons.js"></script>
   <script type="module" src="../js/modules/inventory.js"></script>
 
 </body>

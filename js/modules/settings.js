@@ -12,7 +12,7 @@ document.addEventListener('DOMContentLoaded', () => {
   if (session && session.user) {
     const userAvatar = document.getElementById('userAvatar');
     const userName = document.getElementById('userName');
-    if (userAvatar) userAvatar.textContent = session.user.icon || '📊';
+    if (userAvatar) { userAvatar.innerHTML = window.LucideIcons ? window.LucideIcons.render(session.user.icon || 'shield-check') : ''; window.LucideIcons?.refresh(); }
     if (userName) userName.textContent = session.user.name || 'Sebastian / Juan';
   }
 
@@ -79,7 +79,7 @@ document.addEventListener('DOMContentLoaded', () => {
           BcvRateStore.broadcastChange(rateVal, modoVal, isManual ? 'Tasa Manual' : 'Tasa Auto');
         }
 
-        showToast('💾 Configuración de Tasa BCV guardada correctamente.', 'success');
+        showToast('Configuración de Tasa BCV guardada correctamente.', 'success');
         btnSaveBcv.disabled = false;
         btnSaveBcv.textContent = 'Guardar Cambios de Tasa';
       });
@@ -101,7 +101,7 @@ document.addEventListener('DOMContentLoaded', () => {
       if (confirm('¿Está seguro de que desea restablecer todas las configuraciones a sus valores predeterminados de fábrica?')) {
         const defaultSettings = SettingsStore.resetToDefaults();
         loadFormValues(defaultSettings);
-        showToast('✓ Valores predeterminados cargados correctamente.', 'success');
+        showToast('Valores predeterminados cargados correctamente.', 'success');
       }
     });
   }
@@ -118,7 +118,7 @@ document.addEventListener('DOMContentLoaded', () => {
       document.body.appendChild(downloadAnchor);
       downloadAnchor.click();
       downloadAnchor.remove();
-      showToast('📄 Archivo de configuración exportado correctamente.', 'success');
+      showToast('Archivo de configuración exportado correctamente.', 'success');
     });
   }
 
@@ -128,9 +128,9 @@ document.addEventListener('DOMContentLoaded', () => {
   const btnPurgeCache = document.getElementById('btnPurgeCache');
   if (btnPurgeCache) {
     btnPurgeCache.addEventListener('click', () => {
-      if (confirm('⚠️ ¿Limpiar tokens de sesión activa y datos cacheados en el navegador? Tendrá que volver a iniciar sesión.')) {
+      if (confirm('¿Limpiar tokens de sesión activa y datos cacheados en el navegador? Tendrá que volver a iniciar sesión.')) {
         sessionStorage.clear();
-        showToast('🧹 Caché de sesión purgada con éxito.', 'success');
+        showToast('Caché de sesión purgada con éxito.', 'success');
         setTimeout(() => {
           window.location.href = '../index.html';
         }, 1200);
@@ -142,8 +142,8 @@ document.addEventListener('DOMContentLoaded', () => {
   const btnRestoreSeed = document.getElementById('btnRestoreSeed');
   if (btnRestoreSeed) {
     btnRestoreSeed.addEventListener('click', () => {
-      if (confirm('🔄 ¿Desea recargar la base de datos de insumos, recetas y catálogo a los datos semilla iniciales?')) {
-        showToast('🔄 Semilla de datos restaurada correctamente.', 'success');
+      if (confirm('¿Desea recargar la base de datos de insumos, recetas y catálogo a los datos semilla iniciales?')) {
+        showToast('Semilla de datos restaurada correctamente.', 'success');
       }
     });
   }
@@ -152,18 +152,18 @@ document.addEventListener('DOMContentLoaded', () => {
   const btnSystemReset = document.getElementById('btnSystemReset');
   if (btnSystemReset) {
     btnSystemReset.addEventListener('click', () => {
-      const inputPin = prompt('🚨 ACCIÓN CRÍTICA IRREVERSIBLE 🚨\n\nEsta acción borrará las ventas, movimientos contables y configuraciones.\n\nPara confirmar, ingrese el PIN de Administrador (1234):');
+      const inputPin = prompt('ACCIÓN CRÍTICA IRREVERSIBLE\n\nEsta acción borrará las ventas, movimientos contables y configuraciones.\n\nPara confirmar, ingrese el PIN de Administrador (1234):');
       
       if (inputPin === '1234') {
         localStorage.clear();
         sessionStorage.clear();
         SettingsStore.resetToDefaults();
-        showToast('💣 Base de datos e historial formateados exitosamente.', 'error');
+        showToast('Base de datos e historial formateados exitosamente.', 'error');
         setTimeout(() => {
           window.location.href = '../index.html';
         }, 1800);
       } else if (inputPin !== null) {
-        alert('❌ PIN de Administrador incorrecto. Operación cancelada por seguridad.');
+        alert('PIN de Administrador incorrecto. Operación cancelada por seguridad.');
       }
     });
   }
@@ -242,7 +242,7 @@ document.addEventListener('DOMContentLoaded', () => {
     };
 
     SettingsStore.saveSettings(updatedSettings);
-    showToast('💾 Ajustes corporativos y parámetros fiscales guardados correctamente.', 'success');
+    showToast('Ajustes corporativos y parámetros fiscales guardados correctamente.', 'success');
   }
 
   // HELPERS
@@ -274,7 +274,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if (!toast || !toastText) return;
 
     toastText.textContent = msg;
-    toastIcon.textContent = type === 'success' ? '✓' : '⚠️';
+    toastIcon.innerHTML = type === 'success' ? '<i data-lucide="check-circle-2" class="icon-sm"></i>' : '<i data-lucide="alert-triangle" class="icon-sm"></i>'; window.LucideIcons?.refresh();
     toast.className = `toast-notification active ${type}`;
 
     setTimeout(() => {

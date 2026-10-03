@@ -125,37 +125,35 @@
 
     <!-- NAVBAR SUPERIOR GERENCIAL -->
     <header class="dashboard-navbar">
-      <div class="dashboard-brand-group">
-        <div class="dashboard-brand-icon" aria-hidden="true">⚙️</div>
-        <div>
-          <h1 class="brand-title" style="font-size: 1.3rem;">La Nueva Parisienne</h1>
-          <span class="sub-title">Módulo 9: Configuraciones & Datos Fiscales de la Empresa</span>
-        </div>
-      </div>
-
-      <div class="dashboard-controls">
-        <div class="cashier-badge">
-          <span id="managerAvatar" class="cashier-avatar">👨‍💼</span>
-          <div class="cashier-info">
-            <span id="managerName" class="cashier-name">Administrador</span>
-            <span class="shift-status" style="color: var(--color-gold-dark);">● Gerente General</span>
+      <div class="navbar-container">
+        <div class="dashboard-brand-group">
+          <div class="dashboard-brand-icon" aria-hidden="true"><i data-lucide="settings"></i></div>
+          <div>
+            <h1 class="brand-title">La Nueva Parisienne</h1>
+            <span class="sub-title">Módulo 9 &bull; Datos Fiscales &amp; Parámetros</span>
           </div>
         </div>
-        <a href="dashboard.html" class="btn-export-report" style="background: var(--color-espresso); color: #FFFFFF; border: 1px solid var(--color-gold); text-decoration: none; display: inline-flex; align-items: center; gap: 0.4rem; padding: 0.45rem 0.85rem; border-radius: var(--radius-sm); font-size: 0.82rem; font-weight: 700;" title="Volver al Panel Central (Módulo 4)">
-          <span>⬅️ Volver al Dashboard (Módulo 4)</span>
-        </a>
-        <button id="logoutBtn" class="btn-pos-logout" title="Cerrar sesión activa">Cerrar Sesión</button>
+
+        <div class="dashboard-controls">
+          <div class="cashier-badge">
+            <span id="managerAvatar" class="cashier-avatar"><i data-lucide="shield-check"></i></span>
+            <div class="cashier-info">
+              <span id="managerName" class="cashier-name">Juan Mendoza</span>
+              <span class="shift-status">● Gerente General</span>
+            </div>
+          </div>
+
+          <a href="dashboard.html" class="btn-export-report" title="Volver al Panel Central (Módulo 4)">
+            <i data-lucide="arrow-left" class="icon-xs"></i> <span>Volver al Dashboard</span>
+          </a>
+
+          <button id="logoutBtn" class="btn-pos-logout" title="Cerrar sesión activa">
+            <i data-lucide="log-out" class="icon-sm"></i> <span>Salir</span>
+          </button>
+        </div>
       </div>
     </header>
 
-    <!-- MIGAS DE PAN -->
-    <nav class="breadcrumbs-container" aria-label="Migas de pan">
-      <ol class="breadcrumbs-list">
-        <li class="breadcrumb-item"><a href="dashboard.html">🏠 Inicio</a></li>
-        <li class="breadcrumb-separator">/</li>
-        <li class="breadcrumb-item active" aria-current="page">Configuraciones del Sistema</li>
-      </ol>
-    </nav>
 
     <!-- CONTENIDO PRINCIPAL DE CONFIGURACIÓN -->
     <main class="dashboard-content" style="max-width: 900px; margin: 0 auto; width: 100%;">
@@ -165,7 +163,7 @@
       <!-- TARJETA 1: DATOS FISCALES DE LA EMPRESA -->
       <section class="config-card">
         <h2 style="font-size: 1.15rem; font-weight: 800; color: var(--color-espresso); margin-bottom: 0.5rem; padding-bottom: 0.4rem; border-bottom: 2px solid var(--color-gold);">
-          🏢 Datos Fiscales de la Empresa (Cabecera de Facturas & Tickets)
+          Datos Fiscales de la Empresa (Cabecera de Facturas & Tickets)
         </h2>
         <p style="font-size: 0.85rem; color: var(--color-muted); margin-bottom: 1.25rem;">
           Estos datos se inyectarán de forma dinámica en todos los tickets fiscales generados por el Punto de Venta (POS) para impresoras térmicas de 80mm.
@@ -196,7 +194,7 @@
 
           <div style="margin-top: 1.25rem; text-align: right;">
             <button type="submit" id="btnSaveEmpresaData" class="btn-save-config">
-              <span>💾 Guardar Datos Fiscales</span>
+              <i data-lucide="save" class="icon-sm"></i> <span>Guardar Datos Fiscales</span>
             </button>
           </div>
         </form>
@@ -205,7 +203,7 @@
       <!-- TARJETA 2: TASA DE CAMBIO BCV / MULTIMONEDA INDEPENDIENTE Y MUTUAMENTE EXCLUSIVA -->
       <section class="config-card" style="border: 2px solid rgba(46, 125, 50, 0.25);">
         <h2 style="font-size: 1.15rem; font-weight: 800; color: var(--color-success); margin-bottom: 0.5rem; padding-bottom: 0.4rem; border-bottom: 2px solid var(--color-success);">
-          💵 Tasa de Cambio BCV / Multimoneda ($ USD ➔ Bs. VES)
+          Tasa de Cambio BCV / Multimoneda ($ USD &rarr; Bs. VES)
         </h2>
         <p style="font-size: 0.85rem; color: var(--color-muted); margin-bottom: 1.25rem;">
           Seleccione el modo de obtención de la tasa cambiaria que regirá los cálculos en el Punto de Venta (POS), Dashboard y Contabilidad.
@@ -220,12 +218,12 @@
             <div style="display: flex; gap: 0.75rem; flex-wrap: wrap;">
               <label id="lblModoAuto" style="display: flex; align-items: center; gap: 0.5rem; font-size: 0.88rem; font-weight: 800; cursor: pointer; padding: 0.6rem 1.1rem; background: rgba(46, 125, 50, 0.08); border: 2px solid var(--color-success); border-radius: var(--radius-pill); transition: all 0.2s ease;">
                 <input type="radio" name="modoTasaRadio" value="auto" id="radio_auto" checked>
-                <span>🌐 Modo Automático (API BCV en Vivo)</span>
+                <i data-lucide="refresh-cw" class="icon-xs"></i> <span>Modo Automático (API BCV en Vivo)</span>
               </label>
 
               <label id="lblModoManual" style="display: flex; align-items: center; gap: 0.5rem; font-size: 0.88rem; font-weight: 800; cursor: pointer; padding: 0.6rem 1.1rem; background: #FFFFFF; border: 2px solid var(--border-subtle); border-radius: var(--radius-pill); transition: all 0.2s ease;">
                 <input type="radio" name="modoTasaRadio" value="manual" id="radio_manual">
-                <span>✍️ Modo Manual Gerencial</span>
+                <i data-lucide="edit-3" class="icon-xs"></i> <span>Modo Manual Gerencial</span>
               </label>
             </div>
           </div>
@@ -233,7 +231,7 @@
           <!-- PANEL 1: MODO AUTOMÁTICO ACTIVO (SOLO SE MUESTRA EN AUTOMÁTICO) -->
           <div id="boxModoAuto" style="background: linear-gradient(135deg, #FFFFFF 0%, rgba(46, 125, 50, 0.06) 100%); padding: 1.25rem; border-radius: var(--radius-md); border: 2px solid rgba(46, 125, 50, 0.3); margin-bottom: 1.25rem;">
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
-              <span style="font-size: 0.9rem; font-weight: 800; color: var(--color-success);">🌐 MODO AUTOMÁTICO ACTIVO</span>
+              <span style="font-size: 0.9rem; font-weight: 800; color: var(--color-success);">MODO AUTOMÁTICO ACTIVO</span>
               <span class="growth-badge positive">• Conexión API en Vivo</span>
             </div>
             <p style="font-size: 0.82rem; color: var(--color-muted); margin-bottom: 0.75rem;">
@@ -247,7 +245,7 @@
           <!-- PANEL 2: MODO MANUAL ACTIVO (SOLO SE MUESTRA EN MANUAL) -->
           <div id="boxModoManual" style="display: none; background: linear-gradient(135deg, #FFFFFF 0%, rgba(212, 155, 84, 0.08) 100%); padding: 1.25rem; border-radius: var(--radius-md); border: 2px solid var(--color-gold); margin-bottom: 1.25rem;">
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
-              <span style="font-size: 0.9rem; font-weight: 800; color: var(--color-gold-dark);">✍️ MODO MANUAL GERENCIAL ACTIVO</span>
+              <span style="font-size: 0.9rem; font-weight: 800; color: var(--color-gold-dark);">MODO MANUAL GERENCIAL ACTIVO</span>
               <span class="growth-badge warning">• Modo Edición Gerencial</span>
             </div>
             <p style="font-size: 0.82rem; color: var(--color-muted); margin-bottom: 0.85rem;">
@@ -265,13 +263,13 @@
 
           <!-- RESUMEN DE PREVISUALIZACIÓN GLOBAL -->
           <div id="ratePreviewBox" style="padding: 0.75rem 1rem; background: #FFFFFF; border: 1px solid var(--border-subtle); border-radius: var(--radius-sm); font-size: 0.85rem; font-weight: 700; color: var(--color-espresso); display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.25rem;">
-            <span>🌐 Tasa Seleccionada a Aplicar: <strong id="previewRateVal" style="color: var(--color-gold-dark); font-size: 1.15rem;">Bs. 761.21</strong></span>
+            <span>Tasa Seleccionada a Aplicar: <strong id="previewRateVal" style="color: var(--color-gold-dark); font-size: 1.15rem;">Bs. 761.21</strong></span>
             <span id="texto_estado_tasa" style="font-size: 0.78rem; color: var(--color-muted);">• Tasa: Automática (En Vivo)</span>
           </div>
 
           <div style="text-align: right;">
             <button type="submit" id="btnSaveExchangeRate" class="btn-save-config" style="background: var(--color-success); color: #FFFFFF;">
-              <span>💾 Guardar Tasa de Cambio</span>
+              <i data-lucide="save" class="icon-sm"></i> <span>Guardar Tasa de Cambio</span>
             </button>
           </div>
         </form>
@@ -280,7 +278,7 @@
       <!-- TARJETA 3: INTERFAZ DE INICIO DE SESIÓN (MODALIDAD DE ACCESO) -->
       <section class="config-card" style="border: 2px solid var(--color-gold-dark);">
         <h2 style="font-size: 1.15rem; font-weight: 800; color: var(--color-espresso); margin-bottom: 0.5rem; padding-bottom: 0.4rem; border-bottom: 2px solid var(--color-gold-dark);">
-          🔐 Interfaz de Inicio de Sesión (Modalidad de Acceso)
+          Interfaz de Inicio de Sesión (Modalidad de Acceso)
         </h2>
         <p style="font-size: 0.85rem; color: var(--color-muted); margin-bottom: 1.25rem;">
           Seleccione cómo interactuarán los usuarios al ingresar a la pantalla principal del sistema (<code>index.html</code>).
@@ -291,7 +289,7 @@
             <label id="lblModoPos" style="flex: 1; min-width: 260px; display: flex; align-items: flex-start; gap: 0.75rem; padding: 1rem; background: rgba(212, 155, 84, 0.08); border: 2px solid var(--color-gold); border-radius: var(--radius-md); cursor: pointer; transition: all 0.2s ease;">
               <input type="radio" name="modoLoginRadio" value="pos" id="radio_modo_pos" checked style="margin-top: 0.2rem;">
               <div>
-                <strong style="font-size: 0.95rem; color: var(--color-espresso); display: block; margin-bottom: 0.2rem;">🏬 Modo POS (Visual por Departamentos)</strong>
+                <strong style="font-size: 0.95rem; color: var(--color-espresso); display: block; margin-bottom: 0.2rem;">Modo POS (Visual por Departamentos)</strong>
                 <span style="font-size: 0.8rem; color: var(--color-muted); line-height: 1.35; display: block;">Muestra 4 tarjetas interactivas de roles principales (Gerencia, Caja, Producción, Contabilidad) con transiciones suaves y modal de clave.</span>
               </div>
             </label>
@@ -299,7 +297,7 @@
             <label id="lblModoTradicional" style="flex: 1; min-width: 260px; display: flex; align-items: flex-start; gap: 0.75rem; padding: 1rem; background: #FFFFFF; border: 2px solid var(--border-subtle); border-radius: var(--radius-md); cursor: pointer; transition: all 0.2s ease;">
               <input type="radio" name="modoLoginRadio" value="tradicional" id="radio_modo_tradicional" style="margin-top: 0.2rem;">
               <div>
-                <strong style="font-size: 0.95rem; color: var(--color-espresso); display: block; margin-bottom: 0.2rem;">🔑 Modo Tradicional (Credenciales)</strong>
+                <strong style="font-size: 0.95rem; color: var(--color-espresso); display: block; margin-bottom: 0.2rem;">Modo Tradicional (Credenciales)</strong>
                 <span style="font-size: 0.8rem; color: var(--color-muted); line-height: 1.35; display: block;">Muestra un único formulario minimalista y centrado solicitando Nombre de Usuario y Contraseña para inicio de sesión directo.</span>
               </div>
             </label>
@@ -307,7 +305,7 @@
 
           <div style="text-align: right;">
             <button type="submit" id="btnSaveModoLogin" class="btn-save-config">
-              <span>💾 Guardar Modalidad de Acceso</span>
+              <i data-lucide="save" class="icon-sm"></i> <span>Guardar Modalidad de Acceso</span>
             </button>
           </div>
         </form>
@@ -321,23 +319,23 @@
         <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 0.5rem; padding-bottom: 0.4rem; border-bottom: 2px solid var(--color-gold); flex-wrap: wrap; gap: 0.75rem;">
           <div>
             <h2 style="font-size: 1.15rem; font-weight: 800; color: var(--color-espresso); margin: 0;">
-              👥 Gestión de Usuarios y Roles de Seguridad
+              Gestión de Usuarios y Roles de Seguridad
             </h2>
             <p style="font-size: 0.85rem; color: var(--color-muted); margin-top: 0.2rem; margin-bottom: 0;">
               Administración del personal autorizado para operar el POS, Cocina, Panadería y Gerencia General.
             </p>
           </div>
           <button id="btnUnlockUserManagement" type="button" class="btn-primary-action gold-variant">
-            <span>🔒 Desbloquear Gestión de Usuarios</span>
+            <i data-lucide="lock" class="icon-sm"></i> <span>Desbloquear Gestión de Usuarios</span>
           </button>
         </div>
 
         <!-- BARRERA DE ACCESO: PANEL BLOQUEADO POR DEFECTO -->
         <div id="usersLockedPlaceholder" style="text-align: center; padding: 2.5rem 1rem; background: rgba(212, 155, 84, 0.05); border: 2px dashed rgba(212, 155, 84, 0.3); border-radius: var(--radius-md);">
-          <div style="font-size: 3rem; margin-bottom: 0.5rem;">🔒</div>
+          <div style="margin-bottom: 0.5rem; color: var(--color-gold-dark);"><i data-lucide="lock" class="icon-2xl"></i></div>
           <h3 style="font-size: 1.1rem; color: var(--color-espresso); font-weight: 800; margin-bottom: 0.3rem;">Acceso Protegido por Doble Validación</h3>
           <p style="font-size: 0.85rem; color: var(--color-muted); max-width: 480px; margin: 0 auto 0 auto;">
-            Esta sección contiene credenciales críticas del sistema. Presione el botón <strong>"🔒 Desbloquear Gestión de Usuarios"</strong> situado en el encabezado superior para ingresar la contraseña de autorización gerencial.
+            Esta sección contiene credenciales críticas del sistema. Presione el botón <strong>"Desbloquear Gestión de Usuarios"</strong> situado en el encabezado superior para ingresar la contraseña de autorización gerencial.
           </p>
         </div>
 
@@ -346,11 +344,11 @@
           <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; flex-wrap: wrap; gap: 0.75rem;">
             <div style="display: flex; align-items: center; gap: 0.5rem;">
               <span style="font-size: 0.85rem; font-weight: 700; color: var(--color-success); background: rgba(46,125,50,0.1); padding: 0.25rem 0.65rem; border-radius: 9999px; border: 1px solid rgba(46,125,50,0.25);">
-                🔓 Sesión de Seguridad Autorizada
+                Sesión de Seguridad Autorizada
               </span>
             </div>
             <button id="btnOpenNuevoUsuarioModal" type="button" class="btn-primary-action">
-              <span>✨ + Nuevo Usuario</span>
+              <i data-lucide="plus" class="icon-sm"></i> <span>+ Nuevo Usuario</span>
             </button>
           </div>
 
@@ -386,33 +384,33 @@
     <div class="modal-card-container" style="max-width: 460px; width: 92%;">
       <div class="modal-card-header">
         <div class="modal-header-title">
-          <span class="modal-header-icon">🔐</span>
+          <span class="modal-header-icon"><i data-lucide="lock"></i></span>
           <div>
             <h2 id="authModalTitle" class="modal-title-text">Autorización Gerencial Requerida</h2>
             <span id="authModalSubtitle" class="modal-subtitle-text">Control de Acceso de Alta Seguridad</span>
           </div>
         </div>
-        <button id="closeAuthModalBtn" type="button" class="btn-modal-close" aria-label="Cerrar ventana">✕</button>
+        <button id="closeAuthModalBtn" type="button" class="btn-modal-close" aria-label="Cerrar ventana">&times;</button>
       </div>
 
       <form id="authPasswordForm">
         <div class="modal-card-body" style="padding: 1.5rem; gap: 1rem;">
           <div style="background: rgba(212, 155, 84, 0.08); border: 1px solid rgba(212, 155, 84, 0.3); padding: 0.85rem; border-radius: 8px; font-size: 0.85rem; color: var(--color-espresso);">
-            <strong>⚠️ Validación de Identidad:</strong> Por razones de seguridad, ingrese la <strong>Contraseña de Autorización</strong> para proceder.
+            <strong>Validación de Identidad:</strong> Por razones de seguridad, ingrese la <strong>Contraseña de Autorización</strong> para proceder.
           </div>
 
           <div class="form-group-custom">
-            <label for="authPasswordInput" class="form-label-custom">🔑 Contraseña de Autorización *</label>
+            <label for="authPasswordInput" class="form-label-custom"><i data-lucide="lock" class="icon-xs"></i> Contraseña de Autorización *</label>
             <input type="password" id="authPasswordInput" class="form-control-custom" placeholder="Ingrese clave gerencial (ej: admin123)" required />
             <div id="authPasswordErrorMsg" style="display: none; color: #D32F2F; font-size: 0.83rem; font-weight: 700; margin-top: 0.4rem; background: rgba(211, 47, 47, 0.1); padding: 0.4rem 0.75rem; border-radius: 6px; border: 1px solid rgba(211, 47, 47, 0.3);">
-              ❌ Contraseña gerencial incorrecta. Permiso denegado.
+              Contraseña gerencial incorrecta. Permiso denegado.
             </div>
           </div>
         </div>
 
         <div class="modal-card-footer">
           <button id="cancelAuthModalBtn" type="button" class="btn-modal-action secondary">Cancelar</button>
-          <button type="submit" class="btn-modal-action primary">🔑 Validar & Confirmar</button>
+          <button type="submit" class="btn-modal-action primary"><i data-lucide="check" class="icon-sm"></i> <span>Validar & Confirmar</span></button>
         </div>
       </form>
     </div>
@@ -423,13 +421,13 @@
     <div class="modal-card-container" style="max-width: 520px; width: 92%;">
       <div class="modal-card-header">
         <div class="modal-header-title">
-          <span class="modal-header-icon">👤</span>
+          <span class="modal-header-icon"><i data-lucide="user"></i></span>
           <div>
             <h2 id="modalUserTitle" class="modal-title-text">Crear Nuevo Usuario</h2>
             <span class="modal-subtitle-text">Registro de Credenciales y Asignación de Rol</span>
           </div>
         </div>
-        <button id="closeUserModalBtn" type="button" class="btn-modal-close" aria-label="Cerrar ventana">✕</button>
+        <button id="closeUserModalBtn" type="button" class="btn-modal-close" aria-label="Cerrar ventana">&times;</button>
       </div>
 
       <form id="usuarioForm">
@@ -437,47 +435,47 @@
         <div class="modal-card-body" style="gap: 1.15rem;">
           
           <div class="form-group-custom">
-            <label for="modalUserNombre" class="form-label-custom">📝 Nombre Completo *</label>
+            <label for="modalUserNombre" class="form-label-custom"><i data-lucide="user" class="icon-xs"></i> Nombre Completo *</label>
             <input type="text" id="modalUserNombre" class="form-control-custom" placeholder="Ej: Juan Alberto Mendoza" required />
           </div>
 
           <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
             <div class="form-group-custom">
-              <label for="modalUserUsername" class="form-label-custom">👤 Nombre de Usuario (Login) *</label>
+              <label for="modalUserUsername" class="form-label-custom"><i data-lucide="at-sign" class="icon-xs"></i> Nombre de Usuario (Login) *</label>
               <input type="text" id="modalUserUsername" class="form-control-custom" placeholder="Ej: jmendoza" required />
             </div>
             <div class="form-group-custom">
-              <label for="modalUserPassword" class="form-label-custom">🔒 Contraseña de Acceso *</label>
+              <label for="modalUserPassword" class="form-label-custom"><i data-lucide="lock" class="icon-xs"></i> Contraseña de Acceso *</label>
               <input type="password" id="modalUserPassword" class="form-control-custom" placeholder="••••••••" required />
             </div>
           </div>
 
           <div class="form-group-custom">
-            <label for="modalUserRol" class="form-label-custom">🛡️ Seleccionar Rol del Sistema *</label>
+            <label for="modalUserRol" class="form-label-custom"><i data-lucide="shield" class="icon-xs"></i> Seleccionar Rol del Sistema *</label>
             <select id="modalUserRol" class="form-control-custom" required>
-              <option value="Gerente General">🏢 Gerente General (Control Total)</option>
-              <option value="Cajero">💰 Cajero (Punto de Venta POS)</option>
-              <option value="Panadero">🥖 Panadero (Módulo 2 Cocina & Hornos)</option>
-              <option value="Contador">📊 Contador (Módulo 5 Contabilidad & Finanzas)</option>
+              <option value="Gerente General">Gerente General (Control Total)</option>
+              <option value="Cajero">Cajero (Punto de Venta POS)</option>
+              <option value="Panadero">Panadero (Módulo 2 Cocina & Hornos)</option>
+              <option value="Contador">Contador (Módulo 5 Contabilidad & Finanzas)</option>
             </select>
           </div>
 
           <div class="form-group-custom">
-            <label class="form-label-custom">🎨 Seleccionar Icono / Emoji de Perfil *</label>
-            <input type="hidden" id="modalUserIcon" value="👨‍💼" />
+            <label class="form-label-custom"><i data-lucide="palette" class="icon-xs"></i> Seleccionar Icono de Perfil *</label>
+            <input type="hidden" id="modalUserIcon" value="shield-check" />
             <div id="emojiPickerGrid" class="emoji-picker-grid">
-              <button type="button" class="emoji-option-btn active" data-emoji="👨‍💼" title="Gerente Masculino">👨‍💼</button>
-              <button type="button" class="emoji-option-btn" data-emoji="👩‍💼" title="Gerente Femenino">👩‍💼</button>
-              <button type="button" class="emoji-option-btn" data-emoji="👨‍🍳" title="Panadero / Chef">👨‍🍳</button>
-              <button type="button" class="emoji-option-btn" data-emoji="👩‍🍳" title="Panadera / Chef">👩‍🍳</button>
-              <button type="button" class="emoji-option-btn" data-emoji="📊" title="Contador / Finanzas">📊</button>
-              <button type="button" class="emoji-option-btn" data-emoji="💼" title="Ejecutivo / Empresa">💼</button>
-              <button type="button" class="emoji-option-btn" data-emoji="🥖" title="Panadería">🥖</button>
-              <button type="button" class="emoji-option-btn" data-emoji="🍰" title="Pastelería">🍰</button>
-              <button type="button" class="emoji-option-btn" data-emoji="☕" title="Cafetería">☕</button>
-              <button type="button" class="emoji-option-btn" data-emoji="👨‍💻" title="Desarrollador / IT">👨‍💻</button>
-              <button type="button" class="emoji-option-btn" data-emoji="👩‍💻" title="Desarrolladora / IT">👩‍💻</button>
-              <button type="button" class="emoji-option-btn" data-emoji="👑" title="Administración Máxima">👑</button>
+              <button type="button" class="emoji-option-btn active" data-emoji="shield-check" title="Gerente / Admin"><i data-lucide="shield-check"></i></button>
+              <button type="button" class="emoji-option-btn" data-emoji="banknote" title="Cajero / Cobros"><i data-lucide="banknote"></i></button>
+              <button type="button" class="emoji-option-btn" data-emoji="chef-hat" title="Chef / Panadero"><i data-lucide="chef-hat"></i></button>
+              <button type="button" class="emoji-option-btn" data-emoji="bar-chart-3" title="Contador / Finanzas"><i data-lucide="bar-chart-3"></i></button>
+              <button type="button" class="emoji-option-btn" data-emoji="user" title="Personal General"><i data-lucide="user"></i></button>
+              <button type="button" class="emoji-option-btn" data-emoji="building-2" title="Corporativo / Empresa"><i data-lucide="building-2"></i></button>
+              <button type="button" class="emoji-option-btn" data-emoji="croissant" title="Panadería"><i data-lucide="croissant"></i></button>
+              <button type="button" class="emoji-option-btn" data-emoji="cake" title="Pastelería"><i data-lucide="cake"></i></button>
+              <button type="button" class="emoji-option-btn" data-emoji="coffee" title="Cafetería"><i data-lucide="coffee"></i></button>
+              <button type="button" class="emoji-option-btn" data-emoji="utensils" title="Especialidades"><i data-lucide="utensils"></i></button>
+              <button type="button" class="emoji-option-btn" data-emoji="truck" title="Logística"><i data-lucide="truck"></i></button>
+              <button type="button" class="emoji-option-btn" data-emoji="sparkles" title="Especial / Maestro"><i data-lucide="sparkles"></i></button>
             </div>
           </div>
 
@@ -485,7 +483,7 @@
 
         <div class="modal-card-footer">
           <button id="cancelUserModalBtn" type="button" class="btn-modal-action secondary">Cancelar</button>
-          <button type="submit" class="btn-modal-action primary">💾 Guardar Usuario</button>
+          <button type="submit" class="btn-modal-action primary"><i data-lucide="save" class="icon-sm"></i> <span>Guardar Usuario</span></button>
         </div>
       </form>
     </div>
@@ -508,7 +506,7 @@
         <p id="modalExitoMsg" class="success-modal-msg">El registro ha sido actualizado correctamente en el sistema.</p>
 
         <button id="closeExitoModalBtn" type="button" class="btn-primary-action gold-variant" style="min-width: 160px; margin-top: 0.5rem;">
-          <span>✓ Entendido</span>
+          <span>Entendido</span>
         </button>
       </div>
     </div>
@@ -528,16 +526,18 @@
           </svg>
         </div>
 
-        <h3 id="modalErrorTitle" class="error-modal-title">⛔ Acceso Restringido</h3>
+        <h3 id="modalErrorTitle" class="error-modal-title">Acceso Restringido</h3>
         <p id="modalErrorMsg" class="error-modal-msg">El Módulo 9 (Configuraciones) solo puede ser accedido por el Gerente General desde el Módulo 4 (Dashboard Gerencial).</p>
 
         <button id="closeErrorModalBtn" type="button" class="btn-primary-action gold-variant" style="min-width: 160px; margin-top: 0.5rem; background: var(--gradient-espresso); color: #FFFFFF; border: 1px solid var(--color-terracotta);">
-          <span>✕ Entendido</span>
+          <span>Entendido</span>
         </button>
       </div>
     </div>
   </div>
 
+  <script src="../js/vendor/lucide.min.js"></script>
+  <script src="../js/core/icons.js"></script>
   <script type="module" src="../js/modules/configuraciones.js"></script>
 
 </body>

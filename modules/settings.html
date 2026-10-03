@@ -17,53 +17,45 @@
 
     <!-- NAVBAR SUPERIOR DE CONFIGURACIÓN -->
     <header class="settings-navbar">
-      <div class="settings-brand-group">
-        <div class="settings-brand-icon" aria-hidden="true">⚙️</div>
-        <div>
-          <h1 class="brand-title" style="font-size: 1.3rem;">La Nueva Parisienne</h1>
-          <span class="sub-title">Módulo 9: Configuraciones Generales, Fiscales y Ajustes del Sistema</span>
-        </div>
-      </div>
-
-      <div style="display: flex; align-items: center; gap: 1.25rem;">
-        <div class="cashier-badge">
-          <span id="userAvatar" class="cashier-avatar">📊</span>
-          <div class="cashier-info">
-            <span id="userName" class="cashier-name">Sebastian / Juan</span>
-            <span class="shift-status" style="color: var(--color-gold-dark);">● Administrador del Sistema</span>
+      <div class="navbar-container">
+        <div class="settings-brand-group">
+          <div class="settings-brand-icon" aria-hidden="true"><i data-lucide="settings"></i></div>
+          <div>
+            <h1 class="brand-title">La Nueva Parisienne</h1>
+            <span class="sub-title">Módulo 9 &bull; Configuraciones Generales del Sistema</span>
           </div>
         </div>
-        <!-- Botón Dedicado Exclusivo para Cerrar Sesión -->
-        <button id="logoutBtn" class="btn-pos-logout" title="Cerrar sesión activa y volver al login">Cerrar Sesión</button>
+
+        <div class="navbar-controls">
+          <div class="cashier-badge">
+            <span id="userAvatar" class="cashier-avatar"><i data-lucide="shield-check"></i></span>
+            <div class="cashier-info">
+              <span id="userName" class="cashier-name">Juan Mendoza</span>
+              <span class="shift-status">● Administrador del Sistema</span>
+            </div>
+          </div>
+
+          <button id="logoutBtn" class="btn-pos-logout" title="Cerrar sesión activa y volver al login">
+            <i data-lucide="log-out" class="icon-sm"></i> <span>Salir</span>
+          </button>
+        </div>
       </div>
     </header>
 
-    <!-- NAVEGACIÓN POR MIGAS DE PAN (BREADCRUMBS) -->
-    <nav class="breadcrumbs-container" aria-label="Migas de pan">
-      <ol class="breadcrumbs-list">
-        <li class="breadcrumb-item">
-          <a href="dashboard.html">🏠 Inicio (Panel Central)</a>
-        </li>
-        <li class="breadcrumb-separator">/</li>
-        <li class="breadcrumb-item">Configuraciones</li>
-        <li class="breadcrumb-separator">/</li>
-        <li class="breadcrumb-item active" aria-current="page">Ajustes del Sistema</li>
-      </ol>
-    </nav>
 
     <!-- BARRA DE HERRAMIENTAS Y ACCIONES PRINCIPALES -->
     <section class="settings-action-toolbar" aria-label="Barra de acciones de configuración">
       <div class="settings-toolbar-buttons">
         <button id="btnSaveSettings" type="button" class="btn-settings-action primary">
-          <span>💾 Guardar Cambios</span>
+          <i data-lucide="save" class="icon-sm"></i> <span>Guardar Cambios</span>
         </button>
 
         <button id="btnResetDefaults" type="button" class="btn-settings-action secondary">
-          <span>🔄 Restablecer Valores Predeterminados</span>
+          <i data-lucide="rotate-ccw" class="icon-sm"></i> <span>Restablecer Valores Predeterminados</span>
         </button>
 
         <button id="btnExportConfig" type="button" class="btn-settings-action secondary">
-          <span>📄 Exportar Configuración (JSON)</span>
+          <i data-lucide="file-down" class="icon-sm"></i> <span>Exportar Configuración (JSON)</span>
         </button>
       </div>
 
@@ -79,7 +71,7 @@
       <!-- SECCIÓN 1: DATOS GENERALES DE LA EMPRESA -->
       <section class="settings-card" aria-labelledby="headingCompany">
         <div class="settings-card-header">
-          <span class="card-icon" aria-hidden="true">🏢</span>
+          <span class="card-icon" aria-hidden="true"><i data-lucide="building-2"></i></span>
           <div>
             <h2 id="headingCompany">Datos Generales de la Empresa</h2>
             <p>Información corporativa, identidad comercial y datos de contacto principal.</p>
@@ -140,7 +132,7 @@
       <!-- SECCIÓN 1.5: GESTIÓN DE TASA DE CAMBIO MAESTRA (BCV & MULTIMONEDA) -->
       <section class="settings-card" aria-labelledby="headingExchangeRate" style="border: 2px solid rgba(46, 125, 50, 0.3);">
         <div class="settings-card-header">
-          <span class="card-icon" style="background: rgba(46, 125, 50, 0.12); color: var(--color-success);" aria-hidden="true">🇻🇪</span>
+          <span class="card-icon" style="background: rgba(46, 125, 50, 0.12); color: var(--color-success);" aria-hidden="true"><i data-lucide="coins"></i></span>
           <div>
             <h2 id="headingExchangeRate" style="color: var(--color-success);">Gestión Maestra de Tasa de Cambio BCV</h2>
             <p>Seleccione el modo de operación para el cálculo de bolívares en el POS y Dashboard (Automático o Manual).</p>
@@ -173,7 +165,7 @@
 
           <div style="margin-top: 1.25rem; display: flex; justify-content: flex-end;">
             <button id="btnSaveBcvRate" type="button" class="btn-settings-action primary" style="background: var(--color-success); color: #FFFFFF; border: none;">
-              <span>💾 Guardar Configuración de Tasa</span>
+              <i data-lucide="save" class="icon-sm"></i> <span>Guardar Configuración de Tasa</span>
             </button>
           </div>
         </form>
@@ -182,7 +174,7 @@
       <!-- SECCIÓN 2: PARÁMETROS FISCALES E IMPUESTOS -->
       <section class="settings-card" aria-labelledby="headingFiscal">
         <div class="settings-card-header">
-          <span class="card-icon" aria-hidden="true">⚖️</span>
+          <span class="card-icon" aria-hidden="true"><i data-lucide="scale"></i></span>
           <div>
             <h2 id="headingFiscal">Parámetros Fiscales e Impuestos</h2>
             <p>Configuración de alícuota IVA, exenciones de ley y correlativos de comprobantes.</p>
@@ -255,7 +247,7 @@
       <!-- SECCIÓN 3: PREFERENCIAS DEL SISTEMA Y BASE DE DATOS -->
       <section class="settings-card" aria-labelledby="headingPreferences">
         <div class="settings-card-header">
-          <span class="card-icon" aria-hidden="true">⚙️</span>
+          <span class="card-icon" aria-hidden="true"><i data-lucide="settings"></i></span>
           <div>
             <h2 id="headingPreferences">Preferencias del Sistema</h2>
             <p>Modo de conexión MySQL, política de respaldos y parámetros de operación.</p>
@@ -329,7 +321,7 @@
       <!-- SECCIÓN 4: ZONA DE PELIGRO (DANGER ZONE) -->
       <section class="settings-card danger-zone" aria-labelledby="headingDanger">
         <div class="settings-card-header">
-          <span class="card-icon" aria-hidden="true">⚠️</span>
+          <span class="card-icon" aria-hidden="true"><i data-lucide="alert-triangle"></i></span>
           <div>
             <h2 id="headingDanger">Zona de Peligro — Acciones Críticas del Sistema</h2>
             <p>Operaciones irreversibles de limpieza de datos, purga de sesión y restablecimiento.</p>
@@ -340,7 +332,7 @@
           
           <div class="danger-action-card">
             <div class="danger-action-info">
-              <h4>🧹 Purgar Caché de Sesiones Local</h4>
+              <h4><i data-lucide="brush" class="icon-sm"></i> Purgar Caché de Sesiones Local</h4>
               <p>Elimina tokens de autenticación activos y datos temporales guardados en sessionStorage.</p>
             </div>
             <button id="btnPurgeCache" type="button" class="btn-danger-action warning">
@@ -350,7 +342,7 @@
 
           <div class="danger-action-card">
             <div class="danger-action-info">
-              <h4>🔄 Restablecer Datos de Semilla (Seed Data)</h4>
+              <h4><i data-lucide="refresh-cw" class="icon-sm"></i> Restablecer Datos de Semilla (Seed Data)</h4>
               <p>Recarga la base de datos de insumos, proveedores y usuarios a los valores originales del sistema.</p>
             </div>
             <button id="btnRestoreSeed" type="button" class="btn-danger-action warning">
@@ -360,11 +352,11 @@
 
           <div class="danger-action-card">
             <div class="danger-action-info">
-              <h4>💣 Formatear Base de Datos (Reset Total)</h4>
+              <h4><i data-lucide="alert-octagon" class="icon-sm"></i> Formatear Base de Datos (Reset Total)</h4>
               <p>Borra la totalidad de las ventas, asientos contables y compras. Requiere confirmación por PIN.</p>
             </div>
             <button id="btnSystemReset" type="button" class="btn-danger-action critical">
-              <span>⚠️ Formatear Sistema</span>
+              <i data-lucide="alert-triangle" class="icon-sm"></i> <span>Formatear Sistema</span>
             </button>
           </div>
 
@@ -376,11 +368,13 @@
 
   <!-- TOAST DE NOTIFICACIÓN DE ESTADO -->
   <div id="toastNotification" class="toast-notification" role="status" aria-live="polite">
-    <span id="toastIcon">✓</span>
+    <span id="toastIcon"><i data-lucide="check-circle-2" class="icon-sm"></i></span>
     <span id="toastText">Configuración guardada con éxito.</span>
   </div>
 
   <!-- SCRIPT MODULAR PRINCIPAL -->
+  <script src="../js/vendor/lucide.min.js"></script>
+  <script src="../js/core/icons.js"></script>
   <script type="module" src="../js/modules/settings.js"></script>
 
 </body>

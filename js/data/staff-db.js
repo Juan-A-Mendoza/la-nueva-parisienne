@@ -15,9 +15,9 @@ export const STAFF_DATABASE = [
     phone: '(01) 555-CARLOS',
     email: 'carlos.mendoza@parisienne.com',
     status: 'active',
-    statusText: '✓ Activo',
+    statusText: 'Activo',
     pin: '1234',
-    avatar: '👨‍🍳'
+    avatar: 'chef-hat'
   },
   {
     id: 'emp_02',
@@ -30,9 +30,9 @@ export const STAFF_DATABASE = [
     phone: '(01) 555-ANA',
     email: 'ana.ramirez@parisienne.com',
     status: 'active',
-    statusText: '✓ Activo',
+    statusText: 'Activo',
     pin: '1234',
-    avatar: '👩‍💼'
+    avatar: 'banknote'
   },
   {
     id: 'emp_03',
@@ -45,9 +45,9 @@ export const STAFF_DATABASE = [
     phone: '(01) 555-JUAN',
     email: 'juan.gerente@parisienne.com',
     status: 'active',
-    statusText: '✓ Activo',
+    statusText: 'Activo',
     pin: '1234',
-    avatar: '👨‍💼'
+    avatar: 'shield-check'
   },
   {
     id: 'emp_04',
@@ -60,9 +60,9 @@ export const STAFF_DATABASE = [
     phone: '(01) 555-ENRIQUE',
     email: 'enrique.chef@parisienne.com',
     status: 'active',
-    statusText: '✓ Activo',
+    statusText: 'Activo',
     pin: '1234',
-    avatar: '👨‍🍳'
+    avatar: 'chef-hat'
   },
   {
     id: 'emp_05',
@@ -75,9 +75,9 @@ export const STAFF_DATABASE = [
     phone: '(01) 555-HENRY',
     email: 'henry.pos@parisienne.com',
     status: 'active',
-    statusText: '✓ Activo',
+    statusText: 'Activo',
     pin: '1234',
-    avatar: '👨‍💼'
+    avatar: 'shield-check'
   },
   {
     id: 'emp_06',
@@ -90,9 +90,9 @@ export const STAFF_DATABASE = [
     phone: '(01) 555-SEBASTIAN',
     email: 'sebastian.finanzas@parisienne.com',
     status: 'active',
-    statusText: '✓ Activo',
+    statusText: 'Activo',
     pin: '1234',
-    avatar: '📊'
+    avatar: 'bar-chart-3'
   }
 ];
 

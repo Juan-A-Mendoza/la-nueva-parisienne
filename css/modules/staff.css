@@ -12,10 +12,8 @@
 
 /* NAVBAR DE PERSONAL */
 .staff-navbar {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 1.25rem 2.25rem;
+  width: 100%;
+  padding: 0;
   background: var(--bg-surface);
   border-bottom: var(--border-subtle);
   box-shadow: var(--shadow-subtle);
@@ -82,13 +80,14 @@
 
 /* CONTENEDOR PRINCIPAL */
 .staff-content {
-  padding: 1.25rem 2.25rem 3rem;
+  padding: 1.5rem 2rem 3rem;
   display: flex;
   flex-direction: column;
   gap: 2.25rem;
-  max-width: 1400px;
+  max-width: 1440px;
   width: 100%;
   margin: 0 auto;
+  box-sizing: border-box;
 }
 
 /* AVATAR DE EMPLEADO Y BADGES */

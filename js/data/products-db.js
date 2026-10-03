@@ -4,11 +4,11 @@
    ========================================================================== */
 
 export const CATEGORIES = [
-  { id: 'todos', name: 'Todos los Productos', icon: '✨' },
-  { id: 'panaderia', name: 'Panadería Artesanal', icon: '🥖' },
-  { id: 'pasteleria', name: 'Pastelería & Repostería', icon: '🍰' },
-  { id: 'cafeteria', name: 'Cafetería & Bebidas', icon: '☕' },
-  { id: 'especialidades', name: 'Especialidades & Desayunos', icon: '🥪' }
+  { id: 'todos', name: 'Todos los Productos', icon: 'sparkles' },
+  { id: 'panaderia', name: 'Panadería Artesanal', icon: 'croissant' },
+  { id: 'pasteleria', name: 'Pastelería & Repostería', icon: 'cake' },
+  { id: 'cafeteria', name: 'Cafetería & Bebidas', icon: 'coffee' },
+  { id: 'especialidades', name: 'Especialidades & Desayunos', icon: 'utensils' }
 ];
 
 export const PRODUCTS_DATABASE = [
@@ -186,6 +186,15 @@ export const ProductsStore = {
               else if (catId.includes('bebida') || catId.includes('cafe')) catId = 'cafeteria';
               else if (catId.includes('salado') || catId.includes('especial')) catId = 'especialidades';
 
+              const baseProd = PRODUCTS_DATABASE.find(p => p.code === item.code || p.name === item.name || p.id === item.id);
+              let resolvedIcon = item.icon;
+              const isGenericKey = !resolvedIcon || ['shopping-bag', 'croissant', 'cake', 'sparkles', 'wheat', 'coffee', 'utensils', 'glass-water'].includes(resolvedIcon);
+              if (isGenericKey && baseProd) {
+                resolvedIcon = baseProd.icon;
+              } else if (!resolvedIcon) {
+                resolvedIcon = '🥖';
+              }
+
               return {
                 id: item.id || `prod_${item.code}`,
                 code: item.code,
@@ -194,7 +203,7 @@ export const ProductsStore = {
                 price: parseFloat(item.salePrice || item.price || 0),
                 unitCost: parseFloat(item.unitCost || 0),
                 unit: item.unit || 'Und',
-                icon: item.icon || '🛍️',
+                icon: resolvedIcon,
                 stock: parseFloat(item.stock || 0),
                 description: item.description || `${item.name} (${item.unit || 'Und'})`
               };

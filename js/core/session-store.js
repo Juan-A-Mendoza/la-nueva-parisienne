@@ -7,10 +7,10 @@ const STORAGE_KEY = 'LN_PARISIENNE_SESSION';
 
 // Arreglo de usuarios por defecto (Semilla Inicial)
 const INITIAL_USERS = [
-  { id: 'usr_001', name: 'Juan Mendoza', username: 'admin', role: 'Gerente General', roleCode: 'ADMIN', icon: '👨‍💼', description: 'Acceso total a KPIs, contabilidad, producción y personal.', redirectUrl: 'modules/dashboard.html' },
-  { id: 'usr_002', name: 'María Elena Suárez', username: 'cajero1', role: 'Cajero', roleCode: 'POS', icon: '👩‍💼', description: 'Facturación directa a clientes, cobros rápidos y apertura de caja.', redirectUrl: 'modules/pos.html' },
-  { id: 'usr_003', name: 'Carlos Eduardo Rivas', username: 'panadero1', role: 'Panadero', roleCode: 'KITCHEN', icon: '👨‍🍳', description: 'Gestión de hornos, recetas, orden del día y preparación de masa.', redirectUrl: 'modules/kitchen.html' },
-  { id: 'usr_004', name: 'Andrés Felipe Gómez', username: 'contador1', role: 'Contador', roleCode: 'ACCOUNTANT', icon: '📊', description: 'Auditoría financiera, margen de ganancias y estados contables.', redirectUrl: 'modules/accounting.html' }
+  { id: 'usr_001', name: 'Juan Mendoza', username: 'admin', role: 'Gerente General', roleCode: 'ADMIN', icon: 'shield-check', description: 'Acceso total a KPIs, contabilidad, producción y personal.', redirectUrl: 'modules/dashboard.html' },
+  { id: 'usr_002', name: 'María Elena Suárez', username: 'cajero1', role: 'Cajero', roleCode: 'POS', icon: 'banknote', description: 'Facturación directa a clientes, cobros rápidos y apertura de caja.', redirectUrl: 'modules/pos.html' },
+  { id: 'usr_003', name: 'Carlos Eduardo Rivas', username: 'panadero1', role: 'Panadero', roleCode: 'KITCHEN', icon: 'chef-hat', description: 'Gestión de hornos, recetas, orden del día y preparación de masa.', redirectUrl: 'modules/kitchen.html' },
+  { id: 'usr_004', name: 'Andrés Felipe Gómez', username: 'contador1', role: 'Contador', roleCode: 'ACCOUNTANT', icon: 'bar-chart-3', description: 'Auditoría financiera, margen de ganancias y estados contables.', redirectUrl: 'modules/accounting.html' }
 ];
 
 // Base de datos simulada de empleados y perfiles (Fallback local)
@@ -20,7 +20,7 @@ const USERS_DATABASE = [
     name: 'Juan Mendoza',
     role: 'Gerente General',
     roleCode: 'ADMIN',
-    icon: '👨‍💼',
+    icon: 'shield-check',
     pin: '1234',
     description: 'Acceso total a KPIs, contabilidad, producción y personal.',
     redirectUrl: 'modules/dashboard.html',
@@ -31,7 +31,7 @@ const USERS_DATABASE = [
     name: 'Carlos Eduardo Rivas',
     role: 'Panadero',
     roleCode: 'KITCHEN',
-    icon: '👨‍🍳',
+    icon: 'chef-hat',
     pin: '1234',
     description: 'Gestión de hornos, recetas, orden del día y preparación de masa.',
     redirectUrl: 'modules/kitchen.html',
@@ -42,7 +42,7 @@ const USERS_DATABASE = [
     name: 'María Elena Suárez',
     role: 'Cajero',
     roleCode: 'POS',
-    icon: '👩‍💼',
+    icon: 'banknote',
     pin: '1234',
     description: 'Facturación directa a clientes, cobros rápidos y apertura de caja.',
     redirectUrl: 'modules/pos.html',
@@ -53,7 +53,7 @@ const USERS_DATABASE = [
     name: 'Andrés Felipe Gómez',
     role: 'Contador',
     roleCode: 'ACCOUNTANT',
-    icon: '📊',
+    icon: 'bar-chart-3',
     pin: '1234',
     description: 'Auditoría financiera, margen de ganancias y órdenes de compra.',
     redirectUrl: 'modules/accounting.html',
@@ -88,10 +88,33 @@ export const SessionStore = {
   },
 
   /**
-   * Obtiene la lista de perfiles de usuario exclusivamente desde localStorage (Simulación Local)
+   * Obtiene la lista de perfiles de usuario desde MySQL con respaldo local
    */
   async getProfilesAsync() {
-    // API PHP deshabilitada para evitar SyntaxError en entornos de desarrollo sin servidor PHP activo
+    try {
+      const apiBase = window.location.pathname.includes('/modules/') ? '../api' : 'api';
+      const res = await fetch(`${apiBase}/auth/get_profiles.php?t=${Date.now()}`, { cache: 'no-store' });
+      if (res.ok) {
+        const data = await res.json();
+        if (data.success && Array.isArray(data.profiles) && data.profiles.length > 0) {
+          return data.profiles.map(p => ({
+            id: p.id,
+            code: p.code,
+            username: p.username || p.code || p.id,
+            name: p.name,
+            email: p.email,
+            role: p.role,
+            roleCode: p.roleCode,
+            icon: p.icon || 'shield-check',
+            description: p.description,
+            redirectUrl: p.redirectUrl,
+            allowedModules: ['all']
+          }));
+        }
+      }
+    } catch (e) {
+      console.warn('Fallo cargando perfiles desde MySQL, usando perfiles locales:', e);
+    }
     return this.getProfiles();
   },
 
@@ -106,29 +129,29 @@ export const SessionStore = {
         let redirectUrl = user.redirectUrl || 'modules/dashboard.html';
         let allowedModules = ['all'];
         let roleCode = user.roleCode || 'ADMIN';
-        let icon = user.icon || '👤';
+        let icon = user.icon || 'user';
 
         const roleLower = (user.role || '').toLowerCase();
         if (roleLower.includes('cajero') || roleLower.includes('pos')) {
           redirectUrl = 'modules/pos.html';
           allowedModules = ['pos'];
           roleCode = 'POS';
-          icon = user.icon || '👩‍💼';
+          icon = user.icon || 'banknote';
         } else if (roleLower.includes('panadero') || roleLower.includes('cocina')) {
           redirectUrl = 'modules/kitchen.html';
           allowedModules = ['kitchen', 'inventory'];
           roleCode = 'KITCHEN';
-          icon = user.icon || '👨‍🍳';
+          icon = user.icon || 'chef-hat';
         } else if (roleLower.includes('contador') || roleLower.includes('contabilidad')) {
           redirectUrl = 'modules/accounting.html';
           allowedModules = ['accounting', 'settings'];
           roleCode = 'ACCOUNTANT';
-          icon = user.icon || '📊';
+          icon = user.icon || 'bar-chart-3';
         } else if (roleLower.includes('gerente')) {
           redirectUrl = 'modules/dashboard.html';
           allowedModules = ['all'];
           roleCode = 'ADMIN';
-          icon = user.icon || '👨‍💼';
+          icon = user.icon || 'shield-check';
         }
 
         return {
@@ -157,10 +180,42 @@ export const SessionStore = {
   },
 
   /**
-   * Valida el PIN ingresado de forma asíncrona usando la simulación local
+   * Valida el PIN ingresado con MySQL y respaldo local
    */
   async validatePinAsync(userId, inputPin) {
-    // API PHP deshabilitada para entorno de desarrollo local sin servidor PHP activo
+    try {
+      const apiBase = window.location.pathname.includes('/modules/') ? '../api' : 'api';
+      const res = await fetch(`${apiBase}/auth/login.php`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ userId, inputPin })
+      });
+      const data = await res.json();
+      if (data.success && data.user) {
+        const userPayload = {
+          id: data.user.id,
+          name: data.user.name,
+          username: data.user.code || data.user.id,
+          role: data.user.role,
+          roleCode: data.user.roleCode,
+          icon: data.user.icon,
+          redirectUrl: data.user.redirectUrl,
+          allowedModules: ['all']
+        };
+
+        this.setSession({
+          user: userPayload,
+          token: data.token || `AUTH_${Date.now()}`,
+          loginTimestamp: data.timestamp || new Date().toISOString()
+        });
+
+        return { success: true, redirectUrl: data.user.redirectUrl, user: userPayload };
+      } else if (res.status === 401) {
+        return { success: false, message: data.message || 'PIN de acceso incorrecto.' };
+      }
+    } catch (e) {
+      console.warn('Validación PIN MySQL no disponible, usando respaldo local:', e);
+    }
     return this.validatePin(userId, inputPin);
   },
 
@@ -188,7 +243,7 @@ export const SessionStore = {
               username: user.username || 'admin',
               role: user.role || 'Gerente General',
               roleCode: user.roleCode || 'ADMIN',
-              icon: user.icon || '👨‍💼',
+              icon: user.icon || 'shield-check',
               redirectUrl: redirectUrl
             };
 
@@ -234,9 +289,42 @@ export const SessionStore = {
   },
 
   /**
-   * Valida credenciales de login tradicional (nombre de usuario y contraseña)
+   * Valida credenciales de login tradicional contra MySQL con respaldo local
    */
   async validateCredentialsAsync(username, password) {
+    try {
+      const apiBase = window.location.pathname.includes('/modules/') ? '../api' : 'api';
+      const res = await fetch(`${apiBase}/auth/login.php`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ userId: username, inputPin: password })
+      });
+      const data = await res.json();
+      if (data.success && data.user) {
+        const userPayload = {
+          id: data.user.id,
+          name: data.user.name,
+          username: data.user.code || data.user.id,
+          role: data.user.role,
+          roleCode: data.user.roleCode,
+          icon: data.user.icon,
+          redirectUrl: data.user.redirectUrl,
+          allowedModules: ['all']
+        };
+
+        this.setSession({
+          user: userPayload,
+          token: data.token || `AUTH_${Date.now()}`,
+          loginTimestamp: data.timestamp || new Date().toISOString()
+        });
+
+        return { success: true, redirectUrl: data.user.redirectUrl, user: userPayload };
+      } else if (res.status === 401) {
+        return { success: false, message: data.message || 'Contraseña incorrecta.' };
+      }
+    } catch (e) {
+      console.warn('Validación de credenciales MySQL no disponible, usando respaldo local:', e);
+    }
     return this.validateCredentials(username, password);
   },
 
@@ -260,7 +348,7 @@ export const SessionStore = {
               username: user.username,
               role: user.role,
               roleCode: user.roleCode || 'ADMIN',
-              icon: user.icon || '👤',
+              icon: user.icon || 'user',
               redirectUrl: redirectUrl
             };
 
@@ -324,7 +412,7 @@ export const SessionStore = {
           username: sessionData.user.username || 'admin',
           role: sessionData.user.role || 'Gerente General',
           roleCode: sessionData.user.roleCode || 'ADMIN',
-          icon: sessionData.user.icon || '👨‍💼'
+          icon: sessionData.user.icon || 'shield-check'
         };
         localStorage.setItem('usuario_activo', JSON.stringify(activeUserObj));
         window.dispatchEvent(new Event('storage'));
@@ -365,7 +453,7 @@ export const SessionStore = {
       username: 'admin',
       role: 'Gerente General',
       roleCode: 'ADMIN',
-      icon: '👨‍💼'
+      icon: 'shield-check'
     };
     return { user: defaultActive, token: 'DEFAULT_SESSION' };
   },
@@ -386,3 +474,7 @@ export const SessionStore = {
     window.location.href = isInModules ? '../index.html' : 'index.html';
   }
 };
+
+if (typeof window !== 'undefined') {
+  window.SessionStore = SessionStore;
+}

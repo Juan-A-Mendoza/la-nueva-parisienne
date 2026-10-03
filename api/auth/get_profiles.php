@@ -9,7 +9,7 @@ header("Content-Type: application/json; charset=UTF-8");
 header("Access-Control-Allow-Methods: GET, OPTIONS");
 header("Access-Control-Allow-Headers: Content-Type, Authorization, X-Requested-With");
 
-if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
+if (($_SERVER['REQUEST_METHOD'] ?? '') === 'OPTIONS') {
     http_response_code(200);
     exit();
 }
@@ -19,9 +19,9 @@ require_once __DIR__ . '/../config/conexion.php';
 try {
     $pdo = getDbConnection();
     
-    // Consulta para obtener usuarios activos y sus roles asignados
-    $sql = "SELECT u.id, u.nombre AS name, u.email, u.telefono, u.icono AS icon, 
-                   u.turno, u.redirect_url AS redirectUrl, r.nombre AS role, 
+    // Consulta para obtener usuarios activos y sus roles asignados (redirect_url está en roles - 2FN)
+    $sql = "SELECT u.id, u.codigo, u.username, u.nombre AS name, u.email, u.telefono, u.icono AS icon, 
+                   u.turno, r.redirect_url AS redirectUrl, r.nombre AS role, 
                    r.codigo AS roleCode, r.descripcion
             FROM usuarios u 
             INNER JOIN roles r ON u.rol_id = r.id 
@@ -35,12 +35,16 @@ try {
     $profiles = array_map(function($user) {
         return [
             'id' => $user['id'],
+            'code' => $user['codigo'],
+            'username' => $user['username'] ?: $user['codigo'],
             'name' => $user['name'],
+            'email' => $user['email'],
             'role' => $user['role'],
             'roleCode' => $user['roleCode'],
-            'icon' => $user['icon'] ? $user['icon'] : '👨‍💼',
+            'icon' => $user['icon'] ? $user['icon'] : 'shield-check',
             'description' => $user['descripcion'] ? $user['descripcion'] : 'Perfil de acceso al sistema La Nueva Parisienne.',
-            'redirectUrl' => $user['redirectUrl']
+            'redirectUrl' => $user['redirectUrl'],
+            'turno' => $user['turno']
         ];
     }, $users);
 

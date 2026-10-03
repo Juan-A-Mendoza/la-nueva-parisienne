@@ -27,11 +27,12 @@ CREATE TABLE IF NOT EXISTS `usuarios` (
   `id` VARCHAR(50) NOT NULL,
   `rol_id` VARCHAR(50) NOT NULL,
   `codigo` VARCHAR(50) NOT NULL UNIQUE,
+  `username` VARCHAR(50) NULL UNIQUE,
   `nombre` VARCHAR(100) NOT NULL,
   `email` VARCHAR(100) NOT NULL,
   `telefono` VARCHAR(50),
   `pin` VARCHAR(50) NOT NULL DEFAULT '1234',
-  `icono` VARCHAR(20) DEFAULT '👨‍💼',
+  `icono` VARCHAR(20) DEFAULT 'shield-check',
   `turno` VARCHAR(100),
   `estado` VARCHAR(20) NOT NULL DEFAULT 'active',
   PRIMARY KEY (`id`),
@@ -49,20 +50,41 @@ CREATE TABLE IF NOT EXISTS `categorias_producto` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- ----------------------------------------------------------------------------
--- 4. TABLA: productos (Catálogo e Inventario de Insumos y Productos Terminados)
+-- 4. TABLA: materias_primas (Almacén de Insumos y Materias Primas de Panadería)
+-- ----------------------------------------------------------------------------
+CREATE TABLE IF NOT EXISTS `materias_primas` (
+  `id` VARCHAR(50) NOT NULL,
+  `codigo` VARCHAR(50) NOT NULL UNIQUE,
+  `nombre` VARCHAR(150) NOT NULL,
+  `unidad_medida` VARCHAR(20) NOT NULL DEFAULT 'kg',
+  `stock_actual` DECIMAL(10,2) NOT NULL DEFAULT 0.00,
+  `stock_minimo` DECIMAL(10,2) NOT NULL DEFAULT 10.00,
+  `costo_unitario` DECIMAL(10,2) NOT NULL DEFAULT 0.00,
+  `ubicacion` VARCHAR(100) DEFAULT 'Almacén Central',
+  `icono` VARCHAR(20) DEFAULT 'package',
+  `descripcion` TEXT,
+  `proveedor_id` VARCHAR(50) NULL,
+  `creado_en` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  `actualizado_en` TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  CONSTRAINT `fk_materias_primas_proveedor` FOREIGN KEY (`proveedor_id`) REFERENCES `proveedores` (`id`) ON DELETE SET NULL ON UPDATE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- ----------------------------------------------------------------------------
+-- 4b. TABLA: productos (Catálogo de Mostrador y Vitrina para Venta en POS)
 -- ----------------------------------------------------------------------------
 CREATE TABLE IF NOT EXISTS `productos` (
   `id` VARCHAR(50) NOT NULL,
   `categoria_id` VARCHAR(50) NOT NULL,
   `codigo` VARCHAR(50) NOT NULL UNIQUE,
   `nombre` VARCHAR(150) NOT NULL,
-  `unidad_medida` VARCHAR(20) NOT NULL DEFAULT 'kg',
+  `unidad_medida` VARCHAR(20) NOT NULL DEFAULT 'ud',
   `stock_actual` DECIMAL(10,2) NOT NULL DEFAULT 0.00,
   `stock_minimo` DECIMAL(10,2) NOT NULL DEFAULT 10.00,
   `precio_unitario` DECIMAL(10,2) NOT NULL DEFAULT 0.00,
-  `tipo` VARCHAR(50) NOT NULL DEFAULT 'raw_material', -- 'raw_material' | 'finished_product'
-  `ubicacion` VARCHAR(100) DEFAULT 'Almacén Central',
-  `icono` VARCHAR(20) DEFAULT '🥖',
+  `tipo` VARCHAR(50) NOT NULL DEFAULT 'finished_product', -- 'finished_product'
+  `ubicacion` VARCHAR(100) DEFAULT 'Vitrinas POS',
+  `icono` VARCHAR(20) DEFAULT 'croissant',
   `descripcion` TEXT,
   PRIMARY KEY (`id`),
   CONSTRAINT `fk_productos_categorias` FOREIGN KEY (`categoria_id`) REFERENCES `categorias_producto` (`id`) ON DELETE CASCADE ON UPDATE CASCADE
@@ -83,7 +105,7 @@ CREATE TABLE IF NOT EXISTS `proveedores` (
   `direccion` TEXT,
   `condicion_pago` VARCHAR(50) DEFAULT 'Crédito 30 días',
   `calificacion` DECIMAL(3,1) DEFAULT 5.0,
-  `icono` VARCHAR(20) DEFAULT '🏢',
+  `icono` VARCHAR(20) DEFAULT 'building-2',
   PRIMARY KEY (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
@@ -99,25 +121,25 @@ CREATE TABLE IF NOT EXISTS `ordenes_compra` (
   `estado` VARCHAR(50) NOT NULL DEFAULT 'in_transit', -- 'in_transit' | 'received'
   `monto_total` DECIMAL(10,2) NOT NULL DEFAULT 0.00,
   PRIMARY KEY (`id`),
-  CONSTRAINT `fk_ordenes_proveedores` FOREIGN KEY (`proveedor_id`) REFERENCES `proveedores` (`id`) ON DELETE CASCADE ON UPDATE CASCADE
+  CONSTRAINT `fk_ordenes_proveedores` FOREIGN KEY (`proveedor_id`) REFERENCES `proveedores` (`id`) ON DELETE RESTRICT ON UPDATE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- ----------------------------------------------------------------------------
--- 6b. TABLA: ordenes_compra_detalle (Detalle de Ítems Comprados - 1FN Normalizada)
+-- 6b. TABLA: ordenes_compra_detalle (Detalle de Insumos Comprados - 1FN Normalizada)
 -- ----------------------------------------------------------------------------
 CREATE TABLE IF NOT EXISTS `ordenes_compra_detalle` (
   `id` INT AUTO_INCREMENT NOT NULL,
   `orden_id` VARCHAR(50) NOT NULL,
-  `producto_id` VARCHAR(50) NOT NULL,
+  `materia_prima_id` VARCHAR(50) NOT NULL,
   `cantidad` DECIMAL(10,2) NOT NULL DEFAULT 1.00,
   `precio` DECIMAL(10,2) NOT NULL DEFAULT 0.00,
   PRIMARY KEY (`id`),
   CONSTRAINT `fk_ordenes_compra_detalle_orden` FOREIGN KEY (`orden_id`) REFERENCES `ordenes_compra` (`id`) ON DELETE CASCADE ON UPDATE CASCADE,
-  CONSTRAINT `fk_ordenes_compra_detalle_producto` FOREIGN KEY (`producto_id`) REFERENCES `productos` (`id`) ON DELETE CASCADE ON UPDATE CASCADE
+  CONSTRAINT `fk_ordenes_compra_detalle_materia_prima` FOREIGN KEY (`materia_prima_id`) REFERENCES `materias_primas` (`id`) ON DELETE RESTRICT ON UPDATE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- ----------------------------------------------------------------------------
--- 7. TABLA: ventas (Encabezado de Comprobantes de Venta POS)
+-- 7. TABLA: ventas (Encabezado de Comprobantes de Venta POS - Bimonetario)
 -- ----------------------------------------------------------------------------
 CREATE TABLE IF NOT EXISTS `ventas` (
   `id` VARCHAR(50) NOT NULL,
@@ -128,12 +150,14 @@ CREATE TABLE IF NOT EXISTS `ventas` (
   `iva` DECIMAL(10,2) NOT NULL DEFAULT 0.00,
   `descuento` DECIMAL(10,2) NOT NULL DEFAULT 0.00,
   `total` DECIMAL(10,2) NOT NULL DEFAULT 0.00,
+  `tasa_bcv` DECIMAL(12,4) NOT NULL DEFAULT 1.0000,
+  `total_bs` DECIMAL(16,2) NOT NULL DEFAULT 0.00,
   `metodo_pago` VARCHAR(50) NOT NULL DEFAULT 'Efectivo',
   `monto_pagado` DECIMAL(10,2) NOT NULL DEFAULT 0.00,
   `cambio` DECIMAL(10,2) NOT NULL DEFAULT 0.00,
   `tipo_pedido` VARCHAR(50) DEFAULT 'Para Llevar',
   PRIMARY KEY (`id`),
-  CONSTRAINT `fk_ventas_usuarios` FOREIGN KEY (`usuario_id`) REFERENCES `usuarios` (`id`) ON DELETE CASCADE ON UPDATE CASCADE
+  CONSTRAINT `fk_ventas_usuarios` FOREIGN KEY (`usuario_id`) REFERENCES `usuarios` (`id`) ON DELETE RESTRICT ON UPDATE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- ----------------------------------------------------------------------------
@@ -148,7 +172,7 @@ CREATE TABLE IF NOT EXISTS `ventas_detalle` (
   `subtotal_linea` DECIMAL(10,2) NOT NULL DEFAULT 0.00,
   PRIMARY KEY (`id`),
   CONSTRAINT `fk_ventas_detalle_venta` FOREIGN KEY (`venta_id`) REFERENCES `ventas` (`id`) ON DELETE CASCADE ON UPDATE CASCADE,
-  CONSTRAINT `fk_ventas_detalle_producto` FOREIGN KEY (`producto_id`) REFERENCES `productos` (`id`) ON DELETE CASCADE ON UPDATE CASCADE
+  CONSTRAINT `fk_ventas_detalle_producto` FOREIGN KEY (`producto_id`) REFERENCES `productos` (`id`) ON DELETE RESTRICT ON UPDATE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- ----------------------------------------------------------------------------
@@ -171,7 +195,7 @@ CREATE TABLE IF NOT EXISTS `asientos_contables` (
   `fecha_hora` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
   `concepto` TEXT NOT NULL,
   `modulo_origen` VARCHAR(100) NOT NULL,
-  `icono` VARCHAR(20) DEFAULT '🧾',
+  `icono` VARCHAR(20) DEFAULT 'receipt',
   `total_debe` DECIMAL(10,2) NOT NULL DEFAULT 0.00,
   `total_haber` DECIMAL(10,2) NOT NULL DEFAULT 0.00,
   PRIMARY KEY (`id`)
@@ -188,7 +212,7 @@ CREATE TABLE IF NOT EXISTS `asientos_detalle` (
   `haber` DECIMAL(10,2) NOT NULL DEFAULT 0.00,
   PRIMARY KEY (`id`),
   CONSTRAINT `fk_asientos_detalle_encabezado` FOREIGN KEY (`asiento_id`) REFERENCES `asientos_contables` (`id`) ON DELETE CASCADE ON UPDATE CASCADE,
-  CONSTRAINT `fk_asientos_detalle_cuentas` FOREIGN KEY (`cuenta_codigo`) REFERENCES `plan_cuentas` (`codigo`) ON DELETE CASCADE ON UPDATE CASCADE
+  CONSTRAINT `fk_asientos_detalle_cuentas` FOREIGN KEY (`cuenta_codigo`) REFERENCES `plan_cuentas` (`codigo`) ON DELETE RESTRICT ON UPDATE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- ----------------------------------------------------------------------------
@@ -221,7 +245,7 @@ CREATE TABLE IF NOT EXISTS `lotes_produccion` (
   `id` VARCHAR(50) NOT NULL,
   `codigo` VARCHAR(50) NOT NULL,
   `producto` VARCHAR(150) NOT NULL,
-  `icono` VARCHAR(20) DEFAULT '🥐',
+  `icono` VARCHAR(20) DEFAULT 'croissant',
   `cantidad` INT NOT NULL DEFAULT 0,
   `estado_leudado` VARCHAR(100) NOT NULL DEFAULT 'Leudado Completo (100%)',
   `temperatura_recomendada` INT DEFAULT 190,
@@ -289,39 +313,63 @@ INSERT INTO `roles` (`id`, `codigo`, `nombre`, `descripcion`, `redirect_url`) VA
 ('rol_accountant', 'ACCOUNTANT', 'Contador & Administrador', 'Auditoría financiera, balance de comprobación y órdenes de compra.', 'modules/accounting.html')
 ON DUPLICATE KEY UPDATE `nombre` = VALUES(`nombre`), `redirect_url` = VALUES(`redirect_url`);
 
--- 4. Usuarios (Sin columna redirect_url)
-INSERT INTO `usuarios` (`id`, `rol_id`, `codigo`, `nombre`, `email`, `telefono`, `pin`, `icono`, `turno`, `estado`) VALUES
-('usr_manager', 'rol_admin', 'EMP-003', 'Juan Mendoza', 'juan.gerente@parisienne.com', '(01) 555-JUAN', '1234', '👨‍💼', 'Turno Completo', 'active'),
-('usr_baker', 'rol_baker', 'EMP-004', 'Enrique Chef', 'enrique.chef@parisienne.com', '(01) 555-ENRIQUE', '1234', '👨‍🍳', 'Mañana (05:00 - 13:00)', 'active'),
-('usr_cashier', 'rol_cashier', 'EMP-005', 'Henry POS', 'henry.pos@parisienne.com', '(01) 555-HENRY', '1234', '👨‍💼', 'Mañana (07:00 - 15:00)', 'active'),
-('usr_accountant', 'rol_accountant', 'EMP-006', 'Sebastian Finanzas', 'sebastian.finanzas@parisienne.com', '(01) 555-SEBASTIAN', '1234', '📊', 'Horario Oficina', 'active'),
-('usr_carlos', 'rol_baker', 'EMP-001', 'Carlos Mendoza', 'carlos.mendoza@parisienne.com', '(01) 555-CARLOS', '1234', '👨‍🍳', 'Mañana (05:00 - 13:00)', 'active'),
-('usr_ana', 'rol_cashier', 'EMP-002', 'Ana Ramírez', 'ana.ramirez@parisienne.com', '(01) 555-ANA', '1234', '👩‍💼', 'Tarde (13:00 - 21:00)', 'active')
-ON DUPLICATE KEY UPDATE `nombre` = VALUES(`nombre`), `rol_id` = VALUES(`rol_id`);
+-- 4. Usuarios (Con columna username)
+INSERT INTO `usuarios` (`id`, `rol_id`, `codigo`, `username`, `nombre`, `email`, `telefono`, `pin`, `icono`, `turno`, `estado`) VALUES
+('usr_manager', 'rol_admin', 'EMP-003', 'admin', 'Juan Mendoza', 'juan.gerente@parisienne.com', '(01) 555-JUAN', '1234', 'shield-check', 'Turno Completo', 'active'),
+('usr_baker', 'rol_baker', 'EMP-004', 'chef', 'Enrique Chef', 'enrique.chef@parisienne.com', '(01) 555-ENRIQUE', '1234', 'chef-hat', 'Mañana (05:00 - 13:00)', 'active'),
+('usr_cashier', 'rol_cashier', 'EMP-005', 'cajero', 'Henry POS', 'henry.pos@parisienne.com', '(01) 555-HENRY', '1234', 'shield-check', 'Mañana (07:00 - 15:00)', 'active'),
+('usr_accountant', 'rol_accountant', 'EMP-006', 'contador', 'Sebastian Finanzas', 'sebastian.finanzas@parisienne.com', '(01) 555-SEBASTIAN', '1234', 'bar-chart-3', 'Horario Oficina', 'active'),
+('usr_carlos', 'rol_baker', 'EMP-001', 'panadero', 'Carlos Mendoza', 'carlos.mendoza@parisienne.com', '(01) 555-CARLOS', '1234', 'chef-hat', 'Mañana (05:00 - 13:00)', 'active'),
+('usr_ana', 'rol_cashier', 'EMP-002', 'cajero1', 'Ana Ramírez', 'ana.ramirez@parisienne.com', '(01) 555-ANA', '1234', 'banknote', 'Tarde (13:00 - 21:00)', 'active')
+ON DUPLICATE KEY UPDATE `nombre` = VALUES(`nombre`), `username` = VALUES(`username`), `rol_id` = VALUES(`rol_id`);
 
--- 5. Categorías de Producto
+-- 5. Categorías de Producto (Exclusivas de Mostrador y Venta POS)
 INSERT INTO `categorias_producto` (`id`, `nombre`, `descripcion`) VALUES
-('cat_insumos', 'Materias Primas', 'Harinas, mantequillas, levaduras y cacao para horneado.'),
 ('cat_panaderia', 'Panadería Artesanal', 'Baguettes, brioches y panes de especialidad.'),
 ('cat_pasteleria', 'Pastelería & Éclairs', 'Éclairs, tartas de limón y milhojas.'),
-('cat_cafeteria', 'Cafetería & Bebidas', 'Café espresso, cappuccino y jugos.');
+('cat_cafeteria', 'Cafetería & Bebidas', 'Café espresso, cappuccino y jugos.'),
+('cat_especialidades', 'Especialidades & Desayunos', 'Croque-Monsieur, quiches y productos salados del POS.');
 
--- 6. Productos e Inventario
+-- 6. Materias Primas e Insumos (Almacén de Panadería)
+INSERT INTO `materias_primas` (`id`, `codigo`, `nombre`, `unidad_medida`, `stock_actual`, `stock_minimo`, `costo_unitario`, `ubicacion`, `icono`, `descripcion`, `proveedor_id`) VALUES
+('inv_001', 'MAT-001', 'Harina de Trigo Tradicional T55', 'kg', 18.00, 50.00, 1.80, 'Almacén Principal A-1', 'wheat', 'Harina refinada para panadería francesa.', 'sup_01'),
+('inv_002', 'MAT-002', 'Mantequilla de Normandía 84% M.G.', 'kg', 12.50, 30.00, 8.50, 'Cámara Frigorífica B-2', 'milk', 'Mantequilla de alta grasa para hojaldres.', 'sup_02'),
+('inv_003', 'MAT-003', 'Levadura Madre Activa Tostada', 'kg', 8.00, 15.00, 4.20, 'Refrigerador Insumos', 'package', 'Masa madre natural fermentada.', 'sup_01'),
+('inv_004', 'MAT-004', 'Chocolate Belga 60% Cacao', 'kg', 42.00, 20.00, 12.00, 'Almacén Seco A-3', 'package', 'Cobertura de cacao belga de origen.', 'sup_04'),
+('inv_005', 'MAT-005', 'Azúcar Refinada Extra Fina', 'kg', 45.00, 20.00, 1.50, 'Almacén Seco A-2', 'package', 'Azúcar refinada cristalina para masas leudadas y pastelería fina.', 'sup_01'),
+('inv_006', 'MAT-006', 'Sal Marina de Araya / Sal Refinada', 'kg', 30.00, 10.00, 0.80, 'Almacén Seco A-4', 'package', 'Sal marina purificada para control de fermentación y sabor en panadería.', 'sup_01')
+ON DUPLICATE KEY UPDATE `nombre` = VALUES(`nombre`), `stock_actual` = VALUES(`stock_actual`), `costo_unitario` = VALUES(`costo_unitario`);
+
+-- 6b. Productos Terminados (Venta al Público en Mostrador y Vitrinas POS)
 INSERT INTO `productos` (`id`, `categoria_id`, `codigo`, `nombre`, `unidad_medida`, `stock_actual`, `stock_minimo`, `precio_unitario`, `tipo`, `ubicacion`, `icono`, `descripcion`) VALUES
-('inv_001', 'cat_insumos', 'MAT-001', 'Harina de Trigo Tradicional T55', 'kg', 18.00, 50.00, 1.80, 'raw_material', 'Almacén Principal A-1', '🌾', 'Harina refinada para panadería francesa.'),
-('inv_002', 'cat_insumos', 'MAT-002', 'Mantequilla de Normandía 84% M.G.', 'kg', 12.50, 30.00, 8.50, 'raw_material', 'Cámara Frigorífica B-2', '🧈', 'Mantequilla de alta grasa para hojaldres.'),
-('inv_003', 'cat_insumos', 'MAT-003', 'Levadura Madre Activa Tostada', 'kg', 8.00, 15.00, 4.20, 'raw_material', 'Refrigerador Insumos', '🧫', 'Masa madre natural fermentada.'),
-('inv_004', 'cat_insumos', 'MAT-004', 'Chocolate Belga 60% Cacao', 'kg', 42.00, 20.00, 12.00, 'raw_material', 'Almacén Seco A-3', '🍫', 'Cobertura de cacao belga de origen.'),
-('inv_007', 'cat_panaderia', 'PAN-001', 'Baguette Tradicional Parisina', 'ud', 45.00, 20.00, 2.50, 'finished_product', 'Mostrador Panadería', '🥖', 'Corteza crujiente y miga alveolada.'),
-('inv_008', 'cat_panaderia', 'PAN-002', 'Croissant de Mantequilla', 'ud', 60.00, 25.00, 3.00, 'finished_product', 'Vitrinas POS', '🥐', 'Hojaldre 100% mantequilla de Normandía.'),
-('inv_009', 'cat_pasteleria', 'PAS-001', 'Éclair de Chocolate Belga', 'ud', 25.00, 15.00, 4.50, 'finished_product', 'Vitrinas Refrigeradas Pastelería', '⚡', 'Pasta choux rellena de crema pastelera.');
+('prod_001', 'cat_panaderia', 'PAN-001', 'Baguette Tradicional Parisina', 'ud', 43.00, 20.00, 2.50, 'finished_product', 'Mostrador Panadería', '🥖', 'Corteza crujiente y miga alveolada.'),
+('prod_002', 'cat_panaderia', 'PAN-002', 'Croissant de Mantequilla', 'ud', 60.00, 25.00, 3.00, 'finished_product', 'Vitrinas POS', '🥐', 'Hojaldre 100% mantequilla de Normandía.'),
+('prod_003', 'cat_panaderia', 'PAN-003', 'Pain au Chocolat', 'ud', 35.00, 15.00, 3.50, 'finished_product', 'Vitrinas POS', '🍫', 'Hojaldre relleno de dos barras de chocolate negro 60%.'),
+('prod_004', 'cat_panaderia', 'PAN-004', 'Brioche de Vainilla', 'ud', 20.00, 10.00, 4.20, 'finished_product', 'Vitrinas POS', '🍞', 'Pan de huevo esponjoso aromatizado con vainilla.'),
+('prod_005', 'cat_panaderia', 'PAN-005', 'Focaccia de Romero y Aceitunas', 'ud', 15.00, 8.00, 5.50, 'finished_product', 'Vitrinas POS', '🫓', 'Pan plano italiano horneado con aceite de oliva extra virgen.'),
+('prod_006', 'cat_pasteleria', 'PAS-001', 'Éclair de Chocolate Belga', 'ud', 25.00, 15.00, 4.50, 'finished_product', 'Vitrinas Refrigeradas Pastelería', '⚡', 'Pasta choux rellena de crema pastelera.'),
+('prod_007', 'cat_pasteleria', 'PAS-002', 'Tarta de Limón Merengada', 'ud', 18.00, 10.00, 5.00, 'finished_product', 'Vitrinas Refrigeradas', '🍋', 'Tarta de limón con merengue tostado.'),
+('prod_008', 'cat_pasteleria', 'PAS-003', 'Caja de Macarons Surtidos (6 ud)', 'ud', 30.00, 12.00, 9.50, 'finished_product', 'Vitrinas Refrigeradas', '🍡', 'Selección de macarons surtidos.'),
+('prod_009', 'cat_pasteleria', 'PAS-004', 'Milhojas Tradicional de Crema', 'ud', 14.00, 8.00, 4.80, 'finished_product', 'Vitrinas Refrigeradas', '🍰', 'Capas de hojaldre con crema pastelera.'),
+('prod_010', 'cat_cafeteria', 'BEB-001', 'Café Espresso Doble', 'ud', 100.00, 30.00, 2.80, 'finished_product', 'Barra de Café', '☕', 'Café espresso doble de tueste medio.'),
+('prod_011', 'cat_cafeteria', 'BEB-002', 'Capuchino Cremoso', 'ud', 80.00, 25.00, 3.80, 'finished_product', 'Barra de Café', '🥛', 'Espresso con leche vaporizada y espuma.'),
+('prod_012', 'cat_cafeteria', 'BEB-003', 'Café au Lait Parisien', 'ud', 90.00, 25.00, 3.50, 'finished_product', 'Barra de Café', '☕', 'Café de filtro con leche caliente.'),
+('prod_013', 'cat_cafeteria', 'BEB-004', 'Jugo de Naranja Recién Exprimido', 'l', 40.00, 15.00, 4.00, 'finished_product', 'Barra de Café', '🍊', 'Jugo natural de naranja.'),
+('prod_014', 'cat_especialidades', 'ESP-001', 'Croque-Monsieur Tradicional', 'ud', 22.00, 8.00, 7.50, 'finished_product', 'Cocina / Mostrador', '🥪', 'Sándwich caliente de jamón y queso.'),
+('prod_015', 'cat_especialidades', 'ESP-002', 'Quiche Lorraine de Bacon', 'ud', 16.00, 8.00, 6.80, 'finished_product', 'Cocina / Mostrador', '🥧', 'Quiche salada con bacon y queso.'),
+('prod_016', 'cat_panaderia', 'PAN-006', 'Pan Canilla Tradicional', 'ud', 50.00, 20.00, 1.50, 'finished_product', 'Mostrador Panadería', '🥖', 'Pan canilla clásico de corteza fina y miga ligera y suave.'),
+('prod_017', 'cat_panaderia', 'PAN-007', 'Pan de Jamón Navideño Especial', 'ud', 15.00, 5.00, 12.00, 'finished_product', 'Vitrinas Especiales', '🥖', 'Pan relleno con jamón ahumado selecto, tocineta, pasas y aceitunas rellenas.'),
+('prod_018', 'cat_panaderia', 'PAN-008', 'Pan Gallego Rústico', 'ud', 20.00, 10.00, 3.50, 'finished_product', 'Mostrador Panadería', '🍞', 'Hogaza de alta hidratación con harina de trigo y masa madre rústica.'),
+('prod_019', 'cat_panaderia', 'PAN-009', 'Pan Campestre Integral Multigrano', 'ud', 18.00, 10.00, 3.80, 'finished_product', 'Mostrador Panadería', '🥖', 'Pan de harina integral con mezcla de semillas de chía, lino y sésamo tostado.'),
+('prod_020', 'cat_panaderia', 'PAN-010', 'Ciabatta Italiana Rústica', 'ud', 25.00, 12.00, 2.80, 'finished_product', 'Mostrador Panadería', '🫓', 'Pan plano de miga abierta con aceite de oliva extra virgen prensado en frío.')
+ON DUPLICATE KEY UPDATE `nombre` = VALUES(`nombre`), `stock_actual` = VALUES(`stock_actual`), `precio_unitario` = VALUES(`precio_unitario`);
 
 -- 7. Proveedores
 INSERT INTO `proveedores` (`id`, `codigo`, `nombre`, `categoria`, `contacto`, `telefono`, `email`, `rif`, `direccion`, `condicion_pago`, `calificacion`, `icono`) VALUES
-('sup_01', 'PROV-001', 'Molinos del Sur, C.A.', 'Harinas y Cereales', 'Carlos Mendoza', '(01) 555-MOLINO', 'ventas@molinosdelsur.com', 'J-30819283-4', 'Zona Industrial Sur, Parcela 14, Caracas', 'Crédito 30 días', 4.9, '🌾'),
-('sup_02', 'PROV-002', 'Lácteos La Granja', 'Lácteos y Mantequillas', 'María Elena Suárez', '(01) 555-LACTEOS', 'pedidos@lacteoslagranja.com', 'J-40192837-1', 'Av. Las Acacias, Edif. La Granja, Valencia', 'Contado / 15 días', 4.8, '🧈'),
-('sup_03', 'PROV-003', 'Empaques del Norte', 'Empaques y Papelería', 'Roberto Gómez', '(01) 555-EMPAQUE', 'contacto@empaquesnorte.com', 'J-29837482-9', 'Av. Principal Norte, Bodega 5, Maracay', 'Crédito 30 días', 4.7, '📦'),
-('sup_04', 'PROV-004', 'Chocolates del Rey', 'Coberturas y Cacao Belga', 'Jean-Philippe Laurent', '(01) 555-CACAO', 'info@chocolatesdelrey.com', 'J-50192834-6', 'Calle Los Artesanos, Qta. Cacao, Los Teques', 'Crédito 15 días', 5.0, '🍫');
+('sup_01', 'PROV-001', 'Molinos del Sur, C.A.', 'Harinas y Cereales', 'Carlos Mendoza', '(01) 555-MOLINO', 'ventas@molinosdelsur.com', 'J-30819283-4', 'Zona Industrial Sur, Parcela 14, Caracas', 'Crédito 30 días', 4.9, 'wheat'),
+('sup_02', 'PROV-002', 'Lácteos La Granja', 'Lácteos y Mantequillas', 'María Elena Suárez', '(01) 555-LACTEOS', 'pedidos@lacteoslagranja.com', 'J-40192837-1', 'Av. Las Acacias, Edif. La Granja, Valencia', 'Contado / 15 días', 4.8, 'milk'),
+('sup_03', 'PROV-003', 'Empaques del Norte', 'Empaques y Papelería', 'Roberto Gómez', '(01) 555-EMPAQUE', 'contacto@empaquesnorte.com', 'J-29837482-9', 'Av. Principal Norte, Bodega 5, Maracay', 'Crédito 30 días', 4.7, 'package'),
+('sup_04', 'PROV-004', 'Chocolates del Rey', 'Coberturas y Cacao Belga', 'Jean-Philippe Laurent', '(01) 555-CACAO', 'info@chocolatesdelrey.com', 'J-50192834-6', 'Calle Los Artesanos, Qta. Cacao, Los Teques', 'Crédito 15 días', 5.0, 'sparkles');
 
 -- 8. Órdenes de Compra (Sin resumen_insumos)
 INSERT INTO `ordenes_compra` (`id`, `codigo`, `proveedor_id`, `fecha_pedido`, `fecha_entrega`, `estado`, `monto_total`) VALUES
@@ -329,8 +377,8 @@ INSERT INTO `ordenes_compra` (`id`, `codigo`, `proveedor_id`, `fecha_pedido`, `f
 ('po_002', 'OC-2026-0090', 'sup_02', '2026-08-11', '2026-08-11', 'in_transit', 1700.00),
 ('po_003', 'OC-2026-0088', 'sup_04', '2026-08-05', '2026-08-07', 'received', 600.00);
 
--- 8b. Detalle de Órdenes de Compra (Tabla 1FN Normalizada)
-INSERT INTO `ordenes_compra_detalle` (`orden_id`, `producto_id`, `cantidad`, `precio`) VALUES
+-- 8b. Detalle de Órdenes de Compra (Tabla 1FN Normalizada hacia materias_primas)
+INSERT INTO `ordenes_compra_detalle` (`orden_id`, `materia_prima_id`, `cantidad`, `precio`) VALUES
 ('po_001', 'inv_001', 1000.00, 1.80),
 ('po_002', 'inv_002', 200.00, 8.50),
 ('po_003', 'inv_004', 50.00, 12.00);
@@ -351,7 +399,7 @@ INSERT INTO `plan_cuentas` (`codigo`, `nombre`, `tipo`, `naturaleza`) VALUES
 
 -- 10. Asientos Contables y Detalle
 INSERT INTO `asientos_contables` (`id`, `codigo`, `fecha_hora`, `concepto`, `modulo_origen`, `icono`, `total_debe`, `total_haber`) VALUES
-('as_001', 'AS-2026-001', '2026-08-11 16:42:00', 'Venta POS Mostrador (Comprobante FAC-2026-1003)', 'Punto de Venta (POS)', '🛒', 1485.50, 1485.50);
+('as_001', 'AS-2026-001', '2026-08-11 16:42:00', 'Venta POS Mostrador (Comprobante FAC-2026-1003)', 'Punto de Venta (POS)', 'shopping-cart', 1485.50, 1485.50);
 
 INSERT INTO `asientos_detalle` (`asiento_id`, `cuenta_codigo`, `debe`, `haber`) VALUES
 ('as_001', '1105', 1485.50, 0.00),

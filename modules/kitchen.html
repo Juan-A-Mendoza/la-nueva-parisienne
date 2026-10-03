@@ -17,50 +17,53 @@
 
     <!-- NAVBAR SUPERIOR -->
     <header class="kitchen-navbar">
-      <div class="kitchen-brand-group">
-        <div class="kitchen-brand-icon" aria-hidden="true">👨‍🍳</div>
-        <div>
-          <h1 class="brand-title" style="font-size: 1.3rem;">La Nueva Parisienne</h1>
-          <span class="sub-title">Módulo 2: Producción y Cocina (KDS & Hornos)</span>
-        </div>
-      </div>
-
-      <div style="display: flex; align-items: center; gap: 1.25rem;">
-        <div class="cashier-badge">
-          <span id="chefAvatar" class="cashier-avatar">👨‍🍳</span>
-          <div class="cashier-info">
-            <span id="chefName" class="cashier-name">Jean-Luc Dubois</span>
-            <span class="shift-status">● Turno Mañana (05:00 - 13:00)</span>
+      <div class="navbar-container">
+        <div class="kitchen-brand-group">
+          <div class="kitchen-brand-icon" aria-hidden="true"><i data-lucide="chef-hat"></i></div>
+          <div>
+            <h1 class="brand-title">La Nueva Parisienne</h1>
+            <span class="sub-title">Módulo 2 &bull; Producción y Cocina (KDS &amp; Hornos)</span>
           </div>
         </div>
-        <!-- Botón Dedicado Exclusivo para Cerrar Sesión -->
-        <button id="logoutBtn" class="btn-pos-logout" title="Cerrar sesión activa y volver al login">Cerrar Sesión</button>
+
+        <div class="navbar-controls">
+          <div class="cashier-badge">
+            <span id="chefAvatar" class="cashier-avatar"><i data-lucide="chef-hat"></i></span>
+            <div class="cashier-info">
+              <span id="chefName" class="cashier-name">Carlos Eduardo Rivas</span>
+              <span class="shift-status">● Maestro Panadero</span>
+            </div>
+          </div>
+
+          <button id="logoutBtn" class="btn-pos-logout" title="Cerrar sesión activa y volver al login">
+            <i data-lucide="log-out" class="icon-sm"></i> <span>Salir</span>
+          </button>
+        </div>
       </div>
     </header>
 
-    <!-- NAVEGACIÓN POR MIGAS DE PAN & ACCIÓN DE REQUISICIÓN DE MATERIA PRIMA -->
-    <div style="display: flex; justify-content: space-between; align-items: center; padding: 0.75rem 2rem 0.25rem 2rem; flex-wrap: wrap; gap: 1rem;">
-      <nav class="breadcrumbs-container" aria-label="Migas de pan" style="padding: 0; background: none; margin: 0;">
-        <ol class="breadcrumbs-list">
-          <li class="breadcrumb-item">
-            <a href="dashboard.html">🏠 Inicio (Panel Central)</a>
-          </li>
-          <li class="breadcrumb-separator">/</li>
-          <li class="breadcrumb-item active" aria-current="page">Producción y Cocina</li>
-        </ol>
-      </nav>
+    <!-- BARRA SUPERIOR DE ACCIÓN: REQUISICIÓN DE MATERIA PRIMA & RECETARIO -->
+    <div style="width: 100%; background: #FFFFFF; border-bottom: 1px dashed rgba(44, 29, 17, 0.08);">
+      <div style="max-width: 1440px; width: 100%; margin: 0 auto; box-sizing: border-box; padding: 0.65rem 2rem; display: flex; justify-content: flex-end; align-items: center; flex-wrap: wrap; gap: 0.85rem;">
 
-      <!-- BOTÓN PRINCIPAL 1: SOLICITAR MATERIA PRIMA -->
-      <button id="btnOpenSolicitarMpModal" type="button" class="btn-primary-action gold-variant" style="background: linear-gradient(135deg, #D49B54 0%, #C48B44 100%); color: #FFFFFF; font-weight: 800; padding: 0.65rem 1.35rem; border-radius: var(--radius-pill); border: none; cursor: pointer; display: inline-flex; align-items: center; gap: 0.6rem; box-shadow: 0 4px 12px rgba(212,155,84,0.35); font-size: 0.92rem; transition: all 0.2s ease;">
-        <span style="font-size: 1.1rem;">🎫</span>
-        <span>Solicitar Materia Prima</span>
-      </button>
+        <!-- BOTÓN PRINCIPAL 1: RECETARIO & CALCULADORA DE HORNEADO -->
+        <button id="btnOpenRecetarioModal" type="button" class="btn-primary-action" style="background: linear-gradient(135deg, #2C1D11 0%, #4A3320 100%); color: #FFFFFF; font-weight: 800; padding: 0.5rem 1.25rem; border-radius: var(--radius-pill); border: 1px solid rgba(212,155,84,0.4); cursor: pointer; display: inline-flex; align-items: center; gap: 0.6rem; box-shadow: 0 4px 12px rgba(44,29,17,0.25); font-size: 0.88rem; transition: all 0.2s ease;">
+          <i data-lucide="book-open" class="icon-sm" style="color: var(--color-gold);"></i>
+          <span>📖 Recetario &amp; Calculadora de Panadería</span>
+        </button>
+
+        <!-- BOTÓN PRINCIPAL 2: SOLICITAR MATERIA PRIMA -->
+        <button id="btnOpenSolicitarMpModal" type="button" class="btn-primary-action gold-variant" style="background: linear-gradient(135deg, #D49B54 0%, #C48B44 100%); color: #FFFFFF; font-weight: 800; padding: 0.5rem 1.25rem; border-radius: var(--radius-pill); border: none; cursor: pointer; display: inline-flex; align-items: center; gap: 0.6rem; box-shadow: 0 4px 12px rgba(212,155,84,0.35); font-size: 0.88rem; transition: all 0.2s ease;">
+          <i data-lucide="clipboard-list" class="icon-sm"></i>
+          <span>Solicitar Materia Prima</span>
+        </button>
+      </div>
     </div>
 
     <!-- BARRA DE MÉTRICAS RÁPIDAS (KPI BAR) -->
     <section class="kitchen-kpi-bar" aria-label="Métricas en tiempo real de producción">
       <div class="kpi-card-mini">
-        <div class="kpi-icon-box">🔥</div>
+        <div class="kpi-icon-box"><i data-lucide="flame"></i></div>
         <div class="kpi-text-box">
           <h4>Hornos en Uso</h4>
           <div id="activeOvensKpi" class="kpi-val">3 / 4</div>
@@ -68,7 +71,7 @@
       </div>
 
       <div class="kpi-card-mini">
-        <div class="kpi-icon-box">📋</div>
+        <div class="kpi-icon-box"><i data-lucide="clipboard-list"></i></div>
         <div class="kpi-text-box">
           <h4>Comandas POS en Cola</h4>
           <div id="pendingOrdersKpi" class="kpi-val">4 órdenes</div>
@@ -76,7 +79,7 @@
       </div>
 
       <div class="kpi-card-mini">
-        <div class="kpi-icon-box">🥖</div>
+        <div class="kpi-icon-box"><i data-lucide="croissant"></i></div>
         <div class="kpi-text-box">
           <h4>Horneado Hoy</h4>
           <div id="bakedTodayKpi" class="kpi-val">142 ud</div>
@@ -84,7 +87,7 @@
       </div>
 
       <div class="kpi-card-mini">
-        <div class="kpi-icon-box">⚡</div>
+        <div class="kpi-icon-box"><i data-lucide="timer"></i></div>
         <div class="kpi-text-box">
           <h4>Eficiencia de Cocina</h4>
           <div class="kpi-val" style="color: var(--color-success);">96%</div>
@@ -99,7 +102,7 @@
       <section class="kitchen-column" aria-labelledby="ovensHeader">
         <div class="column-header">
           <h2 id="ovensHeader" class="column-title">
-            <span>🔥</span> Hornos Industriales Activos
+            <i data-lucide="flame" class="icon-sm"></i> Hornos Industriales Activos
           </h2>
           <span class="column-badge">4 Hornos</span>
         </div>
@@ -113,7 +116,7 @@
       <section class="kitchen-column" aria-labelledby="kdsHeader">
         <div class="column-header">
           <h2 id="kdsHeader" class="column-title">
-            <span>📋</span> Comandas POS en Curso
+            <i data-lucide="clipboard-list" class="icon-sm"></i> Comandas POS en Curso
           </h2>
           <span class="column-badge" style="background: var(--color-terracotta); color: white;">En Tiempo Real</span>
         </div>
@@ -127,7 +130,7 @@
       <section class="kitchen-column" aria-labelledby="stagingHeader">
         <div class="column-header">
           <h2 id="stagingHeader" class="column-title">
-            <span>🥖</span> Lotes Listos para Horneado
+            <i data-lucide="croissant" class="icon-sm"></i> Lotes Listos para Horneado
           </h2>
           <span class="column-badge" style="background: var(--color-success); color: white;">Leudados</span>
         </div>
@@ -144,7 +147,7 @@
       <div style="background: #FFFFFF; border-radius: var(--radius-md); padding: 1.25rem 1.5rem; border: var(--border-subtle); box-shadow: var(--shadow-subtle);">
         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; padding-bottom: 0.75rem; border-bottom: 1px solid var(--border-subtle); flex-wrap: wrap; gap: 0.5rem;">
           <div style="display: flex; align-items: center; gap: 0.6rem;">
-            <span style="font-size: 1.3rem;">📋</span>
+            <i data-lucide="clipboard-list" class="icon-sm"></i>
             <div>
               <h3 style="margin: 0; font-size: 1.05rem; color: var(--color-espresso); font-weight: 800;">Mis Solicitudes de Materia Prima (Requisición Cocina)</h3>
               <span style="font-size: 0.8rem; color: var(--color-muted);">Historial de tickets enviados a Gerencia para reabastecimiento de insumos</span>
@@ -181,20 +184,20 @@
     <div class="modal-card-container" style="max-width: 500px; width: 92%;">
       <div class="modal-card-header">
         <div class="modal-header-title">
-          <span class="modal-header-icon">🎫</span>
+          <span class="modal-header-icon"><i data-lucide="clipboard-list"></i></span>
           <div>
             <h2 id="modalSolicitarMpTitle" class="modal-title-text">Solicitar Materia Prima</h2>
             <span class="modal-subtitle-text">Requisición Interna para Cocina y Panadería</span>
           </div>
         </div>
-        <button id="closeSolicitarMpModalBtn" type="button" class="btn-modal-close" aria-label="Cerrar modal">✕</button>
+        <button id="closeSolicitarMpModalBtn" type="button" class="btn-modal-close" aria-label="Cerrar modal">&times;</button>
       </div>
 
       <form id="solicitarMpForm">
         <div class="modal-card-body" style="gap: 1.15rem; padding: 1.25rem;">
           
           <div>
-            <label for="solicitarMpSelect" class="form-label-custom" style="display: block; margin-bottom: 0.4rem; font-weight: 700; font-size: 0.85rem; color: var(--color-espresso);">🌾 Seleccionar Materia Prima / Insumo *</label>
+            <label for="solicitarMpSelect" class="form-label-custom" style="display: block; margin-bottom: 0.4rem; font-weight: 700; font-size: 0.85rem; color: var(--color-espresso);"><i data-lucide="wheat" class="icon-xs"></i> Seleccionar Materia Prima / Insumo *</label>
             <select id="solicitarMpSelect" class="form-control-custom" required style="width: 100%; height: 42px; padding: 0 0.85rem; border-radius: var(--radius-sm); border: 1px solid var(--border-subtle); font-family: inherit;">
               <!-- Opciones dinámicas de materias primas -->
             </select>
@@ -202,18 +205,18 @@
 
           <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
             <div>
-              <label for="solicitarMpCantidad" class="form-label-custom" style="display: block; margin-bottom: 0.4rem; font-weight: 700; font-size: 0.85rem; color: var(--color-espresso);">📦 Cantidad Requerida *</label>
+              <label for="solicitarMpCantidad" class="form-label-custom" style="display: block; margin-bottom: 0.4rem; font-weight: 700; font-size: 0.85rem; color: var(--color-espresso);"><i data-lucide="boxes" class="icon-xs"></i> Cantidad Requerida *</label>
               <input type="number" id="solicitarMpCantidad" class="form-control-custom" placeholder="Ej: 50" min="0.1" step="any" required style="width: 100%; height: 42px; padding: 0 0.85rem; border-radius: var(--radius-sm); border: 1px solid var(--border-subtle);" />
             </div>
 
             <div>
-              <label for="solicitarMpUom" class="form-label-custom" style="display: block; margin-bottom: 0.4rem; font-weight: 700; font-size: 0.85rem; color: var(--color-espresso);">📏 Unidad de Medida (UoM)</label>
+              <label for="solicitarMpUom" class="form-label-custom" style="display: block; margin-bottom: 0.4rem; font-weight: 700; font-size: 0.85rem; color: var(--color-espresso);"><i data-lucide="scale" class="icon-xs"></i> Unidad de Medida (UoM)</label>
               <input type="text" id="solicitarMpUom" class="form-control-custom" value="kg" readonly style="width: 100%; height: 42px; padding: 0 0.85rem; border-radius: var(--radius-sm); border: 1px solid var(--border-subtle); background: rgba(0,0,0,0.03);" />
             </div>
           </div>
 
           <div>
-            <label for="solicitarMpNotas" class="form-label-custom" style="display: block; margin-bottom: 0.4rem; font-weight: 700; font-size: 0.85rem; color: var(--color-espresso);">📝 Notas u Observaciones (Opcional)</label>
+            <label for="solicitarMpNotas" class="form-label-custom" style="display: block; margin-bottom: 0.4rem; font-weight: 700; font-size: 0.85rem; color: var(--color-espresso);"><i data-lucide="file-edit" class="icon-xs"></i> Notas u Observaciones (Opcional)</label>
             <textarea id="solicitarMpNotas" class="form-control-custom" rows="2" placeholder="Ej: Urgente para amasado de Baguettes del turno tarde" style="width: 100%; padding: 0.6rem 0.85rem; border-radius: var(--radius-sm); border: 1px solid var(--border-subtle); resize: vertical; font-family: inherit;"></textarea>
           </div>
 
@@ -222,7 +225,7 @@
         <div class="modal-card-footer" style="padding: 1rem 1.25rem; background: var(--bg-surface); border-top: 1px solid var(--border-subtle); display: flex; justify-content: flex-end; gap: 0.75rem;">
           <button id="cancelSolicitarMpModalBtn" type="button" class="btn-modal-action secondary" style="padding: 0.6rem 1.15rem; border-radius: var(--radius-sm); border: 1px solid var(--border-subtle); background: white; cursor: pointer;">Cancelar</button>
           <button type="submit" class="btn-modal-action primary" style="padding: 0.6rem 1.25rem; border-radius: var(--radius-sm); border: none; background: linear-gradient(135deg, #D49B54 0%, #C48B44 100%); color: white; font-weight: 700; cursor: pointer; display: flex; align-items: center; gap: 0.5rem;">
-            <span>🚀 Enviar Solicitud a Gerencia</span>
+            <i data-lucide="send" class="icon-sm"></i> <span>Enviar Solicitud a Gerencia</span>
           </button>
         </div>
       </form>
@@ -234,13 +237,13 @@
     <div class="modal-card-container">
       <div class="modal-card-header">
         <div class="modal-header-title">
-          <span class="modal-header-icon">🔥</span>
+          <span class="modal-header-icon"><i data-lucide="flame"></i></span>
           <div>
             <h2 id="modalBatchName" class="modal-title-text">Asignar Lote a Horno</h2>
             <span class="modal-subtitle-text">Programación de Horneado Industrial</span>
           </div>
         </div>
-        <button id="closeLoadOvenModalBtn" type="button" class="btn-modal-close" aria-label="Cerrar modal">✕</button>
+        <button id="closeLoadOvenModalBtn" type="button" class="btn-modal-close" aria-label="Cerrar modal">&times;</button>
       </div>
 
       <div class="modal-card-body">
@@ -249,7 +252,7 @@
 
         <form id="loadOvenForm" style="display: flex; flex-direction: column; gap: 1.15rem; text-align: left;">
           <div>
-            <label for="ovenSelect" class="form-label-custom">🔥 Seleccionar Horno Objetivo:</label>
+            <label for="ovenSelect" class="form-label-custom"><i data-lucide="flame" class="icon-xs"></i> Seleccionar Horno Objetivo:</label>
             <select id="ovenSelect" class="form-control-custom">
               <!-- Opciones dinámicas -->
             </select>
@@ -257,7 +260,7 @@
 
           <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
             <div>
-              <label for="bakeTempInput" class="form-label-custom">🌡️ Temperatura (°C):</label>
+              <label for="bakeTempInput" class="form-label-custom"><i data-lucide="thermometer" class="icon-xs"></i> Temperatura (°C):</label>
               <input type="number" id="bakeTempInput" class="form-control-custom" value="200" min="100" max="300" required>
             </div>
 
@@ -282,13 +285,13 @@
     <div class="modal-card-container">
       <div class="modal-card-header">
         <div class="modal-header-title">
-          <span id="modalDetailOvenIcon" class="modal-header-icon">🥖</span>
+          <span id="modalDetailOvenIcon" class="modal-header-icon"><i data-lucide="croissant"></i></span>
           <div>
             <h2 id="modalDetailOvenTitle" class="modal-title-text">Detalle de Horneado - Horno 1</h2>
             <span id="modalDetailOvenSubtitle" class="modal-subtitle-text">Monitoreo en Tiempo Real</span>
           </div>
         </div>
-        <button id="closeOvenDetailModalBtn" type="button" class="btn-modal-close" aria-label="Cerrar modal">✕</button>
+        <button id="closeOvenDetailModalBtn" type="button" class="btn-modal-close" aria-label="Cerrar modal">&times;</button>
       </div>
 
       <div class="modal-card-body">
@@ -313,15 +316,15 @@
         <!-- Grid de Metadatos de Horneado -->
         <div class="modal-meta-grid">
           <div class="meta-item">
-            <span class="meta-label">🥖 Producto Cargado</span>
+            <span class="meta-label"><i data-lucide="croissant" class="icon-xs"></i> Producto Cargado</span>
             <strong id="modalDetailProduct" class="meta-val">-</strong>
           </div>
           <div class="meta-item">
-            <span class="meta-label">📦 Cantidad de Unidades</span>
+            <span class="meta-label"><i data-lucide="boxes" class="icon-xs"></i> Cantidad de Unidades</span>
             <strong id="modalDetailUnits" class="meta-val">-</strong>
           </div>
           <div class="meta-item">
-            <span class="meta-label">🌡️ Temperatura Actual</span>
+            <span class="meta-label"><i data-lucide="thermometer" class="icon-xs"></i> Temperatura Actual</span>
             <strong id="modalDetailTemp" class="meta-val">-</strong>
           </div>
           <div class="meta-item">
@@ -329,11 +332,11 @@
             <strong id="modalDetailTotalTime" class="meta-val">-</strong>
           </div>
           <div class="meta-item">
-            <span class="meta-label">🔥 Tipo de Horno</span>
+            <span class="meta-label"><i data-lucide="flame" class="icon-xs"></i> Tipo de Horno</span>
             <strong id="modalDetailOvenType" class="meta-val">-</strong>
           </div>
           <div class="meta-item">
-            <span class="meta-label">👨‍🍳 Responsable / Chef</span>
+            <span class="meta-label"><i data-lucide="chef-hat" class="icon-xs"></i> Responsable / Chef</span>
             <strong id="modalDetailChef" class="meta-val">-</strong>
           </div>
         </div>
@@ -360,12 +363,193 @@
       </p>
 
       <button id="closeSuccessModalBtn" type="button" class="btn-modal-action primary" style="width: 100%; padding: 0.75rem 1.5rem; font-size: 0.95rem; border-radius: var(--radius-md); background: linear-gradient(135deg, #D49B54 0%, #C48B44 100%); color: white; font-weight: 700; border: none; cursor: pointer; box-shadow: 0 4px 12px rgba(212, 155, 84, 0.35); transition: transform 0.2s ease;">
-        👍 Entendido / Continuar
+        Entendido / Continuar
       </button>
     </div>
   </div>
 
+  <!-- MODAL DE RECETARIO MAESTRO & CALCULADORA DE HORNEADO -->
+  <div id="recetarioModal" class="pin-modal-overlay" role="dialog" aria-modal="true" aria-labelledby="recetarioModalTitle" style="display: none; z-index: 10400;">
+    <div class="modal-card-container recetario-modal-card">
+      
+      <!-- HEADER DEL MODAL -->
+      <div class="recetario-modal-header">
+        <div style="display: flex; align-items: center; gap: 0.75rem;">
+          <div style="width: 44px; height: 44px; border-radius: var(--radius-pill); background: var(--gradient-espresso); color: var(--color-gold); display: flex; align-items: center; justify-content: center;">
+            <i data-lucide="book-open" class="icon-md"></i>
+          </div>
+          <div>
+            <h2 id="recetarioModalTitle" style="font-size: 1.25rem; font-weight: 800; color: var(--color-espresso); margin: 0;">Recetario Maestro &amp; Calculadora de Panadería</h2>
+            <span style="font-size: 0.8rem; color: var(--color-muted);">Selecciona un pan en la cuadrícula y ajusta la cantidad deseada</span>
+          </div>
+        </div>
+        <button id="btnCloseRecetarioModal" type="button" class="btn-modal-close" aria-label="Cerrar recetario">&times;</button>
+      </div>
+
+      <!-- CUERPO PRINCIPAL DEL RECETARIO -->
+      <div class="recetario-modal-body">
+
+        <!-- 1. CUADRÍCULA VISUAL DE SELECCIÓN DE PANES -->
+        <div>
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
+            <span style="font-size: 0.82rem; font-weight: 800; text-transform: uppercase; color: var(--color-muted); letter-spacing: 0.05em; display: flex; align-items: center; gap: 0.4rem;">
+              <i data-lucide="layout-grid" class="icon-xs"></i> 1. Catálogo de Panes &amp; Especialidades (Selecciona uno):
+            </span>
+            <span id="recetarioActiveCategoryBadge" class="column-badge" style="background: rgba(212,155,84,0.15); color: var(--color-gold-dark); font-weight: 700;">Panadería Francesa</span>
+          </div>
+
+          <div id="breadChipsContainer" class="bread-grid-container">
+            <!-- 10 tarjetas de pan en cuadrícula vía kitchen.js -->
+          </div>
+        </div>
+
+        <!-- 2. BARRA HERO DE CANTIDAD Y MÉTRICAS CLAVE -->
+        <div class="recipe-hero-summary-bar">
+          <div class="recipe-hero-product">
+            <span id="heroBreadIcon" class="recipe-hero-icon">🥖</span>
+            <div>
+              <h3 id="heroBreadName" class="recipe-hero-title">Baguette Tradicional Parisina</h3>
+              <span id="heroBreadDesc" class="recipe-hero-category">Panadería Francesa &bull; PAN-001</span>
+            </div>
+          </div>
+
+          <!-- Stepper de cantidad -->
+          <div class="recipe-hero-stepper-box">
+            <span style="font-size: 0.72rem; font-weight: 800; color: var(--color-muted); text-transform: uppercase;">Cantidad a Hornear:</span>
+            <div class="recipe-stepper-row">
+              <button type="button" id="btnQtyMinus" class="qty-stepper-btn" title="Restar 5">-</button>
+              <input type="number" id="recetarioQtyInput" class="qty-number-input" value="50" min="1" max="1000" step="1">
+              <button type="button" id="btnQtyPlus" class="qty-stepper-btn" title="Sumar 5">+</button>
+            </div>
+            <div class="qty-presets-compact">
+              <button type="button" class="qty-preset-btn" data-qty="12">12</button>
+              <button type="button" class="qty-preset-btn" data-qty="24">24</button>
+              <button type="button" class="qty-preset-btn active" data-qty="50">50</button>
+              <button type="button" class="qty-preset-btn" data-qty="100">100</button>
+              <button type="button" class="qty-preset-btn" data-qty="200">200</button>
+            </div>
+          </div>
+
+          <!-- 4 Métricas Clave -->
+          <div class="recipe-hero-metrics">
+            <div class="recipe-metric-pill">
+              <span class="metric-lbl">⚖️ Masa Total</span>
+              <span id="recipeTotalDoughWeight" class="metric-val">12.50 kg</span>
+            </div>
+            <div class="recipe-metric-pill">
+              <span class="metric-lbl">🌡️ Temp</span>
+              <span id="specBakeTemp" class="metric-val">240 °C</span>
+            </div>
+            <div class="recipe-metric-pill">
+              <span class="metric-lbl">⏱️ Tiempo</span>
+              <span id="specBakeTime" class="metric-val">22 min</span>
+            </div>
+            <div class="recipe-metric-pill">
+              <span class="metric-lbl">🔥 Horno</span>
+              <span id="specOvenShort" class="metric-val">Piedra</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- 3. PESTAÑAS DE NAVEGACIÓN VISUAL (DESPEJADO & SIN SATURACIÓN) -->
+        <div class="recipe-tabs-nav">
+          <button type="button" class="recipe-tab-btn active" id="tabBtnInsumos">
+            <i data-lucide="scale" class="icon-xs"></i> <span>1. Insumos &amp; Disponibilidad de Almacén</span>
+          </button>
+          <button type="button" class="recipe-tab-btn" id="tabBtnHorno">
+            <i data-lucide="flame" class="icon-xs"></i> <span>2. Parámetros de Horno &amp; Guía de Horneado</span>
+          </button>
+        </div>
+
+        <!-- PESTAÑA 1: INSUMOS (TILES EN CUADRÍCULA VISUAL) -->
+        <div id="recetarioTabInsumos" class="recipe-tab-content">
+          <!-- Banner de Estado de Stock Global -->
+          <div id="recipeStockAlertBanner" style="padding: 0.65rem 0.95rem; border-radius: var(--radius-sm); font-size: 0.84rem; font-weight: 700; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 0.5rem;">
+            <!-- Dinámico -->
+          </div>
+
+          <!-- Botón Solicitar Faltantes -->
+          <div id="btnSolicitarInsumosFaltantesWrapper" style="display: none; margin-top: 0.6rem;">
+            <button id="btnSolicitarInsumosFaltantes" type="button" style="width: 100%; padding: 0.65rem 1rem; border-radius: var(--radius-sm); border: 1px solid var(--color-danger); background: rgba(198,40,40,0.06); color: var(--color-danger); font-weight: 700; font-size: 0.84rem; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 0.5rem; transition: all 0.2s ease;">
+              <i data-lucide="alert-triangle" class="icon-sm"></i>
+              <span id="btnSolicitarInsumosFaltantesText">Solicitar Insumos Faltantes a Gerencia</span>
+            </button>
+          </div>
+
+          <!-- CUADRÍCULA VISUAL DE INGREDIENTES -->
+          <div id="recipeIngredientsTilesContainer" class="ingredients-tiles-grid">
+            <!-- Tiles dinámicos vía kitchen.js -->
+          </div>
+        </div>
+
+        <!-- PESTAÑA 2: GUÍA DE HORNEADO & ESPECIFICACIONES -->
+        <div id="recetarioTabHorno" class="recipe-tab-content" style="display: none;">
+          <div class="baking-guide-layout">
+            
+            <!-- Columna izquierda: Parámetros técnicos -->
+            <div>
+              <div class="baking-specs-grid">
+                <div class="baking-spec-item" style="grid-column: span 2;">
+                  <span class="baking-spec-label"><i data-lucide="flame" class="icon-xs"></i> Horno Industrial Recomendado</span>
+                  <span id="specOvenType" style="font-size: 0.92rem; font-weight: 800; color: var(--color-espresso);">Bóveda de Piedra / Giratorio Industrial</span>
+                </div>
+                <div class="baking-spec-item" style="grid-column: span 2;">
+                  <span class="baking-spec-label"><i data-lucide="wind" class="icon-xs"></i> Inyección de Vapor / Tiros</span>
+                  <span id="specBakeSteam" style="font-size: 0.84rem; font-weight: 600; color: var(--color-espresso);">Vapor abundante 5 seg al inicio</span>
+                </div>
+                <div class="baking-spec-item" style="grid-column: span 2;">
+                  <span class="baking-spec-label"><i data-lucide="clock" class="icon-xs"></i> Fermentación / Leudado</span>
+                  <span id="specFermentation" style="font-size: 0.84rem; font-weight: 600; color: var(--color-espresso);">18h fermentación lenta en frío (Poolish)</span>
+                </div>
+              </div>
+
+              <div class="chef-tip-banner">
+                <strong style="display: block; margin-bottom: 0.25rem;"><i data-lucide="sparkles" class="icon-xs"></i> Secreto del Maestro Panadero:</strong>
+                <span id="recipeChefTipText">Para una corteza crocante y alveolos irregulares...</span>
+              </div>
+            </div>
+
+            <!-- Columna derecha: Pasos secuenciales -->
+            <div>
+              <div style="font-size: 0.88rem; font-weight: 800; color: var(--color-espresso); margin-bottom: 0.6rem; display: flex; align-items: center; gap: 0.4rem;">
+                <i data-lucide="chef-hat" class="icon-xs"></i> Pasos de Elaboración Artesanal:
+              </div>
+              <div id="recipeStepsContainer" class="recipe-steps-list">
+                <!-- Pasos dinámicos -->
+              </div>
+            </div>
+
+          </div>
+        </div>
+
+      </div>
+
+      <!-- FOOTER DE ACCIONES DEL RECETARIO -->
+      <div style="padding: 1rem 1.6rem; background: var(--bg-surface); border-top: 1px solid rgba(44, 29, 17, 0.08); display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.75rem;">
+        <div style="display: flex; gap: 0.5rem;">
+          <button id="btnPrintRecipeSheet" type="button" class="btn-acc-action secondary" style="padding: 0.55rem 1rem; border-radius: var(--radius-sm); border: 1px solid var(--border-subtle); background: white; cursor: pointer; display: flex; align-items: center; gap: 0.4rem; font-weight: 700; color: var(--color-espresso);">
+            <i data-lucide="printer" class="icon-sm"></i> <span>Imprimir Ficha Técnica</span>
+          </button>
+        </div>
+
+        <div style="display: flex; gap: 0.75rem;">
+          <button id="btnCloseRecetarioFooter" type="button" class="btn-modal-action secondary" style="padding: 0.6rem 1.25rem; border-radius: var(--radius-sm); border: 1px solid var(--border-subtle); background: white; cursor: pointer;">Cerrar</button>
+          
+          <button id="btnSendBatchToKitchen" type="button" class="btn-primary-action gold-variant" style="padding: 0.6rem 1.4rem; border-radius: var(--radius-sm); border: none; background: linear-gradient(135deg, #D49B54 0%, #C48B44 100%); color: white; font-weight: 800; cursor: pointer; display: flex; align-items: center; gap: 0.5rem; box-shadow: 0 4px 12px rgba(212,155,84,0.35);">
+            <i data-lucide="plus-circle" class="icon-sm"></i> <span id="btnSendBatchText">Crear Lote en Cocina (50 ud)</span>
+          </button>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- CONTENEDOR OCULTO PARA IMPRESIÓN DE FICHA TÉCNICA -->
+  <div id="recetarioPrintContainer" style="display: none;"></div>
+
   <!-- SCRIPT MODULAR COCINA -->
+  <script src="../js/vendor/lucide.min.js"></script>
+  <script src="../js/core/icons.js"></script>
   <script type="module" src="../js/modules/kitchen.js"></script>
 
 </body>

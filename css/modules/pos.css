@@ -19,10 +19,8 @@
 
 /* NAVBAR SUPERIOR COMPARTIDA */
 .pos-navbar {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 0.45rem 1.25rem;
+  width: 100%;
+  padding: 0;
   background: var(--bg-surface);
   border-bottom: var(--border-subtle);
   box-shadow: var(--shadow-subtle);
@@ -1195,4 +1193,11 @@
   #ticket-container, #ticket-container * { visibility: visible; }
   #ticket-container { position: absolute; left: 0; top: 0; width: 80mm; padding: 5mm; margin: 0; }
   .no-print { display: none !important; }
+}
+
+
+/* POS NAVBAR HARMONY */
+.pos-navbar .navbar-container {
+  max-width: 100% !important;
+  padding: 0.6rem 1.5rem !important;
 }

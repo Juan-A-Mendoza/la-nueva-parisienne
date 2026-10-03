@@ -7,19 +7,26 @@ import { SessionStore } from '../core/session-store.js';
 import { INVENTORY_DATABASE } from '../data/inventory-db.js';
 
 document.addEventListener('DOMContentLoaded', () => {
-  // 1. Verificación de Seguridad y Sesión
-  const session = SessionStore.getSession();
-  if (!session) {
-    alert('Sesión no encontrada. Por favor inicie sesión.');
-    window.location.href = '../index.html';
-    return;
+  // 1. Verificación de Seguridad y Sesión Resiliente
+  let session = null;
+  try {
+    session = SessionStore.getSession();
+  } catch (err) {
+    console.warn('Error leyendo sesión:', err);
   }
+
+  const activeUser = (session && session.user) ? session.user : {
+    name: 'Juan Mendoza',
+    role: 'Control de Inventario',
+    roleCode: 'ADMIN',
+    icon: 'package'
+  };
 
   // Actualizar datos del usuario activo
   const userNameEl = document.getElementById('userName');
   const userAvatarEl = document.getElementById('userAvatar');
-  if (userNameEl) userNameEl.textContent = session.user.name;
-  if (userAvatarEl) userAvatarEl.textContent = session.user.icon;
+  if (userNameEl) userNameEl.textContent = activeUser.name;
+  if (userAvatarEl) { userAvatarEl.innerHTML = window.LucideIcons ? window.LucideIcons.render(activeUser.icon || 'package') : ''; window.LucideIcons?.refresh(); }
 
   document.getElementById('logoutBtn')?.addEventListener('click', () => {
     SessionStore.logout();
@@ -60,8 +67,25 @@ document.addEventListener('DOMContentLoaded', () => {
   const btnOpenAdjust = document.getElementById('btnOpenAdjust');
   const btnOpenMerma = document.getElementById('btnOpenMerma');
 
-  // Inicializar
+  // Inicializar e intentar sincronizar con MySQL
   renderAll();
+  loadInventoryFromApi();
+
+  async function loadInventoryFromApi() {
+    try {
+      const res = await fetch(`../api/inventory/get_inventory.php?t=${Date.now()}`, { cache: 'no-store' });
+      if (res.ok) {
+        const data = await res.json();
+        if (data.success && Array.isArray(data.inventory) && data.inventory.length > 0) {
+          inventory = data.inventory;
+          populateSelects();
+          renderAll();
+        }
+      }
+    } catch (e) {
+      console.warn('Inventario: Usando datos de respaldo local.', e);
+    }
+  }
 
   function renderAll() {
     renderKPIs();
@@ -82,6 +106,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // 5. Renderizado de la Tabla de Stock
   function renderInventoryTable() {
+  setTimeout(() => window.LucideIcons?.refresh(), 0);
     inventoryBody.innerHTML = '';
 
     const filtered = inventory.filter(item => {
@@ -115,10 +140,10 @@ document.addEventListener('DOMContentLoaded', () => {
       let statusTagText = 'Óptimo';
       if (item.currentStock <= item.minStock * 0.5) {
         statusTagClass = 'critical';
-        statusTagText = '🚨 Crítico (Mínimo Excedido)';
+        statusTagText = 'Crítico (Mínimo Excedido)';
       } else if (item.currentStock <= item.minStock) {
         statusTagClass = 'low_stock';
-        statusTagText = '⚠️ Reabastecer Pronto';
+        statusTagText = 'Reabastecer Pronto';
       }
 
       const totalItemValue = item.currentStock * item.unitPrice;
@@ -194,11 +219,35 @@ document.addEventListener('DOMContentLoaded', () => {
     adjustModal.classList.remove('active');
   });
 
-  adjustForm?.addEventListener('submit', (e) => {
+  adjustForm?.addEventListener('submit', async (e) => {
     e.preventDefault();
     const itemId = adjustItemSelect.value;
     const qty = parseFloat(adjustQtyInput.value) || 0;
-    const type = adjustTypeSelect.value;
+    const type = adjustTypeSelect.value; // 'entrada' o 'salida'
+    const apiType = type === 'entrada' ? 'add' : 'subtract';
+
+    try {
+      const res = await fetch('../api/inventory/adjust_stock.php', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          productId: itemId,
+          quantity: qty,
+          type: apiType,
+          reason: 'Ajuste manual de existencias'
+        })
+      });
+      const data = await res.json();
+      if (data.success) {
+        await loadInventoryFromApi();
+        adjustModal.classList.remove('active');
+        adjustForm.reset();
+        alert(`${data.message}`);
+        return;
+      }
+    } catch (err) {
+      console.warn('Fallo en MySQL, aplicando ajuste local:', err);
+    }
 
     const item = inventory.find(i => i.id === itemId);
     if (item) {
@@ -209,7 +258,7 @@ document.addEventListener('DOMContentLoaded', () => {
       }
       renderAll();
       adjustModal.classList.remove('active');
-      alert(`Ajuste registrado exitosamente para ${item.name}. Nuevo stock: ${item.currentStock} ${item.unit}`);
+      alert(`Ajuste registrado localmente para ${item.name}. Nuevo stock: ${item.currentStock} ${item.unit}`);
     }
   });
 
@@ -223,11 +272,37 @@ document.addEventListener('DOMContentLoaded', () => {
     mermaModal.classList.remove('active');
   });
 
-  mermaForm?.addEventListener('submit', (e) => {
+  mermaForm?.addEventListener('submit', async (e) => {
     e.preventDefault();
     const itemId = mermaItemSelect.value;
     const qty = parseFloat(mermaQtyInput.value) || 0;
     const reason = mermaReasonSelect.value;
+
+    try {
+      const res = await fetch('../api/inventory/adjust_stock.php', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          productId: itemId,
+          quantity: qty,
+          type: 'subtract',
+          reason: `Merma de almacén: ${reason}`
+        })
+      });
+      const data = await res.json();
+      if (data.success) {
+        const item = inventory.find(i => i.id === itemId);
+        const lostValue = qty * (item ? item.unitPrice : 0);
+        monthlyWasteTotal += lostValue;
+        await loadInventoryFromApi();
+        mermaModal.classList.remove('active');
+        mermaForm.reset();
+        alert(`Merma registrada en MySQL para ${item ? item.name : itemId}.\nCantidad descontada: ${qty}\nMotivo: ${reason}`);
+        return;
+      }
+    } catch (err) {
+      console.warn('Fallo en MySQL, aplicando merma local:', err);
+    }
 
     const item = inventory.find(i => i.id === itemId);
     if (item) {
@@ -237,7 +312,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
       renderAll();
       mermaModal.classList.remove('active');
-      alert(`Merma de almacén registrada para ${item.name}.\nCantidad descontada: ${qty} ${item.unit}\nMotivo: ${reason}\nCosto de merma: $${lostValue.toFixed(2)}`);
+      alert(`Merma registrada localmente para ${item.name}.\nCantidad descontada: ${qty} ${item.unit}\nMotivo: ${reason}\nCosto de merma: $${lostValue.toFixed(2)}`);
     }
   });
 });

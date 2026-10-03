@@ -44,6 +44,10 @@ $paymentMethod = isset($data['paymentMethod']) ? trim($data['paymentMethod']) : 
 $tenderAmount = isset($data['tenderAmount']) ? (float)$data['tenderAmount'] : (isset($data['tender_amount']) ? (float)$data['tender_amount'] : (isset($data['monto_pagado']) ? (float)$data['monto_pagado'] : $total));
 $changeDue = isset($data['changeDue']) ? (float)$data['changeDue'] : (isset($data['change_due']) ? (float)$data['change_due'] : (isset($data['cambio']) ? (float)$data['cambio'] : 0.0));
 $orderType = isset($data['orderType']) ? trim($data['orderType']) : (isset($data['order_type']) ? trim($data['order_type']) : 'Para Llevar');
+$bcvRate = isset($data['bcv_rate']) ? (float)$data['bcv_rate'] : (isset($data['tasa_bcv']) ? (float)$data['tasa_bcv'] : 1.0);
+if ($bcvRate <= 0) $bcvRate = 1.0;
+$totalBs = round($total * $bcvRate, 2);
+
 $items = isset($data['items']) ? $data['items'] : (isset($data['cart']) ? $data['cart'] : []);
 
 if (empty($items)) {
@@ -59,10 +63,12 @@ try {
     $pdo = getDbConnection();
     
     // Verificar si el usuario existe en MySQL, o asignar usr_cashier / usr_ana por defecto
-    $stmtUser = $pdo->prepare("SELECT id FROM usuarios WHERE id = :uid LIMIT 1");
+    $stmtUser = $pdo->prepare("SELECT id, nombre, turno FROM usuarios WHERE id = :uid LIMIT 1");
     $stmtUser->execute([':uid' => $userId]);
-    if (!$stmtUser->fetch()) {
+    $userRow = $stmtUser->fetch();
+    if (!$userRow) {
         $userId = 'usr_ana';
+        $userRow = ['id' => 'usr_ana', 'nombre' => 'Ana Ramírez', 'turno' => 'Mañana (07:00 - 15:00)'];
     }
 
     $saleId = 'sale_' . time() . '_' . rand(100, 999);
@@ -71,11 +77,11 @@ try {
     // Iniciar Transacción Atómica
     $pdo->beginTransaction();
 
-    // 1. Insertar Encabezado de Venta en la tabla 'ventas'
+    // 1. Insertar Encabezado de Venta en la tabla 'ventas' (Bimonetario)
     $sqlVenta = "INSERT INTO ventas 
-                    (id, codigo, usuario_id, fecha_hora, subtotal, iva, descuento, total, metodo_pago, monto_pagado, cambio, tipo_pedido) 
+                    (id, codigo, usuario_id, fecha_hora, subtotal, iva, descuento, total, tasa_bcv, total_bs, metodo_pago, monto_pagado, cambio, tipo_pedido) 
                  VALUES 
-                    (:id, :codigo, :usuario_id, :fecha_hora, :subtotal, :iva, :descuento, :total, :metodo_pago, :monto_pagado, :cambio, :tipo_pedido)";
+                    (:id, :codigo, :usuario_id, :fecha_hora, :subtotal, :iva, :descuento, :total, :tasa_bcv, :total_bs, :metodo_pago, :monto_pagado, :cambio, :tipo_pedido)";
     
     $stmtVenta = $pdo->prepare($sqlVenta);
     $stmtVenta->execute([
@@ -87,6 +93,8 @@ try {
         ':iva' => $tax,
         ':descuento' => $discount,
         ':total' => $total,
+        ':tasa_bcv' => $bcvRate,
+        ':total_bs' => $totalBs,
         ':metodo_pago' => $paymentMethod,
         ':monto_pagado' => $tenderAmount,
         ':cambio' => $changeDue,
@@ -142,6 +150,41 @@ try {
         ]);
     }
 
+    // 2b. Registrar Metadatos de la Venta en reportes_caja_venta_meta (Caja, Turno, Estatus)
+    $sqlMeta = "INSERT INTO reportes_caja_venta_meta 
+                    (venta_id, caja_id, turno, referencia_lote, estatus, actualizado_por, actualizado_en) 
+                VALUES 
+                    (:vid, :caja_id, :turno, :ref_lote, 'COMPLETADA', :uid, :now)";
+    $stmtMeta = $pdo->prepare($sqlMeta);
+    $stmtMeta->execute([
+        ':vid' => $saleId,
+        ':caja_id' => 'POS-PRINCIPAL',
+        ':turno' => $userRow['turno'] ?? 'Mañana (07:00 - 15:00)',
+        ':ref_lote' => 'LOTE-' . date('Ymd'),
+        ':uid' => $userId,
+        ':now' => $now
+    ]);
+
+    // 2c. Registrar Evento en reportes_caja_eventos para Cuadres y Auditoría de Caja
+    $sqlEvento = "INSERT INTO reportes_caja_eventos 
+                    (id, venta_id, codigo_venta, caja_id, turno, usuario_id, tipo_evento, estatus, metodo_pago, referencia_lote, monto, motivo, fecha_hora, registrado_por) 
+                  VALUES 
+                    (:eid, :vid, :c_venta, :caja_id, :turno, :uid, 'VENTA_REGISTRADA', 'COMPLETADA', :metodo, :ref_lote, :monto, 'Venta cobrada en caja', :now, :registrado_por)";
+    $stmtEvento = $pdo->prepare($sqlEvento);
+    $stmtEvento->execute([
+        ':eid' => 'ev_' . time() . '_' . rand(100, 999),
+        ':vid' => $saleId,
+        ':c_venta' => $orderNumber,
+        ':caja_id' => 'POS-PRINCIPAL',
+        ':turno' => $userRow['turno'] ?? 'Mañana (07:00 - 15:00)',
+        ':uid' => $userId,
+        ':metodo' => $paymentMethod,
+        ':ref_lote' => 'LOTE-' . date('Ymd'),
+        ':monto' => $total,
+        ':now' => $now,
+        ':registrado_por' => $userRow['nombre'] ?? 'Cajero'
+    ]);
+
     // 3. Generación Automática de Asiento Contable en Partida Doble
     $asientoId = 'as_pos_' . time();
     $asientoCodigo = 'AS-POS-' . date('Ymd-His');
@@ -150,7 +193,7 @@ try {
     $sqlAsiento = "INSERT INTO asientos_contables 
                      (id, codigo, fecha_hora, concepto, modulo_origen, icono, total_debe, total_haber) 
                    VALUES 
-                     (:id, :codigo, :fecha, :concepto, 'Punto de Venta (POS)', '🛒', :debe, :haber)";
+                     (:id, :codigo, :fecha, :concepto, 'Punto de Venta (POS)', 'shopping-cart', :debe, :haber)";
     
     $stmtAsiento = $pdo->prepare($sqlAsiento);
     $stmtAsiento->execute([

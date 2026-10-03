@@ -12,14 +12,18 @@ import { BcvRateStore } from '../core/bcv-rate-store.js';
 import { CATEGORIES, PRODUCTS_DATABASE, ProductsStore } from '../data/products-db.js';
 
 document.addEventListener('DOMContentLoaded', async () => {
-  // 1. Verificación de Sesión Activa
+  // 1. Verificación de Sesión Activa Resiliente
   const session = SessionStore.getSession();
-  if (session && session.user) {
-    const cashierAvatar = document.getElementById('cashierAvatar');
-    const cashierName = document.getElementById('cashierName');
-    if (cashierAvatar) cashierAvatar.textContent = session.user.icon || '👩‍💼';
-    if (cashierName) cashierName.textContent = session.user.name || 'Personal POS';
-  }
+  const activeCashier = (session && session.user) ? session.user : {
+    name: 'María Elena Suárez',
+    role: 'Cajero Principal',
+    roleCode: 'POS',
+    icon: 'banknote'
+  };
+  const cashierAvatar = document.getElementById('cashierAvatar');
+  const cashierName = document.getElementById('cashierName');
+  if (cashierAvatar) { cashierAvatar.innerHTML = window.LucideIcons ? window.LucideIcons.render(activeCashier.icon || 'banknote') : ''; window.LucideIcons?.refresh(); }
+  if (cashierName) cashierName.textContent = activeCashier.name;
 
   const logoutBtn = document.getElementById('logoutBtn');
   if (logoutBtn) {
@@ -125,9 +129,9 @@ document.addEventListener('DOMContentLoaded', async () => {
   const btnConfirmCancel = document.getElementById('btnConfirmCancel');
   const btnConfirmAccept = document.getElementById('btnConfirmAccept');
 
-  function showCustomConfirm({ icon = '⚠️', title = '¿Confirmar Acción?', text = '', acceptText = 'Sí, Confirmar', singleAction = false, onAccept }) {
+  function showCustomConfirm({ icon = 'alert-triangle', title = '¿Confirmar Acción?', text = '', acceptText = 'Sí, Confirmar', singleAction = false, onAccept }) {
     if (!customConfirmModal) return;
-    if (confirmModalIcon) confirmModalIcon.textContent = icon;
+    if (confirmModalIcon) confirmModalIcon.innerHTML = window.LucideIcons ? window.LucideIcons.render(icon, 'icon-2xl') : icon; window.LucideIcons?.refresh();
     if (confirmModalTitle) confirmModalTitle.textContent = title;
     if (confirmModalText) confirmModalText.innerHTML = text.replace(/\n/g, '<br>');
     if (btnConfirmAccept) btnConfirmAccept.textContent = acceptText;
@@ -155,11 +159,19 @@ document.addEventListener('DOMContentLoaded', async () => {
     btnConfirmCancel.addEventListener('click', handleCancel);
   }
 
-  // Inicialización Asíncrona Inmediata al Cargar Pantalla (DOMContentLoaded)
+  // Inicialización Inmediata sin Bloqueos al Cargar Pantalla (DOMContentLoaded)
   initOrderNumber();
-  await loadCompanyData();
-  await loadLiveBcvRate();
-  await loadProductsCatalog();
+  
+  // 1. Mostrar tasa en caché de inmediato (nunca quedarse en "Cargando...")
+  const initialCachedRate = parseFloat(localStorage.getItem('bcv_current_rate') || localStorage.getItem('tasa_auto') || localStorage.getItem('tasa_manual') || localStorage.getItem('tasaManual')) || 784.66;
+  updatePosRateBadge(initialCachedRate, 'Tasa BCV', false);
+
+  // 2. Cargar catálogo de productos de inmediato para que aparezca al instante
+  loadProductsCatalog();
+
+  // 3. Cargar datos de empresa y tasa en vivo en paralelo sin bloquear la UI
+  loadCompanyData();
+  loadLiveBcvRate();
 
   // ==========================================================================
   // CONSULTA DE DATOS FISCALES DE LA EMPRESA DESDE MYSQL (MÓDULO 9)
@@ -194,13 +206,16 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     // 2. Si es automático, hacer fetch a ve.dolarapi.com/v1/dolares/oficial
     const apis = [
-      'https://ve.dolarapi.com/v1/dolares/oficial',
-      'https://bcv-api.vercel.app/api/bcv'
+      '../api/bcv_rate.php',
+      'https://ve.dolarapi.com/v1/dolares/oficial'
     ];
 
     for (const url of apis) {
       try {
-        const res = await fetch(`${url}?t=${Date.now()}`, { cache: 'no-store' });
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 1500);
+        const res = await fetch(`${url}?t=${Date.now()}`, { cache: 'no-store', signal: controller.signal });
+        clearTimeout(timeoutId);
         if (res.ok) {
           const data = await res.json();
           const liveRate = parseFloat(data.promedio || data.precio || data.monto || data.rate);
@@ -230,7 +245,7 @@ document.addEventListener('DOMContentLoaded', async () => {
       bcvRateValEl.textContent = `Bs. ${rate.toFixed(2)}`;
     }
     if (bcvRateBadge) {
-      bcvRateBadge.innerHTML = `<span>🇻🇪 ${labelText}:</span> <strong>Bs. ${rate.toFixed(2)}</strong>`;
+      bcvRateBadge.innerHTML = `<span><i data-lucide="coins" class="icon-xs"></i> ${labelText}:</span> <strong>Bs. ${rate.toFixed(2)}</strong>`;
       bcvRateBadge.className = isManual ? 'bcv-rate-badge warning' : 'bcv-rate-badge';
     }
   }
@@ -301,7 +316,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   if (btnBackToStep1) btnBackToStep1.addEventListener('click', () => goToStep(1));
   if (btnResetAndCancel) btnResetAndCancel.addEventListener('click', () => {
     showCustomConfirm({
-      icon: '🚫',
+      icon: 'alert-circle',
       title: '¿Empezar de Cero?',
       text: '¿Desea cancelar el pedido actual y reiniciar el punto de venta a su estado original?',
       acceptText: 'Sí, Cancelar Todo',
@@ -324,19 +339,74 @@ document.addEventListener('DOMContentLoaded', async () => {
   // ==========================================================================
   // PASO 1: CARGA DE PRODUCTOS DESDE LA ÚNICA FUENTE DE VERDAD (catalogo_pos)
   // ==========================================================================
+    // Diccionario canónico de emojis e imágenes representativas de productos gastronómicos
+  const PRODUCT_EMOJI_MAP = {
+    'PAN-001': '🥖', 'prod_001': '🥖', 'baguette': '🥖',
+    'PAN-002': '🥐', 'prod_002': '🥐', 'croissant': '🥐',
+    'PAN-003': '🍫', 'prod_003': '🍫', 'pain au chocolat': '🍫',
+    'PAN-004': '🍞', 'prod_004': '🍞', 'brioche': '🍞',
+    'PAN-005': '🫓', 'prod_005': '🫓', 'focaccia': '🫓',
+    'PAS-001': '⚡', 'prod_006': '⚡', 'éclair': '⚡', 'eclair': '⚡',
+    'PAS-002': '🍋', 'prod_007': '🍋', 'tarta de limón': '🍋', 'tarta de limon': '🍋',
+    'PAS-003': '🍡', 'prod_008': '🍡', 'macarons': '🍡',
+    'PAS-004': '🍰', 'prod_009': '🍰', 'milhojas': '🍰',
+    'BEB-001': '☕', 'prod_010': '☕', 'espresso': '☕',
+    'BEB-002': '🥛', 'prod_011': '🥛', 'capuchino': '🥛',
+    'BEB-003': '☕', 'prod_012': '☕', 'café au lait': '☕', 'cafe au lait': '☕',
+    'BEB-004': '🍊', 'prod_013': '🍊', 'jugo de naranja': '🍊',
+    'ESP-001': '🥪', 'prod_014': '🥪', 'croque-monsieur': '🥪',
+    'ESP-002': '🥧', 'prod_015': '🥧', 'quiche': '🥧'
+  };
+
+  /**
+   * Obtiene la representación visual auténtica del producto (imagen o emoji de alimento)
+   */
+  function getProductVisual(prod) {
+    if (!prod) return '🥖';
+    const icon = prod.icon || '';
+    if (/[\u{1F300}-\u{1FAFF}\u{2600}-\u{27BF}]/u.test(icon)) {
+      return icon;
+    }
+    if (icon.match(/\.(png|jpe?g|webp|svg|gif)($|\?)/i) || icon.startsWith('http') || icon.startsWith('data:') || icon.startsWith('/')) {
+      return `<img src="${icon}" alt="${prod.name || ''}" style="width: 100%; height: 100%; object-fit: cover; border-radius: 50%;">`;
+    }
+    if (prod.code && PRODUCT_EMOJI_MAP[prod.code]) return PRODUCT_EMOJI_MAP[prod.code];
+    if (prod.id && PRODUCT_EMOJI_MAP[prod.id]) return PRODUCT_EMOJI_MAP[prod.id];
+    const nameLower = (prod.name || '').toLowerCase();
+    for (const key of Object.keys(PRODUCT_EMOJI_MAP)) {
+      if (nameLower.includes(key)) return PRODUCT_EMOJI_MAP[key];
+    }
+    const iconLower = icon.toLowerCase();
+    if (PRODUCT_EMOJI_MAP[iconLower]) return PRODUCT_EMOJI_MAP[iconLower];
+
+    return '🥖';
+  }
+
   function syncProductsWithPosCatalog() {
     try {
       const storedCatalog = localStorage.getItem('catalogo_pos');
       if (storedCatalog) {
         const catalogList = JSON.parse(storedCatalog);
         if (Array.isArray(catalogList) && catalogList.length > 0) {
+          let updated = false;
           productsList.forEach(p => {
             const match = catalogList.find(c => c.id === p.id || c.code === p.code || c.name === p.name);
             if (match) {
               p.stock = parseFloat(match.stock) || 0;
               if (match.salePrice) p.price = parseFloat(match.salePrice);
+              const properVisual = getProductVisual(p);
+              if (properVisual && match.icon !== properVisual && !match.icon?.includes('/')) {
+                match.icon = properVisual;
+                p.icon = properVisual;
+                updated = true;
+              } else if (match.icon) {
+                p.icon = match.icon;
+              }
             }
           });
+          if (updated) {
+            localStorage.setItem('catalogo_pos', JSON.stringify(catalogList));
+          }
         }
       }
     } catch (e) {
@@ -378,7 +448,7 @@ document.addEventListener('DOMContentLoaded', async () => {
       const btn = document.createElement('button');
       btn.type = 'button';
       btn.className = `category-tab-btn ${cat.id === currentCategory ? 'active' : ''}`;
-      btn.innerHTML = `<span>${cat.icon}</span> <span>${cat.name}</span>`;
+      btn.innerHTML = `<span class="cat-icon">${window.LucideIcons ? window.LucideIcons.render(cat.icon || "croissant", "icon-sm") : ""}</span> <span>${cat.name}</span>`;
       btn.addEventListener('click', () => {
         currentCategory = cat.id;
         document.querySelectorAll('.category-tab-btn').forEach(b => b.classList.remove('active'));
@@ -387,6 +457,7 @@ document.addEventListener('DOMContentLoaded', async () => {
       });
       categoryTabsContainer.appendChild(btn);
     });
+    window.LucideIcons?.refresh();
   }
 
   function renderProducts() {
@@ -403,7 +474,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     if (filtered.length === 0) {
       productsGrid.innerHTML = `
         <div style="grid-column: 1 / -1; text-align: center; padding: 3rem 1rem; color: var(--color-muted);">
-          <div style="font-size: 2.5rem; margin-bottom: 0.5rem;">🥖</div>
+          <div style="margin-bottom: 0.5rem;"><i data-lucide="croissant" class="icon-2xl" style="color: var(--color-muted);"></i></div>
           <p>No hay productos disponibles en esta categoría.</p>
         </div>`;
       return;
@@ -415,7 +486,7 @@ document.addEventListener('DOMContentLoaded', async () => {
       const availableStock = prod.stock;
       card.innerHTML = `
         <span class="product-stock-badge" style="${availableStock <= 0 ? 'background: rgba(198, 40, 40, 0.12); color: var(--color-danger); border-color: rgba(198, 40, 40, 0.3);' : ''}">${availableStock > 0 ? `Disponibles: ${availableStock}` : 'Agotado (0)'}</span>
-        <div class="product-card-icon">${prod.icon || '🥖'}</div>
+        <div class="product-card-icon">${getProductVisual(prod)}</div>
         <h3 class="product-card-title">${prod.name}</h3>
         <div class="product-card-footer">
           <span class="product-price">$${prod.price.toFixed(2)}</span>
@@ -424,6 +495,7 @@ document.addEventListener('DOMContentLoaded', async () => {
       card.addEventListener('click', () => addToCart(prod));
       productsGrid.appendChild(card);
     });
+    window.LucideIcons?.refresh();
   }
 
   // ==========================================================================
@@ -468,7 +540,7 @@ document.addEventListener('DOMContentLoaded', async () => {
       row.className = 'cart-item-row';
       row.innerHTML = `
         <div class="cart-item-info">
-          <span class="cart-item-name">${item.product.icon || '🥖'} ${item.product.name}</span>
+          <span class="cart-item-name">${getProductVisual(item.product)} ${item.product.name}</span>
           <span class="cart-item-unit-price">$${item.product.price.toFixed(2)} c/u</span>
         </div>
         <div class="cart-qty-controls">
@@ -586,7 +658,7 @@ document.addEventListener('DOMContentLoaded', async () => {
       itemEl.style.background = '#FFFFFF';
       itemEl.innerHTML = `
         <div class="cart-item-info">
-          <span class="cart-item-name">${item.product.icon || '🥖'} ${item.product.name}</span>
+          <span class="cart-item-name">${getProductVisual(item.product)} ${item.product.name}</span>
           <span class="cart-item-unit-price">$${item.product.price.toFixed(2)} c/u</span>
         </div>
         <div class="cart-item-controls">
@@ -628,7 +700,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     clearCartBtnPaso1.addEventListener('click', () => {
       if (cart.length === 0) return;
       showCustomConfirm({
-        icon: '🗑️',
+        icon: 'trash-2',
         title: '¿Vaciar Pedido?',
         text: '¿Está seguro de que desea eliminar todos los productos del carrito actual?',
         acceptText: 'Sí, Vaciar Carrito',
@@ -683,13 +755,13 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
         if (cardTransferMsg) {
           if (selectedPaymentMethod === 'debito') {
-            cardTransferMsg.textContent = '💳 Pase o inserte la Tarjeta de DÉBITO en el terminal de punto de venta por el monto exacto.';
+            cardTransferMsg.textContent = 'Pase o inserte la Tarjeta de DÉBITO en el terminal de punto de venta por el monto exacto.';
           } else if (selectedPaymentMethod === 'credito') {
-            cardTransferMsg.textContent = '💳 Pase o inserte la Tarjeta de CRÉDITO en el terminal de punto de venta por el monto exacto.';
+            cardTransferMsg.textContent = 'Pase o inserte la Tarjeta de CRÉDITO en el terminal de punto de venta por el monto exacto.';
           } else if (selectedPaymentMethod === 'transferencia') {
-            cardTransferMsg.textContent = '📲 Escanee el código QR o realice el pago móvil por el monto exacto en Bolívares.';
+            cardTransferMsg.textContent = 'Escanee el código QR o realice el pago móvil por el monto exacto en Bolívares.';
           } else {
-            cardTransferMsg.textContent = '💳 Pase o inserte la tarjeta en el terminal de punto de venta por el monto exacto.';
+            cardTransferMsg.textContent = 'Pase o inserte la tarjeta en el terminal de punto de venta por el monto exacto.';
           }
         }
       }
@@ -844,7 +916,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
 
         showCustomConfirm({
-          icon: '🪪',
+          icon: 'id-card',
           title: 'Cédula o RIF del Cliente Requerido',
           text: 'Por disposición fiscal y de control interno, es OBLIGATORIO ingresar la Cédula o RIF del cliente para finalizar la venta en cualquier método de pago (Efectivo, Débito, Crédito o Pago Móvil).',
           acceptText: 'Entendido / Ingresar Cédula',
@@ -901,7 +973,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         const missingVes = missingUsd * bcvRate;
 
         showCustomConfirm({
-          icon: '⚠️',
+          icon: 'alert-triangle',
           title: 'Monto Recibido Insuficiente',
           text: `El monto entregado ($${tenderRound.toFixed(2)}) es menor al total de la venta ($${totalUsdRound.toFixed(2)}).\n\nFalta por recibir: $${missingUsd.toFixed(2)} USD (Bs. ${missingVes.toLocaleString('es-VE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} VES).`,
           acceptText: 'Entendido / Ajustar Monto',
@@ -916,7 +988,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         const changeVes = changeUsd * bcvRate;
 
         showCustomConfirm({
-          icon: '💵',
+          icon: 'banknote',
           title: '¿Confirmar Cobro y Vuelto?',
           text: `Monto Recibido: $${tenderRound.toFixed(2)} USD\nTotal de Venta: $${totalUsdRound.toFixed(2)} USD\n\nVuelto a Entregar: $${changeUsd.toFixed(2)} USD (Bs. ${changeVes.toLocaleString('es-VE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} VES).\n\n¿Desea procesar la venta y emitir la factura?`,
           acceptText: 'Sí, Procesar Venta',
@@ -990,7 +1062,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         else if (selectedPaymentMethod === 'pagomovil') formattedPaymentMethod = 'Pago Móvil';
         else if (selectedPaymentMethod === 'efectivo') formattedPaymentMethod = 'Efectivo';
 
-        const orderCodeText = salePayload.orderNumber || document.getElementById('orderNumber')?.textContent?.replace('🧾 Comprobante:', '')?.trim() || `FAC-2026-${Math.floor(1000 + Math.random() * 9000)}`;
+        const orderCodeText = salePayload.orderNumber || document.getElementById('orderNumber')?.textContent?.replace('Comprobante:', '')?.trim() || `FAC-2026-${Math.floor(1000 + Math.random() * 9000)}`;
 
         const discountLabel = currentDiscountPercent > 0 ? `${currentDiscountPercent}%` : null;
 
@@ -1008,7 +1080,7 @@ document.addEventListener('DOMContentLoaded', async () => {
           discountPercent: currentDiscountPercent,
           itemsCount: cart.reduce((sum, i) => sum + i.quantity, 0),
           breakdown: cart.map(i => ({
-            name: `${i.product.icon || '🥖'} ${i.product.name} (x${i.quantity})`,
+            name: `${getProductVisual(i.product)} ${i.product.name} (x${i.quantity})`,
             price: `$${(i.product.price * i.quantity).toFixed(2)} USD`
           }))
         };
@@ -1051,9 +1123,9 @@ document.addEventListener('DOMContentLoaded', async () => {
     } catch (err) {
       console.error('Persistencia MySQL:', err);
       btnCompleteSale.disabled = false;
-      btnCompleteSale.textContent = '✓ Finalizar Venta e Imprimir Ticket';
+      btnCompleteSale.innerHTML = '<i data-lucide="printer" class="icon-sm"></i> <span>Finalizar Venta e Imprimir Ticket</span>'; window.LucideIcons?.refresh();
       showCustomConfirm({
-        icon: '⚠️',
+        icon: 'alert-triangle',
         title: 'Venta no registrada',
         text: `La venta no se guardó en MySQL y no se emitirá el ticket.\n\n${err.message}`,
         acceptText: 'Entendido',
@@ -1067,7 +1139,7 @@ document.addEventListener('DOMContentLoaded', async () => {
       goToStep(3);
       showReceiptModal(salePayload);
       btnCompleteSale.disabled = false;
-      btnCompleteSale.textContent = '✓ Finalizar Venta e Imprimir Ticket';
+      btnCompleteSale.innerHTML = '<i data-lucide="printer" class="icon-sm"></i> <span>Finalizar Venta e Imprimir Ticket</span>'; window.LucideIcons?.refresh();
     });
   }
 
@@ -1399,7 +1471,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     if (!managerName) {
       showCustomConfirm({
-        icon: '🚫',
+        icon: 'alert-circle',
         title: 'Acceso Denegado',
         text: 'La contraseña de autorización gerencial es incorrecta.\n\nLa devolución no ha sido procesada.',
         acceptText: 'Entendido',
@@ -1457,7 +1529,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   function initOrderNumber() {
     const code = `FAC-2026-${orderCounter}`;
-    if (orderNumberEl) orderNumberEl.innerHTML = `<span>🧾 Comprobante:</span> <strong>${code}</strong>`;
-    if (orderNumberPaso1) orderNumberPaso1.innerHTML = `<span>🛒 Orden:</span> <strong>${code}</strong>`;
+    if (orderNumberEl) orderNumberEl.innerHTML = `<span><i data-lucide="receipt" class="icon-sm"></i> Comprobante:</span> <strong>${code}</strong>`; window.LucideIcons?.refresh();
+    if (orderNumberPaso1) orderNumberPaso1.innerHTML = `<span><i data-lucide="shopping-cart" class="icon-sm"></i> Orden:</span> <strong>${code}</strong>`; window.LucideIcons?.refresh();
   }
 });

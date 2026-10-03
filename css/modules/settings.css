@@ -13,10 +13,8 @@
 
 /* NAVBAR SUPERIOR DE CONFIGURACIÓN */
 .settings-navbar {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 1.25rem 2rem;
+  width: 100%;
+  padding: 0;
   background: var(--bg-surface);
   border-bottom: var(--border-subtle);
   box-shadow: var(--shadow-subtle);
@@ -102,10 +100,11 @@
 /* CONTENIDO PRINCIPAL DE CONFIGURACIÓN */
 .settings-content {
   flex: 1;
-  padding: 2rem;
-  max-width: 1300px;
+  padding: 1.5rem 2rem 3rem;
+  max-width: 1440px;
   margin: 0 auto;
   width: 100%;
+  box-sizing: border-box;
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(360px, 1fr));
   gap: 2rem;

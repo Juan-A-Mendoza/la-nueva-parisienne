@@ -25,7 +25,7 @@ export const AUTOMATIC_ENTRIES = [
     bcvRateHistorical: 761.21,
     concept: 'Venta POS Mostrador (Comprobante FAC-2026-1003)',
     sourceModule: 'Punto de Venta (POS)',
-    icon: '🛒',
+    icon: 'shopping-cart',
     details: [
       { accountCode: '1105', accountName: 'Caja General', debe: 1485.50, haber: 0.00 },
       { accountCode: '4135', accountName: 'Ventas Mostrador Panadería', debe: 0.00, haber: 1280.60 },
@@ -41,7 +41,7 @@ export const AUTOMATIC_ENTRIES = [
     bcvRateHistorical: 758.40,
     concept: 'Compra de Harina a Molinos del Sur (Orden OC-2026-0089)',
     sourceModule: 'Proveedores',
-    icon: '🌾',
+    icon: 'wheat',
     details: [
       { accountCode: '1435', accountName: 'Inventario Materia Prima', debe: 1800.00, haber: 0.00 },
       { accountCode: '2205', accountName: 'Proveedores Nacionales', debe: 0.00, haber: 1800.00 }
@@ -56,7 +56,7 @@ export const AUTOMATIC_ENTRIES = [
     bcvRateHistorical: 761.21,
     concept: 'Registro de Merma de Almacén (Caducidad Harina T55)',
     sourceModule: 'Inventario',
-    icon: '⚠️',
+    icon: 'alert-triangle',
     details: [
       { accountCode: '5195', accountName: 'Gastos Mermas y Pérdidas', debe: 145.20, haber: 0.00 },
       { accountCode: '1435', accountName: 'Inventario Materia Prima', debe: 0.00, haber: 145.20 }
@@ -71,7 +71,7 @@ export const AUTOMATIC_ENTRIES = [
     bcvRateHistorical: 761.21,
     concept: 'Cierre Diario de Costo de Ventas Producción',
     sourceModule: 'Producción y Cocina',
-    icon: '🥖',
+    icon: 'croissant',
     details: [
       { accountCode: '6135', accountName: 'Costo de Ventas Producción', debe: 820.00, haber: 0.00 },
       { accountCode: '1440', accountName: 'Inventario Productos Terminados', debe: 0.00, haber: 820.00 }

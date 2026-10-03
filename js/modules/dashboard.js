@@ -12,21 +12,21 @@ import { DASHBOARD_KPIS, SALES_TREND_DATA, RECENT_MOVEMENTS } from '../data/dash
 // ==========================================================================
 
 const INITIAL_15_POS_PRODUCTS = [
-  { id: 'prod_001', code: 'PAN-001', name: 'Baguette Tradicional Parisina', category: 'Panadería', unitCost: 1.20, salePrice: 2.50, unit: 'Und', stock: 45, minStock: 20, icon: '🥖', showInPos: true, description: 'Corteza crujiente y miga alveolada con levadura madre.' },
-  { id: 'prod_002', code: 'PAN-002', name: 'Croissant de Mantequilla', category: 'Panadería', unitCost: 1.40, salePrice: 3.00, unit: 'Und', stock: 60, minStock: 25, icon: '🥐', showInPos: true, description: 'Hojaldre 100% mantequilla de Normandía.' },
-  { id: 'prod_003', code: 'PAN-003', name: 'Pain au Chocolat', category: 'Panadería', unitCost: 1.60, salePrice: 3.50, unit: 'Und', stock: 35, minStock: 15, icon: '🍫', showInPos: true, description: 'Hojaldre relleno de dos barras de chocolate negro 60%.' },
-  { id: 'prod_004', code: 'PAN-004', name: 'Brioche de Vainilla', category: 'Panadería', unitCost: 2.00, salePrice: 4.20, unit: 'Und', stock: 20, minStock: 10, icon: '🍞', showInPos: true, description: 'Pan de huevo esponjoso aromatizado con vainilla.' },
-  { id: 'prod_005', code: 'PAN-005', name: 'Focaccia de Romero y Aceitunas', category: 'Panadería', unitCost: 2.80, salePrice: 5.50, unit: 'Und', stock: 15, minStock: 8, icon: '🫓', showInPos: true, description: 'Pan plano italiano horneado con aceite de oliva extra virgen.' },
-  { id: 'prod_006', code: 'PAS-001', name: 'Éclair de Chocolate Belga', category: 'Pastelería', unitCost: 2.10, salePrice: 4.50, unit: 'Und', stock: 25, minStock: 15, icon: '⚡', showInPos: true, description: 'Pasta choux rellena de crema pastelera de chocolate oscuro.' },
-  { id: 'prod_007', code: 'PAS-002', name: 'Tarta de Limón Merengada', category: 'Pastelería', unitCost: 2.40, salePrice: 5.00, unit: 'Und', stock: 18, minStock: 10, icon: '🍋', showInPos: true, description: 'Base sablée, crema de limón amarillo y merengue tostado.' },
-  { id: 'prod_008', code: 'PAS-003', name: 'Caja de Macarons Surtidos (6 ud)', category: 'Pastelería', unitCost: 4.50, salePrice: 9.50, unit: 'Und', stock: 30, minStock: 12, icon: '🍡', showInPos: true, description: 'Selección de pistacho, frambuesa, vainilla, chocolate y café.' },
-  { id: 'prod_009', code: 'PAS-004', name: 'Milhojas Tradicional de Crema', category: 'Pastelería', unitCost: 2.20, salePrice: 4.80, unit: 'Und', stock: 14, minStock: 8, icon: '🍰', showInPos: true, description: 'Capas de hojaldre crujiente con crema diplomática.' },
-  { id: 'prod_010', code: 'BEB-001', name: 'Café Espresso Doble', category: 'Bebidas', unitCost: 0.80, salePrice: 2.80, unit: 'Und', stock: 100, minStock: 30, icon: '☕', showInPos: true, description: 'Grano 100% arábica de tueste medio de origen único.' },
-  { id: 'prod_011', code: 'BEB-002', name: 'Capuchino Cremoso', category: 'Bebidas', unitCost: 1.10, salePrice: 3.80, unit: 'Und', stock: 80, minStock: 25, icon: '🥛', showInPos: true, description: 'Espresso con leche al vapor y espuma suave de canela.' },
-  { id: 'prod_012', code: 'BEB-003', name: 'Café au Lait Parisien', category: 'Bebidas', unitCost: 1.00, salePrice: 3.50, unit: 'Und', stock: 90, minStock: 25, icon: '☕', showInPos: true, description: 'Café de filtro mezclado con leche entera caliente.' },
-  { id: 'prod_013', code: 'BEB-004', name: 'Jugo de Naranja Recién Exprimido', category: 'Bebidas', unitCost: 1.50, salePrice: 4.00, unit: 'L', stock: 40, minStock: 15, icon: '🍊', showInPos: true, description: '100% natural, prensado al momento sin azúcar añadida.' },
-  { id: 'prod_014', code: 'ESP-001', name: 'Croque-Monsieur Tradicional', category: 'Salados', unitCost: 3.20, salePrice: 7.50, unit: 'Und', stock: 22, minStock: 10, icon: '🥪', showInPos: true, description: 'Sándwich caliente de jamón cocido, queso Gruyère y bechamel.' },
-  { id: 'prod_015', code: 'ESP-002', name: 'Quiche Lorraine de Bacon', category: 'Salados', unitCost: 3.00, salePrice: 6.80, unit: 'Und', stock: 16, minStock: 8, icon: '🥧', showInPos: true, description: 'Tarta salada con tocino ahumado, crema de leche y queso.' }
+  { id: 'prod_001', code: 'PAN-001', name: 'Baguette Tradicional Parisina', category: 'Panadería', unitCost: 1.20, salePrice: 2.50, unit: 'Und', stock: 45, minStock: 20, icon: 'croissant', showInPos: true, description: 'Corteza crujiente y miga alveolada con levadura madre.' },
+  { id: 'prod_002', code: 'PAN-002', name: 'Croissant de Mantequilla', category: 'Panadería', unitCost: 1.40, salePrice: 3.00, unit: 'Und', stock: 60, minStock: 25, icon: 'croissant', showInPos: true, description: 'Hojaldre 100% mantequilla de Normandía.' },
+  { id: 'prod_003', code: 'PAN-003', name: 'Pain au Chocolat', category: 'Panadería', unitCost: 1.60, salePrice: 3.50, unit: 'Und', stock: 35, minStock: 15, icon: 'sparkles', showInPos: true, description: 'Hojaldre relleno de dos barras de chocolate negro 60%.' },
+  { id: 'prod_004', code: 'PAN-004', name: 'Brioche de Vainilla', category: 'Panadería', unitCost: 2.00, salePrice: 4.20, unit: 'Und', stock: 20, minStock: 10, icon: 'croissant', showInPos: true, description: 'Pan de huevo esponjoso aromatizado con vainilla.' },
+  { id: 'prod_005', code: 'PAN-005', name: 'Focaccia de Romero y Aceitunas', category: 'Panadería', unitCost: 2.80, salePrice: 5.50, unit: 'Und', stock: 15, minStock: 8, icon: 'wheat', showInPos: true, description: 'Pan plano italiano horneado con aceite de oliva extra virgen.' },
+  { id: 'prod_006', code: 'PAS-001', name: 'Éclair de Chocolate Belga', category: 'Pastelería', unitCost: 2.10, salePrice: 4.50, unit: 'Und', stock: 25, minStock: 15, icon: 'cake', showInPos: true, description: 'Pasta choux rellena de crema pastelera de chocolate oscuro.' },
+  { id: 'prod_007', code: 'PAS-002', name: 'Tarta de Limón Merengada', category: 'Pastelería', unitCost: 2.40, salePrice: 5.00, unit: 'Und', stock: 18, minStock: 10, icon: 'cake', showInPos: true, description: 'Base sablée, crema de limón amarillo y merengue tostado.' },
+  { id: 'prod_008', code: 'PAS-003', name: 'Caja de Macarons Surtidos (6 ud)', category: 'Pastelería', unitCost: 4.50, salePrice: 9.50, unit: 'Und', stock: 30, minStock: 12, icon: 'sparkles', showInPos: true, description: 'Selección de pistacho, frambuesa, vainilla, chocolate y café.' },
+  { id: 'prod_009', code: 'PAS-004', name: 'Milhojas Tradicional de Crema', category: 'Pastelería', unitCost: 2.20, salePrice: 4.80, unit: 'Und', stock: 14, minStock: 8, icon: 'cake', showInPos: true, description: 'Capas de hojaldre crujiente con crema diplomática.' },
+  { id: 'prod_010', code: 'BEB-001', name: 'Café Espresso Doble', category: 'Bebidas', unitCost: 0.80, salePrice: 2.80, unit: 'Und', stock: 100, minStock: 30, icon: 'coffee', showInPos: true, description: 'Grano 100% arábica de tueste medio de origen único.' },
+  { id: 'prod_011', code: 'BEB-002', name: 'Capuchino Cremoso', category: 'Bebidas', unitCost: 1.10, salePrice: 3.80, unit: 'Und', stock: 80, minStock: 25, icon: 'coffee', showInPos: true, description: 'Espresso con leche al vapor y espuma suave de canela.' },
+  { id: 'prod_012', code: 'BEB-003', name: 'Café au Lait Parisien', category: 'Bebidas', unitCost: 1.00, salePrice: 3.50, unit: 'Und', stock: 90, minStock: 25, icon: 'coffee', showInPos: true, description: 'Café de filtro mezclado con leche entera caliente.' },
+  { id: 'prod_013', code: 'BEB-004', name: 'Jugo de Naranja Recién Exprimido', category: 'Bebidas', unitCost: 1.50, salePrice: 4.00, unit: 'L', stock: 40, minStock: 15, icon: 'coffee', showInPos: true, description: '100% natural, prensado al momento sin azúcar añadida.' },
+  { id: 'prod_014', code: 'ESP-001', name: 'Croque-Monsieur Tradicional', category: 'Salados', unitCost: 3.20, salePrice: 7.50, unit: 'Und', stock: 22, minStock: 10, icon: 'utensils', showInPos: true, description: 'Sándwich caliente de jamón cocido, queso Gruyère y bechamel.' },
+  { id: 'prod_015', code: 'ESP-002', name: 'Quiche Lorraine de Bacon', category: 'Salados', unitCost: 3.00, salePrice: 6.80, unit: 'Und', stock: 16, minStock: 8, icon: 'utensils', showInPos: true, description: 'Tarta salada con tocino ahumado, crema de leche y queso.' }
 ];
 
 function getPosCatalogFromStorage() {
@@ -68,12 +68,12 @@ function getRawMaterialsFromStorage() {
     console.warn('Error leyendo materias_primas:', e);
   }
   const defaultList = [
-    { code: 'MAT-001', name: 'Harina de Trigo Tradicional T55', icon: '🌾', category: 'Materias Primas', unitCost: 1.80, unit: 'Kg', stock: 18.00, minStock: 50.00 },
-    { code: 'MAT-002', name: 'Mantequilla de Normandía 84% M.G.', icon: '🧈', category: 'Lácteos & Mantequillas', unitCost: 8.50, unit: 'Kg', stock: 12.50, minStock: 30.00 },
-    { code: 'MAT-003', name: 'Levadura Madre Activa Tostada', icon: '🧫', category: 'Levaduras & Fermentos', unitCost: 4.20, unit: 'Kg', stock: 8.00, minStock: 15.00 },
-    { code: 'MAT-004', name: 'Chocolate Belga 60% Cacao', icon: '🍫', category: 'Coberturas & Cacao', unitCost: 12.00, unit: 'Kg', stock: 42.00, minStock: 20.00 },
-    { code: 'MAT-005', name: 'Azúcar Fina Refinada', icon: '🧂', category: 'Materias Primas', unitCost: 1.50, unit: 'Kg', stock: 65.00, minStock: 25.00 },
-    { code: 'MAT-006', name: 'Huevos Frescos de Granja', icon: '🥚', category: 'Insumos Frescos', unitCost: 0.25, unit: 'Und', stock: 120.00, minStock: 150.00 }
+    { code: 'MAT-001', name: 'Harina de Trigo Tradicional T55', icon: 'wheat', category: 'Materias Primas', unitCost: 1.80, unit: 'Kg', stock: 18.00, minStock: 50.00 },
+    { code: 'MAT-002', name: 'Mantequilla de Normandía 84% M.G.', icon: 'milk', category: 'Lácteos & Mantequillas', unitCost: 8.50, unit: 'Kg', stock: 12.50, minStock: 30.00 },
+    { code: 'MAT-003', name: 'Levadura Madre Activa Tostada', icon: 'package', category: 'Levaduras & Fermentos', unitCost: 4.20, unit: 'Kg', stock: 8.00, minStock: 15.00 },
+    { code: 'MAT-004', name: 'Chocolate Belga 60% Cacao', icon: 'sparkles', category: 'Coberturas & Cacao', unitCost: 12.00, unit: 'Kg', stock: 42.00, minStock: 20.00 },
+    { code: 'MAT-005', name: 'Azúcar Fina Refinada', icon: 'package', category: 'Materias Primas', unitCost: 1.50, unit: 'Kg', stock: 65.00, minStock: 25.00 },
+    { code: 'MAT-006', name: 'Huevos Frescos de Granja', icon: 'egg', category: 'Insumos Frescos', unitCost: 0.25, unit: 'Und', stock: 120.00, minStock: 150.00 }
   ];
   try { localStorage.setItem('materias_primas', JSON.stringify(defaultList)); } catch (e) {}
   return defaultList;
@@ -100,10 +100,10 @@ function getSuppliersFromStorage() {
     console.warn('Error leyendo proveedores_list:', e);
   }
   const defaultList = [
-    { code: 'PROV-001', name: 'Molinos del Sur, C.A.', icon: '🌾', rif: 'J-30819283-4', phone: '(01) 555-MOLINO', contact: 'Carlos Mendoza', address: 'Zona Industrial Sur, Parcela 14, Caracas' },
-    { code: 'PROV-002', name: 'Lácteos La Granja', icon: '🧈', rif: 'J-40192837-1', phone: '(01) 555-LACTEOS', contact: 'María Elena Suárez', address: 'Av. Las Acacias, Edif. La Granja, Valencia' },
-    { code: 'PROV-003', name: 'Empaques del Norte', icon: '📦', rif: 'J-29837482-9', phone: '(01) 555-EMPAQUE', contact: 'Roberto Gómez', address: 'Av. Principal Norte, Bodega 5, Maracay' },
-    { code: 'PROV-004', name: 'Chocolates del Rey', icon: '🍫', rif: 'J-50192834-6', phone: '(01) 555-CACAO', contact: 'Jean-Philippe Laurent', address: 'Calle Los Artesanos, Qta. Cacao, Los Teques' }
+    { code: 'PROV-001', name: 'Molinos del Sur, C.A.', icon: 'wheat', rif: 'J-30819283-4', phone: '(01) 555-MOLINO', contact: 'Carlos Mendoza', address: 'Zona Industrial Sur, Parcela 14, Caracas' },
+    { code: 'PROV-002', name: 'Lácteos La Granja', icon: 'milk', rif: 'J-40192837-1', phone: '(01) 555-LACTEOS', contact: 'María Elena Suárez', address: 'Av. Las Acacias, Edif. La Granja, Valencia' },
+    { code: 'PROV-003', name: 'Empaques del Norte', icon: 'package', rif: 'J-29837482-9', phone: '(01) 555-EMPAQUE', contact: 'Roberto Gómez', address: 'Av. Principal Norte, Bodega 5, Maracay' },
+    { code: 'PROV-004', name: 'Chocolates del Rey', icon: 'sparkles', rif: 'J-50192834-6', phone: '(01) 555-CACAO', contact: 'Jean-Philippe Laurent', address: 'Calle Los Artesanos, Qta. Cacao, Los Teques' }
   ];
   try { localStorage.setItem('proveedores_list', JSON.stringify(defaultList)); } catch (e) {}
   return defaultList;
@@ -162,22 +162,22 @@ const UomConverter = {
 
       if (sacos > 0) {
         if (remKg > 0) {
-          return `📦 ${sacos} Saco${sacos > 1 ? 's' : ''} + ${remKg.toFixed(1)} kg`;
+          return `${sacos} Saco${sacos > 1 ? 's' : ''} + ${remKg.toFixed(1)} kg`;
         }
-        return `📦 ${sacos} Saco${sacos > 1 ? 's' : ''} (${(baseQty / 1000).toFixed(0)} kg)`;
+        return `${sacos} Saco${sacos > 1 ? 's' : ''} (${(baseQty / 1000).toFixed(0)} kg)`;
       }
 
       if (baseQty >= 1000) {
-        return `⚖️ ${(baseQty / 1000).toFixed(1)} kg`;
+        return `${(baseQty / 1000).toFixed(1)} kg`;
       }
-      return `⚖️ ${Math.round(baseQty)} g`;
+      return `${Math.round(baseQty)} g`;
     }
 
     if (baseUnit === 'ml') {
       if (baseQty >= 1000) {
-        return `🥛 ${(baseQty / 1000).toFixed(1)} L`;
+        return `${(baseQty / 1000).toFixed(1)} L`;
       }
-      return `🥛 ${Math.round(baseQty)} ml`;
+      return `${Math.round(baseQty)} ml`;
     }
 
     return `${stockQty} ${unitStr}`;
@@ -246,27 +246,27 @@ const VALID_MANAGER_PASSWORDS = ['admin123', '1234', 'gerente', 'admin', '0000']
 
 const BREAKDOWN_MAP = {
   'FAC-2026-1003': [
-    { name: '🥖 Baguette Tradición (x2)', price: '$3.60 USD' },
-    { name: '🥐 Croissant de Mantequilla (x3)', price: '$7.50 USD' },
-    { name: '☕ Café Au Lait (x2)', price: '$6.40 USD' },
-    { name: '🍰 Tarta de Almendras (x1)', price: '$15.00 USD' }
+    { name: 'Baguette Tradición (x2)', price: '$3.60 USD' },
+    { name: 'Croissant de Mantequilla (x3)', price: '$7.50 USD' },
+    { name: 'Café Au Lait (x2)', price: '$6.40 USD' },
+    { name: 'Tarta de Almendras (x1)', price: '$15.00 USD' }
   ],
   'FAC-2026-1002': [
-    { name: '🍞 Pan de Campo Artesanal (x1)', price: '$6.00 USD' },
-    { name: '🍫 Pain au Chocolat (x2)', price: '$8.00 USD' }
+    { name: 'Pan de Campo Artesanal (x1)', price: '$6.00 USD' },
+    { name: 'Pain au Chocolat (x2)', price: '$8.00 USD' }
   ],
   'OC-2026-0089': [
-    { name: '🌾 Harina de Trigo Panadera 50kg (x10 Sacos)', price: '-$450.00 USD' }
+    { name: 'Harina de Trigo Panadera 50kg (x10 Sacos)', price: '-$450.00 USD' }
   ],
   'FAC-2026-1001': [
-    { name: '🍞 Brioche Tradicional (x3)', price: '$10.80 USD' },
-    { name: '🍫 Éclair de Chocolate (x2)', price: '$18.00 USD' }
+    { name: 'Brioche Tradicional (x3)', price: '$10.80 USD' },
+    { name: 'Éclair de Chocolate (x2)', price: '$18.00 USD' }
   ],
   'ARQ-2026-0012': [
-    { name: '🔍 Auditoría de Caja e Inventario (Turno Mañana - Sin Descuadres)', price: '$0.00 USD' }
+    { name: 'Auditoría de Caja e Inventario (Turno Mañana - Sin Descuadres)', price: '$0.00 USD' }
   ],
   'OC-2026-0088': [
-    { name: '🧈 Mantequilla AOP Normandía 25kg (x4 Cajas)', price: '-$280.00 USD' }
+    { name: 'Mantequilla AOP Normandía 25kg (x4 Cajas)', price: '-$280.00 USD' }
   ]
 };
 
@@ -354,7 +354,7 @@ function closeMovementDetailModal() {
 // ==========================================================================
 
 /**
- * 1. Inicialización de Sesión y Barra Superior
+ * 1. Inicialización de Sesión y Barra Superior con Control de Acceso (RBAC)
  */
 function inicializarSesionYBarraSuperior() {
   let session = null;
@@ -367,13 +367,36 @@ function inicializarSesionYBarraSuperior() {
   const activeUser = (session && session.user) ? session.user : {
     name: 'Juan Mendoza',
     role: 'Gerente General',
-    icon: '👨‍💼'
+    roleCode: 'ADMIN',
+    icon: 'shield-check'
   };
+
+  // 1. Verificación Estricta de Permisos de Gerencia
+  const userRole = (activeUser.role || '').toLowerCase();
+  const userRoleCode = (activeUser.roleCode || '').toUpperCase();
+  const isGerente = userRoleCode === 'ADMIN' || userRole.includes('gerente') || userRole.includes('administrador');
+
+  if (!isGerente) {
+    alert(`Acceso Restringido: El Panel Central de Gerencia es de uso exclusivo para el Gerente General.\nTu rol actual es: ${activeUser.role || 'Empleado'}.\nRedirigiendo a tu módulo correspondiente...`);
+    let redirectUrl = 'accounting.html';
+    if (userRoleCode === 'POS' || userRole.includes('cajero')) redirectUrl = 'pos.html';
+    else if (userRoleCode === 'KITCHEN' || userRole.includes('panadero')) redirectUrl = 'kitchen.html';
+    else if (userRoleCode === 'ACCOUNTANT' || userRole.includes('contador')) redirectUrl = 'accounting.html';
+    else redirectUrl = '../index.html';
+    window.location.href = redirectUrl;
+    return false;
+  }
 
   const managerNameEl = document.getElementById('managerName');
   const managerAvatarEl = document.getElementById('managerAvatar');
+  const shiftStatusEl = document.querySelector('.cashier-info .shift-status');
+
   if (managerNameEl) managerNameEl.textContent = activeUser.name || 'Juan Mendoza';
-  if (managerAvatarEl) managerAvatarEl.textContent = activeUser.icon || '👨‍💼';
+  if (shiftStatusEl) shiftStatusEl.textContent = `● ${activeUser.role || 'Gerente General'}`;
+  if (managerAvatarEl) {
+    managerAvatarEl.innerHTML = window.LucideIcons ? window.LucideIcons.render(activeUser.icon || 'shield-check') : '<i data-lucide="shield-check"></i>';
+    window.LucideIcons?.refresh();
+  }
 
   const logoutBtn = document.getElementById('logoutBtn');
   if (logoutBtn) {
@@ -388,6 +411,8 @@ function inicializarSesionYBarraSuperior() {
       }
     });
   }
+
+  return true;
 }
 
 /**
@@ -480,7 +505,7 @@ function cargarTasaCambio() {
 
     if (bcvRateValEl) bcvRateValEl.textContent = `Bs. ${rate.toFixed(2)}`;
     if (bcvRateBadge) {
-      bcvRateBadge.innerHTML = `<span>🇻🇪 ${labelText}:</span> <strong>Bs. ${rate.toFixed(2)}</strong>`;
+      bcvRateBadge.innerHTML = `<span><i data-lucide="coins" class="icon-xs"></i> ${labelText}:</span> <strong>Bs. ${rate.toFixed(2)}</strong>`;
       bcvRateBadge.className = isManual ? 'bcv-rate-badge warning' : 'bcv-rate-badge';
     }
   }
@@ -496,25 +521,31 @@ function cargarTasaCambio() {
     }
 
     const apis = [
-      'https://ve.dolarapi.com/v1/dolares/oficial',
-      'https://bcv-api.vercel.app/api/bcv'
+      '../api/bcv_rate.php',
+      'https://ve.dolarapi.com/v1/dolares/oficial'
     ];
 
     for (const url of apis) {
       try {
-        const res = await fetch(`${url}?t=${Date.now()}`, { cache: 'no-store' });
+        const controller = typeof AbortController !== 'undefined' ? new AbortController() : null;
+        const timeoutId = controller ? setTimeout(() => controller.abort(), 1500) : null;
+        const res = await fetch(`${url}?t=${Date.now()}`, { 
+          cache: 'no-store',
+          signal: controller ? controller.signal : undefined 
+        });
+        if (timeoutId) clearTimeout(timeoutId);
         if (res.ok) {
           const data = await res.json();
           const liveRate = parseFloat(data.promedio || data.precio || data.monto || data.rate);
           if (liveRate && liveRate > 0) {
             localStorage.setItem('tasa_auto', liveRate.toString());
             localStorage.setItem('bcv_current_rate', liveRate.toString());
-            updateDashboardRateBadge(liveRate, 'Tasa: BCV Oficial (En Vivo)', false);
+            updateDashboardRateBadge(liveRate, data.source || 'Tasa: BCV Oficial (En Vivo)', false);
             return liveRate;
           }
         }
       } catch (e) {
-        console.warn(`Error consultando API ${url}:`, e);
+        // Fallback rápido
       }
     }
 
@@ -688,13 +719,13 @@ function renderMovementsTable() {
       amountClass = 'negative';
     }
 
-    let categoryBadge = `<span class="table-status-tag completado" style="background: rgba(46,125,50,0.12); color: var(--color-success); font-weight: 700; border: 1px solid rgba(46,125,50,0.3);">🟢 ${mov.type || 'Venta POS'}</span>`;
+    let categoryBadge = `<span class="table-status-tag completado" style="background: rgba(46,125,50,0.12); color: var(--color-success); font-weight: 700; border: 1px solid rgba(46,125,50,0.3);"><i data-lucide="arrow-down-left" class="icon-xs" style="margin-right: 0.25rem;"></i>${mov.type || "Venta POS"}</span>`;
     if (isDevolucion) {
       categoryBadge = `<span class="table-status-tag" style="background: rgba(198,40,40,0.14); color: #C62828; border: 1px solid rgba(198,40,40,0.35); font-weight: 800;">↩️ Devolución de Venta</span>`;
     } else if (mov.category === 'gasto' || isNegative) {
-      categoryBadge = `<span class="table-status-tag" style="background: rgba(198,40,40,0.12); color: var(--color-danger); border: 1px solid rgba(198,40,40,0.3); font-weight: 700;">🔴 ${mov.type || 'Egreso / Compra'}</span>`;
+      categoryBadge = `<span class="table-status-tag" style="background: rgba(198,40,40,0.12); color: var(--color-danger); border: 1px solid rgba(198,40,40,0.3); font-weight: 700;"><i data-lucide="arrow-up-right" class="icon-xs" style="margin-right: 0.25rem;"></i>${mov.type || "Egreso / Compra"}</span>`;
     } else if (mov.category === 'ajuste' || mov.type?.includes('Requisición') || mov.amount === 0) {
-      categoryBadge = `<span class="table-status-tag" style="background: rgba(255,152,0,0.12); color: #E65100; border: 1px solid rgba(255,152,0,0.3); font-weight: 700;">🟡 ${mov.type || 'Transferencia'}</span>`;
+      categoryBadge = `<span class="table-status-tag" style="background: rgba(255,152,0,0.12); color: #E65100; border: 1px solid rgba(255,152,0,0.3); font-weight: 700;"><i data-lucide="refresh-cw" class="icon-xs" style="margin-right: 0.25rem;"></i>${mov.type || "Transferencia"}</span>`;
     }
 
     const reasonText = mov.reason || mov.motivo || (mov.breakdown && mov.breakdown.find(b => b.name?.includes('Motivo:'))?.name?.replace('Motivo:', '').trim());
@@ -753,9 +784,9 @@ function openMovementDetailModal(mov) {
   const iconEl = document.getElementById('modalDetalleIcon');
   if (iconEl) {
     if (mov.type?.includes('Devolución') || mov.type?.includes('Anulación')) iconEl.textContent = '↩️';
-    else if (mov.category === 'venta') iconEl.textContent = '🛍️';
-    else if (mov.category === 'gasto') iconEl.textContent = '📦';
-    else iconEl.textContent = '📊';
+    else if (mov.category === 'venta') iconEl.innerHTML = '<i data-lucide="shopping-bag"></i>';
+    else if (mov.category === 'gasto') iconEl.innerHTML = '<i data-lucide="package"></i>';
+    else iconEl.innerHTML = '<i data-lucide="bar-chart-3"></i>';
   }
 
   const montoCard = document.getElementById('modalMontoCard');
@@ -805,7 +836,7 @@ function openMovementDetailModal(mov) {
       discRow.style.fontWeight = 'bold';
       discRow.style.color = 'var(--color-success)';
       discRow.innerHTML = `
-        <span class="breakdown-item-name">🎉 Descuento Especial Aplicado</span>
+        <span class="breakdown-item-name"><i data-lucide="tag" class="icon-xs" style="margin-right:0.25rem;"></i>Descuento Especial Aplicado</span>
         <span class="breakdown-item-price">-${mov.discount}</span>
       `;
       listContainer.appendChild(discRow);
@@ -817,7 +848,7 @@ function openMovementDetailModal(mov) {
       reasonCard.style.cssText = 'background: rgba(198,40,40,0.08); border: 1.5px solid rgba(198,40,40,0.3); border-radius: var(--radius-md); padding: 0.85rem 1rem; margin-top: 0.85rem; color: #C62828;';
       reasonCard.innerHTML = `
         <div style="font-size: 0.8rem; font-weight: 800; text-transform: uppercase; margin-bottom: 0.25rem; display: flex; align-items: center; gap: 0.35rem;">
-          <span>⚠️</span> <span>Motivo de la Devolución / Anulación:</span>
+          <i data-lucide="alert-triangle" class="icon-sm" style="margin-right:0.35rem;"></i> <span>Motivo de la Devolución / Anulación:</span>
         </div>
         <div style="font-size: 0.95rem; font-weight: 700;">${reasonText || 'Producto Defectuoso / Solicitud del Cliente'}</div>
         ${mov.authorizedBy ? `<div style="font-size: 0.8rem; color: var(--color-espresso); margin-top: 0.35rem;"><strong>Autorizado por Gerencia:</strong> ${mov.authorizedBy}</div>` : ''}
@@ -947,7 +978,7 @@ function renderInventoryTables() {
       const tr = document.createElement('tr');
       tr.innerHTML = `
         <td class="table-code-badge">${item.code}</td>
-        <td><strong>${item.icon || '📦'} ${item.name}</strong></td>
+        <td><strong><i data-lucide="${item.icon || 'package'}" class="icon-sm" style="margin-right: 0.35rem;"></i>${item.name}</strong></td>
         <td style="color: var(--color-muted);">${item.category}</td>
         <td><span class="table-status-tag" style="background: rgba(0,0,0,0.06); color: var(--color-espresso); font-weight: 700;">${item.unit}</span></td>
         <td style="font-weight: 700; color: var(--color-gold-dark);">$${item.unitCost.toFixed(2)} / ${item.unit}</td>
@@ -957,14 +988,14 @@ function renderInventoryTables() {
         </td>
         <td>
           <span class="${isLow ? 'badge-stock-low' : 'badge-stock-normal'}">
-            ${isLow ? `🔴 ALERTA: Stock Bajo (Min: ${item.minStock} ${item.unit})` : `🟢 Normal (Min: ${item.minStock} ${item.unit})`}
+            ${isLow ? `<span class="badge-clean-icon" style="color: var(--color-danger);"><i data-lucide="alert-triangle" class="icon-xs"></i> ALERTA: Stock Bajo (${item.minStock} ${item.unit})</span>` : `<span class="badge-clean-icon" style="color: var(--color-success);"><i data-lucide="check" class="icon-xs"></i> Normal (${item.minStock} ${item.unit})</span>`}
           </span>
         </td>
         <td>
           <div style="display: flex; gap: 0.35rem;">
             <button type="button" class="btn-table-action-sm btn-ingreso-item" data-code="${item.code}" title="Registrar ingreso de mercancía">+ Ingreso</button>
-            <button type="button" class="btn-table-action-sm btn-edit-mp" title="Editar materia prima">✏️ Editar</button>
-            <button type="button" class="btn-table-action-sm btn-del-mp" style="background: rgba(198,40,40,0.1); color: var(--color-danger); border-color: rgba(198,40,40,0.3);" title="Eliminar materia prima">🗑️</button>
+            <button type="button" class="btn-table-action-sm btn-edit-mp" title="Editar materia prima"><i data-lucide="edit-3" class="icon-xs"></i> <span>Editar</span></button>
+            <button type="button" class="btn-table-action-sm btn-del-mp" style="background: rgba(198,40,40,0.1); color: var(--color-danger); border-color: rgba(198,40,40,0.3);" title="Eliminar materia prima"><i data-lucide="trash-2" class="icon-xs"></i></button>
           </div>
         </td>
       `;
@@ -995,7 +1026,7 @@ function renderInventoryTables() {
       const tr = document.createElement('tr');
       tr.innerHTML = `
         <td class="table-code-badge">${item.code}</td>
-        <td><strong>${item.icon || '🛍️'} ${item.name}</strong></td>
+        <td><strong><i data-lucide="${item.icon || 'shopping-bag'}" class="icon-sm" style="margin-right: 0.35rem;"></i>${item.name}</strong></td>
         <td style="color: var(--color-espresso); font-weight: 600;">${item.category}</td>
         <td><span class="table-status-tag" style="background: rgba(0,0,0,0.06); color: var(--color-espresso); font-weight: 700;">${item.unit || 'Und'}</span></td>
         <td style="color: var(--color-muted);">$${(item.unitCost || 0).toFixed(2)} / ${item.unit || 'Und'}</td>
@@ -1003,19 +1034,19 @@ function renderInventoryTables() {
         <td style="font-weight: 800; font-size: 0.95rem;">${item.stock} ${item.unit || 'Und'}</td>
         <td>
           <span class="table-status-tag ${isVisiblePos ? 'active' : ''}" style="${isVisiblePos ? 'background: rgba(46,125,50,0.1); color: var(--color-success); font-weight: 700;' : 'background: rgba(0,0,0,0.06); color: var(--color-muted);'}">
-            ${isVisiblePos ? '🟢 Visible en POS' : '⚪ Oculto en POS'}
+            ${isVisiblePos ? '<span class="badge-clean-icon" style="color: var(--color-success);"><i data-lucide="eye" class="icon-xs"></i> Visible en POS</span>' : '<span class="badge-clean-icon" style="color: var(--color-muted);"><i data-lucide="eye-off" class="icon-xs"></i> Oculto en POS</span>'}
           </span>
         </td>
         <td>
           <span class="${isLow ? 'badge-stock-low' : 'badge-stock-normal'}">
-            ${isLow ? `🔴 ALERTA: Stock Bajo (Min: ${item.minStock} ${item.unit || 'Und'})` : `🟢 Normal (Min: ${item.minStock} ${item.unit || 'Und'})`}
+            ${isLow ? `<span class="badge-clean-icon" style="color: var(--color-danger);"><i data-lucide="alert-triangle" class="icon-xs"></i> ALERTA: Stock Bajo (${item.minStock} ${item.unit || "Und"})</span>` : `<span class="badge-clean-icon" style="color: var(--color-success);"><i data-lucide="check" class="icon-xs"></i> Normal (${item.minStock} ${item.unit || "Und"})</span>`}
           </span>
         </td>
         <td>
           <div style="display: flex; gap: 0.35rem;">
             <button type="button" class="btn-table-action-sm btn-ingreso-item" data-code="${item.code}" title="Registrar ingreso de mercancía">+ Ingreso</button>
-            <button type="button" class="btn-table-action-sm btn-edit-pt" title="Editar producto">✏️ Editar</button>
-            <button type="button" class="btn-table-action-sm btn-del-pt" style="background: rgba(198,40,40,0.1); color: var(--color-danger); border-color: rgba(198,40,40,0.3);" title="Eliminar producto">🗑️</button>
+            <button type="button" class="btn-table-action-sm btn-edit-pt" title="Editar producto"><i data-lucide="edit-3" class="icon-xs"></i> <span>Editar</span></button>
+            <button type="button" class="btn-table-action-sm btn-del-pt" style="background: rgba(198,40,40,0.1); color: var(--color-danger); border-color: rgba(198,40,40,0.3);" title="Eliminar producto"><i data-lucide="trash-2" class="icon-xs"></i></button>
           </div>
         </td>
       `;
@@ -1044,15 +1075,15 @@ function renderInventoryTables() {
       const tr = document.createElement('tr');
       tr.innerHTML = `
         <td class="table-code-badge">${prov.code}</td>
-        <td><strong>${prov.icon || '🏬'} ${prov.name}</strong></td>
+        <td><strong><i data-lucide="${prov.icon || 'building-2'}" class="icon-sm" style="margin-right: 0.35rem;"></i>${prov.name}</strong></td>
         <td style="font-weight: 600; color: var(--color-espresso);">${prov.rif}</td>
         <td style="color: var(--color-muted);">${prov.phone}</td>
-        <td>👤 ${prov.contact}</td>
+        <td><i data-lucide="user" class="icon-xs" style="margin-right: 0.25rem;"></i>${prov.contact}</td>
         <td style="color: var(--color-muted); font-size: 0.82rem;">${prov.address || 'N/A'}</td>
         <td>
           <div style="display: flex; gap: 0.35rem;">
-            <button type="button" class="btn-table-action-sm btn-edit-prov" title="Editar datos del proveedor">✏️ Editar</button>
-            <button type="button" class="btn-table-action-sm btn-del-prov" style="background: rgba(198,40,40,0.1); color: var(--color-danger); border-color: rgba(198,40,40,0.3);" title="Eliminar proveedor">🗑️</button>
+            <button type="button" class="btn-table-action-sm btn-edit-prov" title="Editar datos del proveedor"><i data-lucide="edit-3" class="icon-xs"></i> <span>Editar</span></button>
+            <button type="button" class="btn-table-action-sm btn-del-prov" style="background: rgba(198,40,40,0.1); color: var(--color-danger); border-color: rgba(198,40,40,0.3);" title="Eliminar proveedor"><i data-lucide="trash-2" class="icon-xs"></i></button>
           </div>
         </td>
       `;
@@ -1114,6 +1145,7 @@ function cargarInventario() {
  * 6. Inicialización de Botones Generales, Buscadores y Modales de Acción
  */
 function inicializarBotonesGenerales() {
+  try { inicializarReporteEjecutivo(); } catch (e) { console.warn('Reporte Ejecutivo init:', e); }
   document.getElementById('inventorySearchInput')?.addEventListener('input', renderInventoryTables);
   document.getElementById('inventoryCategoryFilter')?.addEventListener('change', renderInventoryTables);
 
@@ -1228,7 +1260,7 @@ function inicializarBotonesGenerales() {
       }
     } else {
       const newCode = `PROV-${String(suppliersData.length + 1).padStart(3, '0')}`;
-      suppliersData.push({ code: newCode, name, icon: '🏬', rif, phone, contact, address });
+      suppliersData.push({ code: newCode, name, icon: 'building-2', rif, phone, contact, address });
     }
 
     saveSuppliersToStorage(suppliersData);
@@ -1272,7 +1304,7 @@ function inicializarBotonesGenerales() {
       }
     } else {
       const newCode = `MAT-${String(rawMaterialsData.length + 1).padStart(3, '0')}`;
-      rawMaterialsData.push({ code: newCode, name, icon: '🌾', category, unitCost, unit, stock, minStock });
+      rawMaterialsData.push({ code: newCode, name, icon: 'wheat', category, unitCost, unit, stock, minStock });
     }
 
     saveRawMaterialsToStorage(rawMaterialsData);
@@ -1325,7 +1357,7 @@ function inicializarBotonesGenerales() {
         id: `prod_${String(finishedGoodsData.length + 1).padStart(3, '0')}`,
         code: newCode,
         name: name,
-        icon: category === 'Panadería' ? '🥖' : category === 'Pastelería' ? '🍰' : category === 'Bebidas' ? '☕' : '🥪',
+        icon: category === 'Panadería' ? 'croissant' : category === 'Pastelería' ? 'cake' : category === 'Bebidas' ? 'coffee' : 'utensils',
         category: category,
         unitCost: unitCost,
         salePrice: salePrice,
@@ -1361,7 +1393,7 @@ function inicializarBotonesGenerales() {
     if (!enteredPass || !VALID_MANAGER_PASSWORDS.includes(enteredPass)) {
       if (confirmEliminarErrorMsg) {
         confirmEliminarErrorMsg.style.display = 'block';
-        confirmEliminarErrorMsg.textContent = '❌ Contraseña gerencial incorrecta. Permiso denegado.';
+        confirmEliminarErrorMsg.textContent = 'Contraseña gerencial incorrecta. Permiso denegado.';
       }
       confirmEliminarPassword?.focus();
       return;
@@ -1434,7 +1466,7 @@ function openIngresoMercanciaModal(preselectCode = null) {
     modalIngresoProductoSelect.innerHTML = '<option value="" disabled selected>-- Seleccione un ítem del catálogo --</option>';
 
     const optGroupRaw = document.createElement('optgroup');
-    optGroupRaw.label = '🌾 MATERIAS PRIMAS E INSUMOS';
+    optGroupRaw.label = 'MATERIAS PRIMAS E INSUMOS';
     rawMaterialsData.forEach(item => {
       const opt = document.createElement('option');
       opt.value = item.code;
@@ -1444,7 +1476,7 @@ function openIngresoMercanciaModal(preselectCode = null) {
     modalIngresoProductoSelect.appendChild(optGroupRaw);
 
     const optGroupFinished = document.createElement('optgroup');
-    optGroupFinished.label = '🛍️ PRODUCTOS TERMINADOS / VENTA DIRECTA';
+    optGroupFinished.label = 'PRODUCTOS TERMINADOS / VENTA DIRECTA';
     finishedGoodsData.forEach(item => {
       const opt = document.createElement('option');
       opt.value = item.code;
@@ -1732,32 +1764,32 @@ function inicializarTicketsProduccionGerencia() {
       tickets.forEach(ticket => {
         const tr = document.createElement('tr');
         
-        let statusTag = `<span class="badge-stock-normal" style="background: rgba(255,152,0,0.15); color: #E65100; border: 1px solid rgba(255,152,0,0.3); font-weight: 700;">🟡 Pendiente</span>`;
+        let statusTag = `<span class="badge-stock-normal badge-clean-icon" style="background: rgba(255,152,0,0.15); color: #E65100; border: 1px solid rgba(255,152,0,0.3); font-weight: 700;"><i data-lucide="clock" class="icon-xs"></i> Pendiente</span>`;
         if (ticket.status === 'Aprobado') {
-          statusTag = `<span class="badge-stock-normal" style="background: rgba(46,125,50,0.15); color: var(--color-success); border: 1px solid rgba(46,125,50,0.3); font-weight: 700;">🟢 Aprobado</span>`;
+          statusTag = `<span class="badge-stock-normal badge-clean-icon" style="background: rgba(46,125,50,0.15); color: var(--color-success); border: 1px solid rgba(46,125,50,0.3); font-weight: 700;"><i data-lucide="check" class="icon-xs"></i> Aprobado</span>`;
         } else if (ticket.status === 'Rechazado') {
-          statusTag = `<span class="badge-stock-normal" style="background: rgba(198,40,40,0.15); color: var(--color-danger); border: 1px solid rgba(198,40,40,0.3); font-weight: 700;">🔴 Rechazado</span>`;
+          statusTag = `<span class="badge-stock-normal badge-clean-icon" style="background: rgba(198,40,40,0.15); color: var(--color-danger); border: 1px solid rgba(198,40,40,0.3); font-weight: 700;"><i data-lucide="x" class="icon-xs"></i> Rechazado</span>`;
         }
 
         let actionBtns = '';
         if (ticket.status === 'Pendiente') {
           actionBtns = `
             <div style="display: flex; gap: 0.4rem;">
-              <button type="button" class="btn-table-action-sm btn-approve-ticket" style="background: rgba(46,125,50,0.12); color: var(--color-success); border-color: rgba(46,125,50,0.3); font-weight: 700;" title="Aprobar despacho">✅ Aprobar</button>
-              <button type="button" class="btn-table-action-sm btn-reject-ticket" style="background: rgba(198,40,40,0.12); color: var(--color-danger); border-color: rgba(198,40,40,0.3); font-weight: 700;" title="Rechazar solicitud">❌ Rechazar</button>
+              <button type="button" class="btn-table-action-sm btn-approve-ticket" style="background: rgba(46,125,50,0.12); color: var(--color-success); border-color: rgba(46,125,50,0.3); font-weight: 700;" title="Aprobar despacho"><i data-lucide="check" class="icon-xs"></i> <span>Aprobar</span></button>
+              <button type="button" class="btn-table-action-sm btn-reject-ticket" style="background: rgba(198,40,40,0.12); color: var(--color-danger); border-color: rgba(198,40,40,0.3); font-weight: 700;" title="Rechazar solicitud"><i data-lucide="x" class="icon-xs"></i> <span>Rechazar</span></button>
             </div>
           `;
         } else if (ticket.status === 'Aprobado') {
           actionBtns = `
             <div style="font-size: 0.8rem; color: var(--color-success); font-weight: 600; line-height: 1.3;">
-              <span>✅ Aprobado por <strong>${ticket.processedBy || 'Gerencia'}</strong></span><br/>
+              <span class="badge-clean-icon" style="color: var(--color-success);"><i data-lucide="check" class="icon-xs"></i> Aprobado por <strong>${ticket.processedBy || "Gerencia"}</strong></span><br/>
               <span style="font-size: 0.75rem; color: var(--color-muted); font-weight: 400;">⏱️ ${ticket.processedAt || ticket.date}</span>
             </div>
           `;
         } else if (ticket.status === 'Rechazado') {
           actionBtns = `
             <div style="font-size: 0.8rem; color: var(--color-danger); font-weight: 600; line-height: 1.3;">
-              <span>❌ Rechazado por <strong>${ticket.processedBy || 'Gerencia'}</strong></span><br/>
+              <span class="badge-clean-icon" style="color: var(--color-danger);"><i data-lucide="x" class="icon-xs"></i> Rechazado por <strong>${ticket.processedBy || "Gerencia"}</strong></span><br/>
               <span style="font-size: 0.75rem; color: var(--color-muted); font-weight: 400;">⏱️ ${ticket.processedAt || ticket.date} — ${ticket.reason || ''}</span>
             </div>
           `;
@@ -1766,7 +1798,7 @@ function inicializarTicketsProduccionGerencia() {
         tr.innerHTML = `
           <td><span class="table-code-badge" style="font-weight: 800;">${ticket.id}</span></td>
           <td style="font-size: 0.85rem;">${ticket.date}</td>
-          <td><strong>👨‍🍳 ${ticket.baker}</strong></td>
+          <td><strong><i data-lucide="chef-hat" class="icon-sm" style="margin-right:0.25rem;"></i>${ticket.baker}</strong></td>
           <td><strong>${ticket.itemName}</strong></td>
           <td><strong style="color: var(--color-gold-dark);">${ticket.qty} ${ticket.unit}</strong></td>
           <td style="font-size: 0.85rem; color: var(--color-muted);">${ticket.notes || '-'}</td>
@@ -1891,12 +1923,322 @@ function inicializarTicketsProduccionGerencia() {
 // 4. INICIALIZACIÓN DOMCONTENTLOADED CON AISLAMIENTO DE FALLOS STRICTO
 // ==========================================================================
 
-document.addEventListener('DOMContentLoaded', () => {
-  try { inicializarSesionYBarraSuperior(); } catch (e) { console.error('Error Sesión & Header:', e); }
+
+/**
+ * Inicialización y Gestión del Reporte Ejecutivo Gerencial Imprimible
+ */
+function inicializarReporteEjecutivo() {
+  const btnExportReport = document.getElementById('btnExportReport');
+  const modal = document.getElementById('executiveReportModal');
+  const sheet = document.getElementById('executiveReportSheet');
+  const btnPrint = document.getElementById('btnPrintExecutiveReport');
+  const btnExportCsv = document.getElementById('btnExportExecutiveCsv');
+  const btnClose = document.getElementById('btnCloseExecutiveReport');
+
+  if (!btnExportReport || !modal || !sheet) return;
+
+  function renderExecutiveReportContent() {
+    const session = SessionStore.getSession();
+    const activeUser = session?.user || { name: 'Juan Mendoza', role: 'Gerente General' };
+    const bcvRate = BcvRateStore.getRate ? BcvRateStore.getRate() : 761.21;
+    const now = new Date();
+    const dateFormatted = now.toLocaleDateString('es-VE', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+    const timeFormatted = now.toLocaleTimeString('es-VE', { hour: '2-digit', minute: '2-digit' });
+
+    const totalVentasUsd = 4850.00;
+    const totalVentasBs = totalVentasUsd * bcvRate;
+    const costosOperativosUsd = 2985.00;
+    const costosOperativosBs = costosOperativosUsd * bcvRate;
+    const utilidadUsd = totalVentasUsd - costosOperativosUsd;
+    const utilidadBs = utilidadUsd * bcvRate;
+    const margenPct = ((utilidadUsd / totalVentasUsd) * 100).toFixed(1);
+    const totalPedidos = 248;
+    const ticketPromedioUsd = (totalVentasUsd / totalPedidos).toFixed(2);
+    const ticketPromedioBs = (ticketPromedioUsd * bcvRate).toFixed(2);
+
+    sheet.innerHTML = `
+      <div class="report-header-banner">
+        <div>
+          <div style="display: flex; align-items: center; gap: 0.6rem; margin-bottom: 0.35rem;">
+            <i data-lucide="croissant" class="icon-lg" style="color: var(--color-gold);"></i>
+            <h1 class="report-brand-title">La Nueva Parisienne Panadería &amp; Pastelería C.A.</h1>
+          </div>
+          <p class="report-brand-sub">
+            RIF: J-40123456-7 &bull; Av. Lara con Calle 8, Barquisimeto, Edo. Lara<br>
+            Sistema de Gestión Integral &bull; Módulo 4: Dirección Ejecutiva
+          </p>
+        </div>
+        <div class="report-meta-box">
+          <span class="report-meta-badge">INFORME EJECUTIVO OFICIAL</span>
+          <div><strong>Fecha Emisión:</strong> ${dateFormatted}, ${timeFormatted}</div>
+          <div><strong>Tasa Oficial BCV:</strong> Bs. ${Number(bcvRate).toLocaleString('es-VE', { minimumFractionDigits: 2 })} / USD</div>
+          <div><strong>Emitido por:</strong> ${activeUser.name} (${activeUser.role || 'Gerente General'})</div>
+        </div>
+      </div>
+
+      <div class="report-section-heading">
+        <i data-lucide="trending-up" class="icon-sm"></i>
+        <span>1. Resumen Ejecutivo de Rendimiento Financiero (Mes en Curso)</span>
+      </div>
+
+      <div class="report-kpi-summary-grid">
+        <div class="report-kpi-box">
+          <div class="report-kpi-box-label">Ingresos Brutos por Ventas</div>
+          <div class="report-kpi-box-value">${totalVentasUsd.toLocaleString('es-VE', { minimumFractionDigits: 2 })}</div>
+          <div class="report-kpi-box-sub" style="color: var(--color-gold-dark);">Bs. ${totalVentasBs.toLocaleString('es-VE', { minimumFractionDigits: 2 })}</div>
+        </div>
+        <div class="report-kpi-box">
+          <div class="report-kpi-box-label">Costos &amp; Insumos</div>
+          <div class="report-kpi-box-value" style="color: var(--color-terracotta);">${costosOperativosUsd.toLocaleString('es-VE', { minimumFractionDigits: 2 })}</div>
+          <div class="report-kpi-box-sub" style="color: var(--color-terracotta);">Bs. ${costosOperativosBs.toLocaleString('es-VE', { minimumFractionDigits: 2 })}</div>
+        </div>
+        <div class="report-kpi-box">
+          <div class="report-kpi-box-label">Margen Neto de Utilidad</div>
+          <div class="report-kpi-box-value" style="color: var(--color-success);">${utilidadUsd.toLocaleString('es-VE', { minimumFractionDigits: 2 })} (${margenPct}%)</div>
+          <div class="report-kpi-box-sub">Bs. ${utilidadBs.toLocaleString('es-VE', { minimumFractionDigits: 2 })}</div>
+        </div>
+        <div class="report-kpi-box">
+          <div class="report-kpi-box-label">Tickets / Promedio</div>
+          <div class="report-kpi-box-value">${totalPedidos} ped.</div>
+          <div class="report-kpi-box-sub">${ticketPromedioUsd} / ticket</div>
+        </div>
+      </div>
+
+      <div class="report-section-heading">
+        <i data-lucide="pie-chart" class="icon-sm"></i>
+        <span>2. Desglose de Ventas por Categoría de Producto</span>
+      </div>
+
+      <table class="report-data-table">
+        <thead>
+          <tr>
+            <th>Categoría Comercial</th>
+            <th>Unidades Vendidas</th>
+            <th>Participación (%)</th>
+            <th>Monto Total (USD)</th>
+            <th>Monto Total (Bs. BCV)</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><strong>Panadería Artesanal</strong> (Baguettes, Croissants, Brioches, Focaccias)</td>
+            <td>435 Und</td>
+            <td>42.0%</td>
+            <td>$2,037.00</td>
+            <td>Bs. ${(2037.00 * bcvRate).toLocaleString('es-VE', { minimumFractionDigits: 2 })}</td>
+          </tr>
+          <tr>
+            <td><strong>Pastelería &amp; Éclairs</strong> (Éclairs, Macarons, Tartas, Milhojas)</td>
+            <td>288 Und</td>
+            <td>28.0%</td>
+            <td>$1,358.00</td>
+            <td>Bs. ${(1358.00 * bcvRate).toLocaleString('es-VE', { minimumFractionDigits: 2 })}</td>
+          </tr>
+          <tr>
+            <td><strong>Cafetería &amp; Bebidas</strong> (Espresso, Capuchino, Café au Lait, Jugos)</td>
+            <td>312 Und</td>
+            <td>18.0%</td>
+            <td>$873.00</td>
+            <td>Bs. ${(873.00 * bcvRate).toLocaleString('es-VE', { minimumFractionDigits: 2 })}</td>
+          </tr>
+          <tr>
+            <td><strong>Especialidades Saladas</strong> (Croque-Monsieur, Quiche Lorraine)</td>
+            <td>85 Und</td>
+            <td>12.0%</td>
+            <td>$582.00</td>
+            <td>Bs. ${(582.00 * bcvRate).toLocaleString('es-VE', { minimumFractionDigits: 2 })}</td>
+          </tr>
+        </tbody>
+        <tfoot>
+          <tr>
+            <td><strong>TOTALES CONSOLIDADOS:</strong></td>
+            <td><strong>1,120 Und</strong></td>
+            <td><strong>100.0%</strong></td>
+            <td><strong>$4,850.00</strong></td>
+            <td><strong>Bs. ${totalVentasBs.toLocaleString('es-VE', { minimumFractionDigits: 2 })}</strong></td>
+          </tr>
+        </tfoot>
+      </table>
+
+      <div class="report-section-heading">
+        <i data-lucide="award" class="icon-sm"></i>
+        <span>3. Top 5 Productos con Mayor Demanda y Rotación</span>
+      </div>
+
+      <table class="report-data-table">
+        <thead>
+          <tr>
+            <th>Código</th>
+            <th>Producto</th>
+            <th>Categoría</th>
+            <th>Unidades Vendidas</th>
+            <th>Precio Unitario</th>
+            <th>Total Generado</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><code>PAN-002</code></td>
+            <td><strong>Croissant de Mantequilla de Normandía</strong></td>
+            <td>Panadería</td>
+            <td>142</td>
+            <td>$3.00</td>
+            <td>$426.00</td>
+          </tr>
+          <tr>
+            <td><code>PAN-001</code></td>
+            <td><strong>Baguette Tradicional Parisina</strong></td>
+            <td>Panadería</td>
+            <td>115</td>
+            <td>$2.50</td>
+            <td>$287.50</td>
+          </tr>
+          <tr>
+            <td><code>BEB-001</code></td>
+            <td><strong>Café Espresso Doble de Origen</strong></td>
+            <td>Cafetería</td>
+            <td>88</td>
+            <td>$2.80</td>
+            <td>$246.40</td>
+          </tr>
+          <tr>
+            <td><code>PAN-003</code></td>
+            <td><strong>Pain au Chocolat Belga 60%</strong></td>
+            <td>Panadería</td>
+            <td>74</td>
+            <td>$3.50</td>
+            <td>$259.00</td>
+          </tr>
+          <tr>
+            <td><code>PAS-001</code></td>
+            <td><strong>Éclair de Chocolate Belga</strong></td>
+            <td>Pastelería</td>
+            <td>52</td>
+            <td>$4.50</td>
+            <td>$234.00</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <div class="report-section-heading">
+        <i data-lucide="check-circle-2" class="icon-sm"></i>
+        <span>4. Indicadores de Eficiencia Operativa en Cocina &amp; Calidad</span>
+      </div>
+
+      <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 1rem; margin-bottom: 2rem;">
+        <div style="background: #FAF8F5; padding: 0.85rem; border-radius: 6px; border-left: 3px solid var(--color-gold);">
+          <div style="font-size: 0.8rem; color: var(--color-muted); font-weight: 700;">Lotes Horneados Concluidos</div>
+          <div style="font-size: 1.15rem; font-weight: 800; color: var(--color-espresso); margin-top: 0.2rem;">18 Lotes de Producción</div>
+        </div>
+        <div style="background: #FAF8F5; padding: 0.85rem; border-radius: 6px; border-left: 3px solid var(--color-success);">
+          <div style="font-size: 0.8rem; color: var(--color-muted); font-weight: 700;">Eficiencia de Hornos</div>
+          <div style="font-size: 1.15rem; font-weight: 800; color: var(--color-success); margin-top: 0.2rem;">98.6% (Óptimo)</div>
+        </div>
+        <div style="background: #FAF8F5; padding: 0.85rem; border-radius: 6px; border-left: 3px solid var(--color-terracotta);">
+          <div style="font-size: 0.8rem; color: var(--color-muted); font-weight: 700;">Índice de Merma / Pérdida</div>
+          <div style="font-size: 1.15rem; font-weight: 800; color: var(--color-terracotta); margin-top: 0.2rem;">1.4% (Tolerancia: &lt;3%)</div>
+        </div>
+      </div>
+
+      <div class="report-signatures-grid">
+        <div class="report-signature-block">
+          <div class="report-signature-line"></div>
+          <div class="report-signature-name">${activeUser.name}</div>
+          <div class="report-signature-role">Gerente General &bull; La Nueva Parisienne</div>
+        </div>
+        <div class="report-signature-block">
+          <div class="report-signature-line"></div>
+          <div class="report-signature-name">Andrés Felipe Gómez</div>
+          <div class="report-signature-role">Contador General &bull; Auditoría Interna</div>
+        </div>
+      </div>
+    `;
+
+    window.LucideIcons?.refresh();
+  }
+
+  function openModal() {
+    renderExecutiveReportContent();
+    modal.style.display = 'flex';
+    modal.classList.add('active');
+    modal.setAttribute('aria-hidden', 'false');
+    document.body.classList.add('auth-modal-open');
+  }
+
+  function closeModal() {
+    modal.style.display = 'none';
+    modal.classList.remove('active');
+    modal.setAttribute('aria-hidden', 'true');
+    document.body.classList.remove('auth-modal-open');
+  }
+
+  btnExportReport.addEventListener('click', (e) => {
+    e.preventDefault();
+    openModal();
+  });
+
+  btnClose?.addEventListener('click', closeModal);
+  modal.addEventListener('click', (e) => {
+    if (e.target === modal) closeModal();
+  });
+
+  btnPrint?.addEventListener('click', () => {
+    document.body.classList.add('printing-report');
+    window.print();
+    setTimeout(() => {
+      document.body.classList.remove('printing-report');
+    }, 1000);
+  });
+
+  btnExportCsv?.addEventListener('click', () => {
+    const bcvRate = BcvRateStore.getRate ? BcvRateStore.getRate() : 761.21;
+    const rows = [
+      ['LA NUEVA PARISIENNE - REPORTE EJECUTIVO GERENCIAL'],
+      ['Fecha Emision', new Date().toISOString()],
+      ['Tasa Oficial BCV', bcvRate.toString()],
+      [],
+      ['INDICADOR FINANCIERO', 'MONTO USD', 'MONTO BS'],
+      ['Ventas Brutas', '4850.00', (4850.00 * bcvRate).toFixed(2)],
+      ['Costos Operativos', '2985.00', (2985.00 * bcvRate).toFixed(2)],
+      ['Utilidad Neta Estimada', '1865.00', (1865.00 * bcvRate).toFixed(2)],
+      ['Margen Utilidad', '38.5%', ''],
+      ['Total Tickets', '248', ''],
+      ['Ticket Promedio', '19.55', (19.55 * bcvRate).toFixed(2)],
+      [],
+      ['CATEGORIA', 'UNIDADES VENDIDAS', 'PARTICIPACION', 'TOTAL USD', 'TOTAL BS'],
+      ['Panaderia Artesanal', '435', '42.0%', '2037.00', (2037.00 * bcvRate).toFixed(2)],
+      ['Pasteleria & Eclairs', '288', '28.0%', '1358.00', (1358.00 * bcvRate).toFixed(2)],
+      ['Cafeteria & Bebidas', '312', '18.0%', '873.00', (873.00 * bcvRate).toFixed(2)],
+      ['Especialidades Saladas', '85', '12.0%', '582.00', (582.00 * bcvRate).toFixed(2)],
+      ['TOTAL CONSOLIDADO', '1120', '100.0%', '4850.00', (4850.00 * bcvRate).toFixed(2)]
+    ];
+
+    const csvContent = 'data:text/csv;charset=utf-8,﻿' + rows.map(e => e.map(cell => `"${cell}"`).join(',')).join('\n');
+    const encodedUri = encodeURI(csvContent);
+    const link = document.createElement('a');
+    link.setAttribute('href', encodedUri);
+    link.setAttribute('download', `reporte_ejecutivo_gerencial_${new Date().toISOString().slice(0, 10)}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  });
+}
+
+function initDashboard() {
+  try {
+    const authorized = inicializarSesionYBarraSuperior();
+    if (authorized === false) return;
+  } catch (e) { console.error('Error Sesión & Header:', e); }
   try { inicializarNavegacionTabs(); } catch (e) { console.error('Error Tabs:', e); }
   try { cargarTasaCambio(); } catch (e) { console.error('Error Tasa:', e); }
   try { renderizarGraficos(); } catch (e) { console.error('Error Graficos:', e); }
   try { cargarInventario(); } catch (e) { console.error('Error Inventario:', e); }
   try { inicializarTicketsProduccionGerencia(); } catch (e) { console.error('Error Tickets Producción:', e); }
   try { inicializarBotonesGenerales(); } catch (e) { console.error('Error Botones:', e); }
-});
+}
+
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', initDashboard);
+} else {
+  initDashboard();
+}

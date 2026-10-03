@@ -18,62 +18,57 @@
 
     <!-- NAVBAR SUPERIOR GERENCIAL -->
     <header class="dashboard-navbar">
-      <div class="dashboard-brand-group">
-        <div class="dashboard-brand-icon" aria-hidden="true">📊</div>
-        <div>
-          <h1 class="brand-title" style="font-size: 1.3rem;">La Nueva Parisienne</h1>
-          <span class="sub-title">Módulo 4: Dashboard Gerencial & Inteligencia de Negocios (CU-02)</span>
-        </div>
-      </div>
-
-      <div class="dashboard-controls">
-        <!-- BADGE DE TASA BCV CLONADO DE POS (MÓDULO 3) -->
-        <div id="bcvRateBadge" class="bcv-rate-badge" title="Tasa Oficial de Cambio del Banco Central de Venezuela">
-          <span>🇻🇪 Tasa BCV:</span> <strong id="bcvRateVal">Cargando...</strong>
-        </div>
-
-        <div class="cashier-badge">
-          <span id="managerAvatar" class="cashier-avatar">👨‍💼</span>
-          <div class="cashier-info">
-            <span id="managerName" class="cashier-name">Juan Mendoza</span>
-            <span class="shift-status" style="color: var(--color-gold-dark);">● Gerente General</span>
+      <div class="navbar-container">
+        <div class="dashboard-brand-group">
+          <div class="dashboard-brand-icon" aria-hidden="true"><i data-lucide="layout-dashboard"></i></div>
+          <div>
+            <h1 class="brand-title">La Nueva Parisienne</h1>
+            <span class="sub-title">Módulo 4 &bull; Dashboard Gerencial &amp; Métricas</span>
           </div>
         </div>
 
-        <button type="button" class="period-select-btn">📅 Este Mes (Agosto 2026)</button>
-        <a href="configuraciones.html" id="btnGoToConfig" class="btn-export-report" style="background: var(--color-espresso); color: #FFFFFF; border: 1px solid var(--color-gold); text-decoration: none; display: inline-flex; align-items: center; gap: 0.4rem; padding: 0.45rem 0.85rem; border-radius: var(--radius-sm); font-size: 0.82rem; font-weight: 700;" title="Acceso exclusivo para Gerente General al Módulo 9">
-          <span>⚙️ Módulo 9: Configuraciones</span>
-        </a>
-        <button id="btnExportReport" type="button" class="btn-export-report">
-          <span>📄 Exportar Reporte</span>
-        </button>
-        <!-- Botón Exclusivo para Cerrar Sesión -->
-        <button id="logoutBtn" class="btn-pos-logout" title="Cerrar sesión activa y volver al login">Cerrar Sesión</button>
+        <div class="dashboard-controls">
+          <div id="bcvRateBadge" class="bcv-rate-badge" title="Tasa Oficial del Banco Central de Venezuela en Vivo">
+            <span><i data-lucide="coins" class="icon-xs"></i> Tasa BCV:</span> <strong id="bcvRateVal">Cargando...</strong>
+          </div>
+
+          <div class="cashier-badge">
+            <span id="managerAvatar" class="cashier-avatar"><i data-lucide="shield-check"></i></span>
+            <div class="cashier-info">
+              <span id="managerName" class="cashier-name">Juan Mendoza</span>
+              <span class="shift-status">● Gerente General</span>
+            </div>
+          </div>
+
+          <button type="button" class="period-select-btn" title="Filtrar por período"><i data-lucide="calendar" class="icon-sm"></i> <span>Este Mes</span></button>
+
+          <a href="configuraciones.html" id="btnGoToConfig" class="btn-navbar-config" title="Configuraciones Generales (Módulo 9)">
+            <i data-lucide="settings" class="icon-sm"></i> <span>Configuración</span>
+          </a>
+
+          <button id="btnExportReport" type="button" class="btn-export-report" title="Exportar Reporte Ejecutivo">
+            <i data-lucide="file-text" class="icon-sm"></i> <span>Exportar</span>
+          </button>
+
+          <button id="logoutBtn" class="btn-pos-logout" title="Cerrar sesión activa y volver al login">
+            <i data-lucide="log-out" class="icon-sm"></i> <span>Salir</span>
+          </button>
+        </div>
       </div>
     </header>
 
-    <!-- NAVEGACIÓN POR MIGAS DE PAN (BREADCRUMBS) -->
-    <nav class="breadcrumbs-container" aria-label="Migas de pan">
-      <ol class="breadcrumbs-list">
-        <li class="breadcrumb-item">
-          <a href="dashboard.html">🏠 Inicio (Panel Central)</a>
-        </li>
-        <li class="breadcrumb-separator">/</li>
-        <li id="breadcrumbActiveItem" class="breadcrumb-item active" aria-current="page">Dashboard Gerencial</li>
-      </ol>
-    </nav>
 
     <!-- BARRA DE NAVEGACIÓN PRINCIPAL DEL GERENTE (VISTAS DASHBOARD VS INVENTARIO) -->
     <nav class="dashboard-view-nav" aria-label="Navegación de Secciones">
       <div class="view-nav-container">
         <button id="navBtnAnalytics" type="button" class="dashboard-nav-tab active">
-          <span>📊 Métricas & Inteligencia de Negocios</span>
+          <i data-lucide="bar-chart-3" class="icon-sm"></i> <span>Métricas & Inteligencia de Negocios</span>
         </button>
         <button id="navBtnInventory" type="button" class="dashboard-nav-tab">
-          <span>📦 Control de Inventario & Almacén</span>
+          <i data-lucide="package" class="icon-sm"></i> <span>Control de Inventario & Almacén</span>
         </button>
         <button id="navBtnCashReports" type="button" class="dashboard-nav-tab">
-          <span>📂 Reportes de Caja</span>
+          <i data-lucide="folder" class="icon-sm"></i> <span>Reportes de Caja</span>
         </button>
       </div>
     </nav>
@@ -89,7 +84,7 @@
         <div class="dashboard-kpi-card">
           <div class="kpi-card-header">
             <span class="kpi-card-label">Ingresos Totales (Mensual)</span>
-            <div class="kpi-card-icon">💰</div>
+            <div class="kpi-card-icon"><i data-lucide="banknote"></i></div>
           </div>
           <div id="kpiRevenueVal" class="kpi-card-value">$4,850.00</div>
           <div class="kpi-card-footer">
@@ -101,7 +96,7 @@
         <div class="dashboard-kpi-card">
           <div class="kpi-card-header">
             <span class="kpi-card-label">Órdenes Procesadas</span>
-            <div class="kpi-card-icon">🧾</div>
+            <div class="kpi-card-icon"><i data-lucide="receipt"></i></div>
           </div>
           <div id="kpiOrdersVal" class="kpi-card-value">248 órdenes</div>
           <div class="kpi-card-footer">
@@ -113,7 +108,7 @@
         <div class="dashboard-kpi-card">
           <div class="kpi-card-header">
             <span class="kpi-card-label">Ticket Promedio</span>
-            <div class="kpi-card-icon">🏷️</div>
+            <div class="kpi-card-icon"><i data-lucide="tag"></i></div>
           </div>
           <div id="kpiTicketVal" class="kpi-card-value">$19.55</div>
           <div class="kpi-card-footer">
@@ -125,7 +120,7 @@
         <div class="dashboard-kpi-card">
           <div class="kpi-card-header">
             <span class="kpi-card-label">Margen Bruto Ganancia</span>
-            <div class="kpi-card-icon">📈</div>
+            <div class="kpi-card-icon"><i data-lucide="trending-up"></i></div>
           </div>
           <div id="kpiMarginVal" class="kpi-card-value">38.5%</div>
           <div class="kpi-card-footer">
@@ -141,7 +136,7 @@
       <section class="chart-section-card" aria-label="Gráfico de Tendencia de Ventas">
         <div class="chart-card-header">
           <div class="chart-title-group">
-            <h2>📈 Tendencia de Ventas y Rendimiento Mensual (CU-02)</h2>
+            <h2><i data-lucide="trending-up" class="icon-md"></i> Tendencia de Ventas y Rendimiento Mensual (CU-02)</h2>
             <p>Comparativa entre volumen de ventas brutas e ingresos contra costos de materias primas y horneado.</p>
           </div>
 
@@ -168,7 +163,7 @@
       <section class="table-section-card" aria-label="Tabla de Movimientos Recientes">
         <div class="table-card-header">
           <div class="chart-title-group">
-            <h2>📜 Movimientos Recientes y Registro de Auditoría</h2>
+            <h2><i data-lucide="file-text" class="icon-md"></i> Movimientos Recientes y Registro de Auditoría</h2>
             <p>Historial en tiempo real de transacciones de caja, ventas POS y compras a proveedores.</p>
           </div>
 
@@ -209,12 +204,12 @@
         <!-- CABECERA DEL PANEL DE INVENTARIO (SEPARACIÓN DE CONCEPTOS: ACCIÓN DE INGRESO VS COMPRA) -->
         <div class="inventory-panel-header">
           <div class="inventory-title-group">
-            <h2>📦 Control de Inventario & Almacén Central</h2>
+            <h2><i data-lucide="package" class="icon-md"></i> Control de Inventario & Almacén Central</h2>
             <p>Gestión integral de existencias, recepción de compras a proveedores y catálogo de productos.</p>
           </div>
           <div style="display: flex; gap: 0.75rem; align-items: center; flex-wrap: wrap;">
             <button id="btnOpenIngresoMercanciaModal" type="button" class="btn-primary-action gold-variant" title="Sumar unidades recibidas al stock de un ítem existente mediante factura">
-              <span>📥 Registrar Ingreso de Mercancía</span>
+              <i data-lucide="download" class="icon-sm"></i> <span>Registrar Ingreso de Mercancía</span>
             </button>
           </div>
         </div>
@@ -223,29 +218,29 @@
         <div class="inventory-tabs-bar">
           <div class="inventory-tabs-group">
             <button id="tabBtnMateriaPrima" type="button" class="inventory-tab-pill active">
-              <span>🌾 Materia Prima e Insumos</span>
+              <i data-lucide="wheat" class="icon-sm"></i> <span>Materia Prima e Insumos</span>
               <span id="badgeMateriaPrimaCount" class="inventory-tab-count">6</span>
             </button>
             <button id="tabBtnProductosTerminados" type="button" class="inventory-tab-pill">
-              <span>🛍️ Productos Terminados / Venta Directa</span>
+              <i data-lucide="shopping-bag" class="icon-sm"></i> <span>Productos Terminados / Venta Directa</span>
               <span id="badgeProductosTerminadosCount" class="inventory-tab-count">6</span>
             </button>
             <button id="tabBtnProveedores" type="button" class="inventory-tab-pill">
-              <span>🚚 Proveedores</span>
+              <i data-lucide="truck" class="icon-sm"></i> <span>Proveedores</span>
               <span id="badgeProveedoresCount" class="inventory-tab-count">4</span>
             </button>
             <button id="tabBtnTicketsProduccion" type="button" class="inventory-tab-pill">
-              <span>📨 Tickets de Producción</span>
+              <i data-lucide="clipboard-list" class="icon-sm"></i> <span>Tickets de Producción</span>
               <span id="badgeTicketsProduccionCount" class="inventory-tab-count" style="background: var(--color-terracotta); color: white;">0</span>
             </button>
           </div>
 
           <!-- BARRA DE BÚSQUEDA Y FILTRADO RÁPIDO -->
           <div class="inventory-filter-group">
-            <input type="text" id="inventorySearchInput" class="inventory-search-input" placeholder="🔍 Buscar código, producto, RIF..." />
+            <input type="text" id="inventorySearchInput" class="inventory-search-input" placeholder="Buscar código, producto, RIF..." />
             <select id="inventoryCategoryFilter" class="inventory-select-filter">
               <option value="todos">Todas las Categorías</option>
-              <option value="low_stock">⚠️ Solo Stock Bajo (Alertas)</option>
+              <option value="low_stock">Solo Stock Bajo (Alertas)</option>
             </select>
           </div>
         </div>
@@ -254,11 +249,11 @@
         <div id="panelMateriaPrima" class="inventory-tab-panel active">
           <div class="inventory-panel-subhead">
             <div class="inventory-title-group">
-              <h3 style="font-size: 1.1rem; color: var(--color-espresso); font-weight: 800;">🌾 Catálogo de Materias Primas e Insumos de Producción</h3>
+              <h3 style="font-size: 1.1rem; color: var(--color-espresso); font-weight: 800;">Catálogo de Materias Primas e Insumos de Producción</h3>
               <p style="font-size: 0.82rem; color: var(--color-muted);">Insumos de amasado, harinas, mantequillas y materias primas para panadería.</p>
             </div>
             <button id="btnOpenNuevaMateriaPrimaModal" type="button" class="btn-primary-action">
-              <span>✨ + Nueva Materia Prima</span>
+              <i data-lucide="plus" class="icon-sm"></i> <span>+ Nueva Materia Prima</span>
             </button>
           </div>
 
@@ -287,11 +282,11 @@
         <div id="panelProductosTerminados" class="inventory-tab-panel" style="display: none;">
           <div class="inventory-panel-subhead">
             <div class="inventory-title-group">
-              <h3 style="font-size: 1.1rem; color: var(--color-espresso); font-weight: 800;">🛍️ Catálogo Maestro de Productos Terminados POS</h3>
+              <h3 style="font-size: 1.1rem; color: var(--color-espresso); font-weight: 800;">Catálogo Maestro de Productos Terminados POS</h3>
               <p style="font-size: 0.82rem; color: var(--color-muted);">Catálogo oficial sincronizado con la Caja Registradora (Módulo 3 POS).</p>
             </div>
             <button id="btnOpenNuevoProductoTerminadoModal" type="button" class="btn-primary-action">
-              <span>✨ + Nuevo Producto</span>
+              <i data-lucide="plus" class="icon-sm"></i> <span>+ Nuevo Producto</span>
             </button>
           </div>
 
@@ -322,11 +317,11 @@
         <div id="panelProveedores" class="inventory-tab-panel" style="display: none;">
           <div class="inventory-panel-subhead">
             <div class="inventory-title-group">
-              <h3 style="font-size: 1.1rem; color: var(--color-espresso); font-weight: 800;">🚚 Directorio de Proveedores Registrados</h3>
+              <h3 style="font-size: 1.1rem; color: var(--color-espresso); font-weight: 800;">Directorio de Proveedores Registrados</h3>
               <p style="font-size: 0.82rem; color: var(--color-muted);">Gestión de proveedores para compras de materias primas, insumos y empaques.</p>
             </div>
             <button id="btnOpenProveedorModalHeader" type="button" class="btn-primary-action">
-              <span>🚚 + Nuevo Proveedor</span>
+              <i data-lucide="plus" class="icon-sm"></i> <span>+ Nuevo Proveedor</span>
             </button>
           </div>
 
@@ -354,7 +349,7 @@
         <div id="panelTicketsProduccion" class="inventory-tab-panel" style="display: none;">
           <div class="inventory-panel-subhead">
             <div class="inventory-title-group">
-              <h3 style="font-size: 1.1rem; color: var(--color-espresso); font-weight: 800;">📨 Requisiciones de Materia Prima (Tickets de Producción)</h3>
+              <h3 style="font-size: 1.1rem; color: var(--color-espresso); font-weight: 800;">Requisiciones de Materia Prima (Tickets de Producción)</h3>
               <p style="font-size: 0.82rem; color: var(--color-muted);">Solicitudes de insumos enviadas por los panaderos para aprobación gerencial y control de stock.</p>
             </div>
             <span class="column-badge" style="background: linear-gradient(135deg, #D49B54 0%, #C48B44 100%); color: white; padding: 6px 14px; border-radius: 20px; font-weight: 800; font-size: 0.8rem;">Auditoría en Tiempo Real</span>
@@ -400,13 +395,13 @@
     <div class="modal-card-container">
       <div class="modal-card-header">
         <div class="modal-header-title">
-          <span id="modalDetalleIcon" class="modal-header-icon">🧾</span>
+          <span id="modalDetalleIcon" class="modal-header-icon"><i data-lucide="receipt"></i></span>
           <div>
             <h2 id="modalDetalleCodigo" class="modal-title-text">Transacción #FAC-2026-1003</h2>
             <span id="modalDetalleSubtitulo" class="modal-subtitle-text">Registro Financiero de Operación</span>
           </div>
         </div>
-        <button id="btnCerrarModalDetalle" type="button" class="btn-modal-close" aria-label="Cerrar ventana">✕</button>
+        <button id="btnCerrarModalDetalle" type="button" class="btn-modal-close" aria-label="Cerrar ventana">&times;</button>
       </div>
 
       <div class="modal-card-body">
@@ -421,34 +416,34 @@
         <!-- Grid de Metadatos -->
         <div class="modal-meta-grid">
           <div class="meta-item">
-            <span class="meta-label">🏷️ Tipo de Operación</span>
+            <span class="meta-label"><i data-lucide="tag" class="icon-xs"></i> Tipo de Operación</span>
             <strong id="modalTipoOp" class="meta-val">-</strong>
           </div>
           <div class="meta-item">
-            <span class="meta-label">👤 Responsable</span>
+            <span class="meta-label"><i data-lucide="user" class="icon-xs"></i> Responsable</span>
             <strong id="modalResponsable" class="meta-val">-</strong>
           </div>
           <div class="meta-item">
-            <span class="meta-label">💳 Método de Pago</span>
+            <span class="meta-label"><i data-lucide="credit-card" class="icon-xs"></i> Método de Pago</span>
             <strong id="modalMetodoPago" class="meta-val">-</strong>
           </div>
           <div class="meta-item">
-            <span class="meta-label">📅 Fecha y Hora</span>
+            <span class="meta-label"><i data-lucide="calendar" class="icon-xs"></i> Fecha y Hora</span>
             <strong id="modalFecha" class="meta-val">-</strong>
           </div>
           <div class="meta-item">
-            <span class="meta-label">🏛️ Tasa BCV Aplicada</span>
+            <span class="meta-label"><i data-lucide="coins" class="icon-xs"></i> Tasa BCV Aplicada</span>
             <strong id="modalTasaBcv" class="meta-val">-</strong>
           </div>
           <div class="meta-item">
-            <span class="meta-label">🧾 Estado Fiscal</span>
+            <span class="meta-label"><i data-lucide="file-check" class="icon-xs"></i> Estado Fiscal</span>
             <strong id="modalEstadoFiscal" class="meta-val" style="color: var(--color-success);">Auditado SENIAT OK</strong>
           </div>
         </div>
 
         <!-- Desglose de Ítems / Concepto -->
         <div class="modal-breakdown-box">
-          <h3 class="breakdown-title">📦 Desglose del Movimiento</h3>
+          <h3 class="breakdown-title"><i data-lucide="package" class="icon-sm"></i> Desglose del Movimiento</h3>
           <div id="modalBreakdownList" class="breakdown-list">
             <!-- Renderizado dinámico de productos / conceptos -->
           </div>
@@ -456,8 +451,8 @@
       </div>
 
       <div class="modal-card-footer">
-        <button id="btnImprimirComprobante" type="button" class="btn-modal-action secondary">🖨️ Imprimir Voucher</button>
-        <button id="btnCopiarRef" type="button" class="btn-modal-action secondary">📋 Copiar Ref</button>
+        <button id="btnImprimirComprobante" type="button" class="btn-modal-action secondary"><i data-lucide="printer" class="icon-sm"></i> <span>Imprimir Voucher</span></button>
+        <button id="btnCopiarRef" type="button" class="btn-modal-action secondary"><i data-lucide="copy" class="icon-sm"></i> <span>Copiar Ref</span></button>
         <button id="btnCerrarModalDetalleFooter" type="button" class="btn-modal-action primary">Cerrar</button>
       </div>
     </div>
@@ -468,20 +463,20 @@
     <div class="modal-card-container" style="max-width: 620px; width: 92%;">
       <div class="modal-card-header">
         <div class="modal-header-title">
-          <span class="modal-header-icon">📦</span>
+          <span class="modal-header-icon"><i data-lucide="package"></i></span>
           <div>
             <h2 class="modal-title-text">Registrar Ingreso de Mercancía</h2>
             <span class="modal-subtitle-text">Recepción de Compras a Proveedores & Actualización de Inventario</span>
           </div>
         </div>
-        <button id="closeIngresoMercanciaModalBtn" type="button" class="btn-modal-close" aria-label="Cerrar ventana">✕</button>
+        <button id="closeIngresoMercanciaModalBtn" type="button" class="btn-modal-close" aria-label="Cerrar ventana">&times;</button>
       </div>
 
       <form id="ingresoMercanciaForm">
         <div class="modal-card-body" style="gap: 1.25rem;">
           
           <div class="form-group-custom">
-            <label for="modalIngresoProductoSelect" class="form-label-custom">🛒 Seleccionar Producto o Insumo *</label>
+            <label for="modalIngresoProductoSelect" class="form-label-custom"><i data-lucide="shopping-cart" class="icon-xs"></i> Seleccionar Producto o Insumo *</label>
             <select id="modalIngresoProductoSelect" class="form-control-custom" required>
               <option value="" disabled selected>-- Seleccione un ítem del catálogo --</option>
               <!-- Opciones dinámicas agrupadas por Materia Prima / Producto Terminado -->
@@ -490,11 +485,11 @@
 
           <div style="display: grid; grid-template-columns: 2fr 1fr; gap: 1rem;">
             <div class="form-group-custom">
-              <label for="modalIngresoCantidad" class="form-label-custom">📦 Cantidad Ingresada *</label>
+              <label for="modalIngresoCantidad" class="form-label-custom"><i data-lucide="boxes" class="icon-xs"></i> Cantidad Ingresada *</label>
               <input type="number" id="modalIngresoCantidad" class="form-control-custom" placeholder="Ej: 50.00" min="0.01" step="0.01" required />
             </div>
             <div class="form-group-custom">
-              <label for="modalIngresoUnidad" class="form-label-custom">📏 Unidad de Medida (UoM) *</label>
+              <label for="modalIngresoUnidad" class="form-label-custom"><i data-lucide="scale" class="icon-xs"></i> Unidad de Medida (UoM) *</label>
               <select id="modalIngresoUnidad" class="form-control-custom" required>
                 <option value="Kg">Kilogramos (Kg)</option>
                 <option value="g">Gramos (g)</option>
@@ -508,11 +503,11 @@
 
           <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
             <div class="form-group-custom">
-              <label for="modalIngresoCostoTotal" class="form-label-custom">💵 Costo Total Compra ($ USD) *</label>
+              <label for="modalIngresoCostoTotal" class="form-label-custom"><i data-lucide="dollar-sign" class="icon-xs"></i> Costo Total Compra ($ USD) *</label>
               <input type="number" id="modalIngresoCostoTotal" class="form-control-custom" placeholder="Ej: 180.00" min="0.01" step="0.01" required />
             </div>
             <div class="form-group-custom">
-              <label for="modalIngresoProveedor" class="form-label-custom">🏬 Proveedor *</label>
+              <label for="modalIngresoProveedor" class="form-label-custom"><i data-lucide="building-2" class="icon-xs"></i> Proveedor *</label>
               <select id="modalIngresoProveedor" class="form-control-custom" required>
                 <option value="Molinos del Sur, C.A.">Molinos del Sur, C.A.</option>
                 <option value="Lácteos La Granja">Lácteos La Granja</option>
@@ -523,7 +518,7 @@
           </div>
 
           <div class="form-group-custom">
-            <label for="modalIngresoNumFactura" class="form-label-custom">🧾 Número de Factura / Nota Entrega *</label>
+            <label for="modalIngresoNumFactura" class="form-label-custom"><i data-lucide="receipt" class="icon-xs"></i> Número de Factura / Nota Entrega *</label>
             <input type="text" id="modalIngresoNumFactura" class="form-control-custom" placeholder="Ej: FAC-PROV-9082" required />
           </div>
 
@@ -537,7 +532,7 @@
 
         <div class="modal-card-footer">
           <button id="cancelIngresoMercanciaBtn" type="button" class="btn-modal-action secondary">Cancelar</button>
-          <button type="submit" class="btn-modal-action primary">💾 Guardar Ingreso de Mercancía</button>
+          <button type="submit" class="btn-modal-action primary"><i data-lucide="save" class="icon-sm"></i> <span>Guardar Ingreso de Mercancía</span></button>
         </div>
       </form>
     </div>
@@ -548,13 +543,13 @@
     <div class="modal-card-container" style="max-width: 580px; width: 92%;">
       <div class="modal-card-header">
         <div class="modal-header-title">
-          <span class="modal-header-icon">🚚</span>
+          <span class="modal-header-icon"><i data-lucide="truck"></i></span>
           <div>
             <h2 id="modalProveedorTitle" class="modal-title-text">Registrar Nuevo Proveedor</h2>
             <span class="modal-subtitle-text">Información de Proveedor para Compras e Inventario</span>
           </div>
         </div>
-        <button id="closeProveedorModalBtn" type="button" class="btn-modal-close" aria-label="Cerrar ventana">✕</button>
+        <button id="closeProveedorModalBtn" type="button" class="btn-modal-close" aria-label="Cerrar ventana">&times;</button>
       </div>
 
       <form id="proveedorForm">
@@ -562,28 +557,28 @@
         <div class="modal-card-body" style="gap: 1.25rem;">
           
           <div class="form-group-custom">
-            <label for="modalProvNombre" class="form-label-custom">🏬 Nombre de la Empresa / Razón Social *</label>
+            <label for="modalProvNombre" class="form-label-custom"><i data-lucide="building-2" class="icon-xs"></i> Nombre de la Empresa / Razón Social *</label>
             <input type="text" id="modalProvNombre" class="form-control-custom" placeholder="Ej: Molinos del Sur, C.A." required />
           </div>
 
           <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
             <div class="form-group-custom">
-              <label for="modalProvRif" class="form-label-custom">🪪 RIF de la Empresa *</label>
+              <label for="modalProvRif" class="form-label-custom"><i data-lucide="id-card" class="icon-xs"></i> RIF de la Empresa *</label>
               <input type="text" id="modalProvRif" class="form-control-custom" placeholder="Ej: J-30819283-4" required />
             </div>
             <div class="form-group-custom">
-              <label for="modalProvTelefono" class="form-label-custom">📞 Teléfono de Contacto *</label>
+              <label for="modalProvTelefono" class="form-label-custom"><i data-lucide="phone" class="icon-xs"></i> Teléfono de Contacto *</label>
               <input type="text" id="modalProvTelefono" class="form-control-custom" placeholder="Ej: (01) 555-MOLINO" required />
             </div>
           </div>
 
           <div class="form-group-custom">
-            <label for="modalProvContacto" class="form-label-custom">👤 Persona de Contacto *</label>
+            <label for="modalProvContacto" class="form-label-custom"><i data-lucide="user" class="icon-xs"></i> Persona de Contacto *</label>
             <input type="text" id="modalProvContacto" class="form-control-custom" placeholder="Ej: Carlos Mendoza" required />
           </div>
 
           <div class="form-group-custom">
-            <label for="modalProvDireccion" class="form-label-custom">📍 Dirección Fiscal</label>
+            <label for="modalProvDireccion" class="form-label-custom"><i data-lucide="map-pin" class="icon-xs"></i> Dirección Fiscal</label>
             <input type="text" id="modalProvDireccion" class="form-control-custom" placeholder="Ej: Zona Industrial Sur, Parcela 14, Caracas" />
           </div>
 
@@ -591,7 +586,7 @@
 
         <div class="modal-card-footer">
           <button id="cancelProveedorBtn" type="button" class="btn-modal-action secondary">Cancelar</button>
-          <button type="submit" class="btn-modal-action primary">💾 Guardar Proveedor</button>
+          <button type="submit" class="btn-modal-action primary"><i data-lucide="save" class="icon-sm"></i> <span>Guardar Proveedor</span></button>
         </div>
       </form>
     </div>
@@ -602,13 +597,13 @@
     <div class="modal-card-container" style="max-width: 580px; width: 92%;">
       <div class="modal-card-header">
         <div class="modal-header-title">
-          <span class="modal-header-icon">🌾</span>
+          <span class="modal-header-icon"><i data-lucide="wheat"></i></span>
           <div>
             <h2 id="modalMpTitle" class="modal-title-text">Crear Nueva Materia Prima</h2>
             <span class="modal-subtitle-text">Registro de Insumo para Panadería y Almacén</span>
           </div>
         </div>
-        <button id="closeMpModalBtn" type="button" class="btn-modal-close" aria-label="Cerrar ventana">✕</button>
+        <button id="closeMpModalBtn" type="button" class="btn-modal-close" aria-label="Cerrar ventana">&times;</button>
       </div>
 
       <form id="materiaPrimaForm">
@@ -616,13 +611,13 @@
         <div class="modal-card-body" style="gap: 1.25rem;">
           
           <div class="form-group-custom">
-            <label for="modalMpNombre" class="form-label-custom">🌾 Nombre de la Materia Prima / Insumo *</label>
+            <label for="modalMpNombre" class="form-label-custom"><i data-lucide="wheat" class="icon-xs"></i> Nombre de la Materia Prima / Insumo *</label>
             <input type="text" id="modalMpNombre" class="form-control-custom" placeholder="Ej: Harina de Trigo Tradicional T55" required />
           </div>
 
           <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
             <div class="form-group-custom">
-              <label for="modalMpCategoria" class="form-label-custom">📂 Categoría *</label>
+              <label for="modalMpCategoria" class="form-label-custom"><i data-lucide="folder" class="icon-xs"></i> Categoría *</label>
               <select id="modalMpCategoria" class="form-control-custom" required>
                 <option value="Materias Primas">Materias Primas</option>
                 <option value="Lácteos & Mantequillas">Lácteos & Mantequillas</option>
@@ -632,7 +627,7 @@
               </select>
             </div>
             <div class="form-group-custom">
-              <label for="modalMpUnidad" class="form-label-custom">📏 Unidad de Medida (UoM) *</label>
+              <label for="modalMpUnidad" class="form-label-custom"><i data-lucide="scale" class="icon-xs"></i> Unidad de Medida (UoM) *</label>
               <select id="modalMpUnidad" class="form-control-custom" required>
                 <option value="Kg">Kilogramos (Kg)</option>
                 <option value="g">Gramos (g)</option>
@@ -646,15 +641,15 @@
 
           <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 0.85rem;">
             <div class="form-group-custom">
-              <label for="modalMpCostoUnitario" class="form-label-custom">💵 Costo Unit ($) *</label>
+              <label for="modalMpCostoUnitario" class="form-label-custom"><i data-lucide="dollar-sign" class="icon-xs"></i> Costo Unit ($) *</label>
               <input type="number" id="modalMpCostoUnitario" class="form-control-custom" placeholder="Ej: 1.80" min="0.01" step="0.01" required />
             </div>
             <div class="form-group-custom">
-              <label for="modalMpStockInicial" class="form-label-custom">📦 Stock Inicial *</label>
+              <label for="modalMpStockInicial" class="form-label-custom"><i data-lucide="boxes" class="icon-xs"></i> Stock Inicial *</label>
               <input type="number" id="modalMpStockInicial" class="form-control-custom" placeholder="Ej: 50.00" min="0" step="0.01" required />
             </div>
             <div class="form-group-custom">
-              <label for="modalMpStockMinimo" class="form-label-custom">⚠️ Stock Mín (Alerta) *</label>
+              <label for="modalMpStockMinimo" class="form-label-custom"><i data-lucide="alert-triangle" class="icon-xs"></i> Stock Mín (Alerta) *</label>
               <input type="number" id="modalMpStockMinimo" class="form-control-custom" placeholder="Ej: 20.00" min="0" step="0.01" required />
             </div>
           </div>
@@ -663,7 +658,7 @@
 
         <div class="modal-card-footer">
           <button id="cancelMpBtn" type="button" class="btn-modal-action secondary">Cancelar</button>
-          <button type="submit" class="btn-modal-action primary">💾 Guardar Materia Prima</button>
+          <button type="submit" class="btn-modal-action primary"><i data-lucide="save" class="icon-sm"></i> <span>Guardar Materia Prima</span></button>
         </div>
       </form>
     </div>
@@ -674,13 +669,13 @@
     <div class="modal-card-container" style="max-width: 580px; width: 92%;">
       <div class="modal-card-header">
         <div class="modal-header-title">
-          <span class="modal-header-icon">🛍️</span>
+          <span class="modal-header-icon"><i data-lucide="shopping-bag"></i></span>
           <div>
             <h2 id="modalPtTitle" class="modal-title-text">Crear Nuevo Producto Terminado</h2>
             <span class="modal-subtitle-text">Registro de Producto para Venta Directa en Caja POS</span>
           </div>
         </div>
-        <button id="closePtModalBtn" type="button" class="btn-modal-close" aria-label="Cerrar ventana">✕</button>
+        <button id="closePtModalBtn" type="button" class="btn-modal-close" aria-label="Cerrar ventana">&times;</button>
       </div>
 
       <form id="productoTerminadoForm">
@@ -688,22 +683,22 @@
         <div class="modal-card-body" style="gap: 1.25rem;">
           
           <div class="form-group-custom">
-            <label for="modalPtNombre" class="form-label-custom">🥖 Nombre del Producto *</label>
+            <label for="modalPtNombre" class="form-label-custom"><i data-lucide="croissant" class="icon-xs"></i> Nombre del Producto *</label>
             <input type="text" id="modalPtNombre" class="form-control-custom" placeholder="Ej: Baguette Tradicional Parisina" required />
           </div>
 
           <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
             <div class="form-group-custom">
-              <label for="modalPtCategoria" class="form-label-custom">📂 Categoría POS *</label>
+              <label for="modalPtCategoria" class="form-label-custom"><i data-lucide="folder" class="icon-xs"></i> Categoría POS *</label>
               <select id="modalPtCategoria" class="form-control-custom" required>
-                <option value="Panadería">Panadería Artesanal (🥖)</option>
-                <option value="Pastelería">Pastelería & Repostería (🍰)</option>
-                <option value="Bebidas">Cafetería & Bebidas (☕)</option>
-                <option value="Salados">Salados & Especialidades (🥪)</option>
+                <option value="Panadería">Panadería Artesanal</option>
+                <option value="Pastelería">Pastelería & Repostería</option>
+                <option value="Bebidas">Cafetería & Bebidas</option>
+                <option value="Salados">Salados & Especialidades</option>
               </select>
             </div>
             <div class="form-group-custom">
-              <label for="modalPtUnidad" class="form-label-custom">📏 Unidad de Medida (UoM) *</label>
+              <label for="modalPtUnidad" class="form-label-custom"><i data-lucide="scale" class="icon-xs"></i> Unidad de Medida (UoM) *</label>
               <select id="modalPtUnidad" class="form-control-custom" required>
                 <option value="Und">Unidades (Und)</option>
                 <option value="Kg">Kilogramos (Kg)</option>
@@ -715,22 +710,22 @@
 
           <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
             <div class="form-group-custom">
-              <label for="modalPtCostoUnitario" class="form-label-custom">💵 Costo Producción ($ USD) *</label>
+              <label for="modalPtCostoUnitario" class="form-label-custom"><i data-lucide="dollar-sign" class="icon-xs"></i> Costo Producción ($ USD) *</label>
               <input type="number" id="modalPtCostoUnitario" class="form-control-custom" placeholder="Ej: 1.20" min="0.01" step="0.01" required />
             </div>
             <div class="form-group-custom">
-              <label for="modalPtPrecioVenta" class="form-label-custom">🏷️ Precio Venta POS ($ USD) *</label>
+              <label for="modalPtPrecioVenta" class="form-label-custom"><i data-lucide="tag" class="icon-xs"></i> Precio Venta POS ($ USD) *</label>
               <input type="number" id="modalPtPrecioVenta" class="form-control-custom" placeholder="Ej: 2.50" min="0.01" step="0.01" required />
             </div>
           </div>
 
           <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
             <div class="form-group-custom">
-              <label for="modalPtStockInicial" class="form-label-custom">📦 Stock Inicial *</label>
+              <label for="modalPtStockInicial" class="form-label-custom"><i data-lucide="boxes" class="icon-xs"></i> Stock Inicial *</label>
               <input type="number" id="modalPtStockInicial" class="form-control-custom" placeholder="Ej: 45" min="0" step="1" required />
             </div>
             <div class="form-group-custom">
-              <label for="modalPtStockMinimo" class="form-label-custom">⚠️ Stock Mínimo (Alerta) *</label>
+              <label for="modalPtStockMinimo" class="form-label-custom"><i data-lucide="alert-triangle" class="icon-xs"></i> Stock Mínimo (Alerta) *</label>
               <input type="number" id="modalPtStockMinimo" class="form-control-custom" placeholder="Ej: 20" min="0" step="1" required />
             </div>
           </div>
@@ -739,7 +734,7 @@
           <div class="form-group-custom" style="background: rgba(212, 155, 84, 0.08); padding: 0.85rem 1rem; border-radius: 8px; border: 1px solid rgba(212, 155, 84, 0.3);">
             <label for="modalPtShowInPos" class="form-label-custom" style="cursor: pointer; display: flex; align-items: center; gap: 0.65rem; font-size: 0.92rem;">
               <input type="checkbox" id="modalPtShowInPos" style="width: 20px; height: 20px; cursor: pointer; accent-color: var(--color-gold-dark);" checked />
-              <span>🛒 Mostrar en el Punto de Venta (POS)</span>
+              <span>Mostrar en el Punto de Venta (POS)</span>
             </label>
             <span style="font-size: 0.78rem; color: var(--color-muted); margin-left: 1.9rem; display: block;">Al activar esta casilla, el ítem aparecerá automáticamente en la caja del Módulo 3 POS.</span>
           </div>
@@ -748,7 +743,7 @@
 
         <div class="modal-card-footer">
           <button id="cancelPtBtn" type="button" class="btn-modal-action secondary">Cancelar</button>
-          <button type="submit" class="btn-modal-action primary">💾 Guardar Producto</button>
+          <button type="submit" class="btn-modal-action primary"><i data-lucide="save" class="icon-sm"></i> <span>Guardar Producto</span></button>
         </div>
       </form>
     </div>
@@ -759,36 +754,36 @@
     <div class="modal-card-container" style="max-width: 480px; width: 92%;">
       <div class="modal-card-header" style="background: linear-gradient(135deg, #B71C1C 0%, #880E4F 100%); border-bottom-color: #FF8A80;">
         <div class="modal-header-title">
-          <span class="modal-header-icon" style="background: rgba(255, 255, 255, 0.2);">⚠️</span>
+          <span class="modal-header-icon" style="background: rgba(255, 255, 255, 0.2);"><i data-lucide="alert-triangle"></i></span>
           <div>
             <h2 class="modal-title-text">Confirmar Eliminación</h2>
             <span class="modal-subtitle-text" style="color: #FFCDD2;">Esta acción removerá el ítem permanentemente</span>
           </div>
         </div>
-        <button id="closeConfirmEliminarModalBtn" type="button" class="btn-modal-close" aria-label="Cerrar ventana">✕</button>
+        <button id="closeConfirmEliminarModalBtn" type="button" class="btn-modal-close" aria-label="Cerrar ventana">&times;</button>
       </div>
 
       <div class="modal-card-body" style="padding: 1.5rem; text-align: center; gap: 1rem;">
-        <div style="font-size: 3rem; margin-bottom: -0.5rem;">🗑️</div>
+        <div style="font-size: 2.5rem; margin-bottom: -0.5rem; color: var(--color-danger);"><i data-lucide="trash-2" class="icon-2xl"></i></div>
         <h3 id="confirmEliminarItemName" style="font-size: 1.15rem; color: var(--color-espresso); font-weight: 800; margin: 0;">--</h3>
         <p id="confirmEliminarItemCode" style="font-size: 0.85rem; color: var(--color-muted); margin: 0;">--</p>
         
         <div style="background: rgba(198, 40, 40, 0.08); border: 1px solid rgba(198, 40, 40, 0.3); padding: 0.85rem; border-radius: 8px; color: #C62828; font-size: 0.85rem; text-align: left;">
-          <strong>⚠️ Verificación Gerencial Requerida:</strong> Ingrese la contraseña del <strong>Gerente General</strong> para autorizar la eliminación permanente de este elemento.
+          <strong>Verificación Gerencial Requerida:</strong> Ingrese la contraseña del <strong>Gerente General</strong> para autorizar la eliminación permanente de este elemento.
         </div>
 
         <div class="form-group-custom" style="text-align: left; margin-top: 0.5rem;">
-          <label for="confirmEliminarPassword" class="form-label-custom">🔑 Contraseña del Gerente General *</label>
+          <label for="confirmEliminarPassword" class="form-label-custom"><i data-lucide="lock" class="icon-xs"></i> Contraseña del Gerente General *</label>
           <input type="password" id="confirmEliminarPassword" class="form-control-custom" placeholder="Ingrese clave gerencial (ej: admin123)" required />
           <div id="confirmEliminarErrorMsg" style="display: none; color: #D32F2F; font-size: 0.83rem; font-weight: 700; margin-top: 0.4rem; background: rgba(211, 47, 47, 0.1); padding: 0.4rem 0.75rem; border-radius: 6px; border: 1px solid rgba(211, 47, 47, 0.3);">
-            ❌ Contraseña gerencial incorrecta. Permiso denegado.
+            Contraseña gerencial incorrecta. Permiso denegado.
           </div>
         </div>
       </div>
 
       <div class="modal-card-footer">
         <button id="cancelConfirmEliminarBtn" type="button" class="btn-modal-action secondary">Cancelar</button>
-        <button id="executeConfirmEliminarBtn" type="button" class="btn-modal-action danger">🗑️ Confirmar Eliminar</button>
+        <button id="executeConfirmEliminarBtn" type="button" class="btn-modal-action danger"><i data-lucide="trash-2" class="icon-sm"></i> <span>Confirmar Eliminar</span></button>
       </div>
     </div>
   </div>
@@ -810,7 +805,7 @@
         <p id="modalExitoMsg" class="success-modal-msg">El registro ha sido actualizado correctamente en el sistema.</p>
 
         <button id="closeExitoModalBtn" type="button" class="btn-primary-action gold-variant" style="min-width: 160px; margin-top: 0.5rem;">
-          <span>✓ Entendido</span>
+          <span>Entendido</span>
         </button>
       </div>
     </div>
@@ -821,19 +816,19 @@
     <div class="modal-card-container" style="max-width: 480px; width: 92%;">
       <div class="modal-card-header">
         <div class="modal-header-title">
-          <span class="modal-header-icon" style="color: var(--color-danger);">❌</span>
+          <span class="modal-header-icon" style="color: var(--color-danger);"><i data-lucide="x-circle"></i></span>
           <div>
             <h2 class="modal-title-text">Rechazar Requisición</h2>
             <span class="modal-subtitle-text">Justificación de Rechazo Gerencial</span>
           </div>
         </div>
-        <button id="closeRechazarTicketModalBtn" type="button" class="btn-modal-close" aria-label="Cerrar ventana">✕</button>
+        <button id="closeRechazarTicketModalBtn" type="button" class="btn-modal-close" aria-label="Cerrar ventana">&times;</button>
       </div>
       <form id="rechazarTicketForm">
         <input type="hidden" id="rechazarTicketId" value="" />
         <div class="modal-card-body" style="gap: 1rem; padding: 1.25rem;">
           <div class="form-group-custom">
-            <label for="motivoRechazarInput" class="form-label-custom" style="display: block; margin-bottom: 0.4rem; font-weight: 700; font-size: 0.85rem; color: var(--color-espresso);">💬 Motivo breve de rechazo *</label>
+            <label for="motivoRechazarInput" class="form-label-custom" style="display: block; margin-bottom: 0.4rem; font-weight: 700; font-size: 0.85rem; color: var(--color-espresso);"><i data-lucide="message-square" class="icon-xs"></i> Motivo breve de rechazo *</label>
             <textarea id="motivoRechazarInput" class="form-control-custom" rows="3" placeholder="Ej: Stock insuficiente en almacén / Consultar con Gerencia" required style="width: 100%; padding: 0.6rem 0.85rem; border-radius: var(--radius-sm); border: 1px solid var(--border-subtle); resize: vertical; font-family: inherit;"></textarea>
           </div>
         </div>
@@ -863,14 +858,45 @@
         <p id="modalErrorMsg" class="error-modal-msg">Ocurrió una advertencia o restricción de acceso en el sistema.</p>
 
         <button id="closeErrorModalBtn" type="button" class="btn-primary-action gold-variant" style="min-width: 160px; margin-top: 0.5rem; background: var(--gradient-espresso); color: #FFFFFF; border: 1px solid var(--color-terracotta);">
-          <span>✕ Entendido</span>
+          <span>Entendido</span>
         </button>
       </div>
     </div>
   </div>
 
-  <!-- LIBRERÍA CHART.JS CDN Y SCRIPT MODULAR -->
-  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- MODAL DE REPORTE EJECUTIVO GERENCIAL IMPRIMIBLE -->
+  <div id="executiveReportModal" class="pin-modal-overlay" role="dialog" aria-modal="true" aria-labelledby="execReportModalTitle" aria-hidden="true" style="display: none;">
+    <div class="pin-modal-card report-modal-card">
+      
+      <!-- BARRA DE ACCIONES SUPERIOR (HERRAMIENTAS NO IMPRIMIBLES) -->
+      <div class="report-modal-toolbar no-print">
+        <div class="report-modal-toolbar-title">
+          <i data-lucide="file-text" class="icon-md" style="color: var(--color-gold);"></i>
+          <span id="execReportModalTitle">Informe Ejecutivo Gerencial</span>
+        </div>
+        <div class="report-modal-actions">
+          <button id="btnPrintExecutiveReport" type="button" class="btn-primary-action gold-variant" style="padding: 0.5rem 1.1rem; font-size: 0.85rem; display: inline-flex; align-items: center; gap: 0.4rem; cursor: pointer; border: none; border-radius: var(--radius-pill); font-weight: 700; color: #FFFFFF; background: linear-gradient(135deg, #D49B54 0%, #C48B44 100%);">
+            <i data-lucide="printer" class="icon-sm"></i> <span>Imprimir / PDF</span>
+          </button>
+          <button id="btnExportExecutiveCsv" type="button" class="btn-acc-action secondary" style="padding: 0.5rem 1rem; font-size: 0.85rem; display: inline-flex; align-items: center; gap: 0.4rem; cursor: pointer; border: 1px solid rgba(44, 29, 17, 0.2); border-radius: var(--radius-pill); background: #FFFFFF; font-weight: 700; color: var(--color-espresso);">
+            <i data-lucide="download" class="icon-sm"></i> <span>Exportar CSV</span>
+          </button>
+          <button id="btnCloseExecutiveReport" type="button" class="modal-close-btn" style="position: static; font-size: 1.5rem; cursor: pointer;" aria-label="Cerrar modal">&times;</button>
+        </div>
+      </div>
+
+      <!-- HOJA IMPRIMIBLE FORMAL DE REPORTE EJECUTIVO -->
+      <div id="executiveReportSheet" class="printable-report-sheet">
+        <!-- Renderizado dinámico desde dashboard.js -->
+      </div>
+
+    </div>
+  </div>
+
+  <!-- LIBRERÍA CHART.JS LOCAL Y SCRIPT MODULAR -->
+  <script src="../js/vendor/lucide.min.js"></script>
+  <script src="../js/core/icons.js"></script>
+  <script src="../js/vendor/chart.umd.js"></script>
   <script type="module" src="../js/modules/dashboard.js"></script>
   <script type="module" src="../js/modules/caja-reportes.js?v=20260930-6"></script>
 

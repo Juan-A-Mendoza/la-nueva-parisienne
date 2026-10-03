@@ -37,7 +37,7 @@ function selectField(id, label, placeholder) {
 function commonHeader(context) {
   return `<div class="cash-reports-header">
     <div><span class="cash-reports-eyebrow">${context === 'caja' ? 'MÓDULO CAJA' : 'DASHBOARD GERENCIAL'}</span>
-    <h2>📂 Reportes de Caja</h2></div>
+    <h2><i data-lucide="folder" class="icon-sm"></i> Reportes de Caja</h2></div>
     ${context === 'caja' ? '<div class="cash-reports-header-actions"><button type="button" id="cashReportGenerateZ" class="cash-reports-primary">Generar Cierre</button><button type="button" id="cashReportClose" class="cash-reports-close" aria-label="Cerrar Reportes de Caja">Cerrar</button></div>' : '<span class="cash-reports-readonly">Solo lectura gerencial</span>'}
   </div>`;
 }
@@ -171,7 +171,7 @@ function showDuplicateClosureDialog(data) {
     const overlay = document.createElement('div');
     overlay.className = 'cash-reports-dialog-backdrop';
     overlay.innerHTML = `<div class="cash-reports-dialog" role="dialog" aria-modal="true" aria-labelledby="cashReportDuplicateTitle">
-      <div class="cash-reports-dialog-icon">✓</div>
+      <div class="cash-reports-dialog-icon"><i data-lucide="check-circle-2" class="icon-xl"></i></div>
       <h3 id="cashReportDuplicateTitle">Este turno ya fue cerrado</h3>
       <p>Ya existe un Cierre Z registrado para este turno. No se puede generar otro cierre duplicado.</p>
       <div class="cash-reports-dialog-details">

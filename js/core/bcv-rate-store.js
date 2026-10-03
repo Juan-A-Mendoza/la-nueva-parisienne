@@ -78,21 +78,29 @@ class BcvRateStoreManager {
       }
     }
 
+    const apiBase = (typeof window !== 'undefined' && window.location.pathname.includes('/modules/')) ? '../api' : 'api';
     const apis = [
+      `${apiBase}/bcv_rate.php`,
       'https://ve.dolarapi.com/v1/dolares/oficial',
       'https://bcv-api.vercel.app/api/bcv'
     ];
 
     for (const url of apis) {
       try {
-        const res = await fetch(`${url}?t=${Date.now()}`, { cache: 'no-store' });
+        const controller = typeof AbortController !== 'undefined' ? new AbortController() : null;
+        const timeoutId = controller ? setTimeout(() => controller.abort(), 1500) : null;
+        const res = await fetch(`${url}?t=${Date.now()}`, { 
+          cache: 'no-store',
+          signal: controller ? controller.signal : undefined 
+        });
+        if (timeoutId) clearTimeout(timeoutId);
         if (res.ok) {
           const data = await res.json();
           const rateVal = parseFloat(data.promedio || data.precio || data.monto || data.rate);
           if (rateVal && rateVal > 0) {
             this.rate = rateVal;
             this.mode = 'auto';
-            this.source = 'Tasa: BCV Oficial (ve.dolarapi.com - En Vivo)';
+            this.source = data.source || 'Tasa: BCV Oficial (En Vivo)';
 
             localStorage.setItem('tasa_auto', this.rate.toString());
             localStorage.setItem('tasaAuto', this.rate.toString());
@@ -103,7 +111,7 @@ class BcvRateStoreManager {
           }
         }
       } catch (e) {
-        console.warn(`Error al consultar ${url}:`, e);
+        // Fallo silencioso con timeout ultrarrápido
       }
     }
 
