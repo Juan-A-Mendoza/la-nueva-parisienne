@@ -36,83 +36,164 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // 2. Estado de la Aplicación de Cocina (Persistente desde Backend PHP/MySQL)
   let ovens = [];
-  let kdsOrders = JSON.parse(JSON.stringify(KDS_ORDERS_INITIAL_STATE));
+  let replenishmentAlerts = [];
+  let specialOrders = [];
   let stagingBatches = [];
-  
   let bakedTodayCount = 142;
   let selectedStagingBatchId = null;
 
+  // Función compartida para abrir el recetario pre-seleccionado desde alertas de reposición
+  let openRecetarioForReplenishment = null;
+
+  // Lotes por defecto con trazabilidad de 3 fases
+  const DEFAULT_STAGING_BATCHES = [
+    {
+      id: 'stage_045',
+      code: 'Lote #045',
+      productName: 'Pain au Chocolat (Chocolatina)',
+      productCode: 'PAN-003',
+      icon: 'croissant',
+      units: 40,
+      phase: 3, // 1: Amasado, 2: Leudado, 3: Listo para Horno
+      prepStatus: 'Leudado Completo (Listo para Horno)',
+      fermentRemainingMin: 0,
+      recommendedTemp: 190,
+      recommendedTimeMin: 16
+    },
+    {
+      id: 'stage_046',
+      code: 'Lote #046',
+      productName: 'Brioche de Vainilla de Madagascar',
+      productCode: 'PAN-004',
+      icon: 'cake',
+      units: 25,
+      phase: 2,
+      prepStatus: 'En Cámara de Fermentación',
+      fermentRemainingMin: 35,
+      recommendedTemp: 180,
+      recommendedTimeMin: 22
+    },
+    {
+      id: 'stage_047',
+      code: 'Lote #047',
+      productName: 'Baguette Tradicional Parisina',
+      productCode: 'PAN-001',
+      icon: 'croissant',
+      units: 50,
+      phase: 1,
+      prepStatus: 'Amasado y División en Mesa',
+      fermentRemainingMin: 75,
+      recommendedTemp: 240,
+      recommendedTimeMin: 22
+    }
+  ];
+
   // 3. Elementos DOM
   const ovensContainer = document.getElementById('ovensContainer');
-  const kdsContainer = document.getElementById('kdsContainer');
+  const demandContainer = document.getElementById('demandContainer') || document.getElementById('kdsContainer');
   const stagingContainer = document.getElementById('stagingContainer');
   
   // KPI Badges
   const activeOvensKpi = document.getElementById('activeOvensKpi');
   const pendingOrdersKpi = document.getElementById('pendingOrdersKpi');
   const bakedTodayKpi = document.getElementById('bakedTodayKpi');
+  const activeBatchesKpi = document.getElementById('activeBatchesKpi');
+  const ovensCountBadge = document.getElementById('ovensCountBadge');
   
-  // Modal de Carga de Lote
+  // Modal de Carga de Lote a Horno
   const loadOvenModal = document.getElementById('loadOvenModal');
   const closeLoadOvenModalBtn = document.getElementById('closeLoadOvenModalBtn');
+  const cancelLoadOvenModalBtn = document.getElementById('cancelLoadOvenModalBtn');
   const loadOvenForm = document.getElementById('loadOvenForm');
   const modalBatchName = document.getElementById('modalBatchName');
+  const ovenProductSelect = document.getElementById('ovenProductSelect');
   const ovenSelect = document.getElementById('ovenSelect');
+  const ovenUnitsInput = document.getElementById('ovenUnitsInput');
   const bakeTempInput = document.getElementById('bakeTempInput');
   const bakeTimeInput = document.getElementById('bakeTimeInput');
+  const ovenRecipeTipText = document.getElementById('ovenRecipeTipText');
 
-  // 4. FUNCIÓN INICIAL DE CARGA DESDE LA BASE DE DATOS REAL (API_HORNOS.PHP)
+  // Modal de Descarga de Horno e Ingreso a Vitrina POS
+  const modalDescargaVitrina = document.getElementById('modalDescargaVitrina');
+  const closeDescargaVitrinaBtn = document.getElementById('closeDescargaVitrinaBtn');
+  const cancelDescargaVitrinaBtn = document.getElementById('cancelDescargaVitrinaBtn');
+  const formDescargaVitrina = document.getElementById('formDescargaVitrina');
+  const descargaOvenId = document.getElementById('descargaOvenId');
+  const descargaProductCode = document.getElementById('descargaProductCode');
+  const descargaOvenName = document.getElementById('descargaOvenName');
+  const descargaProductName = document.getElementById('descargaProductName');
+  const descargaBatchCode = document.getElementById('descargaBatchCode');
+  const descargaTotalBaked = document.getElementById('descargaTotalBaked');
+  const descargaWasteQty = document.getElementById('descargaWasteQty');
+  const descargaWasteReason = document.getElementById('descargaWasteReason');
+  const descargaNetQty = document.getElementById('descargaNetQty');
+
+  // 4. FUNCIÓN DE CARGA DINÁMICA INTEGRAL (GET_ESTADO_COMPLETO.PHP)
   async function fetchKitchenState() {
     try {
-      let response = await fetch('../api_hornos.php');
+      let response = await fetch('../api/kitchen/get_estado_completo.php');
       if (!response.ok) {
-        response = await fetch('api_hornos.php');
+        response = await fetch('api/kitchen/get_estado_completo.php');
+      }
+      if (!response.ok) {
+        response = await fetch('../api_hornos.php');
       }
       if (!response.ok) throw new Error(`HTTP status ${response.status}`);
       const data = await response.json();
       
-      if (data && data.success && Array.isArray(data.hornos)) {
-        // Mapear los campos de la tabla MySQL `hornos` a la estructura de las tarjetas
-        ovens = data.hornos.map(h => {
-          let batchObj = null;
-          if (h.lote_actual || h.batch) {
-            batchObj = h.batch || {
-              id: `batch_${h.id}`,
-              productName: h.lote_actual || 'Lote Activo',
-              icon: (h.lote_actual && h.lote_actual.includes('Croissant')) ? 'croissant' : ((h.lote_actual && h.lote_actual.includes('Focaccia')) ? 'wheat' : 'croissant'),
-              units: 50,
-              totalTimeSeconds: parseInt(h.tiempo_restante || 0) > 0 ? (parseInt(h.tiempo_restante || 0) + 300) : 1200,
-              remainingSeconds: parseInt(h.tiempo_restante || 0)
-            };
-          }
+      if (data && data.success) {
+        if (Array.isArray(data.hornos) && data.hornos.length > 0) {
+          const currentOvensMap = new Map(ovens.map(o => [o.id, o]));
+          ovens = data.hornos.map(h => {
+            const current = currentOvensMap.get(h.id);
+            // Si el horno ya estaba horneando en vivo en la pantalla, conservar el temporizador decreciente
+            if (current && current.status === 'baking' && current.batch && h.status === 'baking' && h.batch) {
+              h.batch.remainingSeconds = current.batch.remainingSeconds;
+            }
+            return h;
+          });
+        }
 
-          return {
-            id: h.id,
-            name: h.nombre_horno || h.name || 'Horno Industrial',
-            type: h.type || 'Industrial',
-            currentTemp: parseInt(h.temperatura_actual || h.currentTemp || 180),
-            targetTemp: parseInt(h.temperatura_objetivo || h.targetTemp || 200),
-            status: h.estado || h.status || 'idle',
-            batch: batchObj
-          };
-        });
-      } else {
-        ovens = JSON.parse(JSON.stringify(OVENS_INITIAL_STATE));
+        if (Array.isArray(data.alertas_reposicion)) {
+          replenishmentAlerts = data.alertas_reposicion;
+        }
+
+        if (Array.isArray(data.encargos)) {
+          specialOrders = data.encargos;
+        }
+
+        if (Array.isArray(data.lotes) && data.lotes.length > 0) {
+          stagingBatches = data.lotes.map(l => {
+            let phase = 3;
+            const st = (l.estado_leudado || '').toLowerCase();
+            if (st.includes('amasado')) phase = 1;
+            else if (st.includes('leudado') || st.includes('ferment') || st.includes('reposo')) phase = 2;
+            return {
+              id: l.id,
+              code: l.codigo,
+              productName: l.producto,
+              productCode: l.codigo_producto || '',
+              icon: l.icono || 'croissant',
+              units: parseInt(l.cantidad) || 50,
+              phase: phase,
+              prepStatus: l.estado_leudado || 'Listo para Horno',
+              fermentRemainingMin: phase === 2 ? 40 : 0,
+              recommendedTemp: parseInt(l.temperatura_recomendada) || 200,
+              recommendedTimeMin: parseInt(l.tiempo_recomendado_min) || 20
+            };
+          });
+        } else {
+          stagingBatches = [];
+        }
       }
     } catch (err) {
-      console.warn('API api_hornos.php no disponible, aplicando estado por defecto:', err);
-      ovens = JSON.parse(JSON.stringify(OVENS_INITIAL_STATE));
-    }
-
-    if (!stagingBatches || stagingBatches.length === 0) {
-      stagingBatches = JSON.parse(JSON.stringify(STAGING_BATCHES_INITIAL_STATE));
+      console.warn('API get_estado_completo no disponible, aplicando estado por defecto:', err);
+      if (!ovens || ovens.length === 0) ovens = JSON.parse(JSON.stringify(OVENS_INITIAL_STATE));
+      if (!stagingBatches) stagingBatches = [];
     }
 
     renderAll();
   }
-
-  // Inicializar renderizado dinámico desde la BD
-  fetchKitchenState();
 
   // Bucle de Temporizadores en Tiempo Real (Cada 1 Segundo)
   setInterval(() => {
@@ -130,28 +211,29 @@ document.addEventListener('DOMContentLoaded', () => {
 
     if (stateChanged) {
       renderOvens();
+      updateKPIs();
     }
   }, 1000);
 
   function renderAll() {
     renderOvens();
-    renderKDSOrders();
+    renderDemandMonitor();
     renderStagingBatches();
     updateKPIs();
   }
 
   function updateKPIs() {
     const activeCount = ovens.filter(o => o.status === 'baking' || o.status === 'ready').length;
-    const pendingCount = kdsOrders.filter(o => o.status !== 'ready').length;
-
     if (activeOvensKpi) activeOvensKpi.textContent = `${activeCount} / ${ovens.length}`;
-    if (pendingOrdersKpi) pendingOrdersKpi.textContent = `${pendingCount} órdenes`;
+    if (pendingOrdersKpi) pendingOrdersKpi.textContent = `${replenishmentAlerts.length} alertas`;
     if (bakedTodayKpi) bakedTodayKpi.textContent = `${bakedTodayCount} ud`;
+    if (activeBatchesKpi) activeBatchesKpi.textContent = `${stagingBatches.length} lotes`;
+    if (ovensCountBadge) ovensCountBadge.textContent = `${ovens.length} Hornos`;
   }
 
   // 4. Renderizado de Hornos Industriales
   function renderOvens() {
-  setTimeout(() => window.LucideIcons?.refresh(), 0);
+    setTimeout(() => window.LucideIcons?.refresh(), 0);
     ovensContainer.innerHTML = '';
 
     ovens.forEach(oven => {
@@ -211,7 +293,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         <div style="margin-top: 0.5rem;">
           ${isReady ? `
-            <button type="button" class="btn-oven-action btn-ready"><i data-lucide="check" class="icon-xs"></i> <span>Retirar y Enfriar Lote</span></button>
+            <button type="button" class="btn-oven-action btn-ready"><i data-lucide="store" class="icon-xs"></i> <span>Descargar a Vitrina POS</span></button>
           ` : oven.status === 'baking' ? `
             <button type="button" class="btn-oven-action" style="background: var(--bg-main); color: var(--color-espresso); border: 1px solid var(--color-subtle);"><i data-lucide="eye" class="icon-xs"></i> <span>Ver Detalles de Horneado</span></button>
           ` : `
@@ -224,13 +306,8 @@ document.addEventListener('DOMContentLoaded', () => {
       const actionBtn = card.querySelector('.btn-oven-action');
       actionBtn?.addEventListener('click', () => {
         if (isReady) {
-          // Retirar Lote listo
-          bakedTodayCount += oven.batch ? oven.batch.units : 20;
-          oven.status = 'idle';
-          oven.batch = null;
-          renderAll();
+          openDescargaVitrinaModal(oven.id);
         } else if (oven.status === 'baking') {
-          // ABRIR MODAL DE DETALLES DE HORNEADO
           openOvenDetailModal(oven.id);
         } else if (oven.status === 'idle' || oven.status === 'preheating') {
           openLoadOvenModal(null, oven.id);
@@ -241,95 +318,481 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
-  // 5. Renderizado de Comandas KDS
-  function renderKDSOrders() {
-    kdsContainer.innerHTML = '';
+  // 5. Renderizado del Monitor de Demanda (Vitrina & Encargos Especiales)
+  function renderDemandMonitor() {
+    setTimeout(() => window.LucideIcons?.refresh(), 0);
+    if (!demandContainer) return;
+    demandContainer.innerHTML = '';
 
-    kdsOrders.forEach(order => {
-      const card = document.createElement('div');
-      card.className = `kds-order-card status-${order.status}`;
+    // SECCIÓN 1: ALERTAS DE REPOSICIÓN DE VITRINA
+    const alertSection = document.createElement('div');
+    alertSection.innerHTML = `
+      <div class="demand-section-title">
+        <i data-lucide="bell-ring" class="icon-xs" style="color: var(--color-terracotta);"></i>
+        <span>Alertas de Reposición en Vitrina (${replenishmentAlerts.length})</span>
+      </div>
+    `;
 
-      let itemsHtml = '';
-      order.items.forEach(it => {
-        const itemIconHtml = window.LucideIcons ? window.LucideIcons.render(it.icon || 'utensils', 'icon-xs') : '';
-        itemsHtml += `
-          <li class="kds-item-row">
-            <span class="kds-item-qty">${it.qty}x</span>
-            <span style="display:inline-flex; align-items:center; gap:0.35rem;">${itemIconHtml} ${it.name}</span>
-          </li>
+    if (replenishmentAlerts.length === 0) {
+      const emptyAlert = document.createElement('div');
+      emptyAlert.style.cssText = 'padding: 1rem; background: rgba(46,125,50,0.06); border: 1px dashed rgba(46,125,50,0.3); border-radius: var(--radius-sm); font-size: 0.85rem; color: var(--color-success); text-align: center;';
+      emptyAlert.innerHTML = '<span class="badge-clean-icon"><i data-lucide="check-circle" class="icon-xs"></i> Vitrina 100% abastecida. Sin alertas de quiebre de stock.</span>';
+      alertSection.appendChild(emptyAlert);
+    } else {
+      replenishmentAlerts.forEach(alert => {
+        const card = document.createElement('div');
+        card.className = `demand-alert-card ${alert.isCritical ? 'critical' : ''}`;
+
+        const pct = Math.min(100, Math.round((alert.currentStock / Math.max(1, alert.minStock * 2)) * 100));
+        const badgeClass = alert.isCritical ? 'critical' : 'warning';
+        const badgeText = alert.isCritical ? '¡Stock Crítico!' : 'Stock Bajo';
+
+        card.innerHTML = `
+          <div class="demand-card-header">
+            <div>
+              <h4 style="margin: 0; font-size: 0.92rem; font-weight: 800; color: var(--color-espresso);">${alert.name}</h4>
+              <span style="font-size: 0.76rem; color: var(--color-muted); font-weight: 700;">Código: ${alert.code}</span>
+            </div>
+            <span class="demand-badge ${badgeClass}">${badgeText}</span>
+          </div>
+
+          <div class="demand-stock-meter">
+            <div class="demand-meter-header">
+              <span>Stock en Vitrina POS:</span>
+              <strong>${alert.currentStock} / ${alert.minStock} mín</strong>
+            </div>
+            <div class="demand-meter-track">
+              <div class="demand-meter-fill ${alert.isCritical ? 'critical' : ''}" style="width: ${pct}%;"></div>
+            </div>
+          </div>
+
+          <button type="button" class="btn-knead-replenish">
+            <i data-lucide="plus-circle" class="icon-xs"></i>
+            <span>Amasar Lote de Reposición (${alert.suggestedBatch || 50} ud)</span>
+          </button>
         `;
+
+        card.querySelector('.btn-knead-replenish')?.addEventListener('click', () => {
+          if (typeof openRecetarioForReplenishment === 'function') {
+            openRecetarioForReplenishment(alert.code, alert.suggestedBatch || 50);
+          }
+        });
+
+        alertSection.appendChild(card);
       });
+    }
 
-      let statusBadgeText = 'Pendiente';
-      let actionBtnText = '<i data-lucide="play" class="icon-xs"></i> <span>Iniciar Preparación</span>';
-      if (order.status === 'in_progress') {
-        statusBadgeText = 'En Preparación';
-        actionBtnText = '<i data-lucide="check" class="icon-xs"></i> <span>Marcar Listo</span>';
-      } else if (order.status === 'ready') {
-        statusBadgeText = '¡Listo para Entregar!';
-        actionBtnText = '<i data-lucide="archive" class="icon-xs"></i> <span>Archivar / Entregado</span>';
-      }
+    demandContainer.appendChild(alertSection);
 
-      const clockIcon = window.LucideIcons ? window.LucideIcons.render('clock', 'icon-xs') : '';
-      card.innerHTML = `
-        <div class="kds-header">
-          <span class="kds-order-code">${order.code}</span>
-          <span class="kds-time-elapsed" style="display:inline-flex; align-items:center; gap:0.25rem;">${clockIcon} hace ${order.timeElapsedMin} min</span>
-        </div>
-        <div style="font-size: 0.8rem; color: var(--color-muted); font-weight: 600;">
-          ${order.orderType} — ${order.customerName}
-        </div>
-        <ul class="kds-items-list">
-          ${itemsHtml}
-        </ul>
-        <button type="button" class="btn-oven-action btn-kds-action">${actionBtnText}</button>
-      `;
+    // SECCIÓN 2: ENCARGOS PROGRAMADOS & COMANDAS
+    const ordersSection = document.createElement('div');
+    ordersSection.style.marginTop = '0.5rem';
+    ordersSection.innerHTML = `
+      <div class="demand-section-title">
+        <i data-lucide="clipboard-list" class="icon-xs" style="color: var(--color-gold-dark);"></i>
+        <span>Encargos Programados &amp; Comandas (${specialOrders.length})</span>
+      </div>
+    `;
 
-      card.querySelector('.btn-kds-action').addEventListener('click', () => {
-        if (order.status === 'pending') {
-          order.status = 'in_progress';
-        } else if (order.status === 'in_progress') {
-          order.status = 'ready';
-        } else if (order.status === 'ready') {
-          kdsOrders = kdsOrders.filter(o => o.id !== order.id);
+    if (specialOrders.length === 0) {
+      const emptyOrders = document.createElement('div');
+      emptyOrders.style.cssText = 'padding: 1rem; background: var(--bg-surface); border: 1px dashed var(--border-subtle); border-radius: var(--radius-sm); font-size: 0.85rem; color: var(--color-muted); text-align: center;';
+      emptyOrders.innerHTML = 'Sin comandas especiales pendientes.';
+      ordersSection.appendChild(emptyOrders);
+    } else {
+      specialOrders.forEach(ord => {
+        const card = document.createElement('div');
+        const st = ord.estado_preparacion || 'pending';
+        card.className = `demand-order-card status-${st}`;
+
+        let statusText = 'Pendiente';
+        let actionBtnText = '<i data-lucide="play" class="icon-xs"></i> <span>Iniciar Preparación</span>';
+        if (st === 'in_progress') {
+          statusText = 'En Preparación';
+          actionBtnText = '<i data-lucide="check" class="icon-xs"></i> <span>Marcar Listo para Entrega</span>';
+        } else if (st === 'ready') {
+          statusText = '¡Listo para Entregar!';
+          actionBtnText = '<i data-lucide="archive" class="icon-xs"></i> <span>Archivar / Despachado</span>';
         }
-        renderAll();
-      });
 
-      kdsContainer.appendChild(card);
-    });
+        const dateStr = ord.fecha_hora ? ord.fecha_hora.split(' ')[1]?.slice(0, 5) : '';
+
+        card.innerHTML = `
+          <div class="demand-card-header">
+            <div>
+              <span class="demand-order-code">${ord.numero_factura}</span>
+              ${dateStr ? `<span style="font-size: 0.75rem; color: var(--color-muted); margin-left: 0.4rem;">${dateStr}</span>` : ''}
+            </div>
+            <span class="demand-badge ${st === 'ready' ? 'ready' : (st === 'in_progress' ? 'warning' : 'neutral')}">${statusText}</span>
+          </div>
+
+          <div class="demand-order-items">
+            ${ord.detalles_pedido}
+          </div>
+
+          <button type="button" class="btn-oven-action btn-order-action" style="margin-top: 0.5rem;">${actionBtnText}</button>
+        `;
+
+        card.querySelector('.btn-order-action')?.addEventListener('click', async () => {
+          let nextState = 'in_progress';
+          if (ord.estado_preparacion === 'pending') {
+            nextState = 'in_progress';
+          } else if (ord.estado_preparacion === 'in_progress') {
+            nextState = 'ready';
+          } else if (ord.estado_preparacion === 'ready') {
+            nextState = 'delivered';
+          }
+
+          try {
+            await fetch('../api/kitchen/actualizar_comanda.php', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ id: ord.id, estado: nextState })
+            });
+          } catch (e) {
+            console.warn('Error actualizando comanda en MySQL:', e);
+          }
+
+          if (nextState === 'delivered') {
+            specialOrders = specialOrders.filter(o => o.id !== ord.id);
+          } else {
+            ord.estado_preparacion = nextState;
+          }
+          renderDemandMonitor();
+          updateKPIs();
+        });
+
+        ordersSection.appendChild(card);
+      });
+    }
+
+    demandContainer.appendChild(ordersSection);
   }
 
-  // 6. Renderizado de Lotes Listos para Horno (Staging)
+  // 6. Renderizado de Plan de Producción & Leudado (Staging)
   function renderStagingBatches() {
-  setTimeout(() => window.LucideIcons?.refresh(), 0);
+    setTimeout(() => window.LucideIcons?.refresh(), 0);
     stagingContainer.innerHTML = '';
+
+    if (stagingBatches.length === 0) {
+      stagingContainer.innerHTML = `
+        <div style="padding: 1.5rem; text-align: center; background: white; border-radius: var(--radius-sm); border: 1px dashed var(--border-subtle); color: var(--color-muted); font-size: 0.88rem;">
+          <i data-lucide="layers" class="icon-md" style="margin-bottom: 0.4rem; opacity: 0.5;"></i>
+          <div>No hay lotes en plan de producción.</div>
+          <div style="font-size: 0.78rem; margin-top: 0.3rem;">Abre el Recetario o una alerta de vitrina para iniciar un nuevo lote.</div>
+        </div>
+      `;
+      return;
+    }
 
     stagingBatches.forEach(st => {
       const card = document.createElement('div');
       card.className = 'staging-card';
 
+      const phase = st.phase || (st.prepStatus?.includes('Listo') ? 3 : (st.prepStatus?.includes('Leudado') ? 2 : 1));
+      st.phase = phase;
+
+      let actionHtml = '';
+      if (phase === 1) {
+        actionHtml = `
+          <button type="button" class="btn-batch-advance">
+            <i data-lucide="arrow-right" class="icon-xs"></i> <span>Amasado Listo → Iniciar Leudado</span>
+          </button>
+        `;
+      } else if (phase === 2) {
+        actionHtml = `
+          <button type="button" class="btn-batch-advance">
+            <i data-lucide="check" class="icon-xs"></i> <span>Completar Leudado (Listo Horno)</span>
+          </button>
+        `;
+      } else {
+        actionHtml = `
+          <button type="button" class="btn-load-oven">
+            <i data-lucide="arrow-up-right" class="icon-xs"></i> <span>Cargar a Horno Libre</span>
+          </button>
+        `;
+      }
+
       card.innerHTML = `
         <div class="staging-title">
           <span style="display:inline-flex;align-items:center;">${window.LucideIcons ? window.LucideIcons.render(st.icon || 'croissant', 'icon-lg') : ''}</span>
           <div>
-            <div>${st.productName}</div>
+            <div style="font-weight: 800; font-size: 0.95rem; color: var(--color-espresso);">${st.productName}</div>
             <span style="font-size: 0.78rem; color: var(--color-muted); font-weight: bold;">${st.code} (${st.units} ud)</span>
           </div>
         </div>
-        <span class="staging-status-badge badge-clean-icon"><i data-lucide="check" class="icon-xs"></i> ${st.prepStatus}</span>
-        <button type="button" class="btn-load-oven"><i data-lucide="arrow-up-right" class="icon-xs"></i> <span>Cargar a Horno Libre</span></button>
+
+        <div class="batch-phases-stepper">
+          <div class="phase-step ${phase >= 1 ? 'completed' : ''} ${phase === 1 ? 'active' : ''}">
+            <div class="phase-dot">1</div>
+            <span class="phase-label">Amasado</span>
+          </div>
+          <div class="phase-step ${phase >= 2 ? 'completed' : ''} ${phase === 2 ? 'active' : ''}">
+            <div class="phase-dot">2</div>
+            <span class="phase-label">Leudado ${phase === 2 && st.fermentRemainingMin ? `(${st.fermentRemainingMin}m)` : ''}</span>
+          </div>
+          <div class="phase-step ${phase >= 3 ? 'completed' : ''} ${phase === 3 ? 'active' : ''}">
+            <div class="phase-dot">3</div>
+            <span class="phase-label">Listo Horno</span>
+          </div>
+        </div>
+
+        <div style="margin-top: 0.65rem;">
+          ${actionHtml}
+        </div>
+        <div style="display: flex; justify-content: flex-end; margin-top: 0.4rem; padding-top: 0.35rem; border-top: 1px dashed rgba(0,0,0,0.06);">
+          <button type="button" class="btn-batch-discard" style="background: none; border: none; color: var(--color-danger); cursor: pointer; font-size: 0.75rem; font-weight: 700; display: inline-flex; align-items: center; gap: 0.3rem;" title="Cancelar o descartar este lote">
+            <i data-lucide="trash-2" class="icon-xs"></i> <span>Descartar Lote</span>
+          </button>
+        </div>
       `;
 
-      card.querySelector('.btn-load-oven').addEventListener('click', () => {
-        openLoadOvenModal(st.id);
+      if (phase === 1) {
+        card.querySelector('.btn-batch-advance')?.addEventListener('click', async () => {
+          st.phase = 2;
+          st.prepStatus = 'En Cámara de Fermentación';
+          st.fermentRemainingMin = st.fermentRemainingMin || 45;
+          renderStagingBatches();
+          try {
+            await fetch('../api/kitchen/gestionar_lote.php', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ action: 'advance', id: st.id, fase: 2, estado_leudado: st.prepStatus })
+            });
+          } catch (e) {
+            console.warn('Error al avanzar fase de lote:', e);
+          }
+        });
+      } else if (phase === 2) {
+        card.querySelector('.btn-batch-advance')?.addEventListener('click', async () => {
+          st.phase = 3;
+          st.prepStatus = 'Leudado Completo (Listo para Horno)';
+          st.fermentRemainingMin = 0;
+          renderStagingBatches();
+          try {
+            await fetch('../api/kitchen/gestionar_lote.php', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ action: 'advance', id: st.id, fase: 3, estado_leudado: st.prepStatus })
+            });
+          } catch (e) {
+            console.warn('Error al avanzar fase de lote:', e);
+          }
+        });
+      } else {
+        card.querySelector('.btn-load-oven')?.addEventListener('click', () => {
+          openLoadOvenModal(st.id);
+        });
+      }
+
+      card.querySelector('.btn-batch-discard')?.addEventListener('click', async () => {
+        if (!confirm(`¿Deseas descartar el ${st.code} (${st.productName})?`)) return;
+        try {
+          await fetch('../api/kitchen/gestionar_lote.php', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ action: 'discard', id: st.id })
+          });
+        } catch (e) {
+          console.warn('Error al descartar lote:', e);
+        }
+        stagingBatches = stagingBatches.filter(b => b.id !== st.id);
+        renderStagingBatches();
+        updateKPIs();
       });
 
       stagingContainer.appendChild(card);
     });
   }
 
-  // 7. Modal de Asignación de Horno
+  // 6.5 Modal de Descarga de Horno e Ingreso a Vitrina POS
+  function openDescargaVitrinaModal(ovenId) {
+    const oven = ovens.find(o => o.id === ovenId);
+    if (!oven || !oven.batch) return;
+
+    if (!modalDescargaVitrina) return;
+
+    descargaOvenId.value = oven.id;
+
+    let pCode = oven.batch.productCode || '';
+    if (!pCode) {
+      const n = (oven.batch.productName || '').toLowerCase();
+      if (n.includes('baguette')) pCode = 'PAN-001';
+      else if (n.includes('croissant')) pCode = 'PAN-002';
+      else if (n.includes('chocolat')) pCode = 'PAN-003';
+      else if (n.includes('brioche')) pCode = 'PAN-004';
+      else if (n.includes('focaccia')) pCode = 'PAN-005';
+      else if (n.includes('jamón') || n.includes('jamon')) pCode = 'PAN-007';
+      else pCode = 'PAN-001';
+    }
+    descargaProductCode.value = pCode;
+
+    if (descargaOvenName) descargaOvenName.textContent = oven.name;
+    if (descargaProductName) descargaProductName.textContent = oven.batch.productName;
+    if (descargaBatchCode) descargaBatchCode.textContent = oven.batch.code || 'Lote Activo';
+    if (descargaTotalBaked) descargaTotalBaked.textContent = `${oven.batch.units} ud`;
+
+    if (descargaWasteQty) {
+      descargaWasteQty.value = 0;
+      descargaWasteQty.max = oven.batch.units;
+    }
+    if (descargaWasteReason) descargaWasteReason.value = 'Sin merma';
+    if (descargaNetQty) descargaNetQty.textContent = `${oven.batch.units} ud`;
+
+    modalDescargaVitrina.style.display = 'flex';
+    modalDescargaVitrina.classList.add('active');
+    modalDescargaVitrina.setAttribute('aria-hidden', 'false');
+    window.LucideIcons?.refresh();
+  }
+
+  function closeDescargaVitrinaModal() {
+    if (!modalDescargaVitrina) return;
+    modalDescargaVitrina.style.display = 'none';
+    modalDescargaVitrina.classList.remove('active');
+    modalDescargaVitrina.setAttribute('aria-hidden', 'true');
+  }
+
+  closeDescargaVitrinaBtn?.addEventListener('click', closeDescargaVitrinaModal);
+  cancelDescargaVitrinaBtn?.addEventListener('click', closeDescargaVitrinaModal);
+  modalDescargaVitrina?.addEventListener('click', (e) => {
+    if (e.target === modalDescargaVitrina) closeDescargaVitrinaModal();
+  });
+
+  descargaWasteQty?.addEventListener('input', () => {
+    const oven = ovens.find(o => o.id === descargaOvenId.value);
+    const total = oven && oven.batch ? oven.batch.units : 50;
+    const waste = Math.max(0, Math.min(total, parseInt(descargaWasteQty.value) || 0));
+    const net = Math.max(0, total - waste);
+    if (descargaNetQty) descargaNetQty.textContent = `${net} ud`;
+
+    if (waste > 0 && descargaWasteReason && descargaWasteReason.value === 'Sin merma') {
+      descargaWasteReason.value = 'Exceso de horneado / Quemado';
+    } else if (waste === 0 && descargaWasteReason) {
+      descargaWasteReason.value = 'Sin merma';
+    }
+  });
+
+  formDescargaVitrina?.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const oven = ovens.find(o => o.id === descargaOvenId.value);
+    if (!oven || !oven.batch) {
+      closeDescargaVitrinaModal();
+      return;
+    }
+
+    const totalUnits = oven.batch.units;
+    const waste = parseInt(descargaWasteQty.value) || 0;
+    const net = Math.max(0, totalUnits - waste);
+    const reason = descargaWasteReason.value;
+    const pCode = descargaProductCode.value;
+    const pName = oven.batch.productName;
+
+    const submitBtn = formDescargaVitrina.querySelector('button[type="submit"]');
+    if (submitBtn) {
+      submitBtn.disabled = true;
+      submitBtn.innerHTML = '<span>Guardando en Vitrina...</span>';
+    }
+
+    try {
+      let res = await fetch('../api/kitchen/completar_horneado.php', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          ovenId: oven.id,
+          productCode: pCode,
+          productName: pName,
+          totalBaked: totalUnits,
+          wasteQty: waste,
+          wasteReason: reason,
+          bakerName: activeChef.name
+        })
+      });
+
+      if (!res.ok) {
+        res = await fetch('api/kitchen/completar_horneado.php', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            ovenId: oven.id,
+            productCode: pCode,
+            productName: pName,
+            totalBaked: totalUnits,
+            wasteQty: waste,
+            wasteReason: reason,
+            bakerName: activeChef.name
+          })
+        });
+      }
+
+      const data = await res.json();
+      if (!data.success) {
+        throw new Error(data.message || 'Error al completar descarga');
+      }
+
+      // Actualizar estado local
+      bakedTodayCount += net;
+      oven.status = 'idle';
+      oven.batch = null;
+
+      // Sincronizar catálogo POS vía BroadcastChannel
+      try {
+        const channel = new BroadcastChannel('lnp_pos_catalog_channel');
+        channel.postMessage({
+          type: 'STOCK_RESTOCKED',
+          productCode: pCode,
+          unitsAdded: net,
+          totalStock: data.newStock
+        });
+        channel.close();
+      } catch (errBc) {}
+
+      // Actualizar stock en localStorage si existe catálogo
+      try {
+        const rawPos = localStorage.getItem('pos_products');
+        if (rawPos) {
+          const parsed = JSON.parse(rawPos);
+          if (Array.isArray(parsed)) {
+            const found = parsed.find(p => p.codigo === pCode || p.nombre === pName);
+            if (found) {
+              found.stock_actual = (Number(found.stock_actual) || 0) + net;
+              localStorage.setItem('pos_products', JSON.stringify(parsed));
+            }
+          }
+        }
+      } catch (errLs) {}
+
+      closeDescargaVitrinaModal();
+
+      // Mostrar modal animado de éxito
+      const modal = document.getElementById('modalExitoNotificacion');
+      const titleEl = document.getElementById('modalExitoTitle');
+      const msgEl = document.getElementById('modalExitoMsg');
+
+      if (titleEl) titleEl.textContent = '¡Lote Ingresado a Vitrina POS!';
+      if (msgEl) {
+        msgEl.innerHTML = `Se descargó el <strong>${pName}</strong> del <strong>${oven.name}</strong>.<br/><br/>Se sumaron <strong>+${net} unidades netas</strong> al stock disponible de vitrina para venta en caja (Mermas: ${waste} ud - ${reason}).`;
+      }
+      if (modal) {
+        modal.style.display = 'flex';
+        modal.classList.add('active');
+        modal.setAttribute('aria-hidden', 'false');
+      }
+
+      // Refrescar estado y alertas de reposición
+      fetchKitchenState();
+
+    } catch (err) {
+      console.error('Error al descargar a vitrina:', err);
+      alert('Error al registrar descarga en vitrina: ' + err.message);
+    } finally {
+      if (submitBtn) {
+        submitBtn.disabled = false;
+        submitBtn.innerHTML = '<i data-lucide="check-check" class="icon-sm"></i> <span>Confirmar e Ingresar a Vitrina</span>';
+      }
+    }
+  });
+
+  // 7. Modal de Asignación de Horno e Inicio de Horneado
   function openLoadOvenModal(batchId = null, ovenId = null) {
     selectedStagingBatchId = batchId;
     
@@ -340,7 +803,7 @@ document.addEventListener('DOMContentLoaded', () => {
       ovenErrorBanner.innerHTML = '';
     }
 
-    // Rellenar selector de hornos con estado de disponibilidad
+    // 1. Rellenar selector de hornos con estado de disponibilidad
     ovenSelect.innerHTML = '';
     ovens.forEach(o => {
       const option = document.createElement('option');
@@ -351,21 +814,104 @@ document.addEventListener('DOMContentLoaded', () => {
       ovenSelect.appendChild(option);
     });
 
-    if (batchId) {
-      const batch = stagingBatches.find(b => b.id === batchId);
-      if (batch) {
-        modalBatchName.textContent = `${batch.productName} (${batch.units} ud)`;
-        bakeTempInput.value = batch.recommendedTemp;
-        bakeTimeInput.value = batch.recommendedTimeMin;
+    // 2. Poblar selector de panes y lotes
+    if (ovenProductSelect) {
+      ovenProductSelect.innerHTML = '';
+
+      // Grupo A: Lotes listos en Producción / Leudado
+      if (stagingBatches.length > 0) {
+        const groupBatches = document.createElement('optgroup');
+        groupBatches.label = '📋 Lotes en Plan de Producción / Leudado';
+
+        stagingBatches.forEach(b => {
+          const opt = document.createElement('option');
+          opt.value = `batch:${b.id}`;
+          opt.textContent = `${b.productName} (${b.units} ud) — ${b.code} [${b.prepStatus || 'Listo'}]`;
+          opt.dataset.type = 'batch';
+          opt.dataset.batchId = b.id;
+          opt.dataset.units = b.units;
+          opt.dataset.temp = b.recommendedTemp || 200;
+          opt.dataset.time = b.recommendedTimeMin || 20;
+          opt.dataset.name = b.productName;
+          opt.dataset.icon = b.icon || 'croissant';
+          opt.dataset.code = b.productCode || '';
+          if (batchId && b.id === batchId) opt.selected = true;
+          groupBatches.appendChild(opt);
+        });
+        ovenProductSelect.appendChild(groupBatches);
       }
-    } else {
-      modalBatchName.textContent = 'Selección de Lote de Producción';
+
+      // Grupo B: Catálogo de Panes Artesanales (Recetario)
+      const groupRecipes = document.createElement('optgroup');
+      groupRecipes.label = '🥖 Panes Artesanales (Recetario Maestro)';
+      BAKERY_RECIPES.forEach(r => {
+        const opt = document.createElement('option');
+        opt.value = `recipe:${r.id}`;
+        opt.textContent = `${r.icon} ${r.name} (${r.code}) — Receta Estándar`;
+        opt.dataset.type = 'recipe';
+        opt.dataset.recipeId = r.id;
+        opt.dataset.units = r.defaultQty || 50;
+        opt.dataset.temp = r.bakingProfile?.temp || 200;
+        opt.dataset.time = r.bakingProfile?.timeMin || 20;
+        opt.dataset.name = r.name;
+        opt.dataset.icon = r.lucideIcon || 'croissant';
+        opt.dataset.code = r.code;
+        opt.dataset.ovenType = r.bakingProfile?.ovenType || 'Industrial';
+        groupRecipes.appendChild(opt);
+      });
+      ovenProductSelect.appendChild(groupRecipes);
+
+      // Si no se pasó batchId, seleccionar la primera opción disponible
+      if (!batchId && ovenProductSelect.options.length > 0) {
+        ovenProductSelect.selectedIndex = 0;
+      }
+    }
+
+    // 3. Sincronizar parámetros técnicos según la selección
+    syncOvenProductParams();
+
+    if (modalBatchName) {
+      if (batchId) {
+        const batch = stagingBatches.find(b => b.id === batchId);
+        modalBatchName.textContent = batch ? `Cargar ${batch.productName} a Horno` : 'Cargar y Hornear Pan';
+      } else {
+        modalBatchName.textContent = 'Cargar y Hornear Pan';
+      }
     }
 
     loadOvenModal.classList.add('active');
+    window.LucideIcons?.refresh();
   }
 
+  function syncOvenProductParams() {
+    if (!ovenProductSelect) return;
+    const selectedOpt = ovenProductSelect.options[ovenProductSelect.selectedIndex];
+    if (!selectedOpt) return;
+
+    const temp = parseInt(selectedOpt.dataset.temp) || 200;
+    const time = parseInt(selectedOpt.dataset.time) || 15;
+    const units = parseInt(selectedOpt.dataset.units) || 50;
+    const ovenType = selectedOpt.dataset.ovenType || '';
+
+    if (bakeTempInput) bakeTempInput.value = temp;
+    if (bakeTimeInput) bakeTimeInput.value = time;
+    if (ovenUnitsInput) ovenUnitsInput.value = units;
+
+    if (ovenRecipeTipText) {
+      const tip = ovenType 
+        ? `Horno recomendado: <strong>${ovenType}</strong>. Temp: <strong>${temp}°C</strong> &bull; Tiempo: <strong>${time} min</strong>.`
+        : `Parámetros sugeridos: <strong>${temp}°C</strong> durante <strong>${time} min</strong> para ${units} unidades.`;
+      ovenRecipeTipText.innerHTML = tip;
+    }
+  }
+
+  ovenProductSelect?.addEventListener('change', syncOvenProductParams);
+
   closeLoadOvenModalBtn?.addEventListener('click', () => {
+    loadOvenModal.classList.remove('active');
+  });
+
+  cancelLoadOvenModalBtn?.addEventListener('click', () => {
     loadOvenModal.classList.remove('active');
   });
 
@@ -380,42 +926,77 @@ document.addEventListener('DOMContentLoaded', () => {
     const targetOvenId = ovenSelect.value;
     const oven = ovens.find(o => o.id === targetOvenId);
 
-    // VALIDACIÓN DE HORNO OCUPADO (LÓGICA CRÍTICA OBLIGATORIA)
+    // VALIDACIÓN DE HORNO OCUPADO
     if (!oven || oven.status === 'baking' || oven.status === 'ready') {
       const ovenErrorBanner = document.getElementById('ovenErrorBanner');
       if (ovenErrorBanner) {
         ovenErrorBanner.innerHTML = `<span class="badge-clean-icon"><i data-lucide="alert-triangle" class="icon-sm"></i> <strong>Error de Operación:</strong> El ${oven ? oven.name : "horno seleccionado"} ya está ocupado en un ciclo activo. Seleccione un horno libre.</span>`;
         ovenErrorBanner.style.display = 'block';
       }
-      return false; // Interrumpir ejecución inmediatamente
+      return false;
     }
 
     const temp = parseInt(bakeTempInput.value) || 200;
     const timeMin = parseInt(bakeTimeInput.value) || 15;
+    const units = parseInt(ovenUnitsInput?.value) || 50;
 
-    let batchInfo = {
-      id: `batch_${Date.now()}`,
-      productName: 'Lote Personalizado',
-      icon: 'croissant',
-      units: 30,
+    const selectedOpt = ovenProductSelect ? ovenProductSelect.options[ovenProductSelect.selectedIndex] : null;
+    const isBatch = selectedOpt && selectedOpt.dataset.type === 'batch';
+    const batchId = isBatch ? selectedOpt.dataset.batchId : null;
+
+    let productName = selectedOpt ? selectedOpt.dataset.name : 'Pan Artesanal';
+    let productCode = selectedOpt ? selectedOpt.dataset.code : 'PAN-001';
+    let icon = selectedOpt ? selectedOpt.dataset.icon : 'croissant';
+    let batchCode = `Lote #${String(stagingBatches.length + 50).padStart(3, '0')}`;
+
+    if (isBatch) {
+      const stBatch = stagingBatches.find(b => b.id === batchId);
+      if (stBatch) {
+        productName = stBatch.productName;
+        productCode = stBatch.productCode || productCode;
+        icon = stBatch.icon || icon;
+        batchCode = stBatch.code || batchCode;
+        stagingBatches = stagingBatches.filter(b => b.id !== batchId);
+      }
+    }
+
+    const batchInfo = {
+      id: batchId || `batch_${Date.now()}`,
+      code: batchCode,
+      productName: productName,
+      productCode: productCode,
+      icon: icon,
+      units: units,
       totalTimeSeconds: timeMin * 60,
       remainingSeconds: timeMin * 60
     };
-
-    if (selectedStagingBatchId) {
-      const stBatch = stagingBatches.find(b => b.id === selectedStagingBatchId);
-      if (stBatch) {
-        batchInfo.productName = stBatch.productName;
-        batchInfo.icon = stBatch.icon;
-        batchInfo.units = stBatch.units;
-        stagingBatches = stagingBatches.filter(b => b.id !== selectedStagingBatchId);
-      }
-    }
 
     oven.currentTemp = temp;
     oven.targetTemp = temp;
     oven.status = 'baking';
     oven.batch = batchInfo;
+
+    // Persistir inicio de horneado en MySQL
+    const ovenPayload = {
+      ovenId: targetOvenId,
+      batchId: batchInfo.id,
+      productName: batchInfo.productName,
+      productCode: batchInfo.productCode,
+      temp: temp,
+      timeMin: timeMin,
+      units: batchInfo.units
+    };
+    fetch('../api/kitchen/iniciar_horneado.php', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(ovenPayload)
+    }).catch(() => {
+      fetch('api/kitchen/iniciar_horneado.php', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(ovenPayload)
+      }).catch(err => console.warn('Iniciar horneado local:', err));
+    });
 
     loadOvenModal.classList.remove('active');
     renderAll();
@@ -707,6 +1288,148 @@ document.addEventListener('DOMContentLoaded', () => {
         if (e.target.id === 'modalExitoNotificacion') closeSuccessModal();
       });
 
+      // --- 1. MODAL: NUEVO ENCARGO O COMANDA MANUAL ---
+      const modalNuevoEncargo = document.getElementById('modalNuevoEncargo');
+      const btnOpenNuevoEncargoModal = document.getElementById('btnOpenNuevoEncargoModal');
+      const closeNuevoEncargoModalBtn = document.getElementById('closeNuevoEncargoModalBtn');
+      const cancelNuevoEncargoModalBtn = document.getElementById('cancelNuevoEncargoModalBtn');
+      const nuevoEncargoForm = document.getElementById('nuevoEncargoForm');
+
+      btnOpenNuevoEncargoModal?.addEventListener('click', () => {
+        if (modalNuevoEncargo) {
+          modalNuevoEncargo.style.display = 'flex';
+          modalNuevoEncargo.classList.add('active');
+          document.getElementById('encargoReferencia')?.focus();
+        }
+      });
+
+      function closeNuevoEncargoModal() {
+        if (modalNuevoEncargo) {
+          modalNuevoEncargo.style.display = 'none';
+          modalNuevoEncargo.classList.remove('active');
+          nuevoEncargoForm?.reset();
+        }
+      }
+
+      closeNuevoEncargoModalBtn?.addEventListener('click', closeNuevoEncargoModal);
+      cancelNuevoEncargoModalBtn?.addEventListener('click', closeNuevoEncargoModal);
+      modalNuevoEncargo?.addEventListener('click', (e) => {
+        if (e.target === modalNuevoEncargo) closeNuevoEncargoModal();
+      });
+
+      nuevoEncargoForm?.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const ref = document.getElementById('encargoReferencia')?.value?.trim() || ('ENC-' + Date.now().toString().slice(-4));
+        const det = document.getElementById('encargoDetalles')?.value?.trim();
+        if (!det) return;
+
+        try {
+          const res = await fetch('../api/kitchen/crear_comanda.php', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ numero_factura: ref, detalles_pedido: det })
+          });
+          const data = await res.json();
+          if (data && data.success) {
+            specialOrders.unshift({
+              id: data.comanda.id,
+              numero_factura: data.comanda.numero_factura,
+              detalles_pedido: data.comanda.detalles_pedido,
+              estado_preparacion: 'pending',
+              fecha_hora: data.comanda.fecha_hora
+            });
+            renderDemandMonitor();
+            updateKPIs();
+            closeNuevoEncargoModal();
+            showSuccessModal('¡Encargo Registrado!', `El encargo "<strong>${ref}</strong>" ha sido enviado a la pantalla de cocina.`);
+          } else {
+            alert(data.message || 'Error al guardar encargo');
+          }
+        } catch (err) {
+          console.error('Error creando encargo:', err);
+          alert('Error de conexión al registrar encargo.');
+        }
+      });
+
+      // --- 2. MODAL: CREAR LOTE DIRECTO DE PRODUCCIÓN ---
+      const modalNuevoLote = document.getElementById('modalNuevoLote');
+      const btnOpenNuevoLoteModal = document.getElementById('btnOpenNuevoLoteModal');
+      const closeNuevoLoteModalBtn = document.getElementById('closeNuevoLoteModalBtn');
+      const cancelNuevoLoteModalBtn = document.getElementById('cancelNuevoLoteModalBtn');
+      const nuevoLoteForm = document.getElementById('nuevoLoteForm');
+
+      btnOpenNuevoLoteModal?.addEventListener('click', () => {
+        if (modalNuevoLote) {
+          modalNuevoLote.style.display = 'flex';
+          modalNuevoLote.classList.add('active');
+          document.getElementById('loteProductoNombre')?.focus();
+        }
+      });
+
+      function closeNuevoLoteModal() {
+        if (modalNuevoLote) {
+          modalNuevoLote.style.display = 'none';
+          modalNuevoLote.classList.remove('active');
+          nuevoLoteForm?.reset();
+        }
+      }
+
+      closeNuevoLoteModalBtn?.addEventListener('click', closeNuevoLoteModal);
+      cancelNuevoLoteModalBtn?.addEventListener('click', closeNuevoLoteModal);
+      modalNuevoLote?.addEventListener('click', (e) => {
+        if (e.target === modalNuevoLote) closeNuevoLoteModal();
+      });
+
+      nuevoLoteForm?.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const prod = document.getElementById('loteProductoNombre')?.value?.trim();
+        const qty = parseInt(document.getElementById('loteCantidad')?.value, 10) || 50;
+        const temp = parseInt(document.getElementById('loteTemperatura')?.value, 10) || 220;
+        const timeMin = parseInt(document.getElementById('loteTiempoMin')?.value, 10) || 20;
+        if (!prod) return;
+
+        try {
+          const res = await fetch('../api/kitchen/gestionar_lote.php', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              action: 'create',
+              producto: prod,
+              cantidad: qty,
+              temperatura_recomendada: temp,
+              tiempo_recomendado_min: timeMin,
+              icono: 'croissant'
+            })
+          });
+          const data = await res.json();
+          if (data && data.success) {
+            const lote = data.lote;
+            stagingBatches.unshift({
+              id: lote.id,
+              code: lote.codigo,
+              productName: `${lote.cantidad}x ${lote.producto}`,
+              productCode: '',
+              icon: lote.icono || 'croissant',
+              units: lote.cantidad,
+              phase: 1,
+              prepStatus: lote.estado_leudado,
+              fermentRemainingMin: 60,
+              recommendedTemp: lote.temperatura_recomendada,
+              recommendedTimeMin: lote.tiempo_recomendado_min
+            });
+            renderStagingBatches();
+            updateKPIs();
+            closeNuevoLoteModal();
+            showSuccessModal('¡Lote Creado en Producción!', `Se inició el <strong>${lote.codigo}</strong> (${lote.cantidad} ud de "${lote.producto}") en mesa de panadería.`);
+          } else {
+            alert(data.message || 'Error al iniciar lote');
+          }
+        } catch (err) {
+          console.error('Error creando lote:', err);
+          alert('Error de conexión al crear lote.');
+        }
+      });
+
       solicitarMpForm?.addEventListener('submit', (e) => {
         e.preventDefault();
         const select = document.getElementById('solicitarMpSelect');
@@ -863,6 +1586,21 @@ document.addEventListener('DOMContentLoaded', () => {
         recetarioModal.setAttribute('aria-hidden', 'true');
         document.body.classList.remove('auth-modal-open');
       }
+
+      openRecetarioForReplenishment = function(code, suggestedQty) {
+        const matched = BAKERY_RECIPES.find(r => r.code === code || r.name.toLowerCase().includes((code || '').toLowerCase()));
+        if (matched) {
+          currentRecipeId = matched.id;
+          if (recetarioQtyInput) {
+            recetarioQtyInput.value = suggestedQty || matched.defaultQty || 50;
+          }
+          openRecetarioModal();
+          renderBreadChips();
+          calculateAndRenderRecipe();
+        } else {
+          openRecetarioModal();
+        }
+      };
 
       btnOpenRecetarioModal?.addEventListener('click', (e) => {
         e.preventDefault();
@@ -1134,38 +1872,129 @@ document.addEventListener('DOMContentLoaded', () => {
         });
       });
 
-      // Acción: Enviar Lote al Staging de Cocina
-      btnSendBatchToKitchen?.addEventListener('click', () => {
+      // Acción: Enviar Lote al Staging de Cocina con Consumo Real de Materia Prima
+      btnSendBatchToKitchen?.addEventListener('click', async () => {
         const recipe = BAKERY_RECIPES.find(r => r.id === currentRecipeId) || BAKERY_RECIPES[0];
         const nextBatchNum = stagingBatches.length + 48;
-        const newBatch = {
-          id: `stage_${Date.now()}`,
-          code: `Lote #${String(nextBatchNum).padStart(3, '0')}`,
-          productName: `${currentRecipeQty}x ${recipe.name}`,
-          icon: recipe.lucideIcon || 'croissant',
-          units: currentRecipeQty,
-          prepStatus: 'Leudado Completo (Listo para Horno)',
-          recommendedTemp: recipe.bakingProfile.temp,
-          recommendedTimeMin: recipe.bakingProfile.timeMin
-        };
+        const batchCode = `Lote #${String(nextBatchNum).padStart(3, '0')}`;
 
-        stagingBatches.unshift(newBatch);
-        renderStagingBatches();
-        closeRecetarioModal();
+        const ingredientsPayload = recipe.ingredients.map(ing => ({
+          matCode: ing.matCode,
+          name: ing.name,
+          qtyNeeded: ing.qty * currentRecipeQty,
+          unit: ing.unit
+        }));
 
-        // Notificación de éxito
-        const modal = document.getElementById('modalExitoNotificacion');
-        const titleEl = document.getElementById('modalExitoTitle');
-        const msgEl = document.getElementById('modalExitoMsg');
+        if (btnSendBatchText) btnSendBatchText.textContent = 'Verificando y consumiendo insumos...';
+        btnSendBatchToKitchen.disabled = true;
 
-        if (titleEl) titleEl.textContent = '¡Lote Programado en Cocina!';
-        if (msgEl) {
-          msgEl.innerHTML = `Se ha creado con éxito el <strong>${newBatch.code}</strong> para <strong>${currentRecipeQty} unidades</strong> de <strong>"${recipe.name}"</strong>.<br/><br/>Ya está disponible en la columna de <strong>Lotes Listos para Horneado</strong> listo para cargarse en cualquier horno industrial libre.`;
-        }
-        if (modal) {
-          modal.style.display = 'flex';
-          modal.classList.add('active');
-          modal.setAttribute('aria-hidden', 'false');
+        try {
+          let res = await fetch('../api/kitchen/consumir_materia_prima_lote.php', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              recipeCode: recipe.code,
+              recipeName: recipe.name,
+              batchCode: batchCode,
+              units: currentRecipeQty,
+              ingredients: ingredientsPayload,
+              bakingTemp: recipe.bakingProfile.temp,
+              bakingTimeMin: recipe.bakingProfile.timeMin
+            })
+          });
+
+          if (!res.ok && res.status !== 400) {
+            res = await fetch('api/kitchen/consumir_materia_prima_lote.php', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                recipeCode: recipe.code,
+                recipeName: recipe.name,
+                batchCode: batchCode,
+                units: currentRecipeQty,
+                ingredients: ingredientsPayload,
+                bakingTemp: recipe.bakingProfile.temp,
+                bakingTimeMin: recipe.bakingProfile.timeMin
+              })
+            });
+          }
+
+          const data = await res.json();
+
+          if (data && data.success) {
+            // Actualizar inventario local con las deducciones realizadas
+            if (Array.isArray(data.deductions)) {
+              data.deductions.forEach(d => {
+                const item = liveInventory.find(i => i.code === d.code || i.id === d.code);
+                if (item) item.currentStock = d.newStock;
+              });
+            }
+
+            const newBatch = {
+              id: data.batch?.id || `stage_${Date.now()}`,
+              code: batchCode,
+              productName: `${currentRecipeQty}x ${recipe.name}`,
+              productCode: recipe.code,
+              icon: recipe.lucideIcon || 'croissant',
+              units: currentRecipeQty,
+              phase: 1, // Fase 1: Amasado
+              prepStatus: 'Fase 1: Amasado y División en Mesa',
+              fermentRemainingMin: 60,
+              recommendedTemp: recipe.bakingProfile.temp,
+              recommendedTimeMin: recipe.bakingProfile.timeMin
+            };
+
+            stagingBatches.unshift(newBatch);
+            renderStagingBatches();
+            updateKPIs();
+            closeRecetarioModal();
+
+            // Notificación animada de éxito
+            const modal = document.getElementById('modalExitoNotificacion');
+            const titleEl = document.getElementById('modalExitoTitle');
+            const msgEl = document.getElementById('modalExitoMsg');
+
+            if (titleEl) titleEl.textContent = '¡Lote Creado & Materia Prima Descontada!';
+            if (msgEl) {
+              msgEl.innerHTML = `Se ha iniciado el <strong>${newBatch.code}</strong> para <strong>${currentRecipeQty} unidades</strong> de <strong>"${recipe.name}"</strong>.<br/><br/>Los ingredientes requeridos fueron descontados del almacén de materias primas. El lote ahora está en la <strong>Fase 1 (Amasado)</strong>.`;
+            }
+            if (modal) {
+              modal.style.display = 'flex';
+              modal.classList.add('active');
+              modal.setAttribute('aria-hidden', 'false');
+            }
+          } else if (data && data.code === 'INSUFFICIENT_STOCK') {
+            const firstDeficit = data.missing && data.missing[0];
+            const deficitMsg = firstDeficit 
+              ? `Falta ${firstDeficit.deficit} ${firstDeficit.unit} de "${firstDeficit.name}".`
+              : 'Stock insuficiente.';
+            alert(`No es posible amasar este lote por falta de insumos en almacén: ${deficitMsg}\nPuedes generar una requisición a Gerencia usando el botón de Solicitar Materia Prima.`);
+          } else {
+            throw new Error(data.message || 'Error al procesar lote');
+          }
+        } catch (err) {
+          console.warn('Fallo en consumir_materia_prima_lote (modo offline/resiliente):', err);
+          const newBatch = {
+            id: `stage_${Date.now()}`,
+            code: batchCode,
+            productName: `${currentRecipeQty}x ${recipe.name}`,
+            productCode: recipe.code,
+            icon: recipe.lucideIcon || 'croissant',
+            units: currentRecipeQty,
+            phase: 1,
+            prepStatus: 'Fase 1: Amasado y División en Mesa',
+            fermentRemainingMin: 60,
+            recommendedTemp: recipe.bakingProfile.temp,
+            recommendedTimeMin: recipe.bakingProfile.timeMin
+          };
+
+          stagingBatches.unshift(newBatch);
+          renderStagingBatches();
+          updateKPIs();
+          closeRecetarioModal();
+        } finally {
+          btnSendBatchToKitchen.disabled = false;
+          if (btnSendBatchText) btnSendBatchText.textContent = `Crear Lote en Cocina (${currentRecipeQty} ud)`;
         }
       });
 
@@ -1293,4 +2122,7 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   inicializarRecetarioCocina();
+
+  // Cargar estado inicial integral desde la base de datos MySQL
+  fetchKitchenState();
 });

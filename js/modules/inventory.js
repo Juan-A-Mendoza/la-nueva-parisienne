@@ -315,4 +315,80 @@ document.addEventListener('DOMContentLoaded', () => {
       alert(`Merma registrada localmente para ${item.name}.\nCantidad descontada: ${qty} ${item.unit}\nMotivo: ${reason}\nCosto de merma: $${lostValue.toFixed(2)}`);
     }
   });
+
+  // Modal Nuevo Ítem (Producto o Materia Prima)
+  const nuevoItemModal = document.getElementById('nuevoItemModal');
+  const btnOpenNuevoItem = document.getElementById('btnOpenNuevoItem');
+  const closeNuevoItemModalBtn = document.getElementById('closeNuevoItemModalBtn');
+  const cancelNuevoItemModalBtn = document.getElementById('cancelNuevoItemModalBtn');
+  const nuevoItemForm = document.getElementById('nuevoItemForm');
+  const nuevoItemTipo = document.getElementById('nuevoItemTipo');
+  const lblNuevoItemPrecio = document.getElementById('lblNuevoItemPrecio');
+
+  nuevoItemTipo?.addEventListener('change', () => {
+    if (lblNuevoItemPrecio) {
+      lblNuevoItemPrecio.textContent = nuevoItemTipo.value === 'raw_material' ? 'Costo Unitario ($) *' : 'Precio Venta ($) *';
+    }
+  });
+
+  btnOpenNuevoItem?.addEventListener('click', () => {
+    if (nuevoItemModal) {
+      nuevoItemModal.style.display = 'flex';
+      nuevoItemModal.classList.add('active');
+      document.getElementById('nuevoItemNombre')?.focus();
+    }
+  });
+
+  function closeNuevoItemModal() {
+    if (nuevoItemModal) {
+      nuevoItemModal.style.display = 'none';
+      nuevoItemModal.classList.remove('active');
+      nuevoItemForm?.reset();
+    }
+  }
+
+  closeNuevoItemModalBtn?.addEventListener('click', closeNuevoItemModal);
+  cancelNuevoItemModalBtn?.addEventListener('click', closeNuevoItemModal);
+  nuevoItemModal?.addEventListener('click', (e) => {
+    if (e.target === nuevoItemModal) closeNuevoItemModal();
+  });
+
+  nuevoItemForm?.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const tipo = nuevoItemTipo?.value || 'finished_good';
+    const nombre = document.getElementById('nuevoItemNombre')?.value?.trim();
+    const precio = parseFloat(document.getElementById('nuevoItemPrecio')?.value || 0);
+    const unidad = document.getElementById('nuevoItemUnidad')?.value || 'Und';
+    const stock = parseFloat(document.getElementById('nuevoItemStock')?.value || 0);
+    const minStock = parseFloat(document.getElementById('nuevoItemMinStock')?.value || 10);
+
+    if (!nombre || precio <= 0) return;
+
+    try {
+      const endpoint = tipo === 'raw_material' 
+        ? '../api/inventory/guardar_materia_prima.php' 
+        : '../api/inventory/guardar_producto.php';
+      
+      const payload = tipo === 'raw_material'
+        ? { name: nombre, unitCost: precio, unit: unidad, stock, minStock }
+        : { name: nombre, price: precio, unit: unidad, stock, minStock };
+
+      const res = await fetch(endpoint, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
+      const data = await res.json();
+      if (data && data.success) {
+        await loadInventoryFromApi();
+        closeNuevoItemModal();
+        alert(`¡Ítem guardado con éxito en MySQL!\n${data.message}`);
+      } else {
+        alert(data.message || 'Error al guardar ítem');
+      }
+    } catch (err) {
+      console.error('Error guardando ítem:', err);
+      alert('Error de conexión al guardar ítem en MySQL.');
+    }
+  });
 });

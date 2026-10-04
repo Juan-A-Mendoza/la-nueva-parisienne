@@ -8,57 +8,36 @@ export const OVENS_INITIAL_STATE = [
     id: 'oven_01',
     name: 'Horno 1 (Giratorio A)',
     type: 'Giratorio Industrial',
-    currentTemp: 220,
+    currentTemp: 25,
     targetTemp: 220,
-    status: 'baking', // 'idle' | 'preheating' | 'baking' | 'ready'
-    batch: {
-      id: 'batch_042',
-      productName: 'Baguette Tradicional Parisina',
-      icon: '🥖',
-      units: 50,
-      totalTimeSeconds: 1200, // 20 min
-      remainingSeconds: 255 // ~4 min 15 s
-    }
+    status: 'idle', // 'idle' | 'preheating' | 'baking' | 'ready'
+    batch: null
   },
   {
     id: 'oven_02',
     name: 'Horno 2 (Convección B)',
     type: 'Convección Fina',
-    currentTemp: 190,
+    currentTemp: 25,
     targetTemp: 190,
-    status: 'baking',
-    batch: {
-      id: 'batch_043',
-      productName: 'Croissant de Mantequilla',
-      icon: '🥐',
-      units: 60,
-      totalTimeSeconds: 900, // 15 min
-      remainingSeconds: 760 // ~12 min 40 s
-    }
+    status: 'idle',
+    batch: null
   },
   {
     id: 'oven_03',
     name: 'Horno 3 (Piedra C)',
     type: 'Bóveda de Piedra',
-    currentTemp: 240,
+    currentTemp: 25,
     targetTemp: 240,
-    status: 'ready', // Terminado de hornear
-    batch: {
-      id: 'batch_044',
-      productName: 'Focaccia de Romero y Aceitunas',
-      icon: '🫓',
-      units: 20,
-      totalTimeSeconds: 1500, // 25 min
-      remainingSeconds: 0 // ¡Listo!
-    }
+    status: 'idle',
+    batch: null
   },
   {
     id: 'oven_04',
     name: 'Horno 4 (Pastelero D)',
     type: 'Convección Digital',
-    currentTemp: 160,
+    currentTemp: 25,
     targetTemp: 175,
-    status: 'preheating', // Precalentando
+    status: 'idle',
     batch: null
   }
 ];

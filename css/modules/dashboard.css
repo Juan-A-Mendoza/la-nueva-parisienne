@@ -1182,3 +1182,245 @@ select.form-control-custom {
   margin: 0;
 }
 
+/* ==========================================================================
+   GENERADOR DE REPORTES A MEDIDA GERENCIAL
+   ========================================================================== */
+
+.report-generator-filter-bar {
+  background: #FDFBF7;
+  border-bottom: 1px solid rgba(44, 29, 17, 0.12);
+  padding: 1rem 1.5rem;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: 1rem;
+}
+
+.rep-form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.rep-form-label {
+  font-size: 0.76rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--color-espresso, #2C1D11);
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+.rep-form-select,
+.rep-form-input {
+  height: 38px;
+  padding: 0 0.85rem;
+  font-size: 0.86rem;
+  font-family: inherit;
+  border: 1px solid rgba(44, 29, 17, 0.2);
+  border-radius: var(--radius-sm, 6px);
+  background: #FFFFFF;
+  color: var(--color-espresso, #2C1D11);
+  outline: none;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.rep-form-select:focus,
+.rep-form-input:focus {
+  border-color: var(--color-gold, #D49B54);
+  box-shadow: 0 0 0 3px rgba(212, 155, 84, 0.18);
+}
+
+.rep-presets-group {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+.rep-preset-btn {
+  height: 34px;
+  padding: 0 0.75rem;
+  font-size: 0.78rem;
+  font-weight: 600;
+  border-radius: var(--radius-pill, 9999px);
+  border: 1px solid rgba(44, 29, 17, 0.15);
+  background: #FFFFFF;
+  color: var(--color-muted, #6B5E57);
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.rep-preset-btn:hover {
+  border-color: var(--color-gold, #D49B54);
+  color: var(--color-espresso, #2C1D11);
+}
+
+.rep-preset-btn.active {
+  background: linear-gradient(135deg, #D49B54 0%, #C48B44 100%);
+  border-color: #B57F3A;
+  color: #FFFFFF;
+  font-weight: 700;
+}
+
+.btn-generate-report-submit {
+  height: 38px;
+  padding: 0 1.25rem;
+  background: linear-gradient(135deg, #2C1D11 0%, #442E1E 100%);
+  color: #FFFFFF;
+  font-weight: 700;
+  font-size: 0.86rem;
+  border: 1px solid #1E120A;
+  border-radius: var(--radius-sm, 6px);
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  cursor: pointer;
+  box-shadow: 0 2px 8px rgba(44, 29, 17, 0.15);
+  transition: all 0.2s ease;
+}
+
+.btn-generate-report-submit:hover {
+  background: linear-gradient(135deg, #D49B54 0%, #C48B44 100%);
+  border-color: #B57F3A;
+  transform: translateY(-1px);
+}
+
+/* ==========================================================================
+   MODAL DE REPORTES EJECUTIVOS GERENCIALES (GENERADOR A MEDIDA - OPCIÓN C)
+   ========================================================================== */
+#executiveReportModal,
+.report-modal-overlay,
+.pin-modal-overlay {
+  position: fixed !important;
+  top: 0 !important;
+  left: 0 !important;
+  width: 100vw !important;
+  height: 100vh !important;
+  background: rgba(20, 15, 12, 0.78) !important;
+  backdrop-filter: blur(8px) !important;
+  -webkit-backdrop-filter: blur(8px) !important;
+  z-index: 99999 !important;
+  display: none;
+  align-items: center !important;
+  justify-content: center !important;
+  padding: 1.25rem !important;
+  box-sizing: border-box !important;
+}
+
+#executiveReportModal.active,
+.report-modal-overlay.active,
+.pin-modal-overlay.active {
+  display: flex !important;
+}
+
+#executiveReportModal .report-modal-card,
+.report-modal-card {
+  max-width: 1040px !important;
+  width: 96% !important;
+  max-height: 94vh !important;
+  background: #FFFFFF !important;
+  border-radius: var(--radius-lg, 12px) !important;
+  box-shadow: 0 25px 60px rgba(0, 0, 0, 0.45) !important;
+  border: 1px solid rgba(212, 155, 84, 0.4) !important;
+  display: flex !important;
+  flex-direction: column !important;
+  overflow: hidden !important;
+  animation: scaleUpModal 0.25s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+#executiveReportModal .report-modal-toolbar,
+.report-modal-toolbar {
+  position: sticky !important;
+  top: 0 !important;
+  z-index: 30 !important;
+  background: var(--gradient-espresso, linear-gradient(135deg, #2C1D11 0%, #1A110A 100%)) !important;
+  color: #FFFFFF !important;
+  padding: 1rem 1.5rem !important;
+  border-bottom: 2px solid var(--color-gold, #D49B54) !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  gap: 1rem !important;
+}
+
+#executiveReportModal .report-modal-toolbar-title {
+  display: flex !important;
+  align-items: center !important;
+  gap: 0.65rem !important;
+  font-size: 1.15rem !important;
+  font-weight: 800 !important;
+  color: #FFFFFF !important;
+}
+
+#executiveReportModal .report-modal-actions {
+  display: flex !important;
+  align-items: center !important;
+  gap: 0.75rem !important;
+}
+
+#executiveReportModal .modal-close-btn {
+  background: transparent !important;
+  border: none !important;
+  color: #FFFFFF !important;
+  font-size: 1.6rem !important;
+  cursor: pointer !important;
+  line-height: 1 !important;
+  padding: 0 0.5rem !important;
+  transition: transform 0.2s ease, color 0.2s ease !important;
+}
+
+#executiveReportModal .modal-close-btn:hover {
+  color: var(--color-gold, #D49B54) !important;
+  transform: scale(1.15) !important;
+}
+
+#executiveReportModal .printable-report-sheet {
+  flex: 1 1 auto !important;
+  overflow-y: auto !important;
+  padding: 2rem !important;
+  background: #FFFFFF !important;
+}
+
+/* ==========================================================================
+   VISIBILIDAD Y PERSISTENCIA DEL BOTÓN DE SALIR Y NAVBAR GERENCIAL
+   ========================================================================== */
+.dashboard-controls {
+  display: flex !important;
+  align-items: center !important;
+  gap: 0.65rem !important;
+  flex-wrap: nowrap !important;
+  flex-shrink: 0 !important;
+}
+
+#logoutBtn,
+.btn-pos-logout {
+  flex-shrink: 0 !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 0.4rem !important;
+  visibility: visible !important;
+  opacity: 1 !important;
+  z-index: 10 !important;
+}
+
+@media (max-width: 1280px) {
+  .sub-title {
+    display: none !important;
+  }
+  .cashier-info .shift-status {
+    display: none !important;
+  }
+  .navbar-container {
+    gap: 0.85rem !important;
+    padding: 0.6rem 1.25rem !important;
+  }
+  .dashboard-controls {
+    gap: 0.45rem !important;
+  }
+}
+
+
+
+

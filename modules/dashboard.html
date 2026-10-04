@@ -8,7 +8,7 @@
   
   <!-- Hojas de Estilos Separadas (CSS3 Estricto) -->
   <link rel="stylesheet" href="../css/main.css">
-  <link rel="stylesheet" href="../css/modules/dashboard.css">
+  <link rel="stylesheet" href="../css/modules/dashboard.css?v=20261003-navbar-v4">
   <link rel="stylesheet" href="../css/modules/caja-reportes.css?v=20260930">
 </head>
 <body>
@@ -40,17 +40,15 @@
             </div>
           </div>
 
-          <button type="button" class="period-select-btn" title="Filtrar por período"><i data-lucide="calendar" class="icon-sm"></i> <span>Este Mes</span></button>
-
           <a href="configuraciones.html" id="btnGoToConfig" class="btn-navbar-config" title="Configuraciones Generales (Módulo 9)">
             <i data-lucide="settings" class="icon-sm"></i> <span>Configuración</span>
           </a>
 
-          <button id="btnExportReport" type="button" class="btn-export-report" title="Exportar Reporte Ejecutivo">
-            <i data-lucide="file-text" class="icon-sm"></i> <span>Exportar</span>
+          <button id="btnExportReport" type="button" class="btn-export-report" onclick="window.abrirGeneradorReportes &amp;&amp; window.abrirGeneradorReportes()" title="Generador y Exportador de Reportes Gerenciales">
+            <i data-lucide="file-spreadsheet" class="icon-sm"></i> <span>Reportes</span>
           </button>
 
-          <button id="logoutBtn" class="btn-pos-logout" title="Cerrar sesión activa y volver al login">
+          <button id="logoutBtn" class="btn-pos-logout" title="Cerrar sesión activa y volver al login" onclick="if(window.SessionStore){window.SessionStore.logout();}else{try{localStorage.removeItem('usuario_activo');sessionStorage.clear();}catch(e){}window.location.href='../index.html';}">
             <i data-lucide="log-out" class="icon-sm"></i> <span>Salir</span>
           </button>
         </div>
@@ -865,23 +863,62 @@
   </div>
 
     <!-- MODAL DE REPORTE EJECUTIVO GERENCIAL IMPRIMIBLE -->
-  <div id="executiveReportModal" class="pin-modal-overlay" role="dialog" aria-modal="true" aria-labelledby="execReportModalTitle" aria-hidden="true" style="display: none;">
-    <div class="pin-modal-card report-modal-card">
+  <div id="executiveReportModal" class="modal-overlay report-modal-overlay pin-modal-overlay" role="dialog" aria-modal="true" aria-labelledby="execReportModalTitle" aria-hidden="true" style="display: none;">
+    <div class="pin-modal-card report-modal-card modal-card-container" style="max-width: 1040px; width: 96%; max-height: 94vh; display: flex; flex-direction: column;">
       
       <!-- BARRA DE ACCIONES SUPERIOR (HERRAMIENTAS NO IMPRIMIBLES) -->
       <div class="report-modal-toolbar no-print">
         <div class="report-modal-toolbar-title">
-          <i data-lucide="file-text" class="icon-md" style="color: var(--color-gold);"></i>
-          <span id="execReportModalTitle">Informe Ejecutivo Gerencial</span>
+          <i data-lucide="file-spreadsheet" class="icon-md" style="color: var(--color-gold);"></i>
+          <span id="execReportModalTitle">Generador de Reportes a Medida</span>
         </div>
         <div class="report-modal-actions">
           <button id="btnPrintExecutiveReport" type="button" class="btn-primary-action gold-variant" style="padding: 0.5rem 1.1rem; font-size: 0.85rem; display: inline-flex; align-items: center; gap: 0.4rem; cursor: pointer; border: none; border-radius: var(--radius-pill); font-weight: 700; color: #FFFFFF; background: linear-gradient(135deg, #D49B54 0%, #C48B44 100%);">
             <i data-lucide="printer" class="icon-sm"></i> <span>Imprimir / PDF</span>
           </button>
           <button id="btnExportExecutiveCsv" type="button" class="btn-acc-action secondary" style="padding: 0.5rem 1rem; font-size: 0.85rem; display: inline-flex; align-items: center; gap: 0.4rem; cursor: pointer; border: 1px solid rgba(44, 29, 17, 0.2); border-radius: var(--radius-pill); background: #FFFFFF; font-weight: 700; color: var(--color-espresso);">
-            <i data-lucide="download" class="icon-sm"></i> <span>Exportar CSV</span>
+            <i data-lucide="download" class="icon-sm"></i> <span>Descargar Excel / CSV</span>
           </button>
           <button id="btnCloseExecutiveReport" type="button" class="modal-close-btn" style="position: static; font-size: 1.5rem; cursor: pointer;" aria-label="Cerrar modal">&times;</button>
+        </div>
+      </div>
+
+      <!-- BARRA INTERACTIVA DE PARÁMETROS DEL REPORTE (NO IMPRIMIBLE) -->
+      <div class="report-generator-filter-bar no-print">
+        <div class="rep-form-group" style="min-width: 220px;">
+          <label for="repTypeSelect" class="rep-form-label"><i data-lucide="layers" class="icon-xs"></i> Tipo de Reporte</label>
+          <select id="repTypeSelect" class="rep-form-select">
+            <option value="ventas_resumen" selected>Resumen Ejecutivo Financiero</option>
+            <option value="ventas_detalladas">Detalle de Ventas &amp; Facturación</option>
+            <option value="cierres_turno">Arqueos &amp; Cierres de Turno (Z)</option>
+            <option value="inventario_mermas">Balance de Inventario &amp; Insumos</option>
+          </select>
+        </div>
+
+        <div class="rep-form-group">
+          <label for="repDateFrom" class="rep-form-label"><i data-lucide="calendar" class="icon-xs"></i> Desde</label>
+          <input type="date" id="repDateFrom" class="rep-form-input" />
+        </div>
+
+        <div class="rep-form-group">
+          <label for="repDateTo" class="rep-form-label"><i data-lucide="calendar" class="icon-xs"></i> Hasta</label>
+          <input type="date" id="repDateTo" class="rep-form-input" />
+        </div>
+
+        <div class="rep-form-group">
+          <label class="rep-form-label"><i data-lucide="clock" class="icon-xs"></i> Período Rápido</label>
+          <div class="rep-presets-group">
+            <button type="button" class="rep-preset-btn" data-preset="today">Hoy</button>
+            <button type="button" class="rep-preset-btn" data-preset="week">7 Días</button>
+            <button type="button" class="rep-preset-btn active" data-preset="month">Este Mes</button>
+            <button type="button" class="rep-preset-btn" data-preset="prev_month">Mes Anterior</button>
+          </div>
+        </div>
+
+        <div class="rep-form-group" style="margin-left: auto;">
+          <button id="btnRunReportQuery" type="button" class="btn-generate-report-submit">
+            <i data-lucide="play" class="icon-xs"></i> <span>Generar</span>
+          </button>
         </div>
       </div>
 
@@ -897,7 +934,7 @@
   <script src="../js/vendor/lucide.min.js"></script>
   <script src="../js/core/icons.js"></script>
   <script src="../js/vendor/chart.umd.js"></script>
-  <script type="module" src="../js/modules/dashboard.js"></script>
+  <script type="module" src="../js/modules/dashboard.js?v=20261003-dynamic-full"></script>
   <script type="module" src="../js/modules/caja-reportes.js?v=20260930-6"></script>
 
 </body>

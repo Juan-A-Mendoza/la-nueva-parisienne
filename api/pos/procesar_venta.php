@@ -185,6 +185,25 @@ try {
         ':registrado_por' => $userRow['nombre'] ?? 'Cajero'
     ]);
 
+    // 2d. Generar Comanda en Tiempo Real para Cocina y Panadería (KDS)
+    $comandaItems = [];
+    foreach ($items as $item) {
+        $candidateName = trim((string)($item['name'] ?? $item['productName'] ?? $item['product_name'] ?? ($item['product']['name'] ?? 'Producto')));
+        $qty = isset($item['quantity']) ? (int)$item['quantity'] : (isset($item['qty']) ? (int)$item['qty'] : 1);
+        $comandaItems[] = "{$qty}x {$candidateName}";
+    }
+    if (!empty($comandaItems)) {
+        $detallesPedido = implode(', ', $comandaItems);
+        $comandaId = 'com_' . time() . '_' . rand(100, 999);
+        $stmtComanda = $pdo->prepare("INSERT INTO comandas_cocina (id, numero_factura, detalles_pedido, estado_preparacion, fecha_hora) VALUES (:id, :num, :det, 'pending', :fh)");
+        $stmtComanda->execute([
+            ':id' => $comandaId,
+            ':num' => $orderNumber,
+            ':det' => $detallesPedido,
+            ':fh' => $now
+        ]);
+    }
+
     // 3. Generación Automática de Asiento Contable en Partida Doble
     $asientoId = 'as_pos_' . time();
     $asientoCodigo = 'AS-POS-' . date('Ymd-His');

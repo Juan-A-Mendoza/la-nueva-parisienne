@@ -8,7 +8,7 @@
   
   <!-- Hojas de Estilos Separadas (CSS3 Estricto) -->
   <link rel="stylesheet" href="../css/main.css">
-  <link rel="stylesheet" href="../css/modules/kitchen.css">
+  <link rel="stylesheet" href="../css/modules/kitchen.css?v=20261003-kflow">
 </head>
 <body>
 
@@ -66,31 +66,31 @@
         <div class="kpi-icon-box"><i data-lucide="flame"></i></div>
         <div class="kpi-text-box">
           <h4>Hornos en Uso</h4>
-          <div id="activeOvensKpi" class="kpi-val">3 / 4</div>
+          <div id="activeOvensKpi" class="kpi-val">2 / 4</div>
         </div>
       </div>
 
       <div class="kpi-card-mini">
-        <div class="kpi-icon-box"><i data-lucide="clipboard-list"></i></div>
+        <div class="kpi-icon-box" style="background: rgba(200, 90, 50, 0.12); color: var(--color-terracotta);"><i data-lucide="bell-ring"></i></div>
         <div class="kpi-text-box">
-          <h4>Comandas POS en Cola</h4>
-          <div id="pendingOrdersKpi" class="kpi-val">4 órdenes</div>
+          <h4>Alertas de Vitrina</h4>
+          <div id="pendingOrdersKpi" class="kpi-val">3 alertas</div>
         </div>
       </div>
 
       <div class="kpi-card-mini">
-        <div class="kpi-icon-box"><i data-lucide="croissant"></i></div>
+        <div class="kpi-icon-box" style="background: rgba(46, 125, 50, 0.12); color: var(--color-success);"><i data-lucide="store"></i></div>
         <div class="kpi-text-box">
-          <h4>Horneado Hoy</h4>
+          <h4>Ingresado a Vitrina Hoy</h4>
           <div id="bakedTodayKpi" class="kpi-val">142 ud</div>
         </div>
       </div>
 
       <div class="kpi-card-mini">
-        <div class="kpi-icon-box"><i data-lucide="timer"></i></div>
+        <div class="kpi-icon-box"><i data-lucide="layers"></i></div>
         <div class="kpi-text-box">
-          <h4>Eficiencia de Cocina</h4>
-          <div class="kpi-val" style="color: var(--color-success);">96%</div>
+          <h4>Lotes en Proceso</h4>
+          <div id="activeBatchesKpi" class="kpi-val">3 lotes</div>
         </div>
       </div>
     </section>
@@ -98,13 +98,13 @@
     <!-- DASHBOARD DE COCINA EN 3 COLUMNAS -->
     <main class="kitchen-dashboard-grid">
 
-      <!-- COLUMNA 1: MONITOREO DE HORNOS INDUSTRIALES -->
+      <!-- COLUMNA 1: MONITOREO DE HORNOS INDUSTRIALES (COCCIÓN & INGRESO A VITRINA) -->
       <section class="kitchen-column" aria-labelledby="ovensHeader">
         <div class="column-header">
           <h2 id="ovensHeader" class="column-title">
-            <i data-lucide="flame" class="icon-sm"></i> Hornos Industriales Activos
+            <i data-lucide="flame" class="icon-sm"></i> Hornos Industriales (Cocción &amp; Vitrina)
           </h2>
-          <span class="column-badge">4 Hornos</span>
+          <span class="column-badge" id="ovensCountBadge">4 Hornos</span>
         </div>
 
         <div id="ovensContainer" style="display: flex; flex-direction: column; gap: 1.25rem;">
@@ -112,27 +112,31 @@
         </div>
       </section>
 
-      <!-- COLUMNA 2: COLA DE COMANDAS KDS (POS ORDERS) -->
-      <section class="kitchen-column" aria-labelledby="kdsHeader">
-        <div class="column-header">
-          <h2 id="kdsHeader" class="column-title">
-            <i data-lucide="clipboard-list" class="icon-sm"></i> Comandas POS en Curso
+      <!-- COLUMNA 2: MONITOR DE DEMANDA (REPOSICIÓN DE VITRINA & ENCARGOS) -->
+      <section class="kitchen-column" aria-labelledby="demandHeader">
+        <div class="column-header" style="display: flex; justify-content: space-between; align-items: center;">
+          <h2 id="demandHeader" class="column-title" style="margin: 0;">
+            <i data-lucide="bell-ring" class="icon-sm"></i> Demanda: Vitrina &amp; Encargos
           </h2>
-          <span class="column-badge" style="background: var(--color-terracotta); color: white;">En Tiempo Real</span>
+          <button id="btnOpenNuevoEncargoModal" type="button" class="btn-inventory-action primary" style="padding: 0.35rem 0.75rem; font-size: 0.78rem; height: auto; display: inline-flex; align-items: center; gap: 0.35rem; cursor: pointer;" title="Registrar encargo o comanda manual">
+            <i data-lucide="plus-circle" class="icon-xs"></i> <span>+ Encargo</span>
+          </button>
         </div>
 
-        <div id="kdsContainer" style="display: flex; flex-direction: column; gap: 1.25rem;">
-          <!-- Renderizado dinámico vía js/modules/kitchen.js -->
+        <div id="demandContainer" style="display: flex; flex-direction: column; gap: 1.25rem;">
+          <!-- Renderizado dinámico vía js/modules/kitchen.js: Alertas de Stock Bajo en POS y Encargos de Clientes -->
         </div>
       </section>
 
-      <!-- COLUMNA 3: LOTES LISTOS PARA HORNO (STAGING) -->
+      <!-- COLUMNA 3: PLAN DE PRODUCCIÓN / LOTES EN PREPARACIÓN -->
       <section class="kitchen-column" aria-labelledby="stagingHeader">
-        <div class="column-header">
-          <h2 id="stagingHeader" class="column-title">
-            <i data-lucide="croissant" class="icon-sm"></i> Lotes Listos para Horneado
+        <div class="column-header" style="display: flex; justify-content: space-between; align-items: center;">
+          <h2 id="stagingHeader" class="column-title" style="margin: 0;">
+            <i data-lucide="layers" class="icon-sm"></i> Plan de Producción &amp; Leudado
           </h2>
-          <span class="column-badge" style="background: var(--color-success); color: white;">Leudados</span>
+          <button id="btnOpenNuevoLoteModal" type="button" class="btn-inventory-action primary" style="padding: 0.35rem 0.75rem; font-size: 0.78rem; height: auto; display: inline-flex; align-items: center; gap: 0.35rem; cursor: pointer;" title="Iniciar un nuevo lote en mesa">
+            <i data-lucide="plus-circle" class="icon-xs"></i> <span>+ Nuevo Lote</span>
+          </button>
         </div>
 
         <div id="stagingContainer" style="display: flex; flex-direction: column; gap: 1.25rem;">
@@ -177,6 +181,114 @@
       </div>
     </section>
 
+  </div>
+
+  <!-- MODAL: NUEVO ENCARGO O COMANDA MANUAL -->
+  <div id="modalNuevoEncargo" class="pin-modal-overlay" role="dialog" aria-modal="true" aria-labelledby="modalNuevoEncargoTitle" style="display: none;">
+    <div class="modal-card-container" style="max-width: 480px; width: 92%;">
+      <div class="modal-card-header">
+        <div class="modal-header-title">
+          <span class="modal-header-icon"><i data-lucide="clipboard-plus"></i></span>
+          <div>
+            <h2 id="modalNuevoEncargoTitle" class="modal-title-text">Nuevo Encargo / Comanda</h2>
+            <span class="modal-subtitle-text">Registro Manual para Cocina y Panadería</span>
+          </div>
+        </div>
+        <button id="closeNuevoEncargoModalBtn" type="button" class="btn-modal-close" aria-label="Cerrar modal">&times;</button>
+      </div>
+
+      <form id="nuevoEncargoForm">
+        <div class="modal-card-body" style="gap: 1.15rem; padding: 1.25rem;">
+          <div>
+            <label for="encargoReferencia" class="form-label-custom" style="display: block; margin-bottom: 0.4rem; font-weight: 700; font-size: 0.85rem; color: var(--color-espresso);">
+              <i data-lucide="tag" class="icon-xs"></i> Referencia / Cliente / Mesa *
+            </label>
+            <input type="text" id="encargoReferencia" class="form-control-custom" placeholder="Ej: Mesa 4, Encargo Juan Pérez, Tel: 0414-1234567" required style="width: 100%; height: 42px; padding: 0 0.85rem; border-radius: var(--radius-sm); border: 1px solid var(--border-subtle); font-family: inherit;" />
+          </div>
+
+          <div>
+            <label for="encargoDetalles" class="form-label-custom" style="display: block; margin-bottom: 0.4rem; font-weight: 700; font-size: 0.85rem; color: var(--color-espresso);">
+              <i data-lucide="file-text" class="icon-xs"></i> Detalles del Pedido / Productos *
+            </label>
+            <textarea id="encargoDetalles" class="form-control-custom" rows="3" placeholder="Ej: 4x Croissants de Mantequilla, 2x Baguettes Tradicionales bien cocidas" required style="width: 100%; padding: 0.65rem 0.85rem; border-radius: var(--radius-sm); border: 1px solid var(--border-subtle); resize: vertical; font-family: inherit; font-size: 0.9rem;"></textarea>
+          </div>
+        </div>
+
+        <div class="modal-card-footer" style="padding: 1rem 1.25rem; background: var(--bg-surface); border-top: 1px solid var(--border-subtle); display: flex; justify-content: flex-end; gap: 0.75rem;">
+          <button id="cancelNuevoEncargoModalBtn" type="button" class="btn-modal-action secondary" style="padding: 0.6rem 1.15rem; border-radius: var(--radius-sm); border: 1px solid var(--border-subtle); background: white; cursor: pointer;">Cancelar</button>
+          <button type="submit" class="btn-modal-action primary" style="padding: 0.6rem 1.25rem; border-radius: var(--radius-sm); border: none; background: linear-gradient(135deg, #D49B54 0%, #C48B44 100%); color: white; font-weight: 700; cursor: pointer; display: flex; align-items: center; gap: 0.5rem;">
+            <i data-lucide="send" class="icon-sm"></i> <span>Enviar a Cocina</span>
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- MODAL: CREAR LOTE DIRECTO DE PRODUCCIÓN -->
+  <div id="modalNuevoLote" class="pin-modal-overlay" role="dialog" aria-modal="true" aria-labelledby="modalNuevoLoteTitle" style="display: none;">
+    <div class="modal-card-container" style="max-width: 500px; width: 92%;">
+      <div class="modal-card-header">
+        <div class="modal-header-title">
+          <span class="modal-header-icon"><i data-lucide="layers"></i></span>
+          <div>
+            <h2 id="modalNuevoLoteTitle" class="modal-title-text">Nuevo Lote de Producción</h2>
+            <span class="modal-subtitle-text">Inicio de Amasado y Trazabilidad de Panadería</span>
+          </div>
+        </div>
+        <button id="closeNuevoLoteModalBtn" type="button" class="btn-modal-close" aria-label="Cerrar modal">&times;</button>
+      </div>
+
+      <form id="nuevoLoteForm">
+        <div class="modal-card-body" style="gap: 1.15rem; padding: 1.25rem;">
+          <div>
+            <label for="loteProductoNombre" class="form-label-custom" style="display: block; margin-bottom: 0.4rem; font-weight: 700; font-size: 0.85rem; color: var(--color-espresso);">
+              <i data-lucide="croissant" class="icon-xs"></i> Nombre del Producto / Pan *
+            </label>
+            <input type="text" id="loteProductoNombre" list="panaderiaDatalist" class="form-control-custom" placeholder="Ej: Baguette Tradicional Parisina, Pan Canilla, etc." required style="width: 100%; height: 42px; padding: 0 0.85rem; border-radius: var(--radius-sm); border: 1px solid var(--border-subtle); font-family: inherit;" />
+            <datalist id="panaderiaDatalist">
+              <option value="Baguette Tradicional Parisina">
+              <option value="Croissant de Mantequilla de Normandía">
+              <option value="Pain au Chocolat (Chocolatina)">
+              <option value="Brioche de Vainilla de Madagascar">
+              <option value="Focaccia de Romero y Aceitunas">
+              <option value="Pan Campesino de Masa Madre">
+              <option value="Pan Canilla Artesanal">
+              <option value="Golfeados Tradicionales">
+            </datalist>
+          </div>
+
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+            <div>
+              <label for="loteCantidad" class="form-label-custom" style="display: block; margin-bottom: 0.4rem; font-weight: 700; font-size: 0.85rem; color: var(--color-espresso);">
+                <i data-lucide="boxes" class="icon-xs"></i> Unidades del Lote *
+              </label>
+              <input type="number" id="loteCantidad" class="form-control-custom" value="50" min="1" max="2000" required style="width: 100%; height: 42px; padding: 0 0.85rem; border-radius: var(--radius-sm); border: 1px solid var(--border-subtle);" />
+            </div>
+
+            <div>
+              <label for="loteTemperatura" class="form-label-custom" style="display: block; margin-bottom: 0.4rem; font-weight: 700; font-size: 0.85rem; color: var(--color-espresso);">
+                <i data-lucide="thermometer" class="icon-xs"></i> Temp. Horneado (°C)
+              </label>
+              <input type="number" id="loteTemperatura" class="form-control-custom" value="220" min="100" max="300" required style="width: 100%; height: 42px; padding: 0 0.85rem; border-radius: var(--radius-sm); border: 1px solid var(--border-subtle);" />
+            </div>
+          </div>
+
+          <div>
+            <label for="loteTiempoMin" class="form-label-custom" style="display: block; margin-bottom: 0.4rem; font-weight: 700; font-size: 0.85rem; color: var(--color-espresso);">
+              <i data-lucide="timer" class="icon-xs"></i> Tiempo Estimado de Horneado (minutos)
+            </label>
+            <input type="number" id="loteTiempoMin" class="form-control-custom" value="20" min="5" max="180" required style="width: 100%; height: 42px; padding: 0 0.85rem; border-radius: var(--radius-sm); border: 1px solid var(--border-subtle);" />
+          </div>
+        </div>
+
+        <div class="modal-card-footer" style="padding: 1rem 1.25rem; background: var(--bg-surface); border-top: 1px solid var(--border-subtle); display: flex; justify-content: flex-end; gap: 0.75rem;">
+          <button id="cancelNuevoLoteModalBtn" type="button" class="btn-modal-action secondary" style="padding: 0.6rem 1.15rem; border-radius: var(--radius-sm); border: 1px solid var(--border-subtle); background: white; cursor: pointer;">Cancelar</button>
+          <button type="submit" class="btn-modal-action primary" style="padding: 0.6rem 1.25rem; border-radius: var(--radius-sm); border: none; background: linear-gradient(135deg, #D49B54 0%, #C48B44 100%); color: white; font-weight: 700; cursor: pointer; display: flex; align-items: center; gap: 0.5rem;">
+            <i data-lucide="plus-circle" class="icon-sm"></i> <span>Iniciar Lote en Mesa</span>
+          </button>
+        </div>
+      </form>
+    </div>
   </div>
 
   <!-- MODAL DE SOLICITUD DE MATERIA PRIMA (REQUISICIÓN DE COCINA) -->
@@ -234,12 +346,12 @@
 
   <!-- MODAL 1: ASIGNACIÓN DE LOTE A HORNO INDUSTRIAL -->
   <div id="loadOvenModal" class="pin-modal-overlay" role="dialog" aria-modal="true" aria-labelledby="modalBatchName">
-    <div class="modal-card-container">
+    <div class="modal-card-container" style="max-width: 520px; width: 92%;">
       <div class="modal-card-header">
         <div class="modal-header-title">
           <span class="modal-header-icon"><i data-lucide="flame"></i></span>
           <div>
-            <h2 id="modalBatchName" class="modal-title-text">Asignar Lote a Horno</h2>
+            <h2 id="modalBatchName" class="modal-title-text">Cargar y Hornear Pan</h2>
             <span class="modal-subtitle-text">Programación de Horneado Industrial</span>
           </div>
         </div>
@@ -251,28 +363,63 @@
         <div id="ovenErrorBanner" class="alert-banner-error" style="display: none;"></div>
 
         <form id="loadOvenForm" style="display: flex; flex-direction: column; gap: 1.15rem; text-align: left;">
+          
+          <!-- SELECTOR DE PAN / PRODUCTO A HORNEAR -->
           <div>
-            <label for="ovenSelect" class="form-label-custom"><i data-lucide="flame" class="icon-xs"></i> Seleccionar Horno Objetivo:</label>
-            <select id="ovenSelect" class="form-control-custom">
-              <!-- Opciones dinámicas -->
+            <label for="ovenProductSelect" class="form-label-custom" style="display: block; margin-bottom: 0.4rem; font-weight: 700; font-size: 0.85rem; color: var(--color-espresso);">
+              <i data-lucide="croissant" class="icon-xs"></i> Seleccionar Pan / Lote a Hornear *
+            </label>
+            <select id="ovenProductSelect" class="form-control-custom" required style="width: 100%; height: 42px; padding: 0 0.85rem; border-radius: var(--radius-sm); border: 1px solid var(--border-subtle); font-family: inherit; font-size: 0.9rem;">
+              <!-- Opciones dinámicas de lotes y recetas -->
             </select>
           </div>
 
+          <!-- HORNO OBJETIVO Y CANTIDAD -->
           <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
             <div>
-              <label for="bakeTempInput" class="form-label-custom"><i data-lucide="thermometer" class="icon-xs"></i> Temperatura (°C):</label>
-              <input type="number" id="bakeTempInput" class="form-control-custom" value="200" min="100" max="300" required>
+              <label for="ovenSelect" class="form-label-custom" style="display: block; margin-bottom: 0.4rem; font-weight: 700; font-size: 0.85rem; color: var(--color-espresso);">
+                <i data-lucide="flame" class="icon-xs"></i> Horno Objetivo *
+              </label>
+              <select id="ovenSelect" class="form-control-custom" required style="width: 100%; height: 42px; padding: 0 0.75rem; border-radius: var(--radius-sm); border: 1px solid var(--border-subtle); font-family: inherit; font-size: 0.88rem;">
+                <!-- Opciones dinámicas -->
+              </select>
             </div>
 
             <div>
-              <label for="bakeTimeInput" class="form-label-custom">⏱️ Tiempo (Minutos):</label>
-              <input type="number" id="bakeTimeInput" class="form-control-custom" value="15" min="1" max="120" required>
+              <label for="ovenUnitsInput" class="form-label-custom" style="display: block; margin-bottom: 0.4rem; font-weight: 700; font-size: 0.85rem; color: var(--color-espresso);">
+                <i data-lucide="boxes" class="icon-xs"></i> Unidades a Hornear *
+              </label>
+              <input type="number" id="ovenUnitsInput" class="form-control-custom" value="50" min="1" max="1000" required style="width: 100%; height: 42px; padding: 0 0.85rem; border-radius: var(--radius-sm); border: 1px solid var(--border-subtle); font-weight: 700;">
             </div>
           </div>
 
-          <div class="modal-card-footer" style="padding: 1rem 0 0 0; background: none; border: none;">
-            <button type="submit" class="btn-modal-action primary" style="width: 100%; justify-content: center;">
-              <span>▶ Iniciar Ciclo de Horneado</span>
+          <!-- TEMPERATURA Y TIEMPO RECOMENDADOS -->
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+            <div>
+              <label for="bakeTempInput" class="form-label-custom" style="display: block; margin-bottom: 0.4rem; font-weight: 700; font-size: 0.85rem; color: var(--color-espresso);">
+                <i data-lucide="thermometer" class="icon-xs"></i> Temperatura (°C):
+              </label>
+              <input type="number" id="bakeTempInput" class="form-control-custom" value="200" min="100" max="300" required style="width: 100%; height: 42px; padding: 0 0.85rem; border-radius: var(--radius-sm); border: 1px solid var(--border-subtle); font-weight: 700;">
+            </div>
+
+            <div>
+              <label for="bakeTimeInput" class="form-label-custom" style="display: block; margin-bottom: 0.4rem; font-weight: 700; font-size: 0.85rem; color: var(--color-espresso);">
+                <i data-lucide="clock" class="icon-xs"></i> Tiempo (Minutos):
+              </label>
+              <input type="number" id="bakeTimeInput" class="form-control-custom" value="15" min="1" max="120" required style="width: 100%; height: 42px; padding: 0 0.85rem; border-radius: var(--radius-sm); border: 1px solid var(--border-subtle); font-weight: 700;">
+            </div>
+          </div>
+
+          <!-- BADGE INFORMATIVO DE HORNO RECOMENDADO -->
+          <div id="ovenRecipeTip" style="font-size: 0.8rem; color: var(--color-muted); background: #FAF7F2; border: 1px solid rgba(212,155,84,0.25); border-radius: var(--radius-sm); padding: 0.6rem 0.85rem; display: flex; align-items: center; gap: 0.5rem;">
+            <i data-lucide="sparkles" class="icon-xs" style="color: var(--color-gold-dark);"></i>
+            <span id="ovenRecipeTipText">Parámetros auto-configurados según la receta artesanal seleccionada.</span>
+          </div>
+
+          <div class="modal-card-footer" style="padding: 0.75rem 0 0 0; background: none; border: none; display: flex; gap: 0.75rem;">
+            <button id="cancelLoadOvenModalBtn" type="button" class="btn-modal-action secondary" style="flex: 1; padding: 0.65rem 1rem; border-radius: var(--radius-sm); border: 1px solid var(--border-subtle); background: white; cursor: pointer;">Cancelar</button>
+            <button type="submit" class="btn-modal-action primary" style="flex: 2; padding: 0.65rem 1.25rem; border-radius: var(--radius-sm); border: none; background: linear-gradient(135deg, #D49B54 0%, #C48B44 100%); color: white; font-weight: 800; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 0.5rem; box-shadow: 0 4px 12px rgba(212,155,84,0.35);">
+              <i data-lucide="flame" class="icon-sm"></i> <span>▶ Iniciar Ciclo de Horneado</span>
             </button>
           </div>
         </form>
@@ -544,13 +691,96 @@
     </div>
   </div>
 
+  <!-- MODAL: DESCARGA DE HORNO E INGRESO A VITRINA POS -->
+  <div id="modalDescargaVitrina" class="pin-modal-overlay" role="dialog" aria-modal="true" aria-labelledby="modalDescargaVitrinaTitle" style="display: none;">
+    <div class="modal-card-container" style="max-width: 520px; width: 92%;">
+      <div class="modal-card-header" style="background: linear-gradient(135deg, #2C1D11 0%, #1A110A 100%);">
+        <div class="modal-header-title">
+          <span class="modal-header-icon" style="color: var(--color-gold);"><i data-lucide="arrow-down-circle"></i></span>
+          <div>
+            <h2 id="modalDescargaVitrinaTitle" class="modal-title-text" style="color: #FFFFFF;">Descarga de Horno e Ingreso a Vitrina</h2>
+            <span class="modal-subtitle-text" style="color: rgba(255,255,255,0.7);">Sincronización con el Mostrador POS</span>
+          </div>
+        </div>
+        <button id="closeDescargaVitrinaBtn" type="button" class="btn-modal-close" aria-label="Cerrar modal" style="color: #FFFFFF;">&times;</button>
+      </div>
+
+      <form id="formDescargaVitrina">
+        <input type="hidden" id="descargaOvenId" value="" />
+        <input type="hidden" id="descargaProductCode" value="" />
+        <div class="modal-card-body" style="padding: 1.5rem; gap: 1.25rem;">
+          
+          <!-- Resumen del lote horneado -->
+          <div style="background: #FDFBF7; border: 1px solid rgba(212,155,84,0.25); border-radius: var(--radius-md); padding: 1rem 1.25rem; display: flex; align-items: center; justify-content: space-between;">
+            <div>
+              <span id="descargaOvenName" style="font-size: 0.78rem; text-transform: uppercase; font-weight: 700; color: var(--color-muted); display: block;">Horno 1 (Giratorio A)</span>
+              <strong id="descargaProductName" style="font-size: 1.1rem; color: var(--color-espresso); display: block; margin: 0.2rem 0;">Baguette Tradicional Parisina</strong>
+              <span id="descargaBatchCode" style="font-size: 0.8rem; color: var(--color-gold-dark); font-weight: 600;">Lote #042</span>
+            </div>
+            <div style="text-align: right;">
+              <span style="font-size: 0.75rem; color: var(--color-muted); display: block;">Horneado Total</span>
+              <span id="descargaTotalBaked" style="font-size: 1.5rem; font-weight: 800; color: var(--color-espresso);">50 ud</span>
+            </div>
+          </div>
+
+          <!-- Campos de mermas y control de calidad -->
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; align-items: flex-start;">
+            <div>
+              <label for="descargaWasteQty" class="form-label-custom" style="display: block; margin-bottom: 0.4rem; font-weight: 700; font-size: 0.85rem; color: var(--color-espresso);">
+                <i data-lucide="alert-triangle" class="icon-xs" style="color: var(--color-danger);"></i> Mermas / Defectuosos
+              </label>
+              <input type="number" id="descargaWasteQty" class="form-control-custom" value="0" min="0" max="1000" style="width: 100%; height: 42px; padding: 0 0.85rem; border-radius: var(--radius-sm); border: 1px solid var(--border-subtle); font-weight: 700;" />
+            </div>
+
+            <div id="descargaWasteReasonGroup">
+              <label for="descargaWasteReason" class="form-label-custom" style="display: block; margin-bottom: 0.4rem; font-weight: 700; font-size: 0.85rem; color: var(--color-espresso);">
+                <i data-lucide="help-circle" class="icon-xs"></i> Motivo de Merma
+              </label>
+              <select id="descargaWasteReason" class="form-control-custom" style="width: 100%; height: 42px; padding: 0 0.65rem; border-radius: var(--radius-sm); border: 1px solid var(--border-subtle); font-family: inherit; font-size: 0.85rem;">
+                <option value="Sin merma" selected>Sin merma (Lote 100% perfecto)</option>
+                <option value="Exceso de horneado / Quemado">Exceso de horneado / Quemado</option>
+                <option value="Deformado / Rotura al descargar">Deformado / Rotura al descargar</option>
+                <option value="Falta de cocción interna">Falta de cocción interna</option>
+                <option value="Caído accidentalmente">Caído accidentalmente</option>
+              </select>
+            </div>
+          </div>
+
+          <!-- Tarjeta de Ingreso Neto a Vitrina -->
+          <div style="background: rgba(46, 125, 50, 0.08); border: 1px solid rgba(46, 125, 50, 0.3); border-radius: var(--radius-md); padding: 1rem 1.25rem; display: flex; align-items: center; justify-content: space-between;">
+            <div style="display: flex; align-items: center; gap: 0.75rem;">
+              <span style="width: 40px; height: 40px; border-radius: 50%; background: #2E7D32; color: white; display: flex; align-items: center; justify-content: center; font-size: 1.2rem;">
+                <i data-lucide="store"></i>
+              </span>
+              <div>
+                <strong style="color: #1B5E20; font-size: 0.95rem; display: block;">Ingreso Neto a Vitrina POS</strong>
+                <span style="color: var(--color-muted); font-size: 0.8rem;">Disponibilidad inmediata para venta en caja</span>
+              </div>
+            </div>
+            <div style="text-align: right;">
+              <span id="descargaNetQty" style="font-size: 1.75rem; font-weight: 900; color: #1B5E20;">50 ud</span>
+            </div>
+          </div>
+
+        </div>
+
+        <div class="modal-card-footer" style="padding: 1rem 1.25rem; background: var(--bg-surface); border-top: 1px solid var(--border-subtle); display: flex; justify-content: flex-end; gap: 0.75rem;">
+          <button id="cancelDescargaVitrinaBtn" type="button" class="btn-modal-action secondary" style="padding: 0.6rem 1.15rem; border-radius: var(--radius-sm); border: 1px solid var(--border-subtle); background: white; cursor: pointer;">Cancelar</button>
+          <button type="submit" class="btn-modal-action primary" style="padding: 0.6rem 1.35rem; border-radius: var(--radius-sm); border: none; background: linear-gradient(135deg, #2E7D32 0%, #1B5E20 100%); color: white; font-weight: 700; cursor: pointer; display: flex; align-items: center; gap: 0.5rem; box-shadow: 0 4px 12px rgba(46,125,50,0.3);">
+            <i data-lucide="check-check" class="icon-sm"></i> <span>Confirmar e Ingresar a Vitrina</span>
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
   <!-- CONTENEDOR OCULTO PARA IMPRESIÓN DE FICHA TÉCNICA -->
   <div id="recetarioPrintContainer" style="display: none;"></div>
 
   <!-- SCRIPT MODULAR COCINA -->
   <script src="../js/vendor/lucide.min.js"></script>
   <script src="../js/core/icons.js"></script>
-  <script type="module" src="../js/modules/kitchen.js"></script>
+  <script type="module" src="../js/modules/kitchen.js?v=20261003-dynamic-full"></script>
 
 </body>
 </html>
