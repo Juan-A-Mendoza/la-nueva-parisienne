@@ -5,7 +5,7 @@
 
 import { SessionStore } from '../core/session-store.js';
 import { BcvRateStore } from '../core/bcv-rate-store.js';
-import { DASHBOARD_KPIS, SALES_TREND_DATA, RECENT_MOVEMENTS } from '../data/dashboard-db.js';
+import { DASHBOARD_KPIS, SALES_TREND_DATA, SALES_TREND_PERIODS, RECENT_MOVEMENTS } from '../data/dashboard-db.js?v=20261005-chart-filters';
 
 // ==========================================================================
 // 1. MAESTRO DE DATOS Y ESTADO GLOBAL DEL MÓDULO
@@ -596,8 +596,26 @@ function cargarTasaCambio() {
 }
 
 /**
- * 4. Renderización de KPIs y Gráficos (Chart.js)
+ * 4. Renderización de KPIs y Gráficos (Chart.js con Filtros Dinámicos)
  */
+let chartPeriodFilter = '7d';      // '7d' | 'month' | 'quarter' | 'year'
+let chartMetricFilter = 'all';     // 'all' | 'sales' | 'costs' | 'profit'
+let chartCurrencyFilter = 'usd';   // 'usd' | 'ves'
+
+function getActiveDashboardBcvRate() {
+  const modoGuardado = localStorage.getItem('modo_tasa') || localStorage.getItem('modoTasa');
+  if (modoGuardado === 'manual') {
+    const tasaManualVal = parseFloat(localStorage.getItem('tasa_manual') || localStorage.getItem('tasaManual'));
+    if (tasaManualVal && tasaManualVal > 0) return tasaManualVal;
+  }
+  return parseFloat(localStorage.getItem('bcv_current_rate') || localStorage.getItem('tasa_auto') || '871.37') || 871.37;
+}
+
+function formatChartCurrency(amount, isVes) {
+  const formatted = Number(amount || 0).toLocaleString('es-VE', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  return isVes ? `Bs. ${formatted}` : `$${formatted}`;
+}
+
 function renderizarGraficos() {
   const revenueVal = document.getElementById('kpiRevenueVal');
   const ordersVal = document.getElementById('kpiOrdersVal');
@@ -614,50 +632,148 @@ function renderizarGraficos() {
   const ctx = canvas.getContext('2d');
   if (!ctx) return;
 
+  const bcvRate = getActiveDashboardBcvRate();
+  const isVes = chartCurrencyFilter === 'ves';
+  const multiplier = isVes ? bcvRate : 1.0;
+  const currSymbol = isVes ? 'Bs.' : '$';
+
+  const periodData = (typeof SALES_TREND_PERIODS !== 'undefined' && SALES_TREND_PERIODS[chartPeriodFilter]) 
+    ? SALES_TREND_PERIODS[chartPeriodFilter] 
+    : (SALES_TREND_DATA || { labels: [], sales: [], costs: [], orders: [] });
+
+  const labels = periodData.labels || [];
+  const rawSales = periodData.sales || [];
+  const rawCosts = periodData.costs || [];
+  const rawOrders = periodData.orders || [];
+
+  // Totales en USD para cálculo del margen operativo del período
+  const totalSalesUSD = rawSales.reduce((a, b) => a + b, 0);
+  const totalCostsUSD = rawCosts.reduce((a, b) => a + b, 0);
+  const totalProfitUSD = totalSalesUSD - totalCostsUSD;
+  const marginPct = totalSalesUSD > 0 ? ((totalProfitUSD / totalSalesUSD) * 100).toFixed(1) : '0.0';
+  const totalOrders = rawOrders.reduce((a, b) => a + b, 0);
+
+  // Valores convertidos según la moneda seleccionada (USD o Bs.)
+  const salesValues = rawSales.map(v => Math.round(v * multiplier * 100) / 100);
+  const costsValues = rawCosts.map(v => Math.round(v * multiplier * 100) / 100);
+  const profitValues = rawSales.map((v, i) => Math.round((v - (rawCosts[i] || 0)) * multiplier * 100) / 100);
+
+  const totalSalesDisplay = totalSalesUSD * multiplier;
+  const totalCostsDisplay = totalCostsUSD * multiplier;
+  const totalProfitDisplay = totalProfitUSD * multiplier;
+
+  // Actualizar Mini-Panel de Resumen del Período
+  const summarySalesEl = document.getElementById('chartSummarySales');
+  const summaryCostsEl = document.getElementById('chartSummaryCosts');
+  const summaryProfitEl = document.getElementById('chartSummaryProfit');
+  const summaryMarginEl = document.getElementById('chartSummaryMargin');
+  const summaryOrdersEl = document.getElementById('chartSummaryOrders');
+
+  if (summarySalesEl) summarySalesEl.textContent = formatChartCurrency(totalSalesDisplay, isVes);
+  if (summaryCostsEl) summaryCostsEl.textContent = formatChartCurrency(totalCostsDisplay, isVes);
+  if (summaryProfitEl) {
+    const sign = totalProfitDisplay >= 0 ? '+' : '';
+    summaryProfitEl.textContent = `${sign}${formatChartCurrency(totalProfitDisplay, isVes)}`;
+    summaryProfitEl.className = totalProfitDisplay >= 0 ? 'summary-value text-emerald' : 'summary-value text-danger';
+  }
+  if (summaryMarginEl) summaryMarginEl.textContent = `${marginPct}%`;
+  if (summaryOrdersEl) summaryOrdersEl.textContent = `${totalOrders} pedidos`;
+
+  // Actualizar Leyendas
+  const legendSalesPill = document.getElementById('legendSalesPill');
+  const legendCostsPill = document.getElementById('legendCostsPill');
+  const legendProfitPill = document.getElementById('legendProfitPill');
+  const legendSalesLabel = document.getElementById('legendSalesLabel');
+  const legendCostsLabel = document.getElementById('legendCostsLabel');
+  const legendProfitLabel = document.getElementById('legendProfitLabel');
+
+  if (legendSalesLabel) legendSalesLabel.textContent = `Ventas Totales (${currSymbol})`;
+  if (legendCostsLabel) legendCostsLabel.textContent = `Costo Producción (${currSymbol})`;
+  if (legendProfitLabel) legendProfitLabel.textContent = `Ganancia Neta (${currSymbol})`;
+
+  if (legendSalesPill) legendSalesPill.style.display = (chartMetricFilter === 'all' || chartMetricFilter === 'sales') ? 'flex' : 'none';
+  if (legendCostsPill) legendCostsPill.style.display = (chartMetricFilter === 'all' || chartMetricFilter === 'costs') ? 'flex' : 'none';
+  if (legendProfitPill) legendProfitPill.style.display = (chartMetricFilter === 'profit') ? 'flex' : 'none';
+
   if (salesChartInstance) salesChartInstance.destroy();
 
   const goldGradient = ctx.createLinearGradient(0, 0, 0, 300);
-  goldGradient.addColorStop(0, 'rgba(212, 155, 84, 0.4)');
-  goldGradient.addColorStop(1, 'rgba(212, 155, 84, 0.0)');
+  goldGradient.addColorStop(0, 'rgba(212, 155, 84, 0.45)');
+  goldGradient.addColorStop(1, 'rgba(212, 155, 84, 0.01)');
 
   const terracottaGradient = ctx.createLinearGradient(0, 0, 0, 300);
-  terracottaGradient.addColorStop(0, 'rgba(200, 90, 50, 0.25)');
-  terracottaGradient.addColorStop(1, 'rgba(200, 90, 50, 0.0)');
+  terracottaGradient.addColorStop(0, 'rgba(200, 90, 50, 0.35)');
+  terracottaGradient.addColorStop(1, 'rgba(200, 90, 50, 0.01)');
+
+  const emeraldGradient = ctx.createLinearGradient(0, 0, 0, 300);
+  emeraldGradient.addColorStop(0, 'rgba(16, 185, 129, 0.4)');
+  emeraldGradient.addColorStop(1, 'rgba(16, 185, 129, 0.01)');
+
+  const datasets = [];
+
+  if (chartMetricFilter === 'all' || chartMetricFilter === 'sales') {
+    datasets.push({
+      label: `Ventas Totales (${currSymbol})`,
+      data: salesValues,
+      borderColor: '#D49B54',
+      backgroundColor: goldGradient,
+      borderWidth: 3,
+      fill: true,
+      tension: 0.35,
+      pointBackgroundColor: '#2C1D11',
+      pointBorderColor: '#D49B54',
+      pointRadius: 5,
+      pointHoverRadius: 7
+    });
+  }
+
+  if (chartMetricFilter === 'all' || chartMetricFilter === 'costs') {
+    datasets.push({
+      label: `Costo de Producción (${currSymbol})`,
+      data: costsValues,
+      borderColor: '#C85A32',
+      backgroundColor: terracottaGradient,
+      borderWidth: 2.5,
+      borderDash: chartMetricFilter === 'all' ? [5, 5] : [],
+      fill: true,
+      tension: 0.35,
+      pointBackgroundColor: '#C85A32',
+      pointBorderColor: '#FFFFFF',
+      pointRadius: 4,
+      pointHoverRadius: 6
+    });
+  }
+
+  if (chartMetricFilter === 'profit') {
+    datasets.push({
+      label: `Ganancia Neta (${currSymbol})`,
+      data: profitValues,
+      borderColor: '#10B981',
+      backgroundColor: emeraldGradient,
+      borderWidth: 3,
+      fill: true,
+      tension: 0.35,
+      pointBackgroundColor: '#065F46',
+      pointBorderColor: '#10B981',
+      pointRadius: 5,
+      pointHoverRadius: 7
+    });
+  }
 
   if (typeof Chart !== 'undefined') {
     salesChartInstance = new Chart(ctx, {
       type: 'line',
       data: {
-        labels: SALES_TREND_DATA.labels,
-        datasets: [
-          {
-            label: 'Ventas Totales ($)',
-            data: SALES_TREND_DATA.sales,
-            borderColor: '#D49B54',
-            backgroundColor: goldGradient,
-            borderWidth: 3,
-            fill: true,
-            tension: 0.35,
-            pointBackgroundColor: '#2C1D11',
-            pointBorderColor: '#D49B54',
-            pointRadius: 5
-          },
-          {
-            label: 'Costo de Producción ($)',
-            data: SALES_TREND_DATA.costs,
-            borderColor: '#C85A32',
-            backgroundColor: terracottaGradient,
-            borderWidth: 2,
-            borderDash: [5, 5],
-            fill: true,
-            tension: 0.35,
-            pointRadius: 3
-          }
-        ]
+        labels: labels,
+        datasets: datasets
       },
       options: {
         responsive: true,
         maintainAspectRatio: false,
+        interaction: {
+          mode: 'index',
+          intersect: false
+        },
         plugins: {
           legend: { display: false },
           tooltip: {
@@ -665,7 +781,14 @@ function renderizarGraficos() {
             titleFont: { family: 'Plus Jakarta Sans', size: 14, weight: 'bold' },
             bodyFont: { family: 'Plus Jakarta Sans', size: 13 },
             padding: 12,
-            displayColors: true
+            displayColors: true,
+            callbacks: {
+              label: function(context) {
+                const val = context.parsed.y;
+                const formatted = Number(val || 0).toLocaleString('es-VE', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+                return ` ${context.dataset.label}: ${isVes ? 'Bs. ' : '$'}${formatted}`;
+              }
+            }
           }
         },
         scales: {
@@ -678,12 +801,70 @@ function renderizarGraficos() {
             ticks: {
               font: { family: 'Plus Jakarta Sans' },
               color: '#7A6B5D',
-              callback: (val) => `$${val}`
+              callback: (val) => {
+                if (Math.abs(val) >= 1000000) return `${currSymbol}${(val / 1000000).toFixed(1)}M`;
+                if (Math.abs(val) >= 1000) return `${currSymbol}${(val / 1000).toFixed(0)}k`;
+                return `${currSymbol}${val}`;
+              }
             }
           }
         }
       }
     });
+  }
+}
+
+function inicializarFiltrosGrafico() {
+  // 1. Filtros de Período (7d, month, quarter, year)
+  const periodButtons = document.querySelectorAll('#chartPeriodFilters .chart-filter-pill');
+  periodButtons.forEach(btn => {
+    btn.addEventListener('click', () => {
+      periodButtons.forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      chartPeriodFilter = btn.dataset.period || '7d';
+      renderizarGraficos();
+    });
+  });
+
+  // 2. Filtros de Métrica (all, sales, costs, profit)
+  const metricButtons = document.querySelectorAll('#chartMetricFilters .chart-filter-pill');
+  metricButtons.forEach(btn => {
+    btn.addEventListener('click', () => {
+      metricButtons.forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      chartMetricFilter = btn.dataset.metric || 'all';
+      renderizarGraficos();
+    });
+  });
+
+  // 3. Filtro Bimonetario (USD vs VES)
+  const currencyButtons = document.querySelectorAll('[data-chart-currency]');
+  currencyButtons.forEach(btn => {
+    btn.addEventListener('click', () => {
+      currencyButtons.forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      chartCurrencyFilter = btn.dataset.chartCurrency || 'usd';
+      renderizarGraficos();
+    });
+  });
+
+  // 4. Actualizar si cambia la tasa BCV en tiempo real
+  window.addEventListener('bcvRateChanged', () => {
+    if (chartCurrencyFilter === 'ves') {
+      renderizarGraficos();
+    }
+  });
+
+  window.addEventListener('storage', (e) => {
+    if ((e.key === 'bcv_current_rate' || e.key === 'tasa_manual') && chartCurrencyFilter === 'ves') {
+      renderizarGraficos();
+    }
+  });
+
+  if (typeof lucide !== 'undefined' && lucide.createIcons) {
+    lucide.createIcons();
+  } else if (window.LucideIcons?.refresh) {
+    window.LucideIcons.refresh();
   }
 }
 
@@ -2747,6 +2928,7 @@ function initDashboard() {
   try { inicializarNavegacionTabs(); } catch (e) { console.error('Error Tabs:', e); }
   try { cargarTasaCambio(); } catch (e) { console.error('Error Tasa:', e); }
   try { renderizarGraficos(); } catch (e) { console.error('Error Graficos:', e); }
+  try { inicializarFiltrosGrafico(); } catch (e) { console.error('Error Filtros Gráfico:', e); }
   try { cargarInventario(); } catch (e) { console.error('Error Inventario:', e); }
   try { inicializarTicketsProduccionGerencia(); } catch (e) { console.error('Error Tickets Producción:', e); }
   try { inicializarBotonesGenerales(); } catch (e) { console.error('Error Botones:', e); }

@@ -14,12 +14,38 @@ export const DASHBOARD_KPIS = {
   marginStatus: 'Excelente'
 };
 
-export const SALES_TREND_DATA = {
-  labels: ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado', 'Domingo'],
-  sales: [540.00, 620.50, 580.00, 710.25, 890.00, 1150.75, 958.50],
-  costs: [320.00, 370.00, 340.00, 410.00, 510.00, 680.00, 590.00],
-  orders: [28, 32, 30, 36, 45, 58, 49]
+export const SALES_TREND_PERIODS = {
+  '7d': {
+    label: 'Últimos 7 Días',
+    labels: ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado', 'Domingo'],
+    sales: [540.00, 620.50, 580.00, 710.25, 890.00, 1150.75, 958.50],
+    costs: [320.00, 370.00, 340.00, 410.00, 510.00, 680.00, 590.00],
+    orders: [28, 32, 30, 36, 45, 58, 49]
+  },
+  'month': {
+    label: 'Este Mes',
+    labels: ['Semana 1', 'Semana 2', 'Semana 3', 'Semana 4'],
+    sales: [3850.00, 4210.50, 4900.00, 5449.50],
+    costs: [2310.00, 2450.00, 2890.00, 3220.00],
+    orders: [195, 210, 245, 268]
+  },
+  'quarter': {
+    label: 'Último Trimestre',
+    labels: ['Julio', 'Agosto', 'Septiembre'],
+    sales: [16200.00, 17850.50, 18410.75],
+    costs: [9800.00, 10720.00, 10980.50],
+    orders: [820, 890, 935]
+  },
+  'year': {
+    label: 'Año 2026',
+    labels: ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'],
+    sales: [12400.00, 13150.00, 14200.50, 13800.00, 15300.00, 16100.00, 16200.00, 17850.50, 18410.75, 19200.00, 21500.00, 24800.00],
+    costs: [7600.00, 8100.00, 8600.00, 8400.00, 9200.00, 9700.00, 9800.00, 10720.00, 10980.50, 11400.00, 12600.00, 14200.00],
+    orders: [640, 675, 710, 690, 780, 815, 820, 890, 935, 960, 1050, 1220]
+  }
 };
+
+export const SALES_TREND_DATA = SALES_TREND_PERIODS['7d'];
 
 export const RECENT_MOVEMENTS = [
   {

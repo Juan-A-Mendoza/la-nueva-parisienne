@@ -8,7 +8,7 @@
   
   <!-- Hojas de Estilos Separadas (CSS3 Estricto) -->
   <link rel="stylesheet" href="../css/main.css">
-  <link rel="stylesheet" href="../css/modules/dashboard.css?v=20261003-navbar-v4">
+  <link rel="stylesheet" href="../css/modules/dashboard.css?v=20261005-chart-filters">
   <link rel="stylesheet" href="../css/modules/caja-reportes.css?v=20260930">
 </head>
 <body>
@@ -138,15 +138,82 @@
             <p>Comparativa entre volumen de ventas brutas e ingresos contra costos de materias primas y horneado.</p>
           </div>
 
-          <div class="chart-legend-pills">
-            <div class="legend-pill">
-              <span class="legend-dot sales"></span>
-              <span>Ventas Totales ($)</span>
+          <!-- Selector Bimonetario y Leyendas Dinámicas -->
+          <div class="chart-header-actions">
+            <div class="chart-currency-toggle" role="group" aria-label="Seleccionar Moneda de la Gráfica">
+              <button type="button" class="currency-pill-btn active" data-chart-currency="usd" id="btnCurrencyUsd" title="Ver gráfica en Dólares Estadounidenses">
+                <i data-lucide="dollar-sign" class="icon-xs"></i> USD ($)
+              </button>
+              <button type="button" class="currency-pill-btn" data-chart-currency="ves" id="btnCurrencyVes" title="Ver gráfica en Bolívares a Tasa BCV Oficial">
+                <i data-lucide="coins" class="icon-xs"></i> VES (Bs.)
+              </button>
             </div>
-            <div class="legend-pill">
-              <span class="legend-dot costs"></span>
-              <span>Costo Producción ($)</span>
+
+            <div id="chartLegendPills" class="chart-legend-pills">
+              <div class="legend-pill" id="legendSalesPill">
+                <span class="legend-dot sales"></span>
+                <span id="legendSalesLabel">Ventas Totales ($)</span>
+              </div>
+              <div class="legend-pill" id="legendCostsPill">
+                <span class="legend-dot costs"></span>
+                <span id="legendCostsLabel">Costo Producción ($)</span>
+              </div>
+              <div class="legend-pill" id="legendProfitPill" style="display: none;">
+                <span class="legend-dot profit"></span>
+                <span id="legendProfitLabel">Ganancia Neta ($)</span>
+              </div>
             </div>
+          </div>
+        </div>
+
+        <!-- Barra de Filtros Interactivos (Período y Métrica) -->
+        <div class="chart-filter-toolbar">
+          <div class="filter-group">
+            <span class="filter-group-label"><i data-lucide="calendar" class="icon-xs"></i> Período:</span>
+            <div class="filter-pills-row" id="chartPeriodFilters">
+              <button type="button" class="chart-filter-pill active" data-period="7d">Últimos 7 Días</button>
+              <button type="button" class="chart-filter-pill" data-period="month">Este Mes</button>
+              <button type="button" class="chart-filter-pill" data-period="quarter">Trimestre</button>
+              <button type="button" class="chart-filter-pill" data-period="year">Año 2026</button>
+            </div>
+          </div>
+
+          <div class="filter-group">
+            <span class="filter-group-label"><i data-lucide="layers" class="icon-xs"></i> Métrica:</span>
+            <div class="filter-pills-row" id="chartMetricFilters">
+              <button type="button" class="chart-filter-pill active" data-metric="all">Ventas vs Costos</button>
+              <button type="button" class="chart-filter-pill" data-metric="sales">Solo Ventas</button>
+              <button type="button" class="chart-filter-pill" data-metric="costs">Solo Costos</button>
+              <button type="button" class="chart-filter-pill" data-metric="profit">Ganancia Neta</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Mini-Panel de Métricas del Período Seleccionado -->
+        <div class="chart-summary-bar">
+          <div class="chart-summary-item">
+            <span class="summary-label">Ingresos Totales:</span>
+            <strong class="summary-value text-gold" id="chartSummarySales">$5,449.50</strong>
+          </div>
+          <div class="chart-summary-divider"></div>
+          <div class="chart-summary-item">
+            <span class="summary-label">Costo de Producción:</span>
+            <strong class="summary-value text-terracotta" id="chartSummaryCosts">$3,220.00</strong>
+          </div>
+          <div class="chart-summary-divider"></div>
+          <div class="chart-summary-item">
+            <span class="summary-label">Utilidad Bruta:</span>
+            <strong class="summary-value text-emerald" id="chartSummaryProfit">+$2,229.50</strong>
+          </div>
+          <div class="chart-summary-divider"></div>
+          <div class="chart-summary-item">
+            <span class="summary-label">Margen Operativo:</span>
+            <strong class="summary-value" id="chartSummaryMargin">40.9%</strong>
+          </div>
+          <div class="chart-summary-divider"></div>
+          <div class="chart-summary-item">
+            <span class="summary-label">Órdenes Atendidas:</span>
+            <strong class="summary-value" id="chartSummaryOrders">278 pedidos</strong>
           </div>
         </div>
 
@@ -934,7 +1001,7 @@
   <script src="../js/vendor/lucide.min.js"></script>
   <script src="../js/core/icons.js"></script>
   <script src="../js/vendor/chart.umd.js"></script>
-  <script type="module" src="../js/modules/dashboard.js?v=20261003-dynamic-full"></script>
+  <script type="module" src="../js/modules/dashboard.js?v=20261005-chart-filters-v2"></script>
   <script type="module" src="../js/modules/caja-reportes.js?v=20260930-6"></script>
 
 </body>

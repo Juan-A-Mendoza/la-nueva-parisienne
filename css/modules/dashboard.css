@@ -224,6 +224,47 @@
   color: var(--color-muted);
 }
 
+.chart-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 1.25rem;
+  flex-wrap: wrap;
+}
+
+.chart-currency-toggle {
+  display: inline-flex;
+  background: var(--bg-main);
+  border: var(--border-subtle);
+  border-radius: var(--radius-pill);
+  padding: 3px;
+  gap: 3px;
+}
+
+.currency-pill-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.35rem 0.8rem;
+  border-radius: var(--radius-pill);
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: var(--color-muted);
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+.currency-pill-btn:hover:not(.active) {
+  color: var(--color-espresso);
+}
+
+.currency-pill-btn.active {
+  background: var(--color-espresso);
+  color: var(--color-gold);
+  box-shadow: 0 2px 6px rgba(44, 29, 17, 0.15);
+}
+
 .chart-legend-pills {
   display: flex;
   gap: 1rem;
@@ -247,6 +288,118 @@
 
 .legend-dot.sales { background: var(--color-gold); }
 .legend-dot.costs { background: var(--color-terracotta); }
+.legend-dot.profit { background: var(--color-success); }
+
+/* BARRA DE FILTROS INTERACTIVOS DEL GRÁFICO */
+.chart-filter-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.85rem 1.15rem;
+  background: var(--bg-main);
+  border: var(--border-subtle);
+  border-radius: var(--radius-md);
+}
+
+.filter-group {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  flex-wrap: wrap;
+}
+
+.filter-group-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  font-size: 0.76rem;
+  font-weight: 700;
+  color: var(--color-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.filter-pills-row {
+  display: flex;
+  gap: 0.4rem;
+  flex-wrap: wrap;
+}
+
+.chart-filter-pill {
+  padding: 0.38rem 0.85rem;
+  border-radius: var(--radius-pill);
+  background: #FFFFFF;
+  border: var(--border-subtle);
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--color-muted);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+.chart-filter-pill:hover {
+  border-color: var(--color-gold);
+  color: var(--color-espresso);
+}
+
+.chart-filter-pill.active {
+  background: var(--color-espresso);
+  color: var(--color-gold);
+  border-color: var(--color-espresso);
+  box-shadow: 0 2px 8px rgba(44, 29, 17, 0.12);
+}
+
+/* MINI-PANEL DE MÉTRICAS DEL PERÍODO */
+.chart-summary-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-around;
+  flex-wrap: wrap;
+  gap: 0.85rem 1.25rem;
+  padding: 0.85rem 1.25rem;
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.95) 0%, rgba(245, 237, 224, 0.45) 100%);
+  border: 1px solid rgba(212, 155, 84, 0.22);
+  border-radius: var(--radius-md);
+  box-shadow: 0 2px 10px rgba(44, 29, 17, 0.02);
+}
+
+.chart-summary-item {
+  display: flex;
+  align-items: baseline;
+  gap: 0.5rem;
+}
+
+.summary-label {
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: var(--color-muted);
+}
+
+.summary-value {
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: var(--color-espresso);
+}
+
+.summary-value.text-gold {
+  color: var(--color-gold-dark);
+}
+
+.summary-value.text-terracotta {
+  color: var(--color-terracotta);
+}
+
+.summary-value.text-emerald {
+  color: var(--color-success);
+}
+
+.chart-summary-divider {
+  width: 1px;
+  height: 22px;
+  background: rgba(44, 29, 17, 0.1);
+}
 
 .chart-canvas-wrapper {
   position: relative;
