@@ -2,13 +2,20 @@
 -- LA NUEVA PARISIENNE - SCRIPT DE POBLADO DE DATOS (SEED DATA MOCK MIGRATION)
 -- Inserta datos de prueba para usuarios, perfiles, PINs, catálogo e inventario
 -- Compatible con MySQL / MariaDB (InnoDB) mediante DELETE sin restricciones FK
--- REFACTORIZADO: Coincide 100% con la estructura normalizada (1FN, 2FN)
 -- ============================================================================
+
+SET NAMES utf8mb4;
+SET FOREIGN_KEY_CHECKS = 0;
+SET SQL_MODE = "NO_AUTO_VALUE_ON_ZERO";
+START TRANSACTION;
 
 USE `la_nueva_parisienne`;
 
--- 1. DESHABILITAR RESTRICCIONES TEMPORALMENTE Y LIMPIAR CON DELETE
-SET FOREIGN_KEY_CHECKS = 0;
+-- 1. LIMPIAR TABLAS EXISTENTES
+DELETE FROM `reportes_caja_auditoria`;
+DELETE FROM `reportes_caja_cierres`;
+DELETE FROM `reportes_caja_eventos`;
+DELETE FROM `reportes_caja_venta_meta`;
 DELETE FROM `comandas_cocina`;
 DELETE FROM `estado_hornos`;
 DELETE FROM `lotes_produccion`;
@@ -19,6 +26,7 @@ DELETE FROM `ventas_detalle`;
 DELETE FROM `ventas`;
 DELETE FROM `ordenes_compra_detalle`;
 DELETE FROM `ordenes_compra`;
+DELETE FROM `materias_primas`;
 DELETE FROM `proveedores`;
 DELETE FROM `productos`;
 DELETE FROM `categorias_producto`;
@@ -26,10 +34,9 @@ DELETE FROM `usuarios`;
 DELETE FROM `roles`;
 DELETE FROM `configuracion_empresa`;
 DELETE FROM `configuraciones`;
-SET FOREIGN_KEY_CHECKS = 1;
 
 -- ----------------------------------------------------------------------------
--- 2. POBLAR TABLA: configuracion_empresa (Sin columnas modo_tasa ni tasa_manual)
+-- 2. POBLAR TABLA: configuracion_empresa
 -- ----------------------------------------------------------------------------
 INSERT INTO `configuracion_empresa` (`id`, `nombre`, `rif`, `direccion`, `telefono`) VALUES
 (1, 'La Nueva Parisienne Panadería & Pastelería C.A.', 'J-40123456-7', 'Av. Lara con Calle 8, Barquisimeto, Edo. Lara', '(0251) 555-1234');
@@ -43,7 +50,7 @@ INSERT INTO `configuraciones` (`clave`, `valor`, `descripcion`) VALUES
 ('modo_login', 'pos', 'Modalidad de inicio de sesión en index.html: pos o tradicional');
 
 -- ----------------------------------------------------------------------------
--- 4. POBLAR TABLA: roles (Con columna redirect_url - 2FN Aplicada)
+-- 4. POBLAR TABLA: roles
 -- ----------------------------------------------------------------------------
 INSERT IGNORE INTO `roles` (`id`, `codigo`, `nombre`, `descripcion`, `redirect_url`) VALUES
 ('rol_admin', 'ADMIN', 'Gerente General / Administrador', 'Acceso total a KPIs, contabilidad, personal, inventario y configuración.', 'modules/dashboard.html'),
@@ -52,19 +59,18 @@ INSERT IGNORE INTO `roles` (`id`, `codigo`, `nombre`, `descripcion`, `redirect_u
 ('rol_accountant', 'ACCOUNTANT', 'Contador & Administrador', 'Auditoría financiera, balance de comprobación y órdenes de compra.', 'modules/accounting.html');
 
 -- ----------------------------------------------------------------------------
--- 5. POBLAR TABLA: usuarios (Sin columna redirect_url - 2FN Aplicada)
+-- 5. POBLAR TABLA: usuarios
 -- ----------------------------------------------------------------------------
-INSERT IGNORE INTO `usuarios` (`id`, `rol_id`, `codigo`, `nombre`, `email`, `telefono`, `pin`, `icono`, `turno`, `estado`) VALUES
-('usr_carlos', 'rol_baker', 'EMP-001', 'Carlos Mendoza', 'carlos.mendoza@parisienne.com', '(01) 555-CARLOS', '1234', 'chef-hat', 'Mañana (05:00 - 13:00)', 'active'),
-('usr_ana', 'rol_cashier', 'EMP-002', 'Ana Ramírez', 'ana.ramirez@parisienne.com', '(01) 555-ANA', '1234', 'banknote', 'Tarde (13:00 - 21:00)', 'active'),
-('usr_manager', 'rol_admin', 'EMP-003', 'Juan Mendoza', 'juan.gerente@parisienne.com', '(01) 555-JUAN', '1234', 'shield-check', 'Turno Completo', 'active'),
-('usr_baker', 'rol_baker', 'EMP-004', 'Enrique Chef', 'enrique.chef@parisienne.com', '(01) 555-ENRIQUE', '1234', 'chef-hat', 'Mañana (05:00 - 13:00)', 'active'),
-('usr_cashier', 'rol_cashier', 'EMP-005', 'Henry POS', 'henry.pos@parisienne.com', '(01) 555-HENRY', '1234', 'shield-check', 'Mañana (07:00 - 15:00)', 'active'),
-('usr_accountant', 'rol_accountant', 'EMP-006', 'Sebastian Finanzas', 'sebastian.finanzas@parisienne.com', '(01) 555-SEBASTIAN', '1234', 'bar-chart-3', 'Horario Oficina (08:00 - 17:00)', 'active');
+INSERT IGNORE INTO `usuarios` (`id`, `rol_id`, `codigo`, `username`, `nombre`, `email`, `telefono`, `pin`, `icono`, `turno`, `estado`) VALUES
+('usr_carlos', 'rol_baker', 'EMP-001', 'panadero', 'Carlos Mendoza', 'carlos.mendoza@parisienne.com', '(01) 555-CARLOS', '1234', 'chef-hat', 'Mañana (05:00 - 13:00)', 'active'),
+('usr_ana', 'rol_cashier', 'EMP-002', 'cajero1', 'Ana Ramírez', 'ana.ramirez@parisienne.com', '(01) 555-ANA', '1234', 'banknote', 'Tarde (13:00 - 21:00)', 'active'),
+('usr_manager', 'rol_admin', 'EMP-003', 'admin', 'Juan Mendoza', 'juan.gerente@parisienne.com', '(01) 555-JUAN', '1234', 'shield-check', 'Turno Completo', 'active'),
+('usr_baker', 'rol_baker', 'EMP-004', 'chef', 'Enrique Chef', 'enrique.chef@parisienne.com', '(01) 555-ENRIQUE', '1234', 'chef-hat', 'Mañana (05:00 - 13:00)', 'active'),
+('usr_cashier', 'rol_cashier', 'EMP-005', 'cajero', 'Henry POS', 'henry.pos@parisienne.com', '(01) 555-HENRY', '1234', 'shield-check', 'Mañana (07:00 - 15:00)', 'active'),
+('usr_accountant', 'rol_accountant', 'EMP-006', 'contador', 'Sebastian Finanzas', 'sebastian.finanzas@parisienne.com', '(01) 555-SEBASTIAN', '1234', 'bar-chart-3', 'Horario Oficina (08:00 - 17:00)', 'active');
 
 -- ----------------------------------------------------------------------------
--- ----------------------------------------------------------------------------
--- 6. POBLAR TABLA: categorias_producto (Exclusivas de Mostrador y Venta POS)
+-- 6. POBLAR TABLA: categorias_producto
 -- ----------------------------------------------------------------------------
 INSERT IGNORE INTO `categorias_producto` (`id`, `nombre`, `descripcion`) VALUES
 ('cat_panaderia', 'Panadería Artesanal', 'Baguettes, brioches y panes de especialidad.'),
@@ -73,7 +79,16 @@ INSERT IGNORE INTO `categorias_producto` (`id`, `nombre`, `descripcion`) VALUES
 ('cat_especialidades', 'Especialidades & Desayunos', 'Croque-Monsieur, quiches y desayunos artesanales.');
 
 -- ----------------------------------------------------------------------------
--- 7a. POBLAR TABLA: materias_primas (Almacén de Insumos de Panadería)
+-- 7. POBLAR TABLA: proveedores
+-- ----------------------------------------------------------------------------
+INSERT IGNORE INTO `proveedores` (`id`, `codigo`, `nombre`, `categoria`, `contacto`, `telefono`, `email`, `rif`, `direccion`, `condicion_pago`, `calificacion`, `icono`) VALUES
+('sup_01', 'PROV-001', 'Molinos del Sur, C.A.', 'Harinas y Cereales', 'Carlos Mendoza', '(01) 555-MOLINO', 'ventas@molinosdelsur.com', 'J-30819283-4', 'Zona Industrial Sur, Parcela 14, Caracas', 'Crédito 30 días', 4.9, 'wheat'),
+('sup_02', 'PROV-002', 'Lácteos La Granja', 'Lácteos y Mantequillas', 'María Elena Suárez', '(01) 555-LACTEOS', 'pedidos@lacteoslagranja.com', 'J-40192837-1', 'Av. Las Acacias, Edif. La Granja, Valencia', 'Contado / 15 días', 4.8, 'milk'),
+('sup_03', 'PROV-003', 'Empaques del Norte', 'Empaques y Papelería', 'Roberto Gómez', '(01) 555-EMPAQUE', 'contacto@empaquesnorte.com', 'J-29837482-9', 'Av. Principal Norte, Bodega 5, Maracay', 'Crédito 30 días', 4.7, 'package'),
+('sup_04', 'PROV-004', 'Chocolates del Rey', 'Coberturas y Cacao Belga', 'Jean-Philippe Laurent', '(01) 555-CACAO', 'info@chocolatesdelrey.com', 'J-50192834-6', 'Calle Los Artesanos, Qta. Cacao, Los Teques', 'Crédito 15 días', 5.0, 'sparkles');
+
+-- ----------------------------------------------------------------------------
+-- 8. POBLAR TABLA: materias_primas
 -- ----------------------------------------------------------------------------
 INSERT IGNORE INTO `materias_primas` (`id`, `codigo`, `nombre`, `unidad_medida`, `stock_actual`, `stock_minimo`, `costo_unitario`, `ubicacion`, `icono`, `descripcion`, `proveedor_id`) VALUES
 ('inv_001', 'MAT-001', 'Harina de Trigo Tradicional T55', 'kg', 18.00, 50.00, 1.80, 'Almacén Principal A-1', 'wheat', 'Harina refinada para panadería francesa.', 'sup_01'),
@@ -84,7 +99,7 @@ INSERT IGNORE INTO `materias_primas` (`id`, `codigo`, `nombre`, `unidad_medida`,
 ('inv_006', 'MAT-006', 'Sal Marina de Araya / Sal Refinada', 'kg', 30.00, 10.00, 0.80, 'Almacén Seco A-4', 'package', 'Sal marina purificada para control de fermentación y sabor en panadería.', 'sup_01');
 
 -- ----------------------------------------------------------------------------
--- 7b. POBLAR TABLA: productos (Catálogo de Mostrador y Vitrinas POS)
+-- 9. POBLAR TABLA: productos (Catálogo Completo POS)
 -- ----------------------------------------------------------------------------
 INSERT IGNORE INTO `productos` (`id`, `categoria_id`, `codigo`, `nombre`, `unidad_medida`, `stock_actual`, `stock_minimo`, `precio_unitario`, `tipo`, `ubicacion`, `icono`, `descripcion`) VALUES
 ('prod_001', 'cat_panaderia', 'PAN-001', 'Baguette Tradicional Parisina', 'ud', 43.00, 20.00, 2.50, 'finished_product', 'Mostrador Panadería', '🥖', 'Corteza crujiente y miga alveolada con levadura madre.'),
@@ -92,36 +107,24 @@ INSERT IGNORE INTO `productos` (`id`, `categoria_id`, `codigo`, `nombre`, `unida
 ('prod_003', 'cat_panaderia', 'PAN-003', 'Pain au Chocolat', 'ud', 35.00, 15.00, 3.50, 'finished_product', 'Vitrinas POS', '🍫', 'Hojaldre relleno de dos barras de chocolate negro 60%.'),
 ('prod_004', 'cat_panaderia', 'PAN-004', 'Brioche de Vainilla', 'ud', 20.00, 10.00, 4.20, 'finished_product', 'Vitrinas POS', '🍞', 'Pan de huevo esponjoso aromatizado con vainilla de Madagascar.'),
 ('prod_005', 'cat_panaderia', 'PAN-005', 'Focaccia de Romero y Aceitunas', 'ud', 15.00, 8.00, 5.50, 'finished_product', 'Vitrinas POS', '🫓', 'Pan plano italiano horneado con aceite de oliva extra virgen.'),
-('prod_016', 'cat_panaderia', 'PAN-006', 'Pan Canilla Tradicional', 'ud', 50.00, 20.00, 1.50, 'finished_product', 'Mostrador Panadería', '🥖', 'Pan canilla clásico de corteza fina y miga ligera y suave.'),
-('prod_017', 'cat_panaderia', 'PAN-007', 'Pan de Jamón Navideño Especial', 'ud', 15.00, 5.00, 12.00, 'finished_product', 'Vitrinas Especiales', '🥖', 'Pan relleno con jamón ahumado selecto, tocineta, pasas y aceitunas rellenas.'),
-('prod_018', 'cat_panaderia', 'PAN-008', 'Pan Gallego Rústico', 'ud', 20.00, 10.00, 3.50, 'finished_product', 'Mostrador Panadería', '🍞', 'Hogaza de alta hidratación con harina de trigo y masa madre rústica.'),
-('prod_019', 'cat_panaderia', 'PAN-009', 'Pan Campestre Integral Multigrano', 'ud', 18.00, 10.00, 3.80, 'finished_product', 'Mostrador Panadería', '🥖', 'Pan de harina integral con mezcla de semillas de chía, lino y sésamo tostado.'),
-('prod_020', 'cat_panaderia', 'PAN-010', 'Ciabatta Italiana Rústica', 'ud', 25.00, 12.00, 2.80, 'finished_product', 'Mostrador Panadería', '🫓', 'Pan plano de miga abierta con aceite de oliva extra virgen prensado en frío.'),
-
 ('prod_006', 'cat_pasteleria', 'PAS-001', 'Éclair de Chocolate Belga', 'ud', 25.00, 15.00, 4.50, 'finished_product', 'Vitrinas Refrigeradas', '⚡', 'Pasta choux rellena de crema pastelera de chocolate oscuro.'),
 ('prod_007', 'cat_pasteleria', 'PAS-002', 'Tarta de Limón Merengada', 'ud', 18.00, 10.00, 5.00, 'finished_product', 'Vitrinas Refrigeradas', '🍋', 'Base sablée, crema de limón amarillo y merengue tostado.'),
 ('prod_008', 'cat_pasteleria', 'PAS-003', 'Caja de Macarons Surtidos (6 ud)', 'ud', 30.00, 12.00, 9.50, 'finished_product', 'Vitrinas Refrigeradas', '🍡', 'Selección de pistacho, frambuesa, vainilla, chocolate y café.'),
 ('prod_009', 'cat_pasteleria', 'PAS-004', 'Milhojas Tradicional de Crema', 'ud', 14.00, 8.00, 4.80, 'finished_product', 'Vitrinas Refrigeradas', '🍰', 'Capas de hojaldre crujiente con crema diplomatica.'),
-
 ('prod_010', 'cat_cafeteria', 'BEB-001', 'Café Espresso Doble', 'ud', 100.00, 30.00, 2.80, 'finished_product', 'Barra Cafetería', '☕', 'Grano 100% arábica de tueste medio de origen único.'),
 ('prod_011', 'cat_cafeteria', 'BEB-002', 'Capuchino Cremoso', 'ud', 80.00, 25.00, 3.80, 'finished_product', 'Barra Cafetería', '🥛', 'Espresso con leche al vapor y espuma suave de canela.'),
 ('prod_012', 'cat_cafeteria', 'BEB-003', 'Café au Lait Parisien', 'ud', 90.00, 25.00, 3.50, 'finished_product', 'Barra Cafetería', '☕', 'Café de filtro mezclado con leche entera caliente.'),
 ('prod_013', 'cat_cafeteria', 'BEB-004', 'Jugo de Naranja Recién Exprimido', 'l', 40.00, 15.00, 4.00, 'finished_product', 'Barra Cafetería', '🍊', '100% natural, prensado al momento sin azúcar añadida.'),
-
 ('prod_014', 'cat_especialidades', 'ESP-001', 'Croque-Monsieur Tradicional', 'ud', 22.00, 10.00, 7.50, 'finished_product', 'Cocina POS', '🥪', 'Sándwich caliente de jamón cocido, queso Gruyère y bechamel.'),
-('prod_015', 'cat_especialidades', 'ESP-002', 'Quiche Lorraine de Bacon', 'ud', 16.00, 8.00, 6.80, 'finished_product', 'Cocina POS', '🥧', 'Tarta salada con tocino ahumado, crema de leche y queso.');
+('prod_015', 'cat_especialidades', 'ESP-002', 'Quiche Lorraine de Bacon', 'ud', 16.00, 8.00, 6.80, 'finished_product', 'Cocina POS', '🥧', 'Tarta salada con tocino ahumado, crema de leche y queso.'),
+('prod_016', 'cat_panaderia', 'PAN-006', 'Pan Canilla Tradicional', 'ud', 50.00, 20.00, 1.50, 'finished_product', 'Mostrador Panadería', '🥖', 'Pan canilla clásico de corteza fina y miga ligera y suave.'),
+('prod_017', 'cat_panaderia', 'PAN-007', 'Pan de Jamón Navideño Especial', 'ud', 15.00, 5.00, 12.00, 'finished_product', 'Vitrinas Especiales', '🥖', 'Pan relleno con jamón ahumado selecto, tocineta, pasas y aceitunas rellenas.'),
+('prod_018', 'cat_panaderia', 'PAN-008', 'Pan Gallego Rústico', 'ud', 20.00, 10.00, 3.50, 'finished_product', 'Mostrador Panadería', '🍞', 'Hogaza de alta hidratación con harina de trigo y masa madre rústica.'),
+('prod_019', 'cat_panaderia', 'PAN-009', 'Pan Campestre Integral Multigrano', 'ud', 18.00, 10.00, 3.80, 'finished_product', 'Mostrador Panadería', '🥖', 'Pan de harina integral con mezcla de semillas de chía, lino y sésamo tostado.'),
+('prod_020', 'cat_panaderia', 'PAN-010', 'Ciabatta Italiana Rústica', 'ud', 25.00, 12.00, 2.80, 'finished_product', 'Mostrador Panadería', '🫓', 'Pan plano de miga abierta con aceite de oliva extra virgen prensado en frío.');
 
 -- ----------------------------------------------------------------------------
--- 8. POBLAR TABLA: proveedores
--- ----------------------------------------------------------------------------
-INSERT IGNORE INTO `proveedores` (`id`, `codigo`, `nombre`, `categoria`, `contacto`, `telefono`, `email`, `rif`, `direccion`, `condicion_pago`, `calificacion`, `icono`) VALUES
-('sup_01', 'PROV-001', 'Molinos del Sur, C.A.', 'Harinas y Cereales', 'Carlos Mendoza', '(01) 555-MOLINO', 'ventas@molinosdelsur.com', 'J-30819283-4', 'Zona Industrial Sur, Parcela 14, Caracas', 'Crédito 30 días', 4.9, 'wheat'),
-('sup_02', 'PROV-002', 'Lácteos La Granja', 'Lácteos y Mantequillas', 'María Elena Suárez', '(01) 555-LACTEOS', 'pedidos@lacteoslagranja.com', 'J-40192837-1', 'Av. Las Acacias, Edif. La Granja, Valencia', 'Contado / 15 días', 4.8, 'milk'),
-('sup_03', 'PROV-003', 'Empaques del Norte', 'Empaques y Papelería', 'Roberto Gómez', '(01) 555-EMPAQUE', 'contacto@empaquesnorte.com', 'J-29837482-9', 'Av. Principal Norte, Bodega 5, Maracay', 'Crédito 30 días', 4.7, 'package'),
-('sup_04', 'PROV-004', 'Chocolates del Rey', 'Coberturas y Cacao Belga', 'Jean-Philippe Laurent', '(01) 555-CACAO', 'info@chocolatesdelrey.com', 'J-50192834-6', 'Calle Los Artesanos, Qta. Cacao, Los Teques', 'Crédito 15 días', 5.0, 'sparkles');
-
--- ----------------------------------------------------------------------------
--- 9. POBLAR TABLAS: ordenes_compra y ordenes_compra_detalle (1FN Normalizada hacia materias_primas)
+-- 10. POBLAR TABLAS: ordenes_compra y ordenes_compra_detalle
 -- ----------------------------------------------------------------------------
 INSERT IGNORE INTO `ordenes_compra` (`id`, `codigo`, `proveedor_id`, `fecha_pedido`, `fecha_entrega`, `estado`, `monto_total`) VALUES
 ('po_001', 'OC-2026-0089', 'sup_01', '2026-08-10', '2026-08-12', 'in_transit', 1800.00),
@@ -136,7 +139,7 @@ INSERT IGNORE INTO `ordenes_compra_detalle` (`orden_id`, `materia_prima_id`, `ca
 ('po_004', 'inv_005', 100.00, 1.50);
 
 -- ----------------------------------------------------------------------------
--- 10. POBLAR TABLA: plan_cuentas (PUC)
+-- 11. POBLAR TABLA: plan_cuentas (PUC)
 -- ----------------------------------------------------------------------------
 INSERT IGNORE INTO `plan_cuentas` (`codigo`, `nombre`, `tipo`, `naturaleza`) VALUES
 ('1105', 'Caja General', 'Activo', 'Deudor'),
@@ -152,7 +155,7 @@ INSERT IGNORE INTO `plan_cuentas` (`codigo`, `nombre`, `tipo`, `naturaleza`) VAL
 ('6135', 'Costo de Ventas Producción', 'Costo', 'Deudor');
 
 -- ----------------------------------------------------------------------------
--- 11. POBLAR TABLAS: asientos_contables y asientos_detalle
+-- 12. POBLAR TABLAS: asientos_contables y asientos_detalle
 -- ----------------------------------------------------------------------------
 INSERT IGNORE INTO `asientos_contables` (`id`, `codigo`, `fecha_hora`, `concepto`, `modulo_origen`, `icono`, `total_debe`, `total_haber`) VALUES
 ('as_001', 'AS-2026-001', '2026-08-11 16:42:00', 'Venta POS Mostrador (Comprobante FAC-2026-1003)', 'Punto de Venta (POS)', 'shopping-cart', 1485.50, 1485.50),
@@ -166,7 +169,7 @@ INSERT IGNORE INTO `asientos_detalle` (`asiento_id`, `cuenta_codigo`, `debe`, `h
 ('as_002', '2205', 0.00, 1800.00);
 
 -- ----------------------------------------------------------------------------
--- 12. POBLAR TABLA: lotes_produccion
+-- 13. POBLAR TABLA: lotes_produccion
 -- ----------------------------------------------------------------------------
 INSERT IGNORE INTO `lotes_produccion` (`id`, `codigo`, `producto`, `icono`, `cantidad`, `estado_leudado`, `temperatura_recomendada`, `tiempo_recomendado_min`) VALUES
 ('batch_042', 'Lote #042', 'Baguette Tradicional Parisina', '🥖', 50, 'En Horneado Activo', 220, 20),
@@ -177,7 +180,7 @@ INSERT IGNORE INTO `lotes_produccion` (`id`, `codigo`, `producto`, `icono`, `can
 ('stage_047', 'Lote #047', 'Masa de Éclairs (Choux)', '⚡', 35, 'Reposo en Bandeja (15 min)', 200, 18);
 
 -- ----------------------------------------------------------------------------
--- 13. POBLAR TABLA: estado_hornos (Única Tabla Canónica de Hornos)
+-- 14. POBLAR TABLA: estado_hornos
 -- ----------------------------------------------------------------------------
 INSERT IGNORE INTO `estado_hornos` (`id`, `nombre`, `tipo`, `temperatura_actual`, `temperatura_objetivo`, `tiempo_restante`, `tiempo_total`, `estado`, `lote_id`) VALUES
 ('oven_01', 'Horno 1 (Giratorio A)', 'Giratorio Industrial', 220, 220, 255, 1200, 'baking', 'batch_042'),
@@ -186,9 +189,13 @@ INSERT IGNORE INTO `estado_hornos` (`id`, `nombre`, `tipo`, `temperatura_actual`
 ('oven_04', 'Horno 4 (Pastelero D)', 'Convección Digital', 160, 175, 0, 0, 'preheating', NULL);
 
 -- ----------------------------------------------------------------------------
--- 14. POBLAR TABLA: comandas_cocina
+-- 15. POBLAR TABLA: comandas_cocina
 -- ----------------------------------------------------------------------------
 INSERT IGNORE INTO `comandas_cocina` (`id`, `numero_factura`, `detalles_pedido`, `estado_preparacion`, `fecha_hora`) VALUES
 ('com_1002', 'FAC-2026-1002', '2x Croissant de Mantequilla, 1x Pain au Chocolat', 'in_progress', '2026-08-22 15:50:00'),
 ('com_1003', 'FAC-2026-1003', '2x Croque-Monsieur Tradicional, 2x Café au Lait Parisien', 'pending', '2026-08-22 15:53:00'),
 ('com_1001', 'FAC-2026-1001', '3x Baguette Tradicional Parisina, 2x Éclair de Chocolate Belga', 'ready', '2026-08-22 15:35:00');
+
+-- Finalizar transacción y restaurar verificaciones
+COMMIT;
+SET FOREIGN_KEY_CHECKS = 1;
