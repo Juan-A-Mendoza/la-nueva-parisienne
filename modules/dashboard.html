@@ -68,6 +68,9 @@
         <button id="navBtnCashReports" type="button" class="dashboard-nav-tab">
           <i data-lucide="folder" class="icon-sm"></i> <span>Reportes de Caja</span>
         </button>
+        <button id="navBtnAllModules" type="button" class="dashboard-nav-tab btn-nav-superadmin-hub" onclick="window.abrirLauncherModulos &amp;&amp; window.abrirLauncherModulos()" style="margin-left: auto; background: rgba(106, 27, 154, 0.08); border: 1.5px solid rgba(106, 27, 154, 0.28); color: #4A148C; font-weight: 700;" title="Abrir selector de los 4 módulos (Gerente, Cajero, Panadero, Contador)">
+          <i data-lucide="shield-alert" class="icon-sm" style="color: #6A1B9A;"></i> <span>Los 4 Módulos</span>
+        </button>
       </div>
     </nav>
 
@@ -1001,6 +1004,7 @@
   <script src="../js/vendor/lucide.min.js"></script>
   <script src="../js/core/icons.js"></script>
   <script src="../js/vendor/chart.umd.js"></script>
+  <script type="module" src="../js/core/modules-nav.js"></script>
   <script type="module" src="../js/modules/dashboard.js?v=20261005-chart-filters-v2"></script>
   <script type="module" src="../js/modules/caja-reportes.js?v=20260930-6"></script>
 

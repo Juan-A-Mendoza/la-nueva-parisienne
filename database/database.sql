@@ -408,6 +408,7 @@ ON DUPLICATE KEY UPDATE `valor` = VALUES(`valor`);
 
 -- 3. Roles del Sistema
 INSERT INTO `roles` (`id`, `codigo`, `nombre`, `descripcion`, `redirect_url`) VALUES
+('rol_superadmin', 'SUPERADMIN', 'Super Administrador', 'Acceso total e irrestricto a todos los módulos y funciones del sistema.', 'modules/dashboard.html'),
 ('rol_admin', 'ADMIN', 'Gerente General / Administrador', 'Acceso total a KPIs, contabilidad, personal y configuración.', 'modules/dashboard.html'),
 ('rol_baker', 'BAKER', 'Maestro Panadero / Chef de Cuisine', 'Gestión de hornos industriales, comandas KDS e insumos de masa.', 'modules/kitchen.html'),
 ('rol_cashier', 'CASHIER', 'Personal de Caja / POS', 'Facturación directa, cobro en efectivo/tarjeta y arqueo de caja.', 'modules/pos.html'),
@@ -416,6 +417,7 @@ ON DUPLICATE KEY UPDATE `nombre` = VALUES(`nombre`), `redirect_url` = VALUES(`re
 
 -- 4. Usuarios Iniciales (Credenciales con PIN por defecto '1234')
 INSERT INTO `usuarios` (`id`, `rol_id`, `codigo`, `username`, `nombre`, `email`, `telefono`, `pin`, `icono`, `turno`, `estado`) VALUES
+('usr_superadmin', 'rol_superadmin', 'EMP-000', 'superadmin', 'Super Administrador', 'superadmin@parisienne.com', '(01) 555-SUPER', '1234', 'shield-check', 'Acceso Total 24/7', 'active'),
 ('usr_manager', 'rol_admin', 'EMP-003', 'admin', 'Juan Mendoza', 'juan.gerente@parisienne.com', '(01) 555-JUAN', '1234', 'shield-check', 'Turno Completo', 'active'),
 ('usr_baker', 'rol_baker', 'EMP-004', 'chef', 'Enrique Chef', 'enrique.chef@parisienne.com', '(01) 555-ENRIQUE', '1234', 'chef-hat', 'Mañana (05:00 - 13:00)', 'active'),
 ('usr_cashier', 'rol_cashier', 'EMP-005', 'cajero', 'Henry POS', 'henry.pos@parisienne.com', '(01) 555-HENRY', '1234', 'shield-check', 'Mañana (07:00 - 15:00)', 'active'),

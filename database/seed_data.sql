@@ -53,6 +53,7 @@ INSERT INTO `configuraciones` (`clave`, `valor`, `descripcion`) VALUES
 -- 4. POBLAR TABLA: roles
 -- ----------------------------------------------------------------------------
 INSERT IGNORE INTO `roles` (`id`, `codigo`, `nombre`, `descripcion`, `redirect_url`) VALUES
+('rol_superadmin', 'SUPERADMIN', 'Super Administrador', 'Acceso total e irrestricto a todos los módulos y funciones del sistema.', 'modules/dashboard.html'),
 ('rol_admin', 'ADMIN', 'Gerente General / Administrador', 'Acceso total a KPIs, contabilidad, personal, inventario y configuración.', 'modules/dashboard.html'),
 ('rol_baker', 'BAKER', 'Maestro Panadero / Chef de Cuisine', 'Gestión de hornos industriales, comandas KDS e insumos de masa.', 'modules/kitchen.html'),
 ('rol_cashier', 'CASHIER', 'Personal de Caja / POS', 'Facturación directa, cobro en efectivo/tarjeta y arqueo de caja.', 'modules/pos.html'),
@@ -62,6 +63,7 @@ INSERT IGNORE INTO `roles` (`id`, `codigo`, `nombre`, `descripcion`, `redirect_u
 -- 5. POBLAR TABLA: usuarios
 -- ----------------------------------------------------------------------------
 INSERT IGNORE INTO `usuarios` (`id`, `rol_id`, `codigo`, `username`, `nombre`, `email`, `telefono`, `pin`, `icono`, `turno`, `estado`) VALUES
+('usr_superadmin', 'rol_superadmin', 'EMP-000', 'superadmin', 'Super Administrador', 'superadmin@parisienne.com', '(01) 555-SUPER', '1234', 'shield-check', 'Acceso Total 24/7', 'active'),
 ('usr_carlos', 'rol_baker', 'EMP-001', 'panadero', 'Carlos Mendoza', 'carlos.mendoza@parisienne.com', '(01) 555-CARLOS', '1234', 'chef-hat', 'Mañana (05:00 - 13:00)', 'active'),
 ('usr_ana', 'rol_cashier', 'EMP-002', 'cajero1', 'Ana Ramírez', 'ana.ramirez@parisienne.com', '(01) 555-ANA', '1234', 'banknote', 'Tarde (13:00 - 21:00)', 'active'),
 ('usr_manager', 'rol_admin', 'EMP-003', 'admin', 'Juan Mendoza', 'juan.gerente@parisienne.com', '(01) 555-JUAN', '1234', 'shield-check', 'Turno Completo', 'active'),

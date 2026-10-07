@@ -4,6 +4,37 @@ Todos los cambios significativos, nuevas funcionalidades y actualizaciones del s
 
 El formato está basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1.0.0/) y este proyecto se adhiere a [Semantic Versioning](https://semver.org/lang/es/).
 
+## [5.19.0] - 2026-10-07 (Remodelación de Login Clásico & Rol Superadmin con Acceso Total)
+
+### 🔐 Remodelación Integral del Login ([index.html](file:///c:/xampp/htdocs/la-nueva-parisienne/index.html), [css/modules/auth.css](file:///c:/xampp/htdocs/la-nueva-parisienne/css/modules/auth.css), [js/modules/auth.js](file:///c:/xampp/htdocs/la-nueva-parisienne/js/modules/auth.js))
+- **Formulario Directo Tradicional (Usuario y Contraseña)**:
+  - Se eliminó el flujo anterior de selección previa por departamentos y ventanas emergentes superpuestas.
+  - Se implementó una tarjeta central limpia, moderna y con estética *Parisian Chic*, enfocada estrictamente en credenciales (Usuario y Contraseña) sin elementos de autocompletado en pantalla.
+  - Campos de entrada con iconos semánticos (`@` para usuario, llave para contraseña), validación en tiempo real y soporte para gestores de contraseñas (`autocomplete="username"` y `autocomplete="current-password"`).
+  - Botón de alternancia de visibilidad de contraseña (ojo interactivo) para verificar la clave ingresada.
+  - Estado de carga táctil con indicador dinámico en el botón de envío (*"Verificando credenciales..."*).
+  - Alerta accesible de error con microanimación `shakeAlert` ante credenciales inválidas.
+
+### 👑 Rol Superadmin & Conmutador Directo de los 4 Módulos
+- **Selector Directo de los 4 Módulos Operativos ([js/core/modules-nav.js](file:///c:/xampp/htdocs/la-nueva-parisienne/js/core/modules-nav.js), [css/main.css](file:///c:/xampp/htdocs/la-nueva-parisienne/css/main.css))**:
+  - Desde el botón `👑 4 Módulos (Superadmin)` integrado en la cabecera de todas las vistas, el Superadministrador puede acceder directamente y alternar entre los 4 departamentos clave:
+    1. 🛡️ **Gerente General**: Dashboard Gerencial & Métricas ([dashboard.html](file:///c:/xampp/htdocs/la-nueva-parisienne/modules/dashboard.html))
+    2. 💳 **Cajero**: Punto de Venta POS & Facturación ([pos.html](file:///c:/xampp/htdocs/la-nueva-parisienne/modules/pos.html))
+    3. 🥖 **Panadero**: Producción, Cocina & Hornos ([kitchen.html](file:///c:/xampp/htdocs/la-nueva-parisienne/modules/kitchen.html))
+    4. ⚖️ **Contador**: Contabilidad & Finanzas ([accounting.html](file:///c:/xampp/htdocs/la-nueva-parisienne/modules/accounting.html))
+  - Elimina la necesidad de iniciar sesión por separado en cada departamento o cerrar sesión para alternar funciones.
+- **Base de Datos Relacional MySQL ([database/database.sql](file:///c:/xampp/htdocs/la-nueva-parisienne/database/database.sql), [database/seed_data.sql](file:///c:/xampp/htdocs/la-nueva-parisienne/database/seed_data.sql))**:
+  - Se creó el rol oficial `rol_superadmin` con código `SUPERADMIN`, descripción de privilegios totales y redirección canónica a `modules/dashboard.html`.
+  - Se insertó en la base de datos el usuario `usr_superadmin` con usuario `superadmin`, código `EMP-000`, clave PIN `1234` y estado `active`.
+- **API Backend PHP ([api/auth/login.php](file:///c:/xampp/htdocs/la-nueva-parisienne/api/auth/login.php), [api/auth/get_profiles.php](file:///c:/xampp/htdocs/la-nueva-parisienne/api/auth/get_profiles.php))**:
+  - Soporte completo en la consulta preparada de autenticación para el usuario `superadmin` y el rol `SUPERADMIN`.
+  - Manejo de token de sesión con rol `SUPERADMIN` y privilegios globales.
+- **Servicio Central de Sesión ([js/core/session-store.js](file:///c:/xampp/htdocs/la-nueva-parisienne/js/core/session-store.js))**:
+  - Integración del perfil `superadmin` en `INITIAL_USERS` y `USERS_DATABASE`.
+  - Inyección preventiva de `superadmin` en el almacenamiento local para compatibilidad hacia atrás con navegadores que tengan datos en caché.
+
+---
+
 ## [5.18.2] - 2026-08-24 (Perfeccionamiento Visual Ultra-Premium del Modal de Devolución POS)
 
 ### ✨ Rediseño Estético de Alta Fidelidad ([modules/pos.html](file:///C:/Users/juana/.gemini/antigravity-ide/scratch/la-nueva-parisienne/modules/pos.html), [js/modules/pos.js](file:///C:/Users/juana/.gemini/antigravity-ide/scratch/la-nueva-parisienne/js/modules/pos.js))

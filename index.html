@@ -4,87 +4,101 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>La Nueva Parisienne - Inicio de Sesión</title>
-  <meta name="description" content="Inicio de sesión por departamento para La Nueva Parisienne.">
+  <meta name="description" content="Acceso al Sistema de Gestión, Contabilidad y Punto de Venta de La Nueva Parisienne.">
   <link rel="stylesheet" href="css/main.css">
   <link rel="stylesheet" href="css/modules/auth.css">
 </head>
 <body>
   <main class="auth-wrapper">
+    <!-- CABECERA DE LA MARCA -->
     <header class="auth-header">
-      <div class="logo-badge" aria-hidden="true"><i data-lucide="croissant" class="icon-xl"></i></div>
+      <div class="logo-badge" aria-hidden="true">
+        <i data-lucide="croissant" class="icon-xl"></i>
+      </div>
       <h1 class="brand-title">La Nueva Parisienne</h1>
       <p class="sub-title">Sistema de Gestión Gerencial, Contabilidad y Punto de Venta</p>
-      <span class="academic-badge">Proyecto Académico Multidisciplinario</span>
+      <span class="academic-badge">Panadería &amp; Pastelería Artesanal</span>
     </header>
 
-    <section class="profiles-section" aria-labelledby="mainAuthTitle">
-      <div id="deptView" class="auth-view-container active">
-        <h2 id="mainAuthTitle" class="profiles-title">
-          <i data-lucide="building-2" class="icon-md" style="margin-right: 0.4rem;" aria-hidden="true"></i> Seleccione un Departamento para Iniciar Sesión
-        </h2>
-
-        <div class="departments-grid">
-          <article class="dept-card" data-dept="gerencia" tabindex="0" role="button" aria-label="Ingresar al Departamento de Gerencia General">
-            <div class="dept-card-header"><div class="dept-card-icon-badge"><i data-lucide="shield-check" class="icon-lg"></i></div></div>
-            <h3 class="dept-card-title">Gerencia General</h3>
-            <p class="dept-card-desc">Control gerencial total, KPIs de ventas, auditoría global y administración de personal.</p>
-            <div class="dept-card-footer"><span>Iniciar sesión</span><span class="dept-card-arrow"><i data-lucide="arrow-right" class="icon-sm"></i></span></div>
-          </article>
-
-          <article class="dept-card" data-dept="caja" tabindex="0" role="button" aria-label="Ingresar al Departamento de Caja y Facturación">
-            <div class="dept-card-header"><div class="dept-card-icon-badge"><i data-lucide="banknote" class="icon-lg"></i></div></div>
-            <h3 class="dept-card-title">Caja y Facturación</h3>
-            <p class="dept-card-desc">Operación del Punto de Venta (POS), cobros multimoneda, tickets y devoluciones.</p>
-            <div class="dept-card-footer"><span>Iniciar sesión</span><span class="dept-card-arrow"><i data-lucide="arrow-right" class="icon-sm"></i></span></div>
-          </article>
-
-          <article class="dept-card" data-dept="cocina" tabindex="0" role="button" aria-label="Ingresar al Departamento de Producción y Cocina">
-            <div class="dept-card-header"><div class="dept-card-icon-badge"><i data-lucide="chef-hat" class="icon-lg"></i></div></div>
-            <h3 class="dept-card-title">Producción y Cocina</h3>
-            <p class="dept-card-desc">Control de hornos, recetas panaderas, orden del día y recepción de insumos.</p>
-            <div class="dept-card-footer"><span>Iniciar sesión</span><span class="dept-card-arrow"><i data-lucide="arrow-right" class="icon-sm"></i></span></div>
-          </article>
-
-          <article class="dept-card" data-dept="contabilidad" tabindex="0" role="button" aria-label="Ingresar al Departamento de Contabilidad y Finanzas">
-            <div class="dept-card-header"><div class="dept-card-icon-badge"><i data-lucide="bar-chart-3" class="icon-lg"></i></div></div>
-            <h3 class="dept-card-title">Contabilidad &amp; Finanzas</h3>
-            <p class="dept-card-desc">Auditoría contable, márgenes de ganancia, libros de compras y estados financieros.</p>
-            <div class="dept-card-footer"><span>Iniciar sesión</span><span class="dept-card-arrow"><i data-lucide="arrow-right" class="icon-sm"></i></span></div>
-          </article>
+    <!-- TARJETA CLÁSICA DE INICIO DE SESIÓN -->
+    <section class="auth-card-section" aria-label="Inicio de Sesión">
+      <div class="login-card">
+        <div class="login-card-header">
+          <div class="login-avatar-icon" aria-hidden="true">
+            <i data-lucide="shield-check" class="icon-lg"></i>
+          </div>
+          <h2 class="login-card-title">Iniciar Sesión</h2>
+          <p class="login-card-subtitle">Ingrese sus credenciales de usuario para acceder al sistema</p>
         </div>
-      </div>
 
-      <div id="departmentLoginModal" class="pin-modal-overlay" role="dialog" aria-modal="true" aria-labelledby="selectedDeptTitle" aria-hidden="true">
-        <div class="pin-modal-card department-login-modal-card">
-          <button id="btnCloseDepartmentLogin" type="button" class="modal-close-btn" aria-label="Cerrar inicio de sesión">&times;</button>
+        <form id="classicLoginForm" class="login-form" autocomplete="on">
+          <!-- ALERTA DE ERROR ACCESIBLE -->
+          <div id="loginErrorAlert" class="login-error-alert" style="display: none;" role="alert"></div>
 
-          <div class="traditional-card-header">
-            <div id="selectedDeptIcon" class="traditional-header-icon" aria-hidden="true"><i data-lucide="shield-check" class="icon-xl"></i></div>
-            <h2 id="selectedDeptTitle" class="traditional-card-title">Inicio de sesión</h2>
-            <p id="selectedDeptSubtitle" class="traditional-card-subtitle">Ingrese sus credenciales para continuar</p>
+          <!-- CAMPO: USUARIO -->
+          <div class="login-form-group">
+            <label for="loginUsername" class="login-label">
+              <i data-lucide="user" class="icon-xs"></i> Nombre de Usuario
+            </label>
+            <div class="input-with-icon-wrapper">
+              <span class="input-icon-prefix" aria-hidden="true">
+                <i data-lucide="at-sign" class="icon-sm"></i>
+              </span>
+              <input 
+                type="text" 
+                id="loginUsername" 
+                name="username" 
+                class="login-input with-prefix" 
+                required 
+                autocomplete="username" 
+                placeholder="Ej. superadmin, admin, cajero..."
+                autofocus
+              >
+            </div>
           </div>
 
-          <form id="departmentLoginForm" class="traditional-login-form" autocomplete="on">
-            <div id="departmentErrorAlert" class="traditional-error-alert" style="display: none;" role="alert"></div>
-            <div class="traditional-form-group">
-              <label for="departmentUsernameInput" class="traditional-label"><i data-lucide="user" class="icon-sm"></i> Nombre de Usuario</label>
-              <input type="text" id="departmentUsernameInput" class="traditional-input" required autocomplete="username">
+          <!-- CAMPO: CONTRASEÑA -->
+          <div class="login-form-group">
+            <label for="loginPassword" class="login-label">
+              <i data-lucide="lock" class="icon-xs"></i> Contraseña / Clave
+            </label>
+            <div class="input-with-icon-wrapper">
+              <span class="input-icon-prefix" aria-hidden="true">
+                <i data-lucide="key-round" class="icon-sm"></i>
+              </span>
+              <input 
+                type="password" 
+                id="loginPassword" 
+                name="password" 
+                class="login-input with-prefix with-suffix" 
+                required 
+                autocomplete="current-password" 
+                placeholder="••••••••"
+              >
+              <button 
+                type="button" 
+                id="btnTogglePassword" 
+                class="input-suffix-btn" 
+                aria-label="Mostrar u ocultar contraseña" 
+                title="Mostrar u ocultar contraseña"
+              >
+                <i data-lucide="eye" id="togglePasswordIcon" class="icon-sm"></i>
+              </button>
             </div>
-            <div class="traditional-form-group">
-              <label for="departmentPasswordInput" class="traditional-label"><i data-lucide="lock" class="icon-sm"></i> Clave</label>
-              <input type="password" id="departmentPasswordInput" class="traditional-input" required autocomplete="current-password">
-            </div>
-            <button type="submit" id="departmentLoginButton" class="btn-traditional-submit">
-              <i data-lucide="log-in" class="icon-sm"></i>
-              <span>Iniciar Sesión</span>
-            </button>
-          </form>
-        </div>
+          </div>
+
+          <!-- BOTÓN DE ENVÍO -->
+          <button type="submit" id="loginSubmitBtn" class="btn-login-submit">
+            <i data-lucide="log-in" class="icon-sm"></i>
+            <span>Iniciar Sesión</span>
+          </button>
+        </form>
       </div>
     </section>
 
+    <!-- PIE DE PÁGINA -->
     <footer class="auth-footer">
-      <p>&copy; 2026 La Nueva Parisienne &mdash; Sistema Diseñado para Entorno Visual Studio</p>
+      <p>&copy; 2026 La Nueva Parisienne &mdash; Sistema de Gestión Integral &bull; Versión Empresarial</p>
     </footer>
   </main>
 
@@ -93,4 +107,3 @@
   <script type="module" src="js/modules/auth.js"></script>
 </body>
 </html>
-

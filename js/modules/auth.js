@@ -1,208 +1,119 @@
-/*
- * Inicio de sesión por departamento.
- * Los usuarios y sus claves se leen desde SessionStore; este módulo no crea
- * cuentas ni muestra perfiles registrados.
- */
+/* ==========================================================================
+   LA NUEVA PARISIENNE - CONTROLADOR DE AUTENTICACIÓN CLÁSICA (AUTH.JS)
+   Manejo de Login Clásico Directo (Usuario + Contraseña) y Soporte Superadmin
+   ========================================================================== */
 
 import { SessionStore } from '../core/session-store.js';
 
-document.addEventListener('DOMContentLoaded', async () => {
-  const departments = [
-    {
-      id: 'gerencia',
-      name: 'Gerencia General',
-      icon: 'shield-check',
-      roles: ['gerente general', 'admin'],
-      subtitle: 'KPIs, auditoría y gestión de personal'
-    },
-    {
-      id: 'caja',
-      name: 'Caja y Facturación',
-      icon: 'banknote',
-      roles: ['cajero', 'pos', 'cashier'],
-      subtitle: 'Punto de Venta POS y cobros'
-    },
-    {
-      id: 'cocina',
-      name: 'Producción y Cocina',
-      icon: 'chef-hat',
-      roles: ['panadero', 'kitchen', 'baker'],
-      subtitle: 'Hornos, recetas y producción'
-    },
-    {
-      id: 'contabilidad',
-      name: 'Contabilidad & Finanzas',
-      icon: 'bar-chart-3',
-      roles: ['contador', 'contabilidad', 'accountant'],
-      subtitle: 'Estados financieros y comprobantes'
-    }
-  ];
+document.addEventListener('DOMContentLoaded', () => {
+  // Elementos del DOM
+  const loginForm = document.getElementById('classicLoginForm');
+  const usernameInput = document.getElementById('loginUsername');
+  const passwordInput = document.getElementById('loginPassword');
+  const submitButton = document.getElementById('loginSubmitBtn');
+  const errorAlert = document.getElementById('loginErrorAlert');
+  const togglePasswordBtn = document.getElementById('btnTogglePassword');
+  const togglePasswordIcon = document.getElementById('togglePasswordIcon');
 
-  const deptView = document.getElementById('deptView');
-  const loginModal = document.getElementById('departmentLoginModal');
-  const closeLoginModalButton = document.getElementById('btnCloseDepartmentLogin');
-  const selectedDeptIcon = document.getElementById('selectedDeptIcon');
-  const selectedDeptTitle = document.getElementById('selectedDeptTitle');
-  const selectedDeptSubtitle = document.getElementById('selectedDeptSubtitle');
-  const loginForm = document.getElementById('departmentLoginForm');
-  const usernameInput = document.getElementById('departmentUsernameInput');
-  const passwordInput = document.getElementById('departmentPasswordInput');
-  const loginButton = document.getElementById('departmentLoginButton');
-  const errorAlert = document.getElementById('departmentErrorAlert');
+  // Inicializar íconos Lucide
+  window.LucideIcons?.refresh();
 
-  let allProfiles = [];
-  let currentDepartment = null;
-
-  function normalize(value) {
-    return String(value || '').trim().toLowerCase();
-  }
-
-  function roleMatchesDepartment(profile, department) {
-    if (!profile || !department) return false;
-    const role = normalize(profile.role);
-    const roleCode = normalize(profile.roleCode);
-    return department.roles.some(candidate =>
-      role.includes(candidate) || roleCode.includes(candidate)
-    );
-  }
-
+  /**
+   * Muestra mensaje de error accesible
+   */
   function showError(message) {
     if (!errorAlert) return;
-    errorAlert.innerHTML = `<i data-lucide="alert-circle" class="icon-sm" style="margin-right: 0.35rem;"></i> ${message}`;
+    errorAlert.innerHTML = `
+      <i data-lucide="alert-circle" class="icon-sm" style="flex-shrink: 0;" aria-hidden="true"></i>
+      <span>${message}</span>
+    `;
     errorAlert.style.display = 'flex';
-    errorAlert.style.alignItems = 'center';
     window.LucideIcons?.refresh();
   }
 
+  /**
+   * Oculta el mensaje de error
+   */
   function clearError() {
     if (!errorAlert) return;
     errorAlert.textContent = '';
     errorAlert.style.display = 'none';
   }
 
-  function resetLoginForm() {
-    loginForm?.reset();
-    clearError();
-    if (loginButton) loginButton.disabled = false;
-    const buttonText = loginButton?.querySelector('span');
-    if (buttonText) buttonText.textContent = 'Iniciar Sesión';
-  }
+  /**
+   * Alternar visibilidad de la contraseña
+   */
+  if (togglePasswordBtn && passwordInput) {
+    togglePasswordBtn.addEventListener('click', () => {
+      const isPassword = passwordInput.type === 'password';
+      passwordInput.type = isPassword ? 'text' : 'password';
 
-  function showDepartmentLogin(departmentId) {
-    const department = departments.find(item => item.id === departmentId);
-    if (!department) return;
-
-    currentDepartment = department;
-    if (selectedDeptIcon) {
-      selectedDeptIcon.innerHTML = window.LucideIcons ? window.LucideIcons.render(department.icon, 'icon-xl') : '';
-      window.LucideIcons?.refresh();
-    }
-    if (selectedDeptTitle) selectedDeptTitle.textContent = `Inicio de sesión — ${department.name}`;
-    if (selectedDeptSubtitle) selectedDeptSubtitle.textContent = `${department.subtitle}. Ingrese sus credenciales para continuar.`;
-
-    resetLoginForm();
-    loginModal?.classList.add('active');
-    loginModal?.setAttribute('aria-hidden', 'false');
-    document.body.classList.add('auth-modal-open');
-    window.setTimeout(() => usernameInput?.focus(), 0);
-  }
-
-  function closeDepartmentLogin() {
-    currentDepartment = null;
-    resetLoginForm();
-    loginModal?.classList.remove('active');
-    loginModal?.setAttribute('aria-hidden', 'true');
-    document.body.classList.remove('auth-modal-open');
-    deptView?.focus();
-  }
-
-  document.querySelectorAll('.dept-card').forEach(card => {
-    const selectDepartment = event => {
-      event?.preventDefault();
-      showDepartmentLogin(card.dataset.dept);
-    };
-
-    card.addEventListener('click', selectDepartment);
-    card.addEventListener('keydown', event => {
-      if (event.key === 'Enter' || event.key === ' ') selectDepartment(event);
+      if (togglePasswordIcon) {
+        togglePasswordIcon.setAttribute('data-lucide', isPassword ? 'eye-off' : 'eye');
+        togglePasswordBtn.setAttribute(
+          'aria-label',
+          isPassword ? 'Ocultar contraseña' : 'Mostrar contraseña'
+        );
+        window.LucideIcons?.refresh();
+      }
     });
-  });
+  }
 
-  closeLoginModalButton?.addEventListener('click', closeDepartmentLogin);
-
-  document.addEventListener('keydown', event => {
-    if (event.key === 'Escape' && loginModal?.classList.contains('active')) {
-      closeDepartmentLogin();
-    }
-  });
-
+  /**
+   * Manejo de Envío del Formulario de Login
+   */
   loginForm?.addEventListener('submit', async event => {
     event.preventDefault();
     clearError();
 
     const username = usernameInput?.value.trim() || '';
     const password = passwordInput?.value || '';
-    if (!username || !password || !currentDepartment) return;
 
-    const normUser = normalize(username);
-
-    // Buscar perfil coincidente por usuario, código, ID, nombre o email
-    let selectedProfile = allProfiles.find(profile =>
-      normalize(profile.username) === normUser ||
-      normalize(profile.code) === normUser ||
-      normalize(profile.id) === normUser ||
-      normalize(profile.email) === normUser ||
-      normalize(profile.name) === normUser
-    );
-
-    // Si ingresó una palabra clave genérica como 'admin', 'cajero', 'panadero', 'contador'
-    if (!selectedProfile) {
-      if (normUser === 'admin' || normUser === 'gerente') {
-        selectedProfile = allProfiles.find(p => normalize(p.roleCode) === 'admin' || normalize(p.role).includes('gerente'));
-      } else if (normUser === 'cajero' || normUser === 'cajera' || normUser === 'cajero1' || normUser === 'pos') {
-        selectedProfile = allProfiles.find(p => normalize(p.roleCode) === 'cashier' || normalize(p.roleCode) === 'pos');
-      } else if (normUser === 'panadero' || normUser === 'chef' || normUser === 'panadero1' || normUser === 'cocina') {
-        selectedProfile = allProfiles.find(p => normalize(p.roleCode) === 'baker' || normalize(p.roleCode) === 'kitchen');
-      } else if (normUser === 'contador' || normUser === 'contador1' || normUser === 'finanzas') {
-        selectedProfile = allProfiles.find(p => normalize(p.roleCode) === 'accountant');
-      }
-    }
-
-    if (!selectedProfile) {
-      showError('Usuario no encontrado o no registrado.');
+    if (!username || !password) {
+      showError('Por favor complete ambos campos (usuario y contraseña).');
       return;
     }
 
-    if (!roleMatchesDepartment(selectedProfile, currentDepartment)) {
-      showError('El usuario no pertenece al departamento seleccionado.');
-      return;
+    // Estado visual de carga
+    if (submitButton) {
+      submitButton.disabled = true;
+      submitButton.innerHTML = `
+        <span class="spinner-sm" style="display:inline-block; width:16px; height:16px; border:2px solid currentColor; border-right-color:transparent; border-radius:50%; animation: spin 0.6s linear infinite;" aria-hidden="true"></span>
+        <span>Verificando credenciales...</span>
+      `;
     }
-
-    if (loginButton) loginButton.disabled = true;
-    const buttonText = loginButton?.querySelector('span');
-    if (buttonText) buttonText.textContent = 'Validando...';
 
     try {
-      const loginIdentifier = selectedProfile.id || selectedProfile.username || username;
-      const result = await SessionStore.validateCredentialsAsync(loginIdentifier, password);
-      if (result.success) {
-        window.location.href = result.redirectUrl;
+      // Validar contra MySQL con fallback local mediante SessionStore
+      const result = await SessionStore.validateCredentialsAsync(username, password);
+
+      if (result && result.success) {
+        // Redirección al módulo correspondiente
+        const targetUrl = result.redirectUrl || 'modules/dashboard.html';
+        window.location.href = targetUrl;
       } else {
-        showError(result.message || 'Nombre de usuario o clave incorrectos.');
+        showError(result?.message || 'Usuario o contraseña incorrectos.');
+        if (passwordInput) {
+          passwordInput.value = '';
+          passwordInput.focus();
+        }
       }
     } catch (error) {
-      console.error('Error validando las credenciales:', error);
-      showError('No fue posible validar las credenciales. Intente nuevamente.');
+      console.error('Error al procesar el inicio de sesión:', error);
+      showError('Ocurrió un error inesperado al validar la sesión. Intente nuevamente.');
     } finally {
-      if (loginButton) loginButton.disabled = false;
-      if (buttonText) buttonText.textContent = 'Iniciar Sesi\u00f3n';
+      if (submitButton) {
+        submitButton.disabled = false;
+        submitButton.innerHTML = `
+          <i data-lucide="log-in" class="icon-sm" aria-hidden="true"></i>
+          <span>Iniciar Sesión</span>
+        `;
+        window.LucideIcons?.refresh();
+      }
     }
   });
 
-  try {
-    allProfiles = await SessionStore.getProfilesAsync();
-  } catch (error) {
-    console.error('Error cargando usuarios registrados:', error);
-    showError('No fue posible cargar los usuarios registrados.');
-  }
+  // Limpiar error al escribir
+  usernameInput?.addEventListener('input', clearError);
+  passwordInput?.addEventListener('input', clearError);
 });

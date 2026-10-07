@@ -5,6 +5,21 @@
 
 export const STAFF_DATABASE = [
   {
+    id: 'emp_00',
+    code: 'EMP-000',
+    name: 'Super Administrador',
+    role: 'Super Administrador',
+    roleCode: 'SUPERADMIN',
+    department: 'Control Total & Todos los Módulos',
+    shift: 'Acceso Total 24/7',
+    phone: '(01) 555-SUPER',
+    email: 'superadmin@parisienne.com',
+    status: 'active',
+    statusText: 'Activo',
+    pin: '1234',
+    avatar: 'shield-check'
+  },
+  {
     id: 'emp_01',
     code: 'EMP-001',
     name: 'Carlos Mendoza',
@@ -101,42 +116,42 @@ export const ROLE_PERMISSIONS_MATRIX = [
     permissionId: 'pos_access',
     permissionName: 'Facturación y Cobro en Caja (POS)',
     category: 'Ventas',
-    roles: { ADMIN: true, BAKER: false, CASHIER: true }
+    roles: { SUPERADMIN: true, ADMIN: true, BAKER: false, CASHIER: true }
   },
   {
     permissionId: 'kitchen_access',
     permissionName: 'Monitoreo de Hornos y Comandas KDS',
     category: 'Cocina',
-    roles: { ADMIN: true, BAKER: true, CASHIER: false }
+    roles: { SUPERADMIN: true, ADMIN: true, BAKER: true, CASHIER: false }
   },
   {
     permissionId: 'inventory_view',
     permissionName: 'Consulta de Existencias de Almacén',
     category: 'Inventario',
-    roles: { ADMIN: true, BAKER: true, CASHIER: true }
+    roles: { SUPERADMIN: true, ADMIN: true, BAKER: true, CASHIER: true }
   },
   {
     permissionId: 'inventory_adjust',
     permissionName: 'Ajustes Manuales de Stock y Mermas',
     category: 'Inventario',
-    roles: { ADMIN: true, BAKER: true, CASHIER: false }
+    roles: { SUPERADMIN: true, ADMIN: true, BAKER: true, CASHIER: false }
   },
   {
     permissionId: 'suppliers_po',
     permissionName: 'Emisión de Órdenes de Compra a Proveedores',
     category: 'Compras',
-    roles: { ADMIN: true, BAKER: false, CASHIER: false }
+    roles: { SUPERADMIN: true, ADMIN: true, BAKER: false, CASHIER: false }
   },
   {
     permissionId: 'accounting_view',
     permissionName: 'Consulta de Contabilidad y Balance General',
     category: 'Finanzas',
-    roles: { ADMIN: true, BAKER: false, CASHIER: false }
+    roles: { SUPERADMIN: true, ADMIN: true, BAKER: false, CASHIER: false }
   },
   {
     permissionId: 'staff_manage',
     permissionName: 'Gestión de Empleados y Cambio de PINs',
     category: 'RRHH',
-    roles: { ADMIN: true, BAKER: false, CASHIER: false }
+    roles: { SUPERADMIN: true, ADMIN: true, BAKER: false, CASHIER: false }
   }
 ];

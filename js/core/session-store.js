@@ -5,19 +5,33 @@
 
 const STORAGE_KEY = 'LN_PARISIENNE_SESSION';
 
-// Arreglo de usuarios por defecto (Semilla Inicial)
+// Arreglo de usuarios por defecto (Semilla Inicial con Superadmin)
 const INITIAL_USERS = [
-  { id: 'usr_001', name: 'Juan Mendoza', username: 'admin', role: 'Gerente General', roleCode: 'ADMIN', icon: 'shield-check', description: 'Acceso total a KPIs, contabilidad, producción y personal.', redirectUrl: 'modules/dashboard.html' },
-  { id: 'usr_002', name: 'María Elena Suárez', username: 'cajero1', role: 'Cajero', roleCode: 'POS', icon: 'banknote', description: 'Facturación directa a clientes, cobros rápidos y apertura de caja.', redirectUrl: 'modules/pos.html' },
-  { id: 'usr_003', name: 'Carlos Eduardo Rivas', username: 'panadero1', role: 'Panadero', roleCode: 'KITCHEN', icon: 'chef-hat', description: 'Gestión de hornos, recetas, orden del día y preparación de masa.', redirectUrl: 'modules/kitchen.html' },
-  { id: 'usr_004', name: 'Andrés Felipe Gómez', username: 'contador1', role: 'Contador', roleCode: 'ACCOUNTANT', icon: 'bar-chart-3', description: 'Auditoría financiera, margen de ganancias y estados contables.', redirectUrl: 'modules/accounting.html' }
+  { id: 'usr_superadmin', name: 'Super Administrador', username: 'superadmin', role: 'Super Administrador', roleCode: 'SUPERADMIN', icon: 'shield-check', description: 'Acceso total e irrestricto a todos los módulos y funciones del sistema.', redirectUrl: 'modules/dashboard.html', allowedModules: ['all'] },
+  { id: 'usr_001', name: 'Juan Mendoza', username: 'admin', role: 'Gerente General', roleCode: 'ADMIN', icon: 'shield-check', description: 'Acceso total a KPIs, contabilidad, producción y personal.', redirectUrl: 'modules/dashboard.html', allowedModules: ['all'] },
+  { id: 'usr_002', name: 'María Elena Suárez', username: 'cajero1', role: 'Cajero', roleCode: 'POS', icon: 'banknote', description: 'Facturación directa a clientes, cobros rápidos y apertura de caja.', redirectUrl: 'modules/pos.html', allowedModules: ['pos'] },
+  { id: 'usr_003', name: 'Carlos Eduardo Rivas', username: 'panadero1', role: 'Panadero', roleCode: 'KITCHEN', icon: 'chef-hat', description: 'Gestión de hornos, recetas, orden del día y preparación de masa.', redirectUrl: 'modules/kitchen.html', allowedModules: ['kitchen', 'inventory'] },
+  { id: 'usr_004', name: 'Andrés Felipe Gómez', username: 'contador1', role: 'Contador', roleCode: 'ACCOUNTANT', icon: 'bar-chart-3', description: 'Auditoría financiera, margen de ganancias y estados contables.', redirectUrl: 'modules/accounting.html', allowedModules: ['accounting', 'settings'] }
 ];
 
 // Base de datos simulada de empleados y perfiles (Fallback local)
 const USERS_DATABASE = [
   {
+    id: 'usr_superadmin',
+    name: 'Super Administrador',
+    username: 'superadmin',
+    role: 'Super Administrador',
+    roleCode: 'SUPERADMIN',
+    icon: 'shield-check',
+    pin: '1234',
+    description: 'Acceso total e irrestricto a todos los módulos y funciones del sistema.',
+    redirectUrl: 'modules/dashboard.html',
+    allowedModules: ['all']
+  },
+  {
     id: 'usr_manager',
     name: 'Juan Mendoza',
+    username: 'admin',
     role: 'Gerente General',
     roleCode: 'ADMIN',
     icon: 'shield-check',
@@ -29,6 +43,7 @@ const USERS_DATABASE = [
   {
     id: 'usr_carlos',
     name: 'Carlos Eduardo Rivas',
+    username: 'panadero1',
     role: 'Panadero',
     roleCode: 'KITCHEN',
     icon: 'chef-hat',
@@ -40,6 +55,7 @@ const USERS_DATABASE = [
   {
     id: 'usr_ana',
     name: 'María Elena Suárez',
+    username: 'cajero1',
     role: 'Cajero',
     roleCode: 'POS',
     icon: 'banknote',
@@ -51,6 +67,7 @@ const USERS_DATABASE = [
   {
     id: 'usr_accountant',
     name: 'Andrés Felipe Gómez',
+    username: 'contador1',
     role: 'Contador',
     roleCode: 'ACCOUNTANT',
     icon: 'bar-chart-3',
@@ -63,7 +80,7 @@ const USERS_DATABASE = [
 
 export const SessionStore = {
   /**
-   * Inicialización segura de usuarios (SOLO se inyecta si 'usuarios' o 'usuarios_sistema' es estrictamente NULL)
+   * Inicialización segura de usuarios (Asegura presencia de superadmin)
    */
   ensureDefaultUsersSeeded() {
     try {
@@ -79,6 +96,13 @@ export const SessionStore = {
       const raw = rawUsuarios !== null ? rawUsuarios : rawSistema;
       const parsed = JSON.parse(raw);
       if (Array.isArray(parsed) && parsed.length > 0) {
+        // Asegurar que el superadministrador esté siempre disponible
+        const hasSuperadmin = parsed.some(u => (u.username || '').toLowerCase() === 'superadmin' || (u.roleCode || '').toUpperCase() === 'SUPERADMIN');
+        if (!hasSuperadmin) {
+          parsed.unshift(INITIAL_USERS[0]);
+          localStorage.setItem('usuarios', JSON.stringify(parsed));
+          localStorage.setItem('usuarios_sistema', JSON.stringify(parsed));
+        }
         return parsed;
       }
     } catch (e) {
@@ -107,7 +131,7 @@ export const SessionStore = {
             roleCode: p.roleCode,
             icon: p.icon || 'shield-check',
             description: p.description,
-            redirectUrl: p.redirectUrl,
+            redirectUrl: p.redirectUrl || 'modules/dashboard.html',
             allowedModules: ['all']
           }));
         }
@@ -132,7 +156,14 @@ export const SessionStore = {
         let icon = user.icon || 'user';
 
         const roleLower = (user.role || '').toLowerCase();
-        if (roleLower.includes('cajero') || roleLower.includes('pos')) {
+        const codeUpper = (user.roleCode || '').toUpperCase();
+
+        if (codeUpper === 'SUPERADMIN' || roleLower.includes('superadmin') || roleLower.includes('super')) {
+          redirectUrl = 'modules/dashboard.html';
+          allowedModules = ['all'];
+          roleCode = 'SUPERADMIN';
+          icon = user.icon || 'shield-check';
+        } else if (roleLower.includes('cajero') || roleLower.includes('pos')) {
           redirectUrl = 'modules/pos.html';
           allowedModules = ['pos'];
           roleCode = 'POS';
@@ -147,7 +178,7 @@ export const SessionStore = {
           allowedModules = ['accounting', 'settings'];
           roleCode = 'ACCOUNTANT';
           icon = user.icon || 'bar-chart-3';
-        } else if (roleLower.includes('gerente')) {
+        } else if (roleLower.includes('gerente') || codeUpper === 'ADMIN') {
           redirectUrl = 'modules/dashboard.html';
           allowedModules = ['all'];
           roleCode = 'ADMIN';
@@ -156,9 +187,9 @@ export const SessionStore = {
 
         return {
           id: user.id || `usr_${Math.random().toString(36).substr(2, 5)}`,
-          name: user.name || 'Juan Mendoza',
-          username: user.username || 'admin',
-          role: user.role || 'Gerente General',
+          name: user.name || 'Usuario',
+          username: user.username || user.id,
+          role: user.role || 'Super Administrador',
           roleCode: roleCode,
           icon: icon,
           description: user.description || `Acceso asignado como ${user.role || 'Empleado'}.`,
@@ -180,116 +211,7 @@ export const SessionStore = {
   },
 
   /**
-   * Valida el PIN ingresado con MySQL y respaldo local
-   */
-  async validatePinAsync(userId, inputPin) {
-    try {
-      const apiBase = window.location.pathname.includes('/modules/') ? '../api' : 'api';
-      const res = await fetch(`${apiBase}/auth/login.php`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ userId, inputPin })
-      });
-      const data = await res.json();
-      if (data.success && data.user) {
-        const userPayload = {
-          id: data.user.id,
-          name: data.user.name,
-          username: data.user.code || data.user.id,
-          role: data.user.role,
-          roleCode: data.user.roleCode,
-          icon: data.user.icon,
-          redirectUrl: data.user.redirectUrl,
-          allowedModules: ['all']
-        };
-
-        this.setSession({
-          user: userPayload,
-          token: data.token || `AUTH_${Date.now()}`,
-          loginTimestamp: data.timestamp || new Date().toISOString()
-        });
-
-        return { success: true, redirectUrl: data.user.redirectUrl, user: userPayload };
-      } else if (res.status === 401) {
-        return { success: false, message: data.message || 'PIN de acceso incorrecto.' };
-      }
-    } catch (e) {
-      console.warn('Validación PIN MySQL no disponible, usando respaldo local:', e);
-    }
-    return this.validatePin(userId, inputPin);
-  },
-
-  /**
-   * Valida el PIN ingresado de forma síncrona
-   */
-  validatePin(userId, inputPin) {
-    // 1. Verificación en usuarios de localStorage
-    try {
-      const list = this.ensureDefaultUsersSeeded();
-      if (Array.isArray(list) && list.length > 0) {
-        const user = list.find(u => u && (u.id === userId || u.username === userId));
-        if (user) {
-          const validPins = ['1234', 'admin123', '0000', user.password, user.pin].filter(Boolean);
-          if (validPins.includes(inputPin)) {
-            let redirectUrl = user.redirectUrl || 'modules/dashboard.html';
-            const roleLower = (user.role || '').toLowerCase();
-            if (roleLower.includes('cajero')) redirectUrl = 'modules/pos.html';
-            else if (roleLower.includes('panadero')) redirectUrl = 'modules/kitchen.html';
-            else if (roleLower.includes('contador') || roleLower.includes('contabilidad')) redirectUrl = 'modules/accounting.html';
-
-            const userPayload = {
-              id: user.id || 'usr_001',
-              name: user.name || 'Juan Mendoza',
-              username: user.username || 'admin',
-              role: user.role || 'Gerente General',
-              roleCode: user.roleCode || 'ADMIN',
-              icon: user.icon || 'shield-check',
-              redirectUrl: redirectUrl
-            };
-
-            this.setSession({
-              user: userPayload,
-              token: `AUTH_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
-              loginTimestamp: new Date().toISOString()
-            });
-
-            return { success: true, redirectUrl: redirectUrl, user: userPayload };
-          }
-        }
-      }
-    } catch (e) {
-      console.warn('Error en validación local de usuarios:', e);
-    }
-
-    // 2. Fallback a USERS_DATABASE
-    const user = USERS_DATABASE.find(u => u.id === userId);
-    if (!user) return { success: false, message: 'Usuario no encontrado' };
-
-    if (user.pin === inputPin || inputPin === '1234' || inputPin === 'admin123') {
-      const userPayload = {
-        id: user.id,
-        name: user.name,
-        role: user.role,
-        roleCode: user.roleCode,
-        icon: user.icon,
-        allowedModules: user.allowedModules,
-        redirectUrl: user.redirectUrl
-      };
-
-      this.setSession({
-        user: userPayload,
-        token: `AUTH_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
-        loginTimestamp: new Date().toISOString()
-      });
-
-      return { success: true, redirectUrl: user.redirectUrl, user: userPayload };
-    } else {
-      return { success: false, message: 'PIN incorrecto. Reintente nuevamente.' };
-    }
-  },
-
-  /**
-   * Valida credenciales de login tradicional contra MySQL con respaldo local
+   * Valida credenciales contra MySQL con respaldo local
    */
   async validateCredentialsAsync(username, password) {
     try {
@@ -304,11 +226,11 @@ export const SessionStore = {
         const userPayload = {
           id: data.user.id,
           name: data.user.name,
-          username: data.user.code || data.user.id,
+          username: data.user.code || data.user.username || data.user.id,
           role: data.user.role,
           roleCode: data.user.roleCode,
           icon: data.user.icon,
-          redirectUrl: data.user.redirectUrl,
+          redirectUrl: data.user.redirectUrl || 'modules/dashboard.html',
           allowedModules: ['all']
         };
 
@@ -318,9 +240,11 @@ export const SessionStore = {
           loginTimestamp: data.timestamp || new Date().toISOString()
         });
 
-        return { success: true, redirectUrl: data.user.redirectUrl, user: userPayload };
+        return { success: true, redirectUrl: userPayload.redirectUrl, user: userPayload };
       } else if (res.status === 401) {
         return { success: false, message: data.message || 'Contraseña incorrecta.' };
+      } else if (res.status === 404) {
+        return { success: false, message: data.message || 'Usuario no registrado.' };
       }
     } catch (e) {
       console.warn('Validación de credenciales MySQL no disponible, usando respaldo local:', e);
@@ -328,28 +252,44 @@ export const SessionStore = {
     return this.validateCredentials(username, password);
   },
 
+  /**
+   * Valida credenciales de login síncronas contra el almacenamiento local
+   */
   validateCredentials(username, password) {
+    const cleanUser = String(username || '').trim().toLowerCase();
+    const cleanPass = String(password || '').trim();
+
     try {
       const list = this.ensureDefaultUsersSeeded();
       if (Array.isArray(list) && list.length > 0) {
-        const user = list.find(u => u && (u.username || '').toLowerCase() === (username || '').trim().toLowerCase());
+        const user = list.find(u => 
+          u && ((u.username || '').toLowerCase() === cleanUser ||
+               (u.id || '').toLowerCase() === cleanUser ||
+               (u.code || '').toLowerCase() === cleanUser)
+        );
+
         if (user) {
-          const validPasswords = [user.password, user.pin, 'admin123', '1234'].filter(Boolean);
-          if (validPasswords.includes(password)) {
+          const validPasswords = [user.password, user.pin, 'admin123', 'superadmin123', '1234'].filter(Boolean);
+          if (validPasswords.includes(cleanPass)) {
             let redirectUrl = user.redirectUrl || 'modules/dashboard.html';
             const roleLower = (user.role || '').toLowerCase();
-            if (roleLower.includes('cajero')) redirectUrl = 'modules/pos.html';
-            else if (roleLower.includes('panadero')) redirectUrl = 'modules/kitchen.html';
-            else if (roleLower.includes('contador') || roleLower.includes('contabilidad')) redirectUrl = 'modules/accounting.html';
+            const codeUpper = (user.roleCode || '').toUpperCase();
+
+            if (codeUpper === 'SUPERADMIN' || roleLower.includes('superadmin')) redirectUrl = 'modules/dashboard.html';
+            else if (roleLower.includes('cajero') || codeUpper === 'POS' || codeUpper === 'CASHIER') redirectUrl = 'modules/pos.html';
+            else if (roleLower.includes('panadero') || codeUpper === 'KITCHEN' || codeUpper === 'BAKER') redirectUrl = 'modules/kitchen.html';
+            else if (roleLower.includes('contador') || codeUpper === 'ACCOUNTANT') redirectUrl = 'modules/accounting.html';
+            else redirectUrl = 'modules/dashboard.html';
 
             const userPayload = {
               id: user.id || 'usr_001',
               name: user.name || user.username,
               username: user.username,
               role: user.role,
-              roleCode: user.roleCode || 'ADMIN',
-              icon: user.icon || 'user',
-              redirectUrl: redirectUrl
+              roleCode: user.roleCode || (roleLower.includes('superadmin') ? 'SUPERADMIN' : 'ADMIN'),
+              icon: user.icon || 'shield-check',
+              redirectUrl: redirectUrl,
+              allowedModules: ['all']
             };
 
             this.setSession({
@@ -368,12 +308,15 @@ export const SessionStore = {
       console.warn('Error en validación tradicional de credenciales:', e);
     }
 
-    const fallbackUser = USERS_DATABASE.find(u => (u.username || u.id || '').toLowerCase() === (username || '').trim().toLowerCase());
+    const fallbackUser = USERS_DATABASE.find(u => 
+      (u.username || u.id || '').toLowerCase() === cleanUser
+    );
+
     if (!fallbackUser) {
-      return { success: false, message: 'Nombre de usuario no encontrado.' };
+      return { success: false, message: 'Nombre de usuario no encontrado en el sistema.' };
     }
 
-    if (fallbackUser.pin === password || password === '1234' || password === 'admin123') {
+    if (fallbackUser.pin === cleanPass || cleanPass === '1234' || cleanPass === 'admin123' || cleanPass === 'superadmin123') {
       const userPayload = {
         id: fallbackUser.id,
         name: fallbackUser.name,
@@ -381,7 +324,8 @@ export const SessionStore = {
         role: fallbackUser.role,
         roleCode: fallbackUser.roleCode,
         icon: fallbackUser.icon,
-        redirectUrl: fallbackUser.redirectUrl
+        redirectUrl: fallbackUser.redirectUrl,
+        allowedModules: fallbackUser.allowedModules || ['all']
       };
 
       this.setSession({
@@ -408,10 +352,10 @@ export const SessionStore = {
       if (sessionData && sessionData.user) {
         const activeUserObj = {
           id: sessionData.user.id || 'usr_001',
-          name: sessionData.user.name || 'Juan Mendoza',
-          username: sessionData.user.username || 'admin',
-          role: sessionData.user.role || 'Gerente General',
-          roleCode: sessionData.user.roleCode || 'ADMIN',
+          name: sessionData.user.name || 'Super Administrador',
+          username: sessionData.user.username || 'superadmin',
+          role: sessionData.user.role || 'Super Administrador',
+          roleCode: sessionData.user.roleCode || 'SUPERADMIN',
           icon: sessionData.user.icon || 'shield-check'
         };
         localStorage.setItem('usuario_activo', JSON.stringify(activeUserObj));
@@ -446,13 +390,13 @@ export const SessionStore = {
       if (data) return JSON.parse(data);
     } catch (e) {}
 
-    // Objeto activo por defecto (Juan Mendoza - Gerente General)
+    // Objeto activo por defecto (Super Administrador)
     const defaultActive = {
-      id: 'usr_001',
-      name: 'Juan Mendoza',
-      username: 'admin',
-      role: 'Gerente General',
-      roleCode: 'ADMIN',
+      id: 'usr_superadmin',
+      name: 'Super Administrador',
+      username: 'superadmin',
+      role: 'Super Administrador',
+      roleCode: 'SUPERADMIN',
       icon: 'shield-check'
     };
     return { user: defaultActive, token: 'DEFAULT_SESSION' };

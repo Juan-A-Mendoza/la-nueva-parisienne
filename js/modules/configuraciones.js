@@ -446,7 +446,9 @@ function inicializarGestionUsuarios() {
       const tr = document.createElement('tr');
       
       let badgeStyle = 'background: rgba(46,125,50,0.1); color: var(--color-success); border: 1px solid rgba(46,125,50,0.25);';
-      if (user.roleCode === 'ADMIN') {
+      if (user.roleCode === 'SUPERADMIN' || (user.role || '').toLowerCase().includes('superadmin')) {
+        badgeStyle = 'background: rgba(106,27,154,0.15); color: #6A1B9A; border: 1px solid rgba(106,27,154,0.4); font-weight: 800;';
+      } else if (user.roleCode === 'ADMIN') {
         badgeStyle = 'background: rgba(212,155,84,0.15); color: var(--color-gold-dark); border: 1px solid rgba(212,155,84,0.4); font-weight: 800;';
       } else if (user.roleCode === 'KITCHEN') {
         badgeStyle = 'background: rgba(255,152,0,0.1); color: #E65100; border: 1px solid rgba(255,152,0,0.3); font-weight: 700;';
@@ -618,7 +620,10 @@ function inicializarGestionUsuarios() {
       let finalIcon = icon || 'shield-check';
 
       const rLower = (role || '').toLowerCase();
-      if (rLower.includes('gerente')) {
+      if (rLower.includes('superadmin') || rLower.includes('super')) {
+        roleCode = 'SUPERADMIN';
+        finalIcon = 'shield-check';
+      } else if (rLower.includes('gerente') || rLower.includes('admin')) {
         roleCode = 'ADMIN';
       } else if (rLower.includes('panadero') || rLower.includes('cocina')) {
         roleCode = 'KITCHEN';

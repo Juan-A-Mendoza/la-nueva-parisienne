@@ -374,9 +374,11 @@ function inicializarSesionYBarraSuperior() {
   // 1. Verificación Estricta de Permisos de Gerencia
   const userRole = (activeUser.role || '').toLowerCase();
   const userRoleCode = (activeUser.roleCode || activeUser.role_code || '').toUpperCase();
-  const isGerente = userRoleCode === 'ADMIN' ||
+  const isGerente = userRoleCode === 'SUPERADMIN' ||
+                    userRoleCode === 'ADMIN' ||
                     userRoleCode === 'MANAGER' ||
                     userRoleCode === 'GERENTE' ||
+                    userRole.includes('superadmin') ||
                     userRole.includes('gerente') ||
                     userRole.includes('administrador') ||
                     userRole.includes('manager') ||
