@@ -7,6 +7,7 @@ import { SessionStore } from '../core/session-store.js';
 import { OVENS_INITIAL_STATE, KDS_ORDERS_INITIAL_STATE, STAGING_BATCHES_INITIAL_STATE } from '../data/kitchen-db.js';
 import { BAKERY_RECIPES } from '../data/recipes-db.js';
 import { INVENTORY_DATABASE } from '../data/inventory-db.js';
+import { PRODUCTS_DATABASE } from '../data/products-db.js';
 
 document.addEventListener('DOMContentLoaded', () => {
   // 1. Verificación de Seguridad y Sesión Resiliente
@@ -128,6 +129,132 @@ document.addEventListener('DOMContentLoaded', () => {
   const descargaWasteReason = document.getElementById('descargaWasteReason');
   const descargaNetQty = document.getElementById('descargaNetQty');
 
+  // Constante y Helpers de Persistencia Local & Sincronización
+  const LOCAL_STORAGE_OVENS_KEY = 'lnp_kitchen_ovens_state';
+
+  function saveOvensToLocalStorage() {
+    try {
+      localStorage.setItem(LOCAL_STORAGE_OVENS_KEY, JSON.stringify(ovens));
+    } catch (e) {}
+  }
+
+  function loadOvensFromLocalStorage() {
+    try {
+      const raw = localStorage.getItem(LOCAL_STORAGE_OVENS_KEY);
+      if (raw) {
+        const parsed = JSON.parse(raw);
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          const now = Date.now();
+          ovens = parsed.map(o => {
+            if (o.status === 'baking' && o.endTime) {
+              const rem = Math.max(0, Math.round((o.endTime - now) / 1000));
+              if (o.batch) o.batch.remainingSeconds = rem;
+              if (rem <= 0) {
+                o.status = 'ready';
+              }
+            }
+            return o;
+          });
+          renderOvens();
+          updateKPIs();
+        }
+      }
+    } catch (e) {
+      console.warn('Error leyendo estado local de hornos:', e);
+    }
+  }
+
+  function addStockToPosAndInventory(prodCode, prodName, netUnits, newDbStock) {
+    try {
+      // 1. Sincronizar 'catalogo_pos' en localStorage (Fuente de Verdad del POS y Gerente)
+      let catalogList = [];
+      const stored = localStorage.getItem('catalogo_pos');
+      if (stored) {
+        try { catalogList = JSON.parse(stored); } catch (e) { catalogList = []; }
+      }
+      if (!Array.isArray(catalogList) || catalogList.length === 0) {
+        catalogList = JSON.parse(JSON.stringify(PRODUCTS_DATABASE));
+      }
+
+      const pCodeClean = (prodCode || '').trim();
+      const pNameClean = (prodName || '').trim().toLowerCase();
+
+      let found = catalogList.find(p => 
+        (pCodeClean && (p.code === pCodeClean || p.id === pCodeClean)) ||
+        (pNameClean && p.name && (p.name.toLowerCase() === pNameClean || p.name.toLowerCase().includes(pNameClean) || pNameClean.includes(p.name.toLowerCase())))
+      );
+
+      if (found) {
+        if (typeof newDbStock === 'number' && newDbStock > 0) {
+          found.stock = newDbStock;
+        } else {
+          found.stock = (parseFloat(found.stock) || 0) + netUnits;
+        }
+      } else {
+        found = {
+          id: `prod_${pCodeClean || Date.now()}`,
+          code: pCodeClean || 'PAN-001',
+          name: prodName || 'Producto Horneado',
+          category: 'panaderia',
+          price: 2.50,
+          unitCost: 1.20,
+          unit: 'Und',
+          stock: (typeof newDbStock === 'number' && newDbStock > 0) ? newDbStock : netUnits,
+          minStock: 15,
+          icon: '🥖',
+          showInPos: true,
+          description: 'Recién horneado en cocina.'
+        };
+        catalogList.push(found);
+      }
+
+      localStorage.setItem('catalogo_pos', JSON.stringify(catalogList));
+
+      // 2. Registrar movimiento en la auditoría de inventario (movimientos_inventario)
+      let movs = [];
+      try {
+        const storedMovs = localStorage.getItem('movimientos_inventario');
+        if (storedMovs) movs = JSON.parse(storedMovs);
+      } catch (e) {}
+      if (!Array.isArray(movs)) movs = [];
+
+      const newMov = {
+        id: 'mov_' + Date.now(),
+        date: new Date().toISOString().replace('T', ' ').slice(0, 19),
+        type: 'ingreso_produccion',
+        concept: `Horneado Finalizado: +${netUnits} ud de ${found.name}`,
+        category: 'Producto Terminado',
+        item: found.name,
+        code: found.code,
+        quantity: netUnits,
+        unit: found.unit || 'Und',
+        user: activeChef.name || 'Maestro Panadero',
+        status: 'Completado'
+      };
+      movs.unshift(newMov);
+      localStorage.setItem('movimientos_inventario', JSON.stringify(movs.slice(0, 100)));
+
+      // 3. Notificar en vivo vía eventos y BroadcastChannel a Caja y Tablero
+      window.dispatchEvent(new Event('catalogoPosChanged'));
+      window.dispatchEvent(new StorageEvent('storage', { key: 'catalogo_pos' }));
+      window.dispatchEvent(new StorageEvent('storage', { key: 'movimientos_inventario' }));
+
+      if (typeof BroadcastChannel !== 'undefined') {
+        const channel = new BroadcastChannel('lnp_pos_catalog_channel');
+        channel.postMessage({
+          type: 'catalog_updated',
+          productCode: found.code,
+          unitsAdded: netUnits,
+          totalStock: found.stock,
+          timestamp: Date.now()
+        });
+        setTimeout(() => channel.close(), 1000);
+      }
+    } catch (errSync) {
+      console.error('Error sincronizando stock con POS e Inventario:', errSync);
+    }
+  }
+
   // 4. FUNCIÓN DE CARGA DINÁMICA INTEGRAL (GET_ESTADO_COMPLETO.PHP)
   async function fetchKitchenState() {
     try {
@@ -144,14 +271,34 @@ document.addEventListener('DOMContentLoaded', () => {
       if (data && data.success) {
         if (Array.isArray(data.hornos) && data.hornos.length > 0) {
           const currentOvensMap = new Map(ovens.map(o => [o.id, o]));
+          const now = Date.now();
+
           ovens = data.hornos.map(h => {
             const current = currentOvensMap.get(h.id);
-            // Si el horno ya estaba horneando en vivo en la pantalla, conservar el temporizador decreciente
-            if (current && current.status === 'baking' && current.batch && h.status === 'baking' && h.batch) {
-              h.batch.remainingSeconds = current.batch.remainingSeconds;
+            let endTimeMs = h.endTime ? new Date(h.endTime).getTime() : null;
+            let startTimeMs = h.startTime ? new Date(h.startTime).getTime() : null;
+
+            // Conservar precisión local si el temporizador ya estaba corriendo
+            if (current && current.status === 'baking' && current.endTime && (!endTimeMs || Math.abs(current.endTime - endTimeMs) < 10000)) {
+              endTimeMs = current.endTime;
+              startTimeMs = current.startTime || startTimeMs;
             }
+
+            if (h.status === 'baking' && endTimeMs) {
+              const rem = Math.max(0, Math.round((endTimeMs - now) / 1000));
+              if (h.batch) h.batch.remainingSeconds = rem;
+              if (rem <= 0) {
+                h.status = 'ready';
+              }
+            } else if (h.status === 'baking' && !endTimeMs && h.batch && h.batch.remainingSeconds > 0) {
+              endTimeMs = now + (h.batch.remainingSeconds * 1000);
+            }
+
+            h.startTime = startTimeMs;
+            h.endTime = endTimeMs;
             return h;
           });
+          saveOvensToLocalStorage();
         }
 
         if (Array.isArray(data.alertas_reposicion)) {
@@ -182,8 +329,6 @@ document.addEventListener('DOMContentLoaded', () => {
               recommendedTimeMin: parseInt(l.tiempo_recomendado_min) || 20
             };
           });
-        } else {
-          stagingBatches = [];
         }
       }
     } catch (err) {
@@ -195,16 +340,34 @@ document.addEventListener('DOMContentLoaded', () => {
     renderAll();
   }
 
-  // Bucle de Temporizadores en Tiempo Real (Cada 1 Segundo)
+  // Bucle de Temporizadores en Tiempo Real (Cada 1 Segundo basado en tiempo real)
   setInterval(() => {
     let stateChanged = false;
-    ovens.forEach(oven => {
-      if (oven.status === 'baking' && oven.batch && oven.batch.remainingSeconds > 0) {
-        oven.batch.remainingSeconds--;
-        stateChanged = true;
+    const now = Date.now();
 
-        if (oven.batch.remainingSeconds <= 0) {
-          oven.status = 'ready';
+    ovens.forEach(oven => {
+      if (oven.status === 'baking' && oven.batch) {
+        if (oven.endTime) {
+          const rem = Math.max(0, Math.round((oven.endTime - now) / 1000));
+          if (oven.batch.remainingSeconds !== rem) {
+            oven.batch.remainingSeconds = rem;
+            stateChanged = true;
+          }
+          if (rem <= 0) {
+            oven.status = 'ready';
+            stateChanged = true;
+            fetch('../api/kitchen/forzar_horneado_listo.php', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ ovenId: oven.id })
+            }).catch(() => {});
+          }
+        } else if (oven.batch.remainingSeconds > 0) {
+          oven.batch.remainingSeconds--;
+          stateChanged = true;
+          if (oven.batch.remainingSeconds <= 0) {
+            oven.status = 'ready';
+          }
         }
       }
     });
@@ -212,6 +375,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if (stateChanged) {
       renderOvens();
       updateKPIs();
+      saveOvensToLocalStorage();
     }
   }, 1000);
 
@@ -733,33 +897,12 @@ document.addEventListener('DOMContentLoaded', () => {
       bakedTodayCount += net;
       oven.status = 'idle';
       oven.batch = null;
+      oven.startTime = null;
+      oven.endTime = null;
+      saveOvensToLocalStorage();
 
-      // Sincronizar catálogo POS vía BroadcastChannel
-      try {
-        const channel = new BroadcastChannel('lnp_pos_catalog_channel');
-        channel.postMessage({
-          type: 'STOCK_RESTOCKED',
-          productCode: pCode,
-          unitsAdded: net,
-          totalStock: data.newStock
-        });
-        channel.close();
-      } catch (errBc) {}
-
-      // Actualizar stock en localStorage si existe catálogo
-      try {
-        const rawPos = localStorage.getItem('pos_products');
-        if (rawPos) {
-          const parsed = JSON.parse(rawPos);
-          if (Array.isArray(parsed)) {
-            const found = parsed.find(p => p.codigo === pCode || p.nombre === pName);
-            if (found) {
-              found.stock_actual = (Number(found.stock_actual) || 0) + net;
-              localStorage.setItem('pos_products', JSON.stringify(parsed));
-            }
-          }
-        }
-      } catch (errLs) {}
+      // Sincronizar catálogo POS e Inventario en tiempo real
+      addStockToPosAndInventory(data.productCode || pCode, data.productName || pName, net, data.newStock);
 
       closeDescargaVitrinaModal();
 
@@ -971,10 +1114,16 @@ document.addEventListener('DOMContentLoaded', () => {
       remainingSeconds: timeMin * 60
     };
 
+    const now = Date.now();
+    const durationMs = timeMin * 60 * 1000;
+
     oven.currentTemp = temp;
     oven.targetTemp = temp;
     oven.status = 'baking';
     oven.batch = batchInfo;
+    oven.startTime = now;
+    oven.endTime = now + durationMs;
+    saveOvensToLocalStorage();
 
     // Persistir inicio de horneado en MySQL
     const ovenPayload = {
@@ -990,6 +1139,13 @@ document.addEventListener('DOMContentLoaded', () => {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(ovenPayload)
+    }).then(r => r.json()).then(data => {
+      if (data && data.success && data.oven) {
+        if (data.oven.endTime) {
+          oven.endTime = new Date(data.oven.endTime).getTime();
+        }
+        saveOvensToLocalStorage();
+      }
     }).catch(() => {
       fetch('api/kitchen/iniciar_horneado.php', {
         method: 'POST',
@@ -1006,8 +1162,11 @@ document.addEventListener('DOMContentLoaded', () => {
   const ovenDetailModal = document.getElementById('ovenDetailModal');
   const closeOvenDetailModalBtn = document.getElementById('closeOvenDetailModalBtn');
   const closeOvenDetailModalFooterBtn = document.getElementById('closeOvenDetailModalFooterBtn');
+  const btnFastFinishBake = document.getElementById('btnFastFinishBake');
+  let currentDetailOvenId = null;
 
   function openOvenDetailModal(ovenId) {
+    currentDetailOvenId = ovenId;
     const oven = ovens.find(o => o.id === ovenId);
     if (!oven || !oven.batch) return;
 
@@ -1036,6 +1195,43 @@ document.addEventListener('DOMContentLoaded', () => {
 
     if (ovenDetailModal) ovenDetailModal.classList.add('active');
   }
+
+  btnFastFinishBake?.addEventListener('click', async () => {
+    if (!currentDetailOvenId) return;
+    const oven = ovens.find(o => o.id === currentDetailOvenId);
+    if (!oven || oven.status !== 'baking') return;
+
+    btnFastFinishBake.disabled = true;
+    btnFastFinishBake.innerHTML = '<span>Finalizando horneado...</span>';
+
+    try {
+      let res = await fetch('../api/kitchen/forzar_horneado_listo.php', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ovenId: oven.id })
+      });
+      if (!res.ok) {
+        res = await fetch('api/kitchen/forzar_horneado_listo.php', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ ovenId: oven.id })
+        });
+      }
+    } catch (e) {}
+
+    oven.status = 'ready';
+    if (oven.batch) oven.batch.remainingSeconds = 0;
+    oven.endTime = Date.now();
+    saveOvensToLocalStorage();
+    renderAll();
+    ovenDetailModal?.classList.remove('active');
+
+    btnFastFinishBake.disabled = false;
+    btnFastFinishBake.innerHTML = '<i data-lucide="check-circle" class="icon-xs"></i> <span>¡Marcar Horneado Listo!</span>';
+
+    // Abrir directamente modal de descarga para ingresar a vitrina POS
+    openDescargaVitrinaModal(oven.id);
+  });
 
   closeOvenDetailModalBtn?.addEventListener('click', () => {
     ovenDetailModal?.classList.remove('active');
@@ -2122,6 +2318,9 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   inicializarRecetarioCocina();
+
+  // Cargar estado inicial inmediato desde almacenamiento local para evitar parpadeos
+  loadOvensFromLocalStorage();
 
   // Cargar estado inicial integral desde la base de datos MySQL
   fetchKitchenState();

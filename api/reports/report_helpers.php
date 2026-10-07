@@ -136,17 +136,18 @@ function reportResolveActor(PDO $pdo, array $input) {
 }
 
 function reportRequireContext(array $actor, $context) {
-    $allowed = $context === 'caja'
-        ? reportIsCashier($actor['role'])
-        : reportIsManager($actor['role']);
+    $role = reportRole($actor['role'] ?? '');
+    $isManager = in_array($role, ['ADMIN', 'SUPERADMIN', 'GERENTE', 'MANAGER'], true);
+    $isCashier = in_array($role, ['POS', 'CASHIER', 'CAJERO'], true) || $isManager;
+    $allowed = ($context === 'caja') ? $isCashier : $isManager;
 
     if (!$allowed) {
         reportJson([
             'success' => false,
             'code' => 'REPORT_ROLE_FORBIDDEN',
             'message' => $context === 'caja'
-                ? 'El reporte de Caja solo está disponible para cajeros.'
-                : 'El reporte gerencial solo está disponible para el Gerente.'
+                ? 'El cierre de Caja está disponible para personal de Caja y Administración.'
+                : 'El reporte gerencial solo está disponible para el Gerente General.'
         ], 403);
     }
 }
@@ -182,7 +183,7 @@ function reportApplySaleScope(array $actor, array $input, array &$where, array &
         }
 
         $shift = reportText($input['turno'] ?? $input['shift'] ?? '');
-        if ($shift !== '') {
+        if ($shift !== '' && strtolower($shift) !== 'todos') {
             $where[] = $shiftExpr . ' = :scope_shift';
             $params['scope_shift'] = $shift;
         }
@@ -196,14 +197,12 @@ function reportApplySaleScope(array $actor, array $input, array &$where, array &
     $params['scope_date_from'] = $date . ' 00:00:00';
     $params['scope_date_to'] = date('Y-m-d H:i:s', strtotime($date . ' +1 day'));
 
-    // En Caja no se filtra por cajero ni por caja. El único alcance operativo
-    // permitido es el turno actual del usuario.
-    // El turno del cajero nunca proviene de un filtro manipulable: se toma
-    // exclusivamente del usuario autenticado resuelto arriba.
-    $shift = reportText($actor['shift']);
-    if ($shift !== '') {
-        $where[] = $shiftExpr . ' = :scope_shift';
+    $shift = reportText($input['turno'] ?? $input['shift'] ?? '');
+    // Si se especifica un turno concreto distinto de 'todos' y 'sin turno', filtramos por coincidencia
+    if ($shift !== '' && strtolower($shift) !== 'todos' && strtolower($shift) !== 'sin turno') {
+        $where[] = "($shiftExpr = :scope_shift OR $shiftExpr LIKE :scope_shift_like)";
         $params['scope_shift'] = $shift;
+        $params['scope_shift_like'] = '%' . $shift . '%';
     }
 
     return ['date' => $date, 'shift' => $shift];
@@ -269,8 +268,10 @@ function reportPaymentLabel($method) {
     if ($method === '') return 'SIN MÉTODO';
     $key = strtolower(strtr($method, ['á' => 'a', 'é' => 'e', 'í' => 'i', 'ó' => 'o', 'ú' => 'u']));
     if (in_array($key, ['efectivo', 'cash'], true)) return 'Efectivo';
-    if (in_array($key, ['debito', 'tarjeta debito', 'tarjeta de debito'], true)) return 'Tarjeta Débito';
+    if (in_array($key, ['debito', 'tarjeta debito', 'tarjeta de debito', 'punto'], true)) return 'Tarjeta Débito';
     if (in_array($key, ['credito', 'tarjeta credito', 'tarjeta de credito'], true)) return 'Tarjeta Crédito';
     if (in_array($key, ['pagomovil', 'pago movil'], true)) return 'Pago Móvil';
-    return $method;
+    if (in_array($key, ['transferencia', 'transf', 'banco'], true)) return 'Transferencia';
+    if (in_array($key, ['zelle'], true)) return 'Zelle';
+    return ucfirst($method);
 }

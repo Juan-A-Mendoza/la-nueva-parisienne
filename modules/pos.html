@@ -9,7 +9,7 @@
   <!-- Hojas de Estilos Separadas (CSS3 Estricto) -->
   <link rel="stylesheet" href="../css/main.css">
   <link rel="stylesheet" href="../css/modules/pos.css">
-  <link rel="stylesheet" href="../css/modules/caja-reportes.css?v=20260930">
+  <link rel="stylesheet" href="../css/modules/caja-reportes.css?v=20261007-cierre-z">
 </head>
 <body>
 
@@ -40,8 +40,8 @@
             </div>
           </div>
 
-          <button id="btnReportsView" class="btn-pos-reports" title="Ver Arqueos y Reportes de Caja">
-            <i data-lucide="bar-chart-3" class="icon-sm"></i> <span>Reportes</span>
+          <button id="btnCierreCaja" class="btn-pos-cierre" title="Realizar Arqueo y Cierre de Caja (Cierre Z)">
+            <i data-lucide="lock" class="icon-sm"></i> <span>Cierre de Caja</span>
           </button>
 
           <button id="logoutBtn" class="btn-pos-logout" title="Cerrar sesión activa y volver al login">
@@ -404,10 +404,174 @@
 
   </div>
 
-  <!-- REPORTES EXCLUSIVOS DE CAJA: no intervienen en ventas ni cobros -->
-  <section id="cashReportsSection" class="cash-reports-section cash-reports-caja-overlay no-print" data-report-context="caja" aria-label="Reportes de Caja" hidden>
-    <div id="cashReportsApp"></div>
-  </section>
+  <!-- ====================================================================
+       MODAL PROFESIONAL: CIERRE DE CAJA (ARQUEO Y CORTE Z)
+       ==================================================================== -->
+  <div id="modalCierreCaja" class="pin-modal-overlay no-print" role="dialog" aria-modal="true" style="display: none; z-index: 9990;">
+    <div class="pin-modal-card cierre-caja-card">
+      <!-- Encabezado con Identidad de Marca -->
+      <div class="cierre-caja-header">
+        <div class="cierre-header-left">
+          <div class="cierre-badge-icon"><i data-lucide="lock"></i></div>
+          <div>
+            <h2 class="cierre-title">Cierre de Caja y Arqueo de Turno</h2>
+            <span class="cierre-subtitle">Corte Z Operativo Oficial • La Nueva Parisienne</span>
+          </div>
+        </div>
+        <button type="button" id="btnCerrarModalCierre" class="cierre-btn-close" aria-label="Cerrar modal">&times;</button>
+      </div>
+
+      <div class="cierre-caja-body">
+        <!-- Barra de Metadatos del Turno en Vivo -->
+        <div class="cierre-meta-grid">
+          <div class="cierre-meta-item">
+            <span class="meta-label">Cajero en Turno</span>
+            <strong id="cierreCajeroNombre" class="meta-val">María Elena Suárez</strong>
+          </div>
+          <div class="cierre-meta-item">
+            <span class="meta-label">Turno Activo</span>
+            <strong id="cierreTurnoNombre" class="meta-val">Turno Mañana</strong>
+          </div>
+          <div class="cierre-meta-item">
+            <span class="meta-label">Fecha y Hora</span>
+            <strong id="cierreFechaHora" class="meta-val">--/--/---- --:--</strong>
+          </div>
+          <div class="cierre-meta-item">
+            <span class="meta-label">Tasa Oficial BCV</span>
+            <strong id="cierreTasaBcv" class="meta-val">Bs. -- / USD</strong>
+          </div>
+        </div>
+
+        <!-- Alerta de Cierre Previo (si ya fue cerrado hoy) -->
+        <div id="cierreAlertaPrevio" class="cierre-alert-warning" style="display: none;">
+          <i data-lucide="alert-circle" class="icon-sm"></i>
+          <span>Ya existe un Cierre Z registrado hoy (<strong id="cierrePrevioCodigo">Z-...</strong> a las <span id="cierrePrevioHora">--:--</span>). Puedes consultar el cierre o generar un nuevo corte Z complementario si hubo ventas posteriores.</span>
+        </div>
+
+        <!-- KPIs Operativos del Turno -->
+        <div class="cierre-kpi-grid">
+          <div class="cierre-kpi-card highlight">
+            <span class="kpi-title">Ventas Netas ($ USD)</span>
+            <span id="cierreKpiVentasNetas" class="kpi-num">$0.00</span>
+            <span id="cierreKpiVentasNetasBs" class="kpi-sub">Bs. 0,00 VES</span>
+          </div>
+          <div class="cierre-kpi-card">
+            <span class="kpi-title">Facturas Emitidas</span>
+            <span id="cierreKpiFacturas" class="kpi-num">0</span>
+            <span class="kpi-sub">Ventas completadas</span>
+          </div>
+          <div class="cierre-kpi-card">
+            <span class="kpi-title">Efectivo Esperado</span>
+            <span id="cierreKpiEfectivoEsperado" class="kpi-num">$0.00</span>
+            <span class="kpi-sub">En caja registradora</span>
+          </div>
+          <div class="cierre-kpi-card">
+            <span class="kpi-title">Descuentos</span>
+            <span id="cierreKpiDescuentos" class="kpi-num">$0.00</span>
+            <span class="kpi-sub">Total rebajas aplicadas</span>
+          </div>
+        </div>
+
+        <!-- Desglose por Método de Pago -->
+        <div class="cierre-section-box">
+          <h3 class="cierre-section-title"><i data-lucide="wallet" class="icon-sm"></i> Desglose por Método de Pago</h3>
+          <div class="cierre-table-wrapper">
+            <table class="cierre-table">
+              <thead>
+                <tr>
+                  <th>Método de Pago</th>
+                  <th style="text-align: center;">Transacciones</th>
+                  <th style="text-align: right;">Total Cobrado ($ USD)</th>
+                  <th style="text-align: right;">Equivalente (Bs. VES)</th>
+                </tr>
+              </thead>
+              <tbody id="cierrePagosTbody">
+                <tr><td colspan="4" style="text-align: center; color: #8C7868; padding: 1rem;">Cargando datos del turno...</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- Sección de Arqueo Físico de Efectivo -->
+        <div class="cierre-section-box arqueo-box">
+          <h3 class="cierre-section-title"><i data-lucide="banknote" class="icon-sm"></i> Arqueo Físico de Efectivo en Gaveta</h3>
+          <div class="arqueo-grid">
+            <div class="arqueo-input-col">
+              <label for="cierreEfectivoContadoInput" class="arqueo-label">
+                <span>Efectivo Físico Contado ($ USD):</span>
+                <small>Cuenta los billetes físicos en la caja y escribe el monto total</small>
+              </label>
+              <div class="arqueo-input-wrap">
+                <span class="currency-prefix">$</span>
+                <input type="number" id="cierreEfectivoContadoInput" step="0.01" min="0" placeholder="0.00" class="arqueo-input" />
+              </div>
+            </div>
+
+            <div class="arqueo-diff-col">
+              <div class="diff-card">
+                <span class="diff-title">Estado del Cuadre:</span>
+                <div id="cierreBadgeCuadre" class="cuadre-badge match">
+                  <i data-lucide="check-circle-2" class="icon-sm"></i>
+                  <span id="cierreTextoCuadre">Caja Cuadrada ($0.00)</span>
+                </div>
+                <span id="cierreDetalleDiferencia" class="diff-sub">Esperado: $0.00 | Contado: $0.00</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Observaciones / Novedades -->
+        <div class="cierre-observaciones-box">
+          <label for="cierreObservacionesInput" class="obs-label">Observaciones o Novedades del Turno (Opcional):</label>
+          <textarea id="cierreObservacionesInput" rows="2" placeholder="Ej: Turno cerrado en orden sin discrepancias. Billetes en buen estado..." class="obs-textarea"></textarea>
+        </div>
+
+        <!-- Historial de Cierres de Hoy (Desplegable) -->
+        <details id="cierreHistoricoDetails" class="cierre-historico-details">
+          <summary class="cierre-historico-summary"><i data-lucide="history" class="icon-xs"></i> Ver Cierres Z Anteriores de Hoy (<span id="cierreHistoricoCount">0</span>)</summary>
+          <div id="cierreHistoricoList" class="cierre-historico-list">
+            <div style="font-size: 0.8rem; color: #8C7868; padding: 0.4rem;">No hay cierres anteriores hoy.</div>
+          </div>
+        </details>
+      </div>
+
+      <!-- Footer con Acciones -->
+      <div class="cierre-caja-footer">
+        <button type="button" id="btnCancelarCierre" class="btn-cierre-cancelar">
+          <i data-lucide="arrow-left" class="icon-xs"></i> <span>Continuar Vendiendo</span>
+        </button>
+
+        <div class="cierre-footer-actions-right">
+          <button type="button" id="btnImprimirArqueoX" class="btn-cierre-x" title="Imprimir ticket preliminar de corte X sin sellar turno">
+            <i data-lucide="printer" class="icon-xs"></i> <span>Imprimir Arqueo (X)</span>
+          </button>
+          <button type="button" id="btnConfirmarCierreZ" class="btn-cierre-z">
+            <i data-lucide="lock" class="icon-sm"></i> <span>Realizar Cierre de Caja (Z)</span>
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL DE COMPROBANTE TÉRMICO DE CIERRE Z -->
+  <div id="modalTicketCierreZ" class="pin-modal-overlay no-print" role="dialog" aria-modal="true" style="display: none; z-index: 9995;">
+    <div class="pin-modal-card receipt-card">
+      <button id="btnCloseTicketCierreZ" class="modal-close-btn no-print" aria-label="Cerrar ticket">&times;</button>
+      <div id="ticketCierreContainer">
+        <div id="ticketCierreContent">
+          <!-- Render dinámico del comprobante oficial Z -->
+        </div>
+      </div>
+      <div class="no-print" style="display: flex; gap: 0.75rem; margin-top: 1.25rem;">
+        <button id="btnPrintTicketCierreZ" type="button" class="btn-process-payment no-print" style="background: var(--bg-main); color: var(--color-espresso); border: 1.5px solid var(--color-espresso); font-size: 0.9rem;">
+          <i data-lucide="printer" class="icon-sm"></i> <span>Imprimir Cierre Z</span>
+        </button>
+        <button id="btnFinalizarTurno" type="button" class="btn-process-payment no-print" style="font-size: 0.9rem; background: var(--color-terracotta); color: #fff;">
+          <i data-lucide="check" class="icon-sm"></i> <span>Finalizar Turno</span>
+        </button>
+      </div>
+    </div>
+  </div>
 
   <!-- MODAL ANIMADO DE VENTA COMPLETADA CON CHECKMARK SVG (POS) -->
   <div id="posSuccessModal" class="pin-modal-overlay no-print" role="dialog" aria-modal="true" style="display: none; z-index: 9999;">
@@ -556,7 +720,7 @@
   <script type="module" src="../js/core/modules-nav.js"></script>
   <!-- SCRIPT MODULAR POS -->
   <script type="module" src="../js/modules/pos.js?v=20261003-dynamic-full"></script>
-  <script type="module" src="../js/modules/caja-reportes.js?v=20260930-6"></script>
+  <script type="module" src="../js/modules/caja-reportes.js?v=20261007-cierre-z"></script>
 
 </body>
 </html>

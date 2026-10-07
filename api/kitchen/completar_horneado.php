@@ -16,7 +16,7 @@ if (($_SERVER['REQUEST_METHOD'] ?? '') === 'OPTIONS') {
 
 require_once __DIR__ . '/../config/conexion.php';
 
-$rawInput = file_get_contents('php://input');
+$rawInput = preg_replace('/^\xEF\xBB\xBF/', '', file_get_contents('php://input'));
 $data = json_decode($rawInput, true);
 
 if (!$data) {
@@ -46,39 +46,82 @@ try {
     $pdo = getDbConnection();
     $pdo->beginTransaction();
 
-    // 1. Localizar el producto terminado en la tabla `productos`
-    $stmtFindProd = $pdo->prepare("SELECT id, codigo, nombre, stock_actual FROM productos WHERE codigo = :code OR nombre LIKE :name LIMIT 1");
-    $stmtFindProd->execute([
-        ':code' => $productCode,
-        ':name' => '%' . $productName . '%'
-    ]);
-    $prod = $stmtFindProd->fetch();
+    // 0. Extraer lote_id del horno antes de limpiarlo
+    $stmtGetLote = $pdo->prepare("SELECT lote_id FROM estado_hornos WHERE id = :ovenId");
+    $stmtGetLote->execute([':ovenId' => $ovenId]);
+    $loteRow = $stmtGetLote->fetch();
+    $loteId = !empty($loteRow['lote_id']) ? $loteRow['lote_id'] : null;
+
+    // Si no vino productCode o productName, intentar leerlos del lote
+    if ((empty($productCode) || empty($productName)) && $loteId) {
+        $stmtLoteInfo = $pdo->prepare("SELECT producto, codigo_producto FROM lotes_produccion WHERE id = :lid");
+        $stmtLoteInfo->execute([':lid' => $loteId]);
+        $li = $stmtLoteInfo->fetch();
+        if ($li) {
+            if (empty($productName)) $productName = $li['producto'];
+            if (empty($productCode)) $productCode = $li['codigo_producto'] ?? '';
+        }
+    }
+
+    // 1. Localizar el producto terminado en la tabla `productos` con coincidencia robusta
+    $prod = null;
+    if (!empty($productCode)) {
+        $stmtFindCode = $pdo->prepare("SELECT id, codigo, nombre, stock_actual FROM productos WHERE codigo = :code LIMIT 1");
+        $stmtFindCode->execute([':code' => $productCode]);
+        $prod = $stmtFindCode->fetch();
+    }
+    if (!$prod && !empty($productName)) {
+        $stmtFindName = $pdo->prepare("SELECT id, codigo, nombre, stock_actual FROM productos WHERE nombre = :name OR nombre LIKE :likename OR :name2 LIKE CONCAT('%', nombre, '%') LIMIT 1");
+        $stmtFindName->execute([
+            ':name' => $productName,
+            ':likename' => '%' . $productName . '%',
+            ':name2' => $productName
+        ]);
+        $prod = $stmtFindName->fetch();
+    }
+    if (!$prod) {
+        $pLower = strtolower($productName);
+        $kw = '';
+        if (strpos($pLower, 'baguette') !== false) $kw = 'Baguette';
+        elseif (strpos($pLower, 'croissant') !== false) $kw = 'Croissant';
+        elseif (strpos($pLower, 'chocolat') !== false) $kw = 'Chocolat';
+        elseif (strpos($pLower, 'brioche') !== false) $kw = 'Brioche';
+        elseif (strpos($pLower, 'focaccia') !== false) $kw = 'Focaccia';
+        elseif (strpos($pLower, 'eclair') !== false || strpos($pLower, 'éclair') !== false) $kw = 'Éclair';
+        
+        if ($kw) {
+            $stmtKw = $pdo->prepare("SELECT id, codigo, nombre, stock_actual FROM productos WHERE nombre LIKE :kw LIMIT 1");
+            $stmtKw->execute([':kw' => '%' . $kw . '%']);
+            $prod = $stmtKw->fetch();
+        }
+    }
 
     $prevStock = 0;
     $newStock = 0;
+    $matchedProdCode = $productCode ?: 'PAN-001';
     $matchedProdName = $productName;
 
     if ($prod) {
         $prevStock = (float)$prod['stock_actual'];
         $newStock = $prevStock + $netQty;
+        $matchedProdCode = $prod['codigo'];
         $matchedProdName = $prod['nombre'];
 
-        // Actualizar stock en productos
+        // Actualizar stock en productos MySQL
         $stmtUpdProd = $pdo->prepare("UPDATE productos SET stock_actual = :newStock WHERE id = :id");
         $stmtUpdProd->execute([':newStock' => $newStock, ':id' => $prod['id']]);
+    } else {
+        $newStock = $netQty;
     }
 
     // 2. Liberar el horno en `estado_hornos`
-    $stmtUpdOven = $pdo->prepare("UPDATE estado_hornos SET estado = 'idle', lote_id = NULL, tiempo_restante = 0, tiempo_total = 0 WHERE id = :ovenId");
+    $stmtUpdOven = $pdo->prepare("UPDATE estado_hornos SET estado = 'idle', lote_id = NULL, tiempo_restante = 0, tiempo_total = 0, inicio_en = NULL, fin_estimado = NULL WHERE id = :ovenId");
     $stmtUpdOven->execute([':ovenId' => $ovenId]);
 
-    // 3. Si hubo lote_id en el horno, marcarlo como completado en `lotes_produccion`
-    $stmtGetLote = $pdo->prepare("SELECT lote_id FROM estado_hornos WHERE id = :ovenId");
-    $stmtGetLote->execute([':ovenId' => $ovenId]);
-    $loteRow = $stmtGetLote->fetch();
-    if (!empty($loteRow['lote_id'])) {
+    // 3. Marcar lote completado en `lotes_produccion`
+    if (!empty($loteId)) {
         $stmtUpdLote = $pdo->prepare("UPDATE lotes_produccion SET estado_leudado = 'Entregado a Vitrina' WHERE id = :loteId");
-        $stmtUpdLote->execute([':loteId' => $loteRow['lote_id']]);
+        $stmtUpdLote->execute([':loteId' => $loteId]);
     }
 
     $pdo->commit();
@@ -87,6 +130,7 @@ try {
         'success' => true,
         'message' => "¡Lote horneado con éxito! Se ingresaron {$netQty} unidades de '{$matchedProdName}' a la vitrina del POS.",
         'ovenId' => $ovenId,
+        'productCode' => $matchedProdCode,
         'productName' => $matchedProdName,
         'totalBaked' => $totalBaked,
         'wasteQty' => $wasteQty,

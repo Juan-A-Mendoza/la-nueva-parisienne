@@ -69,7 +69,28 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // Inicializar e intentar sincronizar con MySQL
   renderAll();
+  syncWithPosCatalog();
   loadInventoryFromApi();
+
+  function syncWithPosCatalog() {
+    try {
+      const rawPos = localStorage.getItem('catalogo_pos');
+      if (rawPos) {
+        const parsed = JSON.parse(rawPos);
+        if (Array.isArray(parsed)) {
+          let touched = false;
+          parsed.forEach(cp => {
+            const match = inventory.find(i => i.code === cp.code || i.id === cp.id || i.name === cp.name);
+            if (match && (typeof cp.stock === 'number' || !isNaN(parseFloat(cp.stock)))) {
+              match.currentStock = parseFloat(cp.stock);
+              touched = true;
+            }
+          });
+          if (touched) renderAll();
+        }
+      }
+    } catch (e) {}
+  }
 
   async function loadInventoryFromApi() {
     try {
@@ -78,13 +99,31 @@ document.addEventListener('DOMContentLoaded', () => {
         const data = await res.json();
         if (data.success && Array.isArray(data.inventory) && data.inventory.length > 0) {
           inventory = data.inventory;
+          syncWithPosCatalog();
           populateSelects();
           renderAll();
         }
       }
     } catch (e) {
       console.warn('Inventario: Usando datos de respaldo local.', e);
+      syncWithPosCatalog();
     }
+  }
+
+  // Reactividad en tiempo real (Módulo 2 Cocina / Módulo 3 POS -> Módulo 5 Inventario)
+  window.addEventListener('catalogoPosChanged', () => {
+    loadInventoryFromApi();
+  });
+  window.addEventListener('storage', (e) => {
+    if (e.key === 'catalogo_pos' || e.key === 'movimientos_inventario') {
+      loadInventoryFromApi();
+    }
+  });
+  if (typeof BroadcastChannel !== 'undefined') {
+    const invChannel = new BroadcastChannel('lnp_pos_catalog_channel');
+    invChannel.onmessage = () => {
+      loadInventoryFromApi();
+    };
   }
 
   function renderAll() {

@@ -489,8 +489,11 @@
         </div>
       </div>
 
-      <div class="modal-card-footer">
-        <button id="closeOvenDetailModalFooterBtn" type="button" class="btn-modal-action primary">Entendido / Cerrar</button>
+      <div class="modal-card-footer" style="display: flex; justify-content: space-between; align-items: center; gap: 0.75rem;">
+        <button id="btnFastFinishBake" type="button" class="btn-modal-action" style="background: linear-gradient(135deg, #2E7D32 0%, #1B5E20 100%); color: #FFFFFF; font-weight: 700; border: none; padding: 0.65rem 1.25rem; border-radius: var(--radius-sm); cursor: pointer; display: flex; align-items: center; gap: 0.4rem;">
+          <i data-lucide="check-circle" class="icon-xs"></i> <span>¡Marcar Horneado Listo!</span>
+        </button>
+        <button id="closeOvenDetailModalFooterBtn" type="button" class="btn-modal-action primary">Cerrar</button>
       </div>
     </div>
   </div>

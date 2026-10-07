@@ -30,8 +30,12 @@ try {
             h.tiempo_total, 
             h.estado, 
             h.lote_id,
+            h.inicio_en,
+            h.fin_estimado,
+            TIMESTAMPDIFF(SECOND, NOW(), h.fin_estimado) AS seg_restantes_calc,
             l.codigo AS lote_codigo,
             l.producto AS lote_producto,
+            l.codigo_producto AS lote_codigo_producto,
             l.icono AS lote_icono,
             l.cantidad AS lote_cantidad
         FROM estado_hornos h
@@ -42,25 +46,59 @@ try {
 
     $hornos = [];
     foreach ($hornosDb as $h) {
+        $estado = $h['estado'];
+        $remSeconds = (int)($h['tiempo_restante'] ?? 0);
+        $totalSeconds = (int)($h['tiempo_total'] > 0 ? $h['tiempo_total'] : 1200);
+
+        // Cálculo dinámico en tiempo real según fin_estimado y TIMESTAMPDIFF de MySQL
+        if ($estado === 'baking') {
+            if ($h['fin_estimado'] !== null) {
+                $diff = (int)$h['seg_restantes_calc'];
+                if ($diff <= 0) {
+                    $estado = 'ready';
+                    $remSeconds = 0;
+                    $pdo->prepare("UPDATE estado_hornos SET estado = 'ready', tiempo_restante = 0 WHERE id = :id")->execute([':id' => $h['id']]);
+                    if (!empty($h['lote_id'])) {
+                        $pdo->prepare("UPDATE lotes_produccion SET estado_leudado = 'Horneado Listo' WHERE id = :lid")->execute([':lid' => $h['lote_id']]);
+                    }
+                } else {
+                    $remSeconds = $diff;
+                    $pdo->prepare("UPDATE estado_hornos SET tiempo_restante = :rem WHERE id = :id")->execute([':rem' => $diff, ':id' => $h['id']]);
+                }
+            } else {
+                if ($remSeconds > 0) {
+                    $pdo->prepare("UPDATE estado_hornos SET inicio_en = NOW(), fin_estimado = DATE_ADD(NOW(), INTERVAL :rem SECOND) WHERE id = :id")->execute([':rem' => $remSeconds, ':id' => $h['id']]);
+                } else {
+                    $estado = 'ready';
+                    $remSeconds = 0;
+                    $pdo->prepare("UPDATE estado_hornos SET estado = 'ready', tiempo_restante = 0 WHERE id = :id")->execute([':id' => $h['id']]);
+                }
+            }
+        }
+
         $batch = null;
         if (!empty($h['lote_producto']) || !empty($h['lote_id'])) {
             $batch = [
                 'id' => $h['lote_id'],
                 'code' => $h['lote_codigo'] ?? 'LOTE-ACTIVO',
                 'productName' => $h['lote_producto'] ?? 'Lote en Horneado',
+                'productCode' => $h['lote_codigo_producto'] ?? '',
                 'icon' => $h['lote_icono'] ?? 'croissant',
                 'units' => (int)($h['lote_cantidad'] ?? 50),
-                'totalTimeSeconds' => (int)($h['tiempo_total'] > 0 ? $h['tiempo_total'] : 1200),
-                'remainingSeconds' => (int)($h['tiempo_restante'] ?? 0)
+                'totalTimeSeconds' => $totalSeconds,
+                'remainingSeconds' => $remSeconds
             ];
         }
+
         $hornos[] = [
             'id' => $h['id'],
             'name' => $h['nombre'],
             'type' => $h['tipo'],
             'currentTemp' => (int)$h['temperatura_actual'],
             'targetTemp' => (int)$h['temperatura_objetivo'],
-            'status' => $h['estado'],
+            'status' => $estado,
+            'startTime' => $h['inicio_en'] ? date('c', strtotime($h['inicio_en'])) : null,
+            'endTime' => $h['fin_estimado'] ? date('c', strtotime($h['fin_estimado'])) : null,
             'batch' => $batch
         ];
     }

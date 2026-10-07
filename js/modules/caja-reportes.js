@@ -1,3 +1,9 @@
+/* ============================================================================
+   LA NUEVA PARISIENNE - MÓDULO DE CIERRE DE CAJA (ARQUEO Y CORTE Z)
+   - Operación de Caja (POS): Arqueo en vivo, Cuadre de Gaveta, Cierre Z Oficial
+   - Gerencia (Dashboard): Consulta histórica y auditoría de cortes
+   ============================================================================ */
+
 import { SessionStore } from '../core/session-store.js';
 
 const API_ROOT = '../api/reports/';
@@ -7,268 +13,652 @@ const money = (value) => new Intl.NumberFormat('es-VE', { style: 'currency', cur
 const num = (value) => Number(value || 0).toLocaleString('es-VE', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 const today = () => new Date().toISOString().slice(0, 10);
 
+function currentSessionUser() {
+  try { return SessionStore.getSession()?.user || {}; } catch { return {}; }
+}
+
 function normalizeReportRole(user = {}) {
   const code = String(user.roleCode || user.role_code || '').trim().toUpperCase();
-  if (code.includes('ADMIN') || code.includes('MANAGER') || code.includes('GERENTE')) return 'ADMIN';
+  if (code.includes('ADMIN') || code.includes('MANAGER') || code.includes('GERENTE') || code.includes('SUPERADMIN')) return 'ADMIN';
   if (code.includes('POS') || code.includes('CASHIER') || code.includes('CAJERO') || code.includes('CAJA')) return 'POS';
   const label = String(user.role || '').trim().toLowerCase();
   if (label.includes('gerente') || label.includes('admin')) return 'ADMIN';
   if (label.includes('cajero') || label.includes('caja') || label.includes('pos') || label.includes('cashier')) return 'POS';
-  return code;
-}
-
-function currentSessionUser() {
-  try { return SessionStore.getSession()?.user || {}; } catch (error) { return {}; }
+  return code || 'POS';
 }
 
 function sessionParams() {
   const user = currentSessionUser();
-  return { user_id: user.id || '', role_code: normalizeReportRole(user), user_name: user.name || '', shift: user.shift || '' };
+  return {
+    user_id: user.id || '',
+    role_code: normalizeReportRole(user),
+    user_name: user.name || 'María Elena Suárez',
+    shift: user.shift || ''
+  };
 }
 
-function field(id, label, type = 'text', extra = '') {
-  return `<label class="cash-reports-field"><span>${label}</span><input id="${id}" data-filter="${id}" type="${type}" ${extra}></label>`;
+function queryString(params) {
+  return new URLSearchParams(Object.entries(params).filter(([, value]) => value !== '' && value != null)).toString();
 }
-
-function selectField(id, label, placeholder) {
-  return `<label class="cash-reports-field"><span>${label}</span><select id="${id}" data-filter="${id}"><option value="">${placeholder}</option></select></label>`;
-}
-
-function commonHeader(context) {
-  return `<div class="cash-reports-header">
-    <div><span class="cash-reports-eyebrow">${context === 'caja' ? 'MÓDULO CAJA' : 'DASHBOARD GERENCIAL'}</span>
-    <h2><i data-lucide="folder" class="icon-sm"></i> Reportes de Caja</h2></div>
-    ${context === 'caja' ? '<div class="cash-reports-header-actions"><button type="button" id="cashReportGenerateZ" class="cash-reports-primary">Generar Cierre</button><button type="button" id="cashReportClose" class="cash-reports-close" aria-label="Cerrar Reportes de Caja">Cerrar</button></div>' : '<span class="cash-reports-readonly">Solo lectura gerencial</span>'}
-  </div>`;
-}
-
-function renderShell(root, context) {
-  root.innerHTML = `${commonHeader(context)}
-    <div class="cash-reports-tabs" role="tablist">
-      <button type="button" class="cash-reports-tab active" data-report-tab="z">Cierre de Caja (Z)</button>
-      <button type="button" class="cash-reports-tab" data-report-tab="detail">Detalle de Ventas y Cobros</button>
-    </div>
-    <section class="cash-reports-pane active" data-report-pane="z">
-      <form class="cash-reports-filters" data-filter-form="z">
-        ${context === 'caja' ? field('z_date', 'Fecha', 'date', `value="${today()}"`) + selectField('z_shift', 'Turno', 'Turno actual') : field('z_date_from', 'Fecha desde', 'date') + field('z_date_to', 'Fecha hasta', 'date') + selectField('z_box', 'Caja / punto de venta', 'Todas las cajas') + selectField('z_cashier', 'Cajero', 'Todos los cajeros') + selectField('z_shift', 'Turno', 'Todos los turnos')}
-        <button type="submit" class="cash-reports-secondary">Consultar</button>
-      </form>
-      <div class="cash-reports-status" data-status="z" role="status"></div>
-      <div data-output="z"></div>
-    </section>
-    <section class="cash-reports-pane" data-report-pane="detail" hidden>
-      <div class="cash-reports-subtabs" role="tablist">
-        <button type="button" class="cash-reports-subtab active" data-detail-tab="ventas">Ventas</button>
-        <button type="button" class="cash-reports-subtab" data-detail-tab="cobros">Cobros</button>
-      </div>
-      <form class="cash-reports-filters" data-filter-form="detail">
-        ${context === 'caja' ? field('d_date', 'Fecha', 'date', `value="${today()}"`) : field('d_date_from', 'Fecha desde', 'date') + field('d_date_to', 'Fecha hasta', 'date') + selectField('d_box', 'Caja / punto de venta', 'Todas las cajas') + selectField('d_cashier', 'Cajero', 'Todos los cajeros') + selectField('d_shift', 'Turno', 'Todos los turnos')}
-        ${selectField('d_payment', 'Método de pago', 'Todos los métodos') + field('d_reference', 'Referencia / lote', 'text', 'placeholder="Buscar referencia"') + selectField('d_product', 'Producto', 'Todos los productos') + selectField('d_category', 'Categoría', 'Todas las categorías') + selectField('d_status', 'Estatus', 'Todos los estatus')}
-        <button type="submit" class="cash-reports-secondary">Consultar</button>
-      </form>
-      <div class="cash-reports-status" data-status="detail" role="status"></div>
-      <div data-output="detail"></div>
-    </section>`;
-}
-
-function readFilters(root, mode, context, detailTab = 'ventas') {
-  const params = { ...sessionParams(), context };
-  if (mode === 'z') {
-    if (context === 'caja') { params.date = root.querySelector('#z_date')?.value || today(); params.turno = root.querySelector('#z_shift')?.value || ''; }
-    else { params.date_from = root.querySelector('#z_date_from')?.value || ''; params.date_to = root.querySelector('#z_date_to')?.value || ''; params.caja_id = root.querySelector('#z_box')?.value || ''; params.cajero_id = root.querySelector('#z_cashier')?.value || ''; params.turno = root.querySelector('#z_shift')?.value || ''; }
-    return params;
-  }
-  params.tab = detailTab;
-  if (context === 'caja') { params.date = root.querySelector('#d_date')?.value || today(); }
-  else { params.date_from = root.querySelector('#d_date_from')?.value || ''; params.date_to = root.querySelector('#d_date_to')?.value || ''; params.caja_id = root.querySelector('#d_box')?.value || ''; params.cajero_id = root.querySelector('#d_cashier')?.value || ''; params.turno = root.querySelector('#d_shift')?.value || ''; }
-  params.metodo_pago = root.querySelector('#d_payment')?.value || '';
-  params.referencia_lote = root.querySelector('#d_reference')?.value || '';
-  params.producto_id = root.querySelector('#d_product')?.value || '';
-  params.categoria_id = root.querySelector('#d_category')?.value || '';
-  params.estatus = root.querySelector('#d_status')?.value || '';
-  return params;
-}
-
-function queryString(params) { return new URLSearchParams(Object.entries(params).filter(([, value]) => value !== '' && value != null)).toString(); }
 
 async function getJson(url, options = {}) {
   const response = await fetch(url, options);
   const data = await response.json().catch(() => ({ success: false, message: 'Respuesta inválida del servidor.' }));
-  if (!response.ok && !data.code) throw new Error(data.message || 'No fue posible consultar el reporte.');
+  if (!response.ok && !data.code) throw new Error(data.message || 'No fue posible consultar el cierre.');
   return data;
 }
 
-function setStatus(root, mode, message = '', error = false) {
-  const target = root.querySelector(`[data-status="${mode}"]`);
-  if (target) { target.textContent = message; target.className = `cash-reports-status${error ? ' is-error' : ''}`; }
+function getBcvRate() {
+  return parseFloat(localStorage.getItem('bcv_current_rate') || localStorage.getItem('tasa_auto') || localStorage.getItem('tasa_manual') || localStorage.getItem('tasaManual')) || 784.66;
 }
 
-function populate(select, items, valueKey = 'value', labelKey = 'label') {
-  if (!select) return;
-  const current = select.value;
-  select.innerHTML = `<option value="">${select.options[0]?.textContent || 'Todos'}</option>` + (items || []).map(item => `<option value="${esc(item[valueKey])}">${esc(item[labelKey] ?? item.name ?? item[valueKey])}</option>`).join('');
-  if ([...select.options].some(option => option.value === current)) select.value = current;
-}
+// ============================================================================
+// 1. CONTROLADOR EXCLUSIVO DE CIERRE DE CAJA (POS / CAJA)
+// ============================================================================
+function initPosCierreCaja() {
+  const btnCierre = document.getElementById('btnCierreCaja') || document.getElementById('btnReportsView');
+  const modal = document.getElementById('modalCierreCaja');
+  if (!btnCierre || !modal) return;
 
-function loadCatalogs(root, context) {
-  const query = queryString({ ...sessionParams(), context });
-  return getJson(`${API_ROOT}catalogos.php?${query}`).then(data => {
-    populate(root.querySelector('#z_box'), data.cajas);
-    populate(root.querySelector('#d_box'), data.cajas);
-    populate(root.querySelector('#z_cashier'), data.cajeros, 'id', 'nombre');
-    populate(root.querySelector('#d_cashier'), data.cajeros, 'id', 'nombre');
-    populate(root.querySelector('#z_shift'), data.turnos);
-    populate(root.querySelector('#d_shift'), data.turnos);
-    if (context === 'caja') {
-      const currentShift = data.turno_actual || 'SIN TURNO';
-      ['#z_shift', '#d_shift'].forEach(selector => {
-        const select = root.querySelector(selector);
-        if (select) { select.innerHTML = `<option value="${esc(currentShift)}">${esc(currentShift)}</option>`; select.value = currentShift; select.disabled = true; }
+  const btnCerrarModal = document.getElementById('btnCerrarModalCierre');
+  const btnCancelar = document.getElementById('btnCancelarCierre');
+  const btnImprimirX = document.getElementById('btnImprimirArqueoX');
+  const btnConfirmarZ = document.getElementById('btnConfirmarCierreZ');
+
+  const ticketModal = document.getElementById('modalTicketCierreZ');
+  const btnCloseTicket = document.getElementById('btnCloseTicketCierreZ');
+  const btnPrintTicket = document.getElementById('btnPrintTicketCierreZ');
+  const btnFinalizarTurno = document.getElementById('btnFinalizarTurno');
+  const ticketContent = document.getElementById('ticketCierreContent');
+
+  const efectivoInput = document.getElementById('cierreEfectivoContadoInput');
+  const badgeCuadre = document.getElementById('cierreBadgeCuadre');
+  const textoCuadre = document.getElementById('cierreTextoCuadre');
+  const detalleDiferencia = document.getElementById('cierreDetalleDiferencia');
+  const obsInput = document.getElementById('cierreObservacionesInput');
+
+  let currentClosureData = null;
+  let currentBcvRate = getBcvRate();
+
+  function updateCuadreDiff() {
+    if (!currentClosureData || !efectivoInput) return;
+    const esperado = Number(currentClosureData.summary?.monto_efectivo_esperado || 0);
+    const contado = parseFloat(efectivoInput.value) || 0;
+    const diferencia = Math.round((contado - esperado) * 100) / 100;
+
+    if (badgeCuadre) {
+      if (Math.abs(diferencia) < 0.01) {
+        badgeCuadre.className = 'cuadre-badge match';
+        badgeCuadre.innerHTML = `<i data-lucide="check-circle-2" class="icon-sm"></i> <span>Caja Cuadrada ($0.00)</span>`;
+      } else if (diferencia > 0) {
+        badgeCuadre.className = 'cuadre-badge over';
+        badgeCuadre.innerHTML = `<i data-lucide="arrow-up-right" class="icon-sm"></i> <span>Sobrante: +$${diferencia.toFixed(2)} USD</span>`;
+      } else {
+        badgeCuadre.className = 'cuadre-badge short';
+        badgeCuadre.innerHTML = `<i data-lucide="alert-triangle" class="icon-sm"></i> <span>Faltante: -$${Math.abs(diferencia).toFixed(2)} USD</span>`;
+      }
+      window.LucideIcons?.refresh();
+    }
+
+    if (detalleDiferencia) {
+      detalleDiferencia.textContent = `Esperado: $${esperado.toFixed(2)} USD | Físico Contado: $${contado.toFixed(2)} USD`;
+    }
+  }
+
+  if (efectivoInput) {
+    efectivoInput.addEventListener('input', updateCuadreDiff);
+  }
+
+  async function openCierreModal() {
+    currentBcvRate = getBcvRate();
+    const user = currentSessionUser();
+    const cashierName = user.name || document.getElementById('cashierName')?.textContent || 'María Elena Suárez';
+    const shiftName = user.shift || 'Turno Mañana';
+
+    const cajeroEl = document.getElementById('cierreCajeroNombre');
+    const turnoEl = document.getElementById('cierreTurnoNombre');
+    const fechaHoraEl = document.getElementById('cierreFechaHora');
+    const tasaBcvEl = document.getElementById('cierreTasaBcv');
+
+    if (cajeroEl) cajeroEl.textContent = cashierName;
+    if (turnoEl) turnoEl.textContent = shiftName;
+    if (fechaHoraEl) {
+      fechaHoraEl.textContent = new Date().toLocaleString('es-VE', {
+        day: '2-digit', month: '2-digit', year: 'numeric',
+        hour: '2-digit', minute: '2-digit'
       });
     }
-    populate(root.querySelector('#d_category'), data.categorias, 'id', 'name');
-    populate(root.querySelector('#d_product'), data.productos, 'id', 'name');
-    populate(root.querySelector('#d_payment'), data.metodos_pago);
-    populate(root.querySelector('#d_status'), data.estatus);
-  });
-}
+    if (tasaBcvEl) tasaBcvEl.textContent = `Bs. ${currentBcvRate.toFixed(2)} / USD`;
 
-function summaryCard(label, value) { return `<div class="cash-reports-summary-card"><span>${label}</span><strong>${money(value)}</strong></div>`; }
+    const pagosTbody = document.getElementById('cierrePagosTbody');
+    if (pagosTbody) {
+      pagosTbody.innerHTML = '<tr><td colspan="4" style="text-align: center; color: #8C7868; padding: 1rem;"><i data-lucide="loader-2" class="icon-sm spin"></i> Consultando ventas del turno...</td></tr>';
+      window.LucideIcons?.refresh();
+    }
 
-function renderClosure(root, data) {
-  const output = root.querySelector('[data-output="z"]');
-  if (!data.has_data) { output.innerHTML = `<div class="cash-reports-empty">${esc(data.message || 'No hay información para mostrar')}</div>`; return; }
-  const s = data.summary || {};
-  const payments = data.payments || [];
-  const closures = data.closures || [];
-  output.innerHTML = `<div class="cash-reports-summary-grid">
-      ${summaryCard('Ventas brutas', s.ventas_brutas)}${summaryCard('Descuentos', s.descuentos)}${summaryCard('Devoluciones', s.devoluciones)}${summaryCard('Ventas netas', s.ventas_netas)}${summaryCard('Efectivo esperado', s.monto_efectivo_esperado)}
-    </div>
-    <div class="cash-reports-two-col"><div class="cash-reports-table-wrap"><h3>Desglose por forma de pago</h3><table class="cash-reports-table"><thead><tr><th>Método</th><th>Transacciones</th><th>Monto</th></tr></thead><tbody>${payments.length ? payments.map(p => `<tr><td>${esc(p.metodo_pago)}</td><td>${num(p.transacciones)}</td><td>${money(p.monto)}</td></tr>`).join('') : '<tr><td colspan="3">No hay información para mostrar</td></tr>'}</tbody></table></div>
-    <div class="cash-reports-signature"><h3>Facturación y firmas</h3><p>Facturas emitidas: <strong>${esc(s.facturas_emitidas || 0)}</strong></p><p>Facturas anuladas: <strong>${esc(s.facturas_anuladas || 0)}</strong></p><div class="cash-reports-sign-line">Cajero: ${esc(s.firma_cajero || 'Pendiente')}</div><div class="cash-reports-sign-line">Supervisor: ${esc(s.firma_supervisor || 'Pendiente')}</div></div></div>
-    ${closures.length ? `<h3 class="cash-reports-section-title">Cierres históricos consultables</h3><div class="cash-reports-table-wrap"><table class="cash-reports-table"><thead><tr><th>Reporte</th><th>Fecha</th><th>Turno</th><th>Generado</th><th>Neto</th></tr></thead><tbody>${closures.map(c => `<tr><td>${esc(c.codigo_reporte)}</td><td>${esc(c.fecha_turno)}</td><td>${esc(c.turno)}</td><td>${esc(c.generado_en)}</td><td>${money(c.ventas_netas)}</td></tr>`).join('')}</tbody></table></div>` : ''}`;
-}
+    modal.style.display = 'flex';
+    modal.classList.add('active');
 
-function renderSales(root, data) {
-  const output = root.querySelector('[data-output="detail"]');
-  if (!data.has_data) { output.innerHTML = `<div class="cash-reports-empty">${esc(data.message || 'No hay información para mostrar')}</div>`; return; }
-  const rows = data.rows || [], events = data.events || [];
-  output.innerHTML = `<div class="cash-reports-summary-grid">${summaryCard('Transacciones', data.totals?.transacciones || 0)}${summaryCard('Subtotal', data.totals?.subtotal || 0)}${summaryCard('Descuentos', data.totals?.descuentos || 0)}${summaryCard('Impuestos', data.totals?.impuestos || 0)}${summaryCard('Total', data.totals?.total || 0)}</div>
-    <div class="cash-reports-table-wrap"><table class="cash-reports-table"><thead><tr><th>Factura / fecha</th><th>Producto</th><th>Categoría</th><th>Cajero / turno</th><th>Estatus</th><th>Descuento</th><th>Impuesto</th><th>Total</th></tr></thead><tbody>${rows.map(r => `<tr><td>${esc(r.codigo)}<small>${esc(r.fecha_hora)}</small></td><td>${esc(r.producto || 'Venta sin detalle')}</td><td>${esc(r.categoria)}</td><td>${esc(r.cajero)}<small>${esc(r.turno)}</small></td><td>${esc(r.estatus)}</td><td>${money(r.descuento)}</td><td>${money(r.iva)}</td><td>${money(r.total)}</td></tr>`).join('')}</tbody></table></div>
-    ${events.length ? `<h3 class="cash-reports-section-title">Anulaciones y devoluciones</h3><div class="cash-reports-table-wrap"><table class="cash-reports-table"><thead><tr><th>Factura</th><th>Evento</th><th>Fecha</th><th>Monto</th><th>Referencia</th><th>Motivo</th></tr></thead><tbody>${events.map(e => `<tr><td>${esc(e.codigo)}</td><td>${esc(e.tipo_evento)}</td><td>${esc(e.fecha_hora)}</td><td>${money(e.monto)}</td><td>${esc(e.referencia_lote)}</td><td>${esc(e.motivo)}</td></tr>`).join('')}</tbody></table></div>` : ''}
-    <h3 class="cash-reports-section-title">Totales por categoría</h3><div class="cash-reports-table-wrap"><table class="cash-reports-table"><thead><tr><th>Categoría</th><th>Cantidad</th><th>Total</th></tr></thead><tbody>${(data.category_totals || []).map(c => `<tr><td>${esc(c.categoria)}</td><td>${num(c.cantidad)}</td><td>${money(c.total)}</td></tr>`).join('')}</tbody></table></div>`;
-}
+    try {
+      const query = queryString({
+        context: 'caja',
+        date: today(),
+        user_name: cashierName,
+        role_code: normalizeReportRole(user),
+        turno: shiftName,
+        bcv_rate: currentBcvRate
+      });
 
-function renderPayments(root, data) {
-  const output = root.querySelector('[data-output="detail"]');
-  if (!data.has_data) { output.innerHTML = `<div class="cash-reports-empty">${esc(data.message || 'No hay información para mostrar')}</div>`; return; }
-  output.innerHTML = `<div class="cash-reports-summary-grid">${summaryCard('Transacciones', data.totals?.transacciones || 0)}${summaryCard('Monto por canal', data.totals?.monto_canal || 0)}${summaryCard('Monto según sistema', data.totals?.monto_sistema || 0)}${summaryCard('Diferencia total', data.totals?.diferencia || 0)}</div><div class="cash-reports-table-wrap"><table class="cash-reports-table"><thead><tr><th>Método</th><th>Transacciones</th><th>Referencia / lote</th><th>Monto por canal</th><th>Monto sistema</th><th>Diferencia</th></tr></thead><tbody>${(data.groups || []).map(g => `<tr><td>${esc(g.metodo_pago)}</td><td>${num(g.transacciones)}</td><td>${esc(g.referencias || 'No especificada')}</td><td>${money(g.monto_canal)}</td><td>${money(g.monto_sistema)}</td><td>${money(g.diferencia)}</td></tr>`).join('')}</tbody></table></div>`;
-}
+      const data = await getJson(`${API_ROOT}cierre_caja.php?${query}`);
+      currentClosureData = data;
 
-function showDuplicateClosureDialog(data) {
-  return new Promise(resolve => {
-    const closure = data.closure || {};
-    const overlay = document.createElement('div');
-    overlay.className = 'cash-reports-dialog-backdrop';
-    overlay.innerHTML = `<div class="cash-reports-dialog" role="dialog" aria-modal="true" aria-labelledby="cashReportDuplicateTitle">
-      <div class="cash-reports-dialog-icon"><i data-lucide="check-circle-2" class="icon-xl"></i></div>
-      <h3 id="cashReportDuplicateTitle">Este turno ya fue cerrado</h3>
-      <p>Ya existe un Cierre Z registrado para este turno. No se puede generar otro cierre duplicado.</p>
-      <div class="cash-reports-dialog-details">
-        <span><small>Reporte</small><strong>${esc(closure.codigo_reporte || 'Cierre Z registrado')}</strong></span>
-        <span><small>Generado</small><strong>${esc(closure.generado_en || 'Fecha no disponible')}</strong></span>
-      </div>
-      <div class="cash-reports-dialog-actions">
-        <button type="button" class="cash-reports-dialog-cancel">Cancelar</button>
-        <button type="button" class="cash-reports-dialog-view">Ver cierre existente</button>
-      </div>
-    </div>`;
-    document.body.appendChild(overlay);
-    const finish = value => { overlay.remove(); resolve(value); };
-    overlay.querySelector('.cash-reports-dialog-cancel')?.addEventListener('click', () => finish(false));
-    overlay.querySelector('.cash-reports-dialog-view')?.addEventListener('click', () => finish(true));
-    overlay.addEventListener('click', event => { if (event.target === overlay) finish(false); });
-    overlay.querySelector('.cash-reports-dialog-view')?.focus();
-  });
-}
+      const s = data.summary || {};
+      const netUsd = Number(s.ventas_netas || 0);
+      const netBs = netUsd * currentBcvRate;
 
-function initReportSection(section) {
-  const root = section.querySelector('[id$="CashReportsApp"]') || section.firstElementChild;
-  const context = section.dataset.reportContext || 'caja';
-  const role = normalizeReportRole(currentSessionUser());
-  const openCajaReports = document.getElementById('btnOpenCashReports');
-  const allowed = context === 'caja' ? role === 'POS' : role === 'ADMIN';
-  if (!allowed && role) {
-    section.hidden = false;
-    const app = section.querySelector('[id$="CashReportsApp"]') || section.firstElementChild;
-    app.innerHTML = `<div class="cash-reports-role-warning"><strong>Reportes no disponibles para esta sesión.</strong><span>Sesión detectada: ${esc(role)}. Ingrese con un usuario de ${context === 'caja' ? 'Caja / POS' : 'Gerencia / ADMIN'}.</span></div>`;
-    if (openCajaReports) openCajaReports.hidden = false;
-    return;
+      const kpiNetas = document.getElementById('cierreKpiVentasNetas');
+      const kpiNetasBs = document.getElementById('cierreKpiVentasNetasBs');
+      const kpiFacturas = document.getElementById('cierreKpiFacturas');
+      const kpiEfectivo = document.getElementById('cierreKpiEfectivoEsperado');
+      const kpiDescuentos = document.getElementById('cierreKpiDescuentos');
+
+      if (kpiNetas) kpiNetas.textContent = `$${netUsd.toFixed(2)}`;
+      if (kpiNetasBs) kpiNetasBs.textContent = `Bs. ${netBs.toLocaleString('es-VE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} VES`;
+      if (kpiFacturas) kpiFacturas.textContent = String(s.facturas_emitidas || 0);
+      if (kpiEfectivo) kpiEfectivo.textContent = `$${Number(s.monto_efectivo_esperado || 0).toFixed(2)}`;
+      if (kpiDescuentos) kpiDescuentos.textContent = `$${Number(s.descuentos || 0).toFixed(2)}`;
+
+      // Desglose de pagos
+      if (pagosTbody) {
+        const payments = data.payments || [];
+        if (payments.length === 0) {
+          pagosTbody.innerHTML = '<tr><td colspan="4" style="text-align: center; color: #8C7868; padding: 1.25rem;">No hay ventas registradas en este turno aún.</td></tr>';
+        } else {
+          let rowsHtml = payments.map(p => {
+            const montoUsd = Number(p.monto || 0);
+            const montoBs = montoUsd * currentBcvRate;
+            return `<tr>
+              <td><strong>${esc(p.metodo_pago)}</strong></td>
+              <td style="text-align: center;">${num(p.transacciones)}</td>
+              <td style="text-align: right; font-weight: 700; color: #78350F;">$${montoUsd.toFixed(2)}</td>
+              <td style="text-align: right; color: #59483B;">Bs. ${montoBs.toLocaleString('es-VE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
+            </tr>`;
+          }).join('');
+
+          rowsHtml += `<tfoot>
+            <tr>
+              <td><strong>TOTAL GENERAL</strong></td>
+              <td style="text-align: center;"><strong>${num(s.facturas_emitidas || 0)}</strong></td>
+              <td style="text-align: right; font-weight: 800; color: #78350F; font-size: 0.95rem;">$${netUsd.toFixed(2)}</td>
+              <td style="text-align: right; font-weight: 800; color: #2E241E;">Bs. ${netBs.toLocaleString('es-VE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
+            </tr>
+          </tfoot>`;
+
+          pagosTbody.innerHTML = rowsHtml;
+        }
+      }
+
+      // Input de efectivo
+      if (efectivoInput) {
+        efectivoInput.value = Number(s.monto_efectivo_esperado || 0).toFixed(2);
+        updateCuadreDiff();
+      }
+
+      // Alerta de cierre previo
+      const alertaPrevio = document.getElementById('cierreAlertaPrevio');
+      const previoCodigo = document.getElementById('cierrePrevioCodigo');
+      const previoHora = document.getElementById('cierrePrevioHora');
+      const histList = document.getElementById('cierreHistoricoList');
+      const histCount = document.getElementById('cierreHistoricoCount');
+
+      const closures = data.closures || [];
+      if (histCount) histCount.textContent = String(closures.length);
+
+      if (closures.length > 0) {
+        if (alertaPrevio) alertaPrevio.style.display = 'flex';
+        if (previoCodigo) previoCodigo.textContent = closures[0].codigo_reporte || 'Z-OFICIAL';
+        if (previoHora) {
+          const gen = closures[0].generado_en || '';
+          previoHora.textContent = gen.includes(' ') ? gen.split(' ')[1].slice(0, 5) : gen;
+        }
+
+        if (histList) {
+          histList.innerHTML = closures.map(c => `
+            <div class="cierre-hist-card">
+              <div>
+                <strong>${esc(c.codigo_reporte)}</strong> • <span>${esc(c.turno)}</span>
+                <div style="font-size: 0.72rem; color: #8C7868;">${esc(c.generado_en)} • Total: $${Number(c.ventas_netas).toFixed(2)}</div>
+              </div>
+              <button type="button" class="cierre-hist-btn-view" data-cierre-id="${esc(c.id)}">Ver Comprobante</button>
+            </div>
+          `).join('');
+
+          histList.querySelectorAll('.cierre-hist-btn-view').forEach(btn => {
+            btn.addEventListener('click', () => {
+              const cid = btn.dataset.cierreId;
+              const found = closures.find(item => item.id === cid);
+              if (found) renderAndShowTicket(found, false);
+            });
+          });
+        }
+      } else {
+        if (alertaPrevio) alertaPrevio.style.display = 'none';
+        if (histList) histList.innerHTML = '<div style="font-size: 0.8rem; color: #8C7868; padding: 0.4rem;">No hay cierres anteriores registrados hoy.</div>';
+      }
+
+      window.LucideIcons?.refresh();
+    } catch (err) {
+      console.error('Error al cargar datos del cierre:', err);
+      if (pagosTbody) {
+        pagosTbody.innerHTML = `<tr><td colspan="4" style="text-align: center; color: #B91C1C; padding: 1rem;">No se pudieron cargar los datos del cierre: ${esc(err.message)}</td></tr>`;
+      }
+    }
   }
-  if (context === 'caja' && openCajaReports) {
-    openCajaReports.hidden = false;
-    openCajaReports.addEventListener('click', () => {
-      section.hidden = false;
-      document.body.classList.add('cash-reports-open');
+
+  function closeCierreModal() {
+    modal.style.display = 'none';
+    modal.classList.remove('active');
+  }
+
+  function renderAndShowTicket(closure, isPreview = false) {
+    if (!ticketContent || !ticketModal) return;
+
+    const companyInfo = {
+      nombre: 'LA NUEVA PARISIENNE C.A.',
+      rif: 'J-40123456-7',
+      direccion: 'Av. Lara con Calle 8, Barquisimeto, Edo. Lara',
+      telefono: '(0251) 555-1234'
+    };
+
+    const s = closure.summary || closure;
+    const rate = Number(closure.tasa_bcv || currentBcvRate || 1);
+    const netUsd = Number(s.ventas_netas || 0);
+    const netBs = Number(closure.total_bs || (netUsd * rate));
+    const code = closure.codigo_reporte || (isPreview ? 'CORTE-X-PRELIMINAR' : 'Z-' + Date.now());
+    const dateFormatted = closure.generado_en || new Date().toLocaleString('es-VE');
+    const cashier = closure.firma_cajero || document.getElementById('cashierName')?.textContent || 'María Elena Suárez';
+    const shift = closure.turno || 'Turno Mañana';
+
+    let payments = closure.payments || [];
+    if (!payments.length && closure.detalle_pagos_json) {
+      try { payments = JSON.parse(closure.detalle_pagos_json); } catch {}
+    }
+
+    ticketContent.innerHTML = `
+      <div style="font-family: 'Courier New', Courier, monospace; font-size: 11px; color: #000000; text-align: left; line-height: 1.25; width: 100%; max-width: 76mm; margin: 0 auto;">
+        <!-- ENCABEZADO FISCAL DE LA EMPRESA -->
+        <div style="text-align: center; font-weight: bold; margin-bottom: 4px;">
+          <div style="font-size: 13px; text-transform: uppercase;">${companyInfo.nombre}</div>
+          <div>RIF: ${companyInfo.rif}</div>
+          <div style="font-size: 9px; font-weight: normal;">${companyInfo.direccion}</div>
+          <div style="font-size: 9px; font-weight: normal;">Tel: ${companyInfo.telefono}</div>
+        </div>
+
+        <div style="border-top: 1px dashed #000; margin: 5px 0;"></div>
+
+        <!-- TÍTULO DEL CORTE FISCAL / OPERATIVO -->
+        <div style="text-align: center; font-weight: bold;">
+          <div style="font-size: 13px;">${isPreview ? '*** REPORTE DE ARQUEO (CORTE X) ***' : '*** COMPROBANTE OFICIAL CIERRE Z ***'}</div>
+          <div style="font-size: 9px; font-weight: normal; margin-top: 2px;">${isPreview ? 'COMPROBANTE DE CONTROL INTERNO NO FISCAL' : 'DOCUMENTO DE CIERRE DEFINITIVO DE TURNO'}</div>
+        </div>
+
+        <div style="border-top: 1px dashed #000; margin: 5px 0;"></div>
+
+        <!-- METADATOS DEL REPORTE -->
+        <div style="font-size: 10px;">
+          <div><strong>CÓDIGO REPORTE:</strong> ${esc(code)}</div>
+          <div><strong>FECHA / HORA:</strong> ${esc(dateFormatted)}</div>
+          <div><strong>TERMINAL:</strong> POS-01 (Caja Principal)</div>
+          <div><strong>CAJERO(A):</strong> ${esc(cashier)}</div>
+          <div><strong>TURNO:</strong> ${esc(shift)}</div>
+        </div>
+
+        <div style="border-top: 1px dashed #000; margin: 5px 0;"></div>
+
+        <!-- RESUMEN DE VENTAS Y OPERACIONES -->
+        <div style="font-size: 10px; font-weight: bold; margin-bottom: 2px;">RESUMEN DE FACTURACIÓN:</div>
+        <div style="font-size: 10px; line-height: 1.3;">
+          <div style="display: flex; justify-content: space-between;">
+            <span>VENTAS BRUTAS ($):</span>
+            <span>$${Number(s.ventas_brutas || 0).toFixed(2)}</span>
+          </div>
+          <div style="display: flex; justify-content: space-between;">
+            <span>DESCUENTOS APLICADOS:</span>
+            <span>-$${Number(s.descuentos || 0).toFixed(2)}</span>
+          </div>
+          ${Number(s.devoluciones || 0) > 0 ? `
+          <div style="display: flex; justify-content: space-between;">
+            <span>DEVOLUCIONES / ANULACIONES:</span>
+            <span>-$${Number(s.devoluciones || 0).toFixed(2)}</span>
+          </div>` : ''}
+          <div style="display: flex; justify-content: space-between; font-weight: bold; font-size: 11px; border-top: 1px solid #000; padding-top: 2px; margin-top: 2px;">
+            <span>TOTAL VENTAS NETAS ($):</span>
+            <span>$${netUsd.toFixed(2)}</span>
+          </div>
+          <div style="display: flex; justify-content: space-between;">
+            <span>TOTAL FACTURAS EMITIDAS:</span>
+            <span>${s.facturas_emitidas || 0}</span>
+          </div>
+          <div style="display: flex; justify-content: space-between;">
+            <span>FACTURAS ANULADAS:</span>
+            <span>${s.facturas_anuladas || 0}</span>
+          </div>
+        </div>
+
+        <div style="border-top: 2px double #000; margin: 5px 0;"></div>
+
+        <!-- CONVERSIÓN OFICIAL BCV -->
+        <div style="text-align: center; padding: 4px; border: 1px solid #000; margin: 4px 0;">
+          <div style="font-size: 9px; font-weight: bold;">TASA OFICIAL BCV APLICADA</div>
+          <div style="font-size: 10px;">Bs. ${rate.toFixed(2)} / USD</div>
+          <div style="font-size: 12px; font-weight: bold; margin-top: 2px;">
+            TOTAL NETO EN BS: Bs. ${netBs.toLocaleString('es-VE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+          </div>
+        </div>
+
+        <div style="border-top: 1px dashed #000; margin: 5px 0;"></div>
+
+        <!-- DESGLOSE POR FORMA DE PAGO -->
+        <div style="font-size: 10px; font-weight: bold; margin-bottom: 2px;">COBROS POR MEDIO DE PAGO:</div>
+        <table style="width: 100%; font-size: 9.5px; border-collapse: collapse;">
+          <thead>
+            <tr style="border-bottom: 1px solid #000;">
+              <th style="text-align: left;">Método</th>
+              <th style="text-align: center;">Op</th>
+              <th style="text-align: right;">Total ($)</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${payments.length ? payments.map(p => `
+              <tr>
+                <td>${esc(p.metodo_pago)}</td>
+                <td style="text-align: center;">${p.transacciones}</td>
+                <td style="text-align: right;">$${Number(p.monto).toFixed(2)}</td>
+              </tr>
+            `).join('') : '<tr><td colspan="3" style="text-align: center;">Sin cobros en este turno</td></tr>'}
+          </tbody>
+        </table>
+
+        <div style="border-top: 1px dashed #000; margin: 5px 0;"></div>
+
+        <!-- ARQUEO DE EFECTIVO -->
+        <div style="font-size: 10px; font-weight: bold; margin-bottom: 2px;">ARQUEO DE EFECTIVO EN CAJA:</div>
+        <div style="font-size: 10px; line-height: 1.3;">
+          <div style="display: flex; justify-content: space-between;">
+            <span>EFECTIVO ESPERADO ($):</span>
+            <span>$${Number(s.monto_efectivo_esperado || 0).toFixed(2)}</span>
+          </div>
+          <div style="display: flex; justify-content: space-between;">
+            <span>EFECTIVO FÍSICO CONTADO:</span>
+            <span>$${Number(s.monto_efectivo_real ?? s.monto_efectivo_esperado ?? 0).toFixed(2)}</span>
+          </div>
+          <div style="display: flex; justify-content: space-between; font-weight: bold; margin-top: 2px;">
+            <span>DIFERENCIA / CUADRE:</span>
+            <span>${Number(s.diferencia_efectivo || 0) === 0 ? 'CUADRADO ($0.00)' : (Number(s.diferencia_efectivo) > 0 ? 'SOBRANTE +$' + Number(s.diferencia_efectivo).toFixed(2) : 'FALTANTE -$' + Math.abs(Number(s.diferencia_efectivo)).toFixed(2))}</span>
+          </div>
+        </div>
+
+        ${s.observaciones ? `
+        <div style="border-top: 1px dotted #000; margin: 4px 0;"></div>
+        <div style="font-size: 9px;">
+          <strong>OBSERVACIONES:</strong> ${esc(s.observaciones)}
+        </div>` : ''}
+
+        <div style="border-top: 1px dashed #000; margin: 8px 0 4px;"></div>
+
+        <!-- FIRMAS -->
+        <div style="display: flex; justify-content: space-between; margin-top: 18px; font-size: 9px; text-align: center;">
+          <div style="width: 45%; border-top: 1px solid #000; padding-top: 3px;">
+            <strong>FIRMA CAJERO</strong><br>${esc(cashier)}
+          </div>
+          <div style="width: 45%; border-top: 1px solid #000; padding-top: 3px;">
+            <strong>SUPERVISOR / GERENCIA</strong><br>V° B° Control
+          </div>
+        </div>
+
+        <div style="text-align: center; margin-top: 12px; font-size: 8px;">
+          <div>LA NUEVA PARISIENNE • SISTEMA DE GESTIÓN INTEGRAL</div>
+          <div>Corte Z generado conforme a políticas internas.</div>
+        </div>
+      </div>
+    `;
+
+    ticketModal.style.display = 'flex';
+    ticketModal.classList.add('active');
+  }
+
+  // EVENT LISTENERS
+  btnCierre.addEventListener('click', openCierreModal);
+  if (btnCerrarModal) btnCerrarModal.addEventListener('click', closeCierreModal);
+  if (btnCancelar) btnCancelar.addEventListener('click', closeCierreModal);
+
+  // Imprimir Corte X preliminar
+  if (btnImprimirX) {
+    btnImprimirX.addEventListener('click', () => {
+      if (!currentClosureData) return;
+      const contado = parseFloat(efectivoInput?.value) || 0;
+      const esperado = Number(currentClosureData.summary?.monto_efectivo_esperado || 0);
+      const diff = Math.round((contado - esperado) * 100) / 100;
+      const obs = obsInput?.value?.trim() || '';
+
+      const xData = {
+        ...currentClosureData,
+        codigo_reporte: 'CORTE-X-' + new Date().toISOString().slice(0, 10).replace(/-/g, '') + '-' + Math.floor(100 + Math.random() * 900),
+        monto_efectivo_real: contado,
+        diferencia_efectivo: diff,
+        observaciones: obs,
+        tasa_bcv: currentBcvRate,
+        generado_en: new Date().toLocaleString('es-VE')
+      };
+      renderAndShowTicket(xData, true);
     });
   }
-  renderShell(root, context);
-  root.querySelector('#cashReportClose')?.addEventListener('click', () => {
-    section.hidden = true;
-    document.body.classList.remove('cash-reports-open');
-  });
-  let detailTab = 'ventas';
-  const syncDetailFilters = () => {
-    if (context !== 'caja') return;
-    const paymentFields = ['#d_payment', '#d_reference'];
-    const salesFields = ['#d_product', '#d_category'];
-    paymentFields.forEach(selector => { const input = root.querySelector(selector); if (input) { input.parentElement.style.display = detailTab === 'ventas' ? 'none' : ''; if (detailTab === 'ventas') input.value = ''; } });
-    salesFields.forEach(selector => { const input = root.querySelector(selector); if (input) { input.parentElement.style.display = detailTab === 'cobros' ? 'none' : ''; if (detailTab === 'cobros') input.value = ''; } });
-  };
-  syncDetailFilters();
-  loadCatalogs(root, context).catch(error => setStatus(root, 'z', error.message, true));
 
-  const runZ = async () => {
-    setStatus(root, 'z', 'Consultando…');
-    try { const data = await getJson(`${API_ROOT}cierre_caja.php?${queryString(readFilters(root, 'z', context))}`); renderClosure(root, data); setStatus(root, 'z', data.message || ''); }
-    catch (error) { setStatus(root, 'z', error.message, true); }
-  };
-  const runDetail = async () => {
-    setStatus(root, 'detail', 'Consultando…');
-    try { const data = await getJson(`${API_ROOT}ventas_cobros.php?${queryString(readFilters(root, 'detail', context, detailTab))}`); if (detailTab === 'ventas') renderSales(root, data); else renderPayments(root, data); setStatus(root, 'detail', data.message || ''); }
-    catch (error) { setStatus(root, 'detail', error.message, true); }
-  };
-  root.querySelector('[data-filter-form="z"]').addEventListener('submit', event => { event.preventDefault(); runZ(); });
-  root.querySelector('[data-filter-form="detail"]').addEventListener('submit', event => { event.preventDefault(); runDetail(); });
-  root.querySelectorAll('[data-report-tab]').forEach(button => button.addEventListener('click', () => {
-    root.querySelectorAll('[data-report-tab]').forEach(item => item.classList.toggle('active', item === button));
-    root.querySelectorAll('[data-report-pane]').forEach(pane => { const active = pane.dataset.reportPane === button.dataset.reportTab; pane.hidden = !active; pane.classList.toggle('active', active); });
-    if (button.dataset.reportTab === 'z') runZ(); else runDetail();
-  }));
-  root.querySelectorAll('[data-detail-tab]').forEach(button => button.addEventListener('click', () => {
-    detailTab = button.dataset.detailTab;
-    root.querySelectorAll('[data-detail-tab]').forEach(item => item.classList.toggle('active', item === button));
-    syncDetailFilters();
-    runDetail();
-  }));
-  root.querySelector('#cashReportGenerateZ')?.addEventListener('click', async () => {
-    const filters = readFilters(root, 'z', context);
-    const request = async (confirmEmpty = false) => getJson(`${API_ROOT}cierre_caja.php`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ ...filters, action: 'generate', confirm_empty: confirmEmpty }) });
-    setStatus(root, 'z', 'Generando y sellando cierre…');
-    try {
-      let data = await request(false);
-      if (data.code === 'CONFIRM_EMPTY') { if (!window.confirm('No hay ventas. ¿Deseas cerrar turno igual?')) { setStatus(root, 'z', 'Cierre cancelado.'); return; } data = await request(true); }
-      if (!data.success && data.code === 'ALREADY_CLOSED') {
-        const consultExisting = await showDuplicateClosureDialog(data);
-        if (consultExisting) await runZ();
-        else setStatus(root, 'z', 'No se generó un nuevo cierre para este turno.');
-        return;
+  // Confirmar Cierre Z definitivo
+  if (btnConfirmarZ) {
+    btnConfirmarZ.addEventListener('click', async () => {
+      if (!currentClosureData) return;
+
+      const user = currentSessionUser();
+      const cashierName = user.name || document.getElementById('cashierName')?.textContent || 'María Elena Suárez';
+      const shiftName = user.shift || 'Turno Mañana';
+      const contado = parseFloat(efectivoInput?.value) || 0;
+      const esperado = Number(currentClosureData.summary?.monto_efectivo_esperado || 0);
+      const diff = Math.round((contado - esperado) * 100) / 100;
+      const obs = obsInput?.value?.trim() || '';
+      const hasData = currentClosureData.has_data;
+
+      // Confirmaciones de seguridad
+      if (!hasData) {
+        if (!window.confirm('No hay ventas registradas en este turno. ¿Deseas sellar el Cierre de Caja (Z) de todos modos?')) {
+          return;
+        }
+      } else if (Math.abs(diff) >= 0.01) {
+        const msg = diff > 0
+          ? `Existe un SOBRANTE de +$${diff.toFixed(2)} USD en efectivo.\n\n¿Deseas confirmar y sellar el Cierre Z con este valor?`
+          : `Existe un FALTANTE de -$${Math.abs(diff).toFixed(2)} USD en efectivo.\n\n¿Deseas confirmar y sellar el Cierre Z con este valor?`;
+        if (!window.confirm(msg)) {
+          return;
+        }
+      } else {
+        if (!window.confirm(`¿Confirmar y sellar el Cierre Z de Caja para el ${shiftName}?\n\nTotal Ventas: $${Number(currentClosureData.summary.ventas_netas).toFixed(2)} USD\nCajero: ${cashierName}`)) {
+          return;
+        }
       }
-      if (!data.success) throw new Error(data.message || 'No fue posible generar el cierre.');
-      renderClosure(root, { ...data, has_data: true, summary: data.closure, closures: [] }); setStatus(root, 'z', data.message || 'Cierre Z generado.');
-    } catch (error) { setStatus(root, 'z', error.message, true); }
-  });
-  runZ();
+
+      btnConfirmarZ.disabled = true;
+      btnConfirmarZ.innerHTML = '<i data-lucide="loader-2" class="icon-sm spin"></i> Sellando Cierre Z...';
+      window.LucideIcons?.refresh();
+
+      try {
+        const payload = {
+          context: 'caja',
+          action: 'generate',
+          date: today(),
+          user_name: cashierName,
+          role_code: normalizeReportRole(user),
+          turno: shiftName,
+          tasa_bcv: currentBcvRate,
+          monto_efectivo_real: contado,
+          observaciones: obs,
+          force: true,
+          confirm_empty: true
+        };
+
+        const res = await getJson(`${API_ROOT}cierre_caja.php`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+
+        if (!res.success) {
+          throw new Error(res.message || 'No fue posible registrar el Cierre Z en MySQL.');
+        }
+
+        // Guardar en histórico local y notificar canales
+        try {
+          const rawHist = localStorage.getItem('lnp_cierres_caja');
+          const hist = rawHist ? JSON.parse(rawHist) : [];
+          hist.unshift(res.closure);
+          localStorage.setItem('lnp_cierres_caja', JSON.stringify(hist));
+
+          if (typeof BroadcastChannel !== 'undefined') {
+            const ch = new BroadcastChannel('lnp_cierres_channel');
+            ch.postMessage({ type: 'cierre_generado', closure: res.closure });
+          }
+        } catch (e) {
+          console.warn('Error guardando en localStorage lnp_cierres_caja:', e);
+        }
+
+        closeCierreModal();
+        renderAndShowTicket(res.closure, false);
+      } catch (err) {
+        console.error('Error generando Cierre Z:', err);
+        alert('Error al generar el Cierre Z: ' + err.message);
+      } finally {
+        btnConfirmarZ.disabled = false;
+        btnConfirmarZ.innerHTML = '<i data-lucide="lock" class="icon-sm"></i> <span>Realizar Cierre de Caja (Z)</span>';
+        window.LucideIcons?.refresh();
+      }
+    });
+  }
+
+  // Controles de modal de ticket
+  if (btnCloseTicket) {
+    btnCloseTicket.addEventListener('click', () => {
+      ticketModal.style.display = 'none';
+      ticketModal.classList.remove('active');
+    });
+  }
+
+  if (btnPrintTicket) {
+    btnPrintTicket.addEventListener('click', () => {
+      window.print();
+    });
+  }
+
+  if (btnFinalizarTurno) {
+    btnFinalizarTurno.addEventListener('click', () => {
+      if (window.confirm('¿Deseas cerrar la sesión activa del cajero tras finalizar el turno?')) {
+        SessionStore.logout();
+      } else {
+        ticketModal.style.display = 'none';
+        ticketModal.classList.remove('active');
+      }
+    });
+  }
+}
+
+// ============================================================================
+// 2. CONTROLADOR GERENCIAL DE REPORTES DE CAJA (DASHBOARD)
+// ============================================================================
+function initManagerReports(section) {
+  const root = section.querySelector('[id$="CashReportsApp"]') || section.firstElementChild;
+  if (!root) return;
+
+  root.innerHTML = `
+    <div class="cash-reports-header">
+      <div>
+        <span class="cash-reports-eyebrow">DASHBOARD GERENCIAL</span>
+        <h2><i data-lucide="folder" class="icon-sm"></i> Historial y Auditoría de Cierres de Caja</h2>
+        <p>Cortes Z oficiales sellados por cajeros y turnos operativos</p>
+      </div>
+      <button type="button" id="btnRefreshManagerCierres" class="cash-reports-primary">
+        <i data-lucide="refresh-cw" class="icon-xs"></i> Actualizar
+      </button>
+    </div>
+    <div class="cash-reports-pane">
+      <div id="managerCierresStatus" style="margin-bottom: 0.75rem; font-size: 0.85rem; color: #6E5C50;"></div>
+      <div id="managerCierresTableWrap" class="cash-reports-table-wrap">
+        <table class="cash-reports-table">
+          <thead>
+            <tr>
+              <th>Código Reporte</th>
+              <th>Fecha Turno</th>
+              <th>Turno</th>
+              <th>Cajero / Firma</th>
+              <th>Facturas</th>
+              <th>Ventas Netas ($)</th>
+              <th>Efectivo Esperado</th>
+              <th>Efectivo Físico</th>
+              <th>Diferencia</th>
+              <th>Generado</th>
+            </tr>
+          </thead>
+          <tbody id="managerCierresTbody">
+            <tr><td colspan="10" style="text-align: center; padding: 1.5rem;">Cargando histórico de cierres...</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  `;
+
+  async function loadManagerCierres() {
+    const tbody = root.querySelector('#managerCierresTbody');
+    const status = root.querySelector('#managerCierresStatus');
+    if (status) status.textContent = 'Consultando Cierres Z en base de datos...';
+
+    try {
+      const data = await getJson(`${API_ROOT}cierre_caja.php?context=gerente&date_from=2026-01-01&date_to=${today()}`);
+      const closures = data.closures || [];
+
+      if (status) status.textContent = `Se encontraron ${closures.length} Cierres Z registrados.`;
+
+      if (tbody) {
+        if (!closures.length) {
+          tbody.innerHTML = '<tr><td colspan="10" style="text-align: center; padding: 2rem; color: #8C7868;">No hay Cierres Z generados en el período consultado.</td></tr>';
+        } else {
+          tbody.innerHTML = closures.map(c => {
+            const net = Number(c.ventas_netas || 0);
+            const esp = Number(c.monto_efectivo_esperado || 0);
+            const real = Number(c.monto_efectivo_real || 0);
+            const diff = Number(c.diferencia_efectivo || 0);
+            const diffText = diff === 0 ? '<span style="color:#047857; font-weight:700;">$0.00 (Cuadrada)</span>' : (diff > 0 ? `<span style="color:#B45309; font-weight:700;">+$${diff.toFixed(2)} (Sobrante)</span>` : `<span style="color:#B91C1C; font-weight:700;">-$${Math.abs(diff).toFixed(2)} (Faltante)</span>`);
+
+            return `<tr>
+              <td><strong><code>${esc(c.codigo_reporte)}</code></strong></td>
+              <td>${esc(c.fecha_turno)}</td>
+              <td>${esc(c.turno)}</td>
+              <td>${esc(c.firma_cajero || 'Cajero')}</td>
+              <td style="text-align: center;">${c.facturas_emitidas || 0}</td>
+              <td style="font-weight: 700; color: #78350F;">$${net.toFixed(2)}</td>
+              <td>$${esp.toFixed(2)}</td>
+              <td>$${real.toFixed(2)}</td>
+              <td>${diffText}</td>
+              <td><small>${esc(c.generado_en)}</small></td>
+            </tr>`;
+          }).join('');
+        }
+      }
+      window.LucideIcons?.refresh();
+    } catch (err) {
+      if (status) status.textContent = 'Error: ' + err.message;
+      if (tbody) tbody.innerHTML = `<tr><td colspan="10" style="text-align: center; color: #B91C1C; padding: 1.5rem;">Error al consultar: ${esc(err.message)}</td></tr>`;
+    }
+  }
+
+  root.querySelector('#btnRefreshManagerCierres')?.addEventListener('click', loadManagerCierres);
+  loadManagerCierres();
 }
 
 function bindManagerNavigation() {
@@ -278,8 +668,15 @@ function bindManagerNavigation() {
   const show = (active) => {
     const analytics = document.getElementById('analyticsView');
     const inventory = document.getElementById('inventoryView');
-    if (active) { analytics?.classList.remove('active'); if (analytics) analytics.style.display = 'none'; inventory?.classList.remove('active'); if (inventory) inventory.style.display = 'none'; reportView.style.display = 'block'; }
-    else { reportView.style.display = 'none'; }
+    if (active) {
+      analytics?.classList.remove('active');
+      if (analytics) analytics.style.display = 'none';
+      inventory?.classList.remove('active');
+      if (inventory) inventory.style.display = 'none';
+      reportView.style.display = 'block';
+    } else {
+      reportView.style.display = 'none';
+    }
     reportButton.classList.toggle('active', active);
   };
   reportButton.addEventListener('click', () => show(true));
@@ -287,7 +684,12 @@ function bindManagerNavigation() {
   document.getElementById('navBtnInventory')?.addEventListener('click', () => show(false));
 }
 
+// INICIALIZACIÓN AUTOMÁTICA
 document.addEventListener('DOMContentLoaded', () => {
-  document.querySelectorAll('.cash-reports-section').forEach(initReportSection);
+  // Inicializar en POS
+  try { initPosCierreCaja(); } catch (e) { console.error('Error initPosCierreCaja:', e); }
+
+  // Inicializar en Gerencia / Dashboard si existe
+  document.querySelectorAll('.cash-reports-section[data-report-context="gerente"]').forEach(initManagerReports);
   bindManagerNavigation();
 });

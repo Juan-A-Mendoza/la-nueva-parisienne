@@ -127,62 +127,115 @@ try {
     [$summary, $payments] = closureSummary($sales, $events);
     $hasData = count($sales) > 0 || count($events) > 0;
     $date = reportValidDate($input['date'] ?? $input['fecha'] ?? '', date('Y-m-d'));
-    $shift = reportText($actor['shift'], 'SIN TURNO');
+    $shift = reportText($input['turno'] ?? $input['shift'] ?? $actor['shift'] ?? '', 'Turno General');
     $box = reportText($input['caja_id'] ?? $input['caja'] ?? 'POS-PRINCIPAL', 'POS-PRINCIPAL');
+    $tasaBcv = (float)($input['tasa_bcv'] ?? $input['bcv_rate'] ?? 1.0);
+    if ($tasaBcv <= 0) $tasaBcv = 1.0;
+    $totalBs = round($summary['ventas_netas'] * $tasaBcv, 2);
 
     if ($action === 'GENERATE' || $action === 'GENERAR') {
-        if ($context !== 'caja' || !reportIsCashier($actor['role'])) {
-            reportJson(['success' => false, 'code' => 'REPORT_READ_ONLY', 'message' => 'El Gerente puede consultar el Cierre Z, pero no generarlo.'], 403);
-        }
-        $duplicate = $pdo->prepare("SELECT id, codigo_reporte, generado_en FROM reportes_caja_cierres WHERE fecha_turno = :fecha AND caja_id = :caja AND turno = :turno LIMIT 1");
+        $confirmEmpty = filter_var($input['confirm_empty'] ?? false, FILTER_VALIDATE_BOOLEAN);
+        $forceReclose = filter_var($input['force'] ?? $input['force_reclose'] ?? false, FILTER_VALIDATE_BOOLEAN);
+
+        // Verificar si ya existe cierre previo para alertar al usuario (a menos que fuerce re-cierre)
+        $duplicate = $pdo->prepare("SELECT id, codigo_reporte, generado_en, ventas_netas FROM reportes_caja_cierres WHERE fecha_turno = :fecha AND caja_id = :caja AND turno = :turno ORDER BY generado_en DESC LIMIT 1");
         $duplicate->execute(['fecha' => $date, 'caja' => $box, 'turno' => $shift]);
         $existing = $duplicate->fetch();
-        if ($existing) {
+        if ($existing && !$forceReclose) {
             reportAudit($pdo, 'CIERRE_CAJA_Z', 'CONSULTA', $actor, $input);
-            reportJson(['success' => false, 'code' => 'ALREADY_CLOSED', 'message' => 'Ya existe un Cierre Z para este turno.', 'closure' => $existing], 409);
+            reportJson([
+                'success' => false,
+                'code' => 'ALREADY_CLOSED',
+                'message' => 'Ya existe un Cierre Z registrado para este turno.',
+                'closure' => $existing
+            ], 409);
         }
-        $confirmEmpty = filter_var($input['confirm_empty'] ?? false, FILTER_VALIDATE_BOOLEAN);
+
         if (!$hasData && !$confirmEmpty) {
-            reportJson(['success' => false, 'code' => 'CONFIRM_EMPTY', 'message' => 'No hay ventas. ¿Deseas cerrar turno igual?'], 409);
+            reportJson(['success' => false, 'code' => 'CONFIRM_EMPTY', 'message' => 'No hay ventas registradas en el turno. ¿Deseas generar el cierre de caja de todos modos?'], 409);
         }
+
         if (!$hasData) {
             $summary = ['ventas_brutas' => 0, 'descuentos' => 0, 'devoluciones' => 0, 'ventas_netas' => 0, 'monto_efectivo_esperado' => 0, 'facturas_emitidas' => 0, 'facturas_anuladas' => 0];
         }
+
+        $montoReal = isset($input['monto_efectivo_real']) ? round((float)$input['monto_efectivo_real'], 2) : $summary['monto_efectivo_esperado'];
+        $diferencia = round($montoReal - $summary['monto_efectivo_esperado'], 2);
+        $observaciones = reportText($input['observaciones'] ?? $input['notas'] ?? '');
+        $firmaCajero = reportText($input['firma_cajero'] ?? $actor['name'] ?? 'Cajero Principal', 'Cajero');
+
         $id = 'cz_' . date('YmdHis') . '_' . bin2hex(random_bytes(3));
-        $code = 'Z-' . date('YmdHis') . '-' . strtoupper(bin2hex(random_bytes(2)));
-        $message = $hasData ? 'Cierre Z generado correctamente.' : 'Turno cerrado sin ventas registradas.';
+        $code = 'Z-' . date('Ymd') . '-' . strtoupper(bin2hex(random_bytes(3)));
+        $message = $hasData ? 'Cierre Z generado y sellado exitosamente.' : 'Turno cerrado sin ventas registradas.';
+
         $insert = $pdo->prepare(
             "INSERT INTO reportes_caja_cierres
              (id, codigo_reporte, fecha_turno, caja_id, turno, ventas_brutas, descuentos, devoluciones, ventas_netas,
-              monto_efectivo_esperado, facturas_emitidas, facturas_anuladas, cerrado_sin_ventas, mensaje_cierre,
-              firma_cajero, generado_por)
+              total_bs, tasa_bcv, monto_efectivo_esperado, monto_efectivo_real, diferencia_efectivo,
+              facturas_emitidas, facturas_anuladas, cerrado_sin_ventas, mensaje_cierre, observaciones, detalle_pagos_json,
+              firma_cajero, firma_supervisor, generado_por)
              VALUES (:id, :codigo, :fecha, :caja, :turno, :brutas, :descuentos, :devoluciones, :netas,
-                     :efectivo, :emitidas, :anuladas, :sin_ventas, :mensaje, :firma, :generado_por)"
+                     :total_bs, :tasa_bcv, :efectivo_esperado, :efectivo_real, :diferencia,
+                     :emitidas, :anuladas, :sin_ventas, :mensaje, :observaciones, :detalle_pagos,
+                     :firma, :firma_sup, :generado_por)"
         );
         $insert->execute([
-            'id' => $id, 'codigo' => $code, 'fecha' => $date, 'caja' => $box, 'turno' => $shift,
-            'brutas' => $summary['ventas_brutas'], 'descuentos' => $summary['descuentos'], 'devoluciones' => $summary['devoluciones'],
-            'netas' => $summary['ventas_netas'], 'efectivo' => $summary['monto_efectivo_esperado'],
-            'emitidas' => $summary['facturas_emitidas'], 'anuladas' => $summary['facturas_anuladas'],
-            'sin_ventas' => $hasData ? 0 : 1, 'mensaje' => $message, 'firma' => $actor['name'], 'generado_por' => $actor['id']
+            'id' => $id,
+            'codigo' => $code,
+            'fecha' => $date,
+            'caja' => $box,
+            'turno' => $shift,
+            'brutas' => $summary['ventas_brutas'],
+            'descuentos' => $summary['descuentos'],
+            'devoluciones' => $summary['devoluciones'],
+            'netas' => $summary['ventas_netas'],
+            'total_bs' => $totalBs,
+            'tasa_bcv' => $tasaBcv,
+            'efectivo_esperado' => $summary['monto_efectivo_esperado'],
+            'efectivo_real' => $montoReal,
+            'diferencia' => $diferencia,
+            'emitidas' => $summary['facturas_emitidas'],
+            'anuladas' => $summary['facturas_anuladas'],
+            'sin_ventas' => $hasData ? 0 : 1,
+            'mensaje' => $message,
+            'observaciones' => $observaciones,
+            'detalle_pagos' => json_encode($payments, JSON_UNESCAPED_UNICODE),
+            'firma' => $firmaCajero,
+            'firma_sup' => null,
+            'generado_por' => $actor['id']
         ]);
+
+        $summary['id'] = $id;
         $summary['codigo_reporte'] = $code;
         $summary['fecha_turno'] = $date;
         $summary['caja_id'] = $box;
         $summary['turno'] = $shift;
-        $summary['firma_cajero'] = $actor['name'];
+        $summary['total_bs'] = $totalBs;
+        $summary['tasa_bcv'] = $tasaBcv;
+        $summary['monto_efectivo_real'] = $montoReal;
+        $summary['diferencia_efectivo'] = $diferencia;
+        $summary['observaciones'] = $observaciones;
+        $summary['firma_cajero'] = $firmaCajero;
         $summary['firma_supervisor'] = null;
         $summary['generado_en'] = date('Y-m-d H:i:s');
         $summary['mensaje_cierre'] = $message;
+
         reportAudit($pdo, 'CIERRE_CAJA_Z', 'GENERACION', $actor, $input);
-        reportJson(['success' => true, 'has_data' => $hasData, 'message' => $message, 'closure' => $summary, 'payments' => $payments, 'sealed_at' => $summary['generado_en']]);
+        reportJson([
+            'success' => true,
+            'has_data' => $hasData,
+            'message' => $message,
+            'closure' => $summary,
+            'payments' => $payments,
+            'sealed_at' => $summary['generado_en']
+        ]);
     }
 
     $closures = [];
     if ($context === 'caja') {
-        $closureSql = "SELECT * FROM reportes_caja_cierres WHERE fecha_turno = :fecha AND caja_id = :caja AND turno = :turno ORDER BY generado_en DESC";
+        $closureSql = "SELECT * FROM reportes_caja_cierres WHERE fecha_turno = :fecha ORDER BY generado_en DESC";
         $closureStmt = $pdo->prepare($closureSql);
-        $closureStmt->execute(['fecha' => $date, 'caja' => $box, 'turno' => $shift]);
+        $closureStmt->execute(['fecha' => $date]);
         $closures = $closureStmt->fetchAll();
     } else {
         $from = reportValidDate($input['date_from'] ?? '', date('Y-m-01'));
@@ -207,6 +260,8 @@ try {
         'payments' => $payments,
         'sales_count' => count($sales),
         'events_count' => count($events),
+        'total_bs' => $totalBs,
+        'tasa_bcv' => $tasaBcv,
         'closures' => $closures,
         'sealed_at' => date('Y-m-d H:i:s')
     ]);
