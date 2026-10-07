@@ -275,40 +275,37 @@
         </form>
       </section>
 
-      <!-- TARJETA 3: INTERFAZ DE INICIO DE SESIÓN (MODALIDAD DE ACCESO) -->
-      <section class="config-card" style="border: 2px solid var(--color-gold-dark);">
-        <h2 style="font-size: 1.15rem; font-weight: 800; color: var(--color-espresso); margin-bottom: 0.5rem; padding-bottom: 0.4rem; border-bottom: 2px solid var(--color-gold-dark);">
-          Interfaz de Inicio de Sesión (Modalidad de Acceso)
-        </h2>
-        <p style="font-size: 0.85rem; color: var(--color-muted); margin-bottom: 1.25rem;">
-          Seleccione cómo interactuarán los usuarios al ingresar a la pantalla principal del sistema (<code>index.html</code>).
-        </p>
-
-        <form id="modoLoginForm">
-          <div style="display: flex; gap: 1rem; flex-wrap: wrap; margin-bottom: 1.25rem;">
-            <label id="lblModoPos" style="flex: 1; min-width: 260px; display: flex; align-items: flex-start; gap: 0.75rem; padding: 1rem; background: rgba(212, 155, 84, 0.08); border: 2px solid var(--color-gold); border-radius: var(--radius-md); cursor: pointer; transition: all 0.2s ease;">
-              <input type="radio" name="modoLoginRadio" value="pos" id="radio_modo_pos" checked style="margin-top: 0.2rem;">
-              <div>
-                <strong style="font-size: 0.95rem; color: var(--color-espresso); display: block; margin-bottom: 0.2rem;">Modo POS (Visual por Departamentos)</strong>
-                <span style="font-size: 0.8rem; color: var(--color-muted); line-height: 1.35; display: block;">Muestra 4 tarjetas interactivas de roles principales (Gerencia, Caja, Producción, Contabilidad) con transiciones suaves y modal de clave.</span>
-              </div>
-            </label>
-
-            <label id="lblModoTradicional" style="flex: 1; min-width: 260px; display: flex; align-items: flex-start; gap: 0.75rem; padding: 1rem; background: #FFFFFF; border: 2px solid var(--border-subtle); border-radius: var(--radius-md); cursor: pointer; transition: all 0.2s ease;">
-              <input type="radio" name="modoLoginRadio" value="tradicional" id="radio_modo_tradicional" style="margin-top: 0.2rem;">
-              <div>
-                <strong style="font-size: 0.95rem; color: var(--color-espresso); display: block; margin-bottom: 0.2rem;">Modo Tradicional (Credenciales)</strong>
-                <span style="font-size: 0.8rem; color: var(--color-muted); line-height: 1.35; display: block;">Muestra un único formulario minimalista y centrado solicitando Nombre de Usuario y Contraseña para inicio de sesión directo.</span>
-              </div>
-            </label>
+      <!-- TARJETA 3: GESTIÓN CRUD DE MÉTODOS DE PAGO DIGITALES & ADICIONALES (5TO MEDIO DE PAGO POS) -->
+      <section class="config-card" style="border: 2px solid var(--color-success);">
+        <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 0.5rem; padding-bottom: 0.4rem; border-bottom: 2px solid var(--color-success); flex-wrap: wrap; gap: 0.75rem;">
+          <div>
+            <h2 style="font-size: 1.15rem; font-weight: 800; color: var(--color-success); margin: 0;">
+              🌐 Métodos de Pago Digitales & Adicionales (5to Medio de Pago POS)
+            </h2>
+            <p style="font-size: 0.85rem; color: var(--color-muted); margin-top: 0.2rem; margin-bottom: 0;">
+              Administración de canales digitales (Binance, Zelle, Zinli, Wally, etc.), cuentas de recepción de fondos y estado activo en Caja.
+            </p>
           </div>
+          <button id="btnOpenNuevoMetodoDigitalModal" type="button" class="btn-primary-action" style="background: var(--color-success); color: #FFFFFF; border: none; padding: 0.55rem 1rem; border-radius: var(--radius-pill); font-weight: 800; font-size: 0.85rem; cursor: pointer; display: flex; align-items: center; gap: 0.4rem;">
+            <i data-lucide="plus-circle" class="icon-sm"></i> <span>+ Nuevo Método Digital</span>
+          </button>
+        </div>
 
-          <div style="text-align: right;">
-            <button type="submit" id="btnSaveModoLogin" class="btn-save-config">
-              <i data-lucide="save" class="icon-sm"></i> <span>Guardar Modalidad de Acceso</span>
-            </button>
-          </div>
-        </form>
+        <div class="config-table-wrapper" style="margin-top: 1rem; overflow-x: auto;">
+          <table class="config-users-table" style="width: 100%; border-collapse: collapse;">
+            <thead>
+              <tr style="background: var(--bg-main); border-bottom: 2px solid var(--border-subtle);">
+                <th style="text-align: left; padding: 0.65rem 0.85rem; font-size: 0.8rem; font-weight: 800; color: var(--color-espresso);">Canal Digital / Nombre</th>
+                <th style="text-align: left; padding: 0.65rem 0.85rem; font-size: 0.8rem; font-weight: 800; color: var(--color-espresso);">Datos / Cuenta de Recepción</th>
+                <th style="text-align: center; padding: 0.65rem 0.85rem; font-size: 0.8rem; font-weight: 800; color: var(--color-espresso);">Estado en POS</th>
+                <th style="text-align: center; padding: 0.65rem 0.85rem; font-size: 0.8rem; font-weight: 800; color: var(--color-espresso);">Acciones</th>
+              </tr>
+            </thead>
+            <tbody id="metodosDigitalesTbody">
+              <!-- Renderizado dinámico desde localStorage 'metodos_pago_digitales' por js/modules/configuraciones.js -->
+            </tbody>
+          </table>
+        </div>
       </section>
 
       <!-- SEPARADOR VISUAL DE SECCIÓN DE ALTA SEGURIDAD -->
@@ -486,6 +483,114 @@
           <button type="submit" class="btn-modal-action primary"><i data-lucide="save" class="icon-sm"></i> <span>Guardar Usuario</span></button>
         </div>
       </form>
+    </div>
+  </div>
+
+  <!-- MODAL PARA CREAR / EDITAR MÉTODO DE PAGO DIGITAL -->
+  <div id="modalMetodoDigitalForm" class="modal-overlay" aria-hidden="true" style="display: none;">
+    <div class="modal-card-container" style="max-width: 520px;">
+      <div class="modal-card-header">
+        <div style="display: flex; align-items: center; gap: 0.5rem;">
+          <i data-lucide="globe" class="icon-md" style="color: var(--color-success);"></i>
+          <h3 id="modalMetodoDigitalTitle" class="modal-card-title">Configurar Método Digital</h3>
+        </div>
+        <button id="closeMetodoDigitalModalBtn" type="button" class="btn-close-modal" aria-label="Cerrar modal">&times;</button>
+      </div>
+
+      <form id="metodoDigitalForm">
+        <input type="hidden" id="modalMetodoId" value="">
+
+        <div class="modal-card-body">
+          <div class="form-group-custom">
+            <label for="modalMetodoNombre" class="form-label-custom">Nombre del Método Digital *</label>
+            <input type="text" id="modalMetodoNombre" class="form-control-custom" placeholder="Ej. Binance Pay, Zelle USD, Wally Tech, etc." required>
+          </div>
+
+          <div class="form-group-custom">
+            <label for="modalMetodoDetalles" class="form-label-custom">Datos / Cuenta de Recepción de Fondos *</label>
+            <textarea id="modalMetodoDetalles" class="form-control-custom" style="min-height: 70px; resize: vertical;" placeholder="Ej. zelle@lanuevaparisienne.com - Titular: La Nueva Parisienne C.A. / RIF: J-40123456-7" required></textarea>
+            <small style="font-size: 0.75rem; color: var(--color-muted); display: block; margin-top: 0.2rem;">Estos datos se mostrarán en la pantalla del cajero al cobrar para guiarse o dictarle al cliente.</small>
+          </div>
+
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+            <div class="form-group-custom">
+              <label for="modalMetodoIcono" class="form-label-custom">Icono / Emoji *</label>
+              <select id="modalMetodoIcono" class="form-control-custom">
+                <option value="🌐">🌐 Binance / Web</option>
+                <option value="💸">💸 Zelle / Transferencia</option>
+                <option value="💳">💳 Zinli / Tarjeta</option>
+                <option value="🅿️">🅿️ PayPal</option>
+                <option value="🟢">🟢 Reserve</option>
+                <option value="📱">📱 Pago Móvil / App</option>
+                <option value="⚡">⚡ Wally / Rápido</option>
+                <option value="✨">✨ Personalizado</option>
+              </select>
+            </div>
+
+            <div class="form-group-custom" style="display: flex; flex-direction: column; justify-content: center;">
+              <label class="form-label-custom">Estado en POS</label>
+              <label style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer; font-weight: 700; font-size: 0.88rem; margin-top: 0.4rem;">
+                <input type="checkbox" id="modalMetodoActivo" checked style="width: 18px; height: 18px; accent-color: var(--color-success);">
+                <span>Habilitado para Cajeros</span>
+              </label>
+            </div>
+          </div>
+
+          <!-- SECCIÓN CÓDIGO QR PARA ESCANEO EN CAJA -->
+          <div style="margin-top: 1rem; padding: 0.85rem; background: var(--bg-main); border: 1.5px dashed var(--color-success); border-radius: var(--radius-md);">
+            <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 0.4rem;">
+              <label style="display: flex; align-items: center; gap: 0.4rem; font-weight: 800; font-size: 0.85rem; color: var(--color-espresso); cursor: pointer;">
+                <input type="checkbox" id="modalMetodoQrActivo" style="width: 18px; height: 18px; accent-color: var(--color-success);">
+                <span>📷 Habilitar Código QR de Pago en Caja</span>
+              </label>
+            </div>
+
+            <div id="modalQrFieldsWrapper" style="display: none; margin-top: 0.65rem;">
+              <label class="form-label-custom" style="font-size: 0.78rem; color: var(--color-espresso);"><i data-lucide="qr-code" class="icon-xs"></i> Cargar Imagen del Código QR (PNG / JPG / WEBP):</label>
+              
+              <div style="display: flex; gap: 0.5rem; align-items: center; margin-bottom: 0.5rem;">
+                <input type="file" id="modalMetodoQrFile" accept="image/*" class="form-control-custom" style="font-size: 0.8rem; padding: 0.35rem 0.5rem; flex: 1; background: #FFFFFF;">
+                <button type="button" id="btnRemoveQrImage" class="btn-table-action-sm" style="display: none; background: rgba(198,40,40,0.1); color: var(--color-danger); border: 1px solid rgba(198,40,40,0.3); padding: 0.45rem 0.65rem; font-weight: 700;" title="Quitar imagen QR">
+                  <i data-lucide="trash-2" class="icon-xs"></i> <span>Quitar</span>
+                </button>
+              </div>
+
+              <!-- PREVISUALIZACIÓN THUMBNAIL QR -->
+              <div id="modalMetodoQrPreviewContainer" style="margin-top: 0.5rem; display: none; text-align: center;">
+                <div style="font-size: 0.72rem; font-weight: 800; color: var(--color-success); margin-bottom: 0.25rem;">Vista Previa de QR a Mostrar en Caja:</div>
+                <img id="modalMetodoQrPreview" src="" alt="Vista previa QR" style="max-width: 130px; max-height: 130px; border-radius: var(--radius-sm); border: 2px solid var(--color-success); background: #FFFFFF; padding: 4px; box-shadow: 0 3px 8px rgba(0,0,0,0.12); display: inline-block;">
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="modal-card-footer">
+          <button id="cancelMetodoDigitalModalBtn" type="button" class="btn-modal-action secondary">Cancelar</button>
+          <button type="submit" class="btn-modal-action primary" style="background: var(--color-success); color: #FFFFFF;">
+            <i data-lucide="save" class="icon-sm"></i> <span>Guardar Método Digital</span>
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- MODAL DE CONFIRMACIÓN PARA ELIMINAR MÉTODO DE PAGO DIGITAL -->
+  <div id="modalConfirmarEliminacionMetodo" class="modal-overlay" aria-hidden="true" style="display: none;">
+    <div class="modal-card-container" style="max-width: 440px; text-align: center; padding: 1.5rem;">
+      <div style="width: 56px; height: 56px; border-radius: 50%; background: rgba(198, 40, 40, 0.12); color: var(--color-danger); display: flex; align-items: center; justify-content: center; margin: 0 auto 1rem auto;">
+        <i data-lucide="alert-triangle" class="icon-xl"></i>
+      </div>
+      <h3 style="font-size: 1.15rem; font-weight: 800; color: var(--color-espresso); margin-bottom: 0.5rem;">¿Eliminar Método Digital?</h3>
+      <p id="confirmEliminarMetodoText" style="font-size: 0.88rem; color: var(--color-muted); line-height: 1.4; margin-bottom: 1.25rem;">
+        ¿Está seguro de que desea eliminar este canal digital? Esta acción no se puede deshacer.
+      </p>
+
+      <div style="display: flex; gap: 0.75rem; justify-content: center;">
+        <button id="cancelEliminarMetodoBtn" type="button" class="btn-modal-action secondary" style="min-width: 120px;">Cancelar</button>
+        <button id="acceptEliminarMetodoBtn" type="button" class="btn-modal-action danger" style="background: var(--color-danger); color: #FFFFFF; min-width: 140px; font-weight: 800;">
+          <i data-lucide="trash-2" class="icon-sm"></i> <span>Sí, Eliminar</span>
+        </button>
+      </div>
     </div>
   </div>
 

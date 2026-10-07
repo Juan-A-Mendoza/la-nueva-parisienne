@@ -4,6 +4,72 @@ Todos los cambios significativos, nuevas funcionalidades y actualizaciones del s
 
 El formato está basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1.0.0/) y este proyecto se adhiere a [Semantic Versioning](https://semver.org/lang/es/).
 
+## [5.21.0] - 2026-10-07 (Quinto Medio de Pago: CRUD Completo de Canales Digitales, Código QR & Cobro Dinámico en POS)
+
+### 💳 5to Medio de Pago en Caja POS ([modules/pos.html](file:///c:/Users/juana/.gemini/antigravity-ide/scratch/la-nueva-parisienne/modules/pos.html), [js/modules/pos.js](file:///c:/Users/juana/.gemini/antigravity-ide/scratch/la-nueva-parisienne/js/modules/pos.js), [css/modules/pos.css](file:///c:/Users/juana/.gemini/antigravity-ide/scratch/la-nueva-parisienne/css/modules/pos.css))
+- **Botón "Digitales" en Grilla de Pagos**:
+  - Incorporación del 5to botón de medio de pago (`data-method="digitales"`) en la interfaz de pago de la Caja POS, ampliando la grilla a 5 opciones con distribución responsiva.
+- **Panel de Cobro Digital Dinámico (`#digitalPaymentPanel`)**:
+  - Inyección de tarjetas de selección de canales activos (Binance Pay, Zelle USD, Zinli, PayPal, Reserve, Wally Tech, Mercado Pago, etc.) alimentadas directamente desde la configuración CRUD en `localStorage` (`metodos_pago_digitales`).
+  - **Banner de Datos de Cuenta (`#digitalMethodInfoBox`)**: Visualización dinámica de los datos de recepción de fondos / cuenta del canal seleccionado para que el cajero pueda dictarle o guiar al cliente al pagar.
+  - **Visualización de Código QR en Caja (`#posDigitalQrContainer`)**: Si el método de pago seleccionado tiene la opción `qrEnabled: true` y una imagen cargada (`qrImage`), se renderiza automáticamente la imagen del código QR en el banner de cobro.
+  - **Modal de Ampliación de QR (`#modalEnlargeQr`)**: Al hacer clic en la imagen del QR en caja, se abre un modal de vista ampliada en pantalla completa con detalles del método para facilitar el escaneo por parte del cliente.
+  - Resumen de totales a cobrar en dólares ($ USD) y bolívares (Bs. VES según Tasa BCV).
+  - Campo de entrada para el número de referencia, hash o ID de transacción (`#digitalRefInput`).
+- **Registro en Auditoría y Emisión de Tickets**:
+  - Registro del nombre específico del método digital seleccionado en el objeto de venta, comprobante térmico de facturación y movimientos de inventario/caja.
+
+### ⚙️ Módulo 9: CRUD Completo de Métodos de Pago Digitales ([modules/configuraciones.html](file:///c:/Users/juana/.gemini/antigravity-ide/scratch/la-nueva-parisienne/modules/configuraciones.html), [js/modules/configuraciones.js](file:///c:/Users/juana/.gemini/antigravity-ide/scratch/la-nueva-parisienne/js/modules/configuraciones.js))
+- **Tabla CRUD Gerencial de Métodos Digitales**:
+  - Nueva sección interactiva en el Módulo 9 que permite al Gerente General crear, listar, editar, eliminar y activar/desactivar cualquier método de pago digital (Binance, Zelle, Zinli, PayPal, Reserve, Wally Tech, etc.).
+- **Gestión de Código QR por Método de Pago**:
+  - Selector en la ventana de edición/creación (`#modalMetodoQrActivo`) para habilitar o deshabilitar la visualización del código QR en la Caja POS.
+  - Carga de archivo de imagen QR (`#modalMetodoQrFile`) con conversión automática a DataURL base64 (`FileReader`) y vista previa en tiempo real (`#modalMetodoQrPreview`).
+- **Modales de Edición / Creación & Confirmación de Eliminación**:
+  - Formulario modal `#modalMetodoDigitalForm` para editar o añadir nuevos métodos de pago con Nombre, Datos de Cuenta, Icono/Emoji, Código QR, Estado Activo.
+  - Modal de confirmación `#modalConfirmarEliminacionMetodo` que consulta al Gerente antes de eliminar un método digital.
+  - **Animación SVG de Checkmark Verde**: Tanto al guardar/editar un método como al confirmar su eliminación, el sistema concluye con la ventana de éxito `#modalExitoNotificacion` mostrando la animación del checkmark verde.
+  - Persistencia en `localStorage` con sincronización en tiempo real (`storage` event) hacia las Cajas POS abiertas.
+- **Limpieza de Interfaz**:
+  - Eliminación de la sección obsoleta *"Interfaz de Inicio de Sesión (Modalidad de Acceso)"* de `modules/configuraciones.html` al haber consolidado la navegación universal por departamentos.
+
+---
+
+## [5.20.0] - 2026-10-07 (Consolidación de APIs Backend PHP, Reportes de Cierre de Caja, Módulo de Cocina/Hornos y Filtros Gerenciales)
+
+### 🥖 Módulo de Cocina, Hornos e Inventario en Tiempo Real ([modules/kitchen.html](file:///c:/Users/juana/.gemini/antigravity-ide/scratch/la-nueva-parisienne/modules/kitchen.html), [js/modules/kitchen.js](file:///c:/Users/juana/.gemini/antigravity-ide/scratch/la-nueva-parisienne/js/modules/kitchen.js), [css/modules/kitchen.css](file:///c:/Users/juana/.gemini/antigravity-ide/scratch/la-nueva-parisienne/css/modules/kitchen.css))
+- **Endpoints de Backend PHP (`api/kitchen/`)**:
+  - Implementación de controladores PHP dedicados para el flujo de horneado y comandas KDS: `get_estado_completo.php`, `iniciar_horneado.php`, `completar_horneado.php`, `gestionar_lote.php`, `consumir_materia_prima_lote.php`, `crear_comanda.php` y `actualizar_comanda.php`.
+- **Descuento Automático de Materias Primas**:
+  - Al iniciar o completar el horneado de lotes en la cocina, el sistema descuenta automáticamente el inventario de materias primas e insumos registrado en la base de datos MySQL (`productos`).
+- **Monitoreo Canónico de Hornos (`estado_hornos`)**:
+  - Sincronización del estado de los 4 hornos industriales (Giratorio A, Convección B, Piedra C, Digital D) con actualización en tiempo real del tiempo restante, temperatura objetivo y lote activo.
+
+### 💰 Reportes de Cierre de Caja & Arqueo POS ([js/modules/caja-reportes.js](file:///c:/Users/juana/.gemini/antigravity-ide/scratch/la-nueva-parisienne/js/modules/caja-reportes.js), [api/reports/](file:///c:/Users/juana/.gemini/antigravity-ide/scratch/la-nueva-parisienne/api/reports/))
+- **Mapeo Multimoneda y Métodos de Pago (`cierre_caja.php`, `ventas_cobros.php`)**:
+  - Desglose y agrupación de ingresos por método de pago: Efectivo VES/USD, Punto de Venta, Zelle y Pago Móvil.
+  - Generación de reportes de arqueo de caja con totales acumulados por turno y cajero activo.
+- **Sincronización con Auditoría POS**:
+  - Integración del modal de detalles de venta y generación de reportes consolidados para gerencia y caja.
+
+### 📊 Filtros Temporales en Dashboard Gerencial ([modules/dashboard.html](file:///c:/Users/juana/.gemini/antigravity-ide/scratch/la-nueva-parisienne/modules/dashboard.html), [js/modules/dashboard.js](file:///c:/Users/juana/.gemini/antigravity-ide/scratch/la-nueva-parisienne/js/modules/dashboard.js), [css/modules/dashboard.css](file:///c:/Users/juana/.gemini/antigravity-ide/scratch/la-nueva-parisienne/css/modules/dashboard.css))
+- **Filtrado Dinámico de Gráficas**:
+  - Selector de rangos de fecha y periodos (Hoy, Esta Semana, Este Mes, Año) para las gráficas comparativas de ingresos, egresos y volumen de ventas.
+- **Base de Datos Gerencial (`js/data/dashboard-db.js`)**:
+  - Cálculo en tiempo real de márgenes de ganancia, totales acumulados y distribución de productos más vendidos.
+
+### 📖 Recetario Artesanal & Catálogo de Productos ([js/data/recipes-db.js](file:///c:/Users/juana/.gemini/antigravity-ide/scratch/la-nueva-parisienne/js/data/recipes-db.js), [api/inventory/](file:///c:/Users/juana/.gemini/antigravity-ide/scratch/la-nueva-parisienne/api/inventory/))
+- **Base de Datos de Recetas (`recipes-db.js`)**:
+  - Catálogo detallado de formulación de masa para panadería y pastelería (Baguettes, Croissants, Éclairs, Brioches) con proporción de ingredientes y tiempos de leudado/horneado.
+- **Endpoints de Inventario PHP**:
+  - `guardar_materia_prima.php`, `guardar_producto.php`, `eliminar_item.php`, `adjust_stock.php` y `get_inventory.php`.
+
+### 🗄️ Consolidación de Base de Datos MySQL ([database/database.sql](file:///c:/Users/juana/.gemini/antigravity-ide/scratch/la-nueva-parisienne/database/database.sql), [database/seed_data.sql](file:///c:/Users/juana/.gemini/antigravity-ide/scratch/la-nueva-parisienne/database/seed_data.sql))
+- **Normalización 1FN y 2FN Preservada**:
+  - Esquema limpio con llaves foráneas en cascada, tabla canónica `estado_hornos`, `ordenes_compra_detalle` y semillas de datos sincronizadas para todos los módulos.
+
+---
+
 ## [5.19.0] - 2026-10-07 (Remodelación de Login Clásico & Rol Superadmin con Acceso Total)
 
 ### 🔐 Remodelación Integral del Login ([index.html](file:///c:/xampp/htdocs/la-nueva-parisienne/index.html), [css/modules/auth.css](file:///c:/xampp/htdocs/la-nueva-parisienne/css/modules/auth.css), [js/modules/auth.js](file:///c:/xampp/htdocs/la-nueva-parisienne/js/modules/auth.js))

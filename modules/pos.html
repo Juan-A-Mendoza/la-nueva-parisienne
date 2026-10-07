@@ -256,7 +256,7 @@
           <div class="payment-box-card">
             <h3 class="card-title">Medio de Pago</h3>
 
-            <!-- Métodos de Pago (Efectivo, Débito, Crédito, Pago Móvil) -->
+            <!-- Métodos de Pago (Efectivo, Débito, Crédito, Pago Móvil, Digitales) -->
             <div class="payment-methods-grid">
               <button type="button" class="method-btn active" data-method="efectivo">
                 <span class="method-icon"><i data-lucide="banknote"></i></span>
@@ -273,6 +273,10 @@
               <button type="button" class="method-btn" data-method="transferencia">
                 <span class="method-icon"><i data-lucide="smartphone"></i></span>
                 <span>Pago Móvil</span>
+              </button>
+              <button type="button" class="method-btn" data-method="digitales">
+                <span class="method-icon"><i data-lucide="globe"></i></span>
+                <span>Digitales</span>
               </button>
             </div>
 
@@ -370,6 +374,48 @@
                   <label for="referenceInput" style="font-size: 0.82rem; font-weight: 700; color: var(--color-espresso);">Número de Referencia / Aprobación:</label>
                   <input type="text" id="referenceInput" class="tender-input" style="width: 100%; text-align: left; font-size: 0.95rem; background: #FFFFFF; height: 38px;" placeholder="Ej. REF-982401" autocomplete="off">
                 </div>
+              </div>
+            </div>
+
+            <!-- Panel Pagos Digitales & Adicionales (Binance, Zelle, Zinli, PayPal, Reserve, etc.) -->
+            <div id="digitalPaymentPanel" class="cash-calculator-panel" style="display: none; background: rgba(46, 125, 50, 0.06); border: 1px solid rgba(46, 125, 50, 0.3);">
+              <div class="card-pay-total-summary" style="display: flex; justify-content: space-between; align-items: center; padding: 0.5rem 0.75rem; background: #FFFFFF; border: 1px solid var(--color-success); border-radius: var(--radius-sm); margin-bottom: 0.65rem;">
+                <div>
+                  <span style="font-size: 0.72rem; color: var(--color-muted); font-weight: 700; display: block;">Monto a Cobrar ($ USD):</span>
+                  <strong id="digitalTotalUsdVal" style="font-size: 1.15rem; color: var(--color-gold-dark);">$0.00</strong>
+                </div>
+                <div style="text-align: right;">
+                  <span style="font-size: 0.72rem; color: var(--color-muted); font-weight: 700; display: block;">Monto en Bolívares (BCV):</span>
+                  <strong id="digitalTotalVesVal" style="font-size: 1.05rem; color: var(--color-success);">Bs. 0,00</strong>
+                </div>
+              </div>
+
+              <p style="font-size: 0.82rem; font-weight: 700; color: var(--color-espresso); margin-bottom: 0.5rem; display: flex; align-items: center; gap: 0.35rem;">
+                <i data-lucide="globe" class="icon-sm" style="color: var(--color-success);"></i> Seleccione el Canal Digital Activo:
+              </p>
+
+              <div id="digitalOptionsGrid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(105px, 1fr)); gap: 0.4rem; margin-bottom: 0.65rem;">
+                <!-- Opciones inyectadas dinámicamente desde metodos_pago_digitales -->
+              </div>
+
+              <!-- BANNER DE DATOS Y DETALLES DE LA CUENTA DEL CANAL SELECCIONADO -->
+              <div id="digitalMethodInfoBox" style="background: #FFFFFF; border: 1.5px dashed var(--color-success); padding: 0.55rem 0.75rem; border-radius: var(--radius-sm); margin-bottom: 0.65rem; font-size: 0.8rem; color: var(--color-espresso);">
+                <strong id="digitalInfoTitle" style="color: var(--color-success); display: flex; align-items: center; gap: 0.3rem; margin-bottom: 0.15rem; font-size: 0.82rem;">📌 Cuenta / Datos de Recepción:</strong>
+                <span id="digitalInfoText" style="line-height: 1.35; display: block; font-weight: 700; color: var(--color-espresso);">Seleccione un canal para consultar los datos de destino.</span>
+
+                <!-- CONTENEDOR VISTA QR DE PAGO EN CAJA -->
+                <div id="posDigitalQrContainer" style="display: none; margin-top: 0.5rem; text-align: center; border-top: 1px dashed var(--color-border-subtle); padding-top: 0.4rem;">
+                  <div style="font-size: 0.72rem; color: var(--color-gold-dark); font-weight: 700; margin-bottom: 0.25rem;">
+                    <i data-lucide="qr-code" class="icon-xs" style="color: var(--color-gold-dark);"></i> Escanea el Código QR para Pagar:
+                  </div>
+                  <img id="posDigitalQrImage" src="" alt="Código QR de Pago" style="max-width: 140px; max-height: 140px; border-radius: 8px; border: 2px solid var(--color-gold); cursor: pointer; box-shadow: var(--shadow-sm); transition: transform 0.2s ease; background: #FFFFFF;" title="Haz clic para ampliar el QR">
+                  <div style="font-size: 0.68rem; color: var(--color-gold-dark); margin-top: 0.2rem; font-weight: 600;">🔍 Toca la imagen para ampliar QR</div>
+                </div>
+              </div>
+
+              <div style="display: flex; flex-direction: column; gap: 0.2rem; text-align: left;">
+                <label for="digitalRefInput" style="font-size: 0.82rem; font-weight: 700; color: var(--color-espresso);">Número de Referencia / Hash / ID Transacción:</label>
+                <input type="text" id="digitalRefInput" class="tender-input" style="width: 100%; text-align: left; font-size: 0.95rem; background: #FFFFFF; height: 38px;" placeholder="Ej. BIN-982401 / ZEL-5582" autocomplete="off">
               </div>
             </div>
 
@@ -712,6 +758,32 @@
         </div>
       </form>
 
+    </div>
+  </div>
+
+  <!-- MODAL DE VISUALIZACIÓN AMPLIADA DE CÓDIGO QR EN CAJA -->
+  <div id="modalEnlargeQr" class="pin-modal-overlay no-print" role="dialog" aria-modal="true" style="display: none; z-index: 9999;">
+    <div class="pin-modal-card" style="max-width: 380px; text-align: center; padding: 1.5rem; background: #FFFFFF; border-radius: 16px; border: 2px solid var(--color-gold); box-shadow: 0 10px 30px rgba(0,0,0,0.25);">
+      <button type="button" id="btnCloseEnlargeQr" class="modal-close-btn" style="position: absolute; top: 12px; right: 12px; border: none; background: transparent; font-size: 1.5rem; cursor: pointer; color: var(--color-muted);">&times;</button>
+      
+      <div style="width: 48px; height: 48px; border-radius: 50%; background: rgba(212, 155, 84, 0.12); color: var(--color-gold-dark); display: flex; align-items: center; justify-content: center; margin: 0 auto 0.75rem auto;">
+        <i data-lucide="qr-code" class="icon-md"></i>
+      </div>
+      
+      <h3 id="enlargeQrTitle" style="font-size: 1.15rem; color: var(--color-espresso); margin-bottom: 0.25rem; font-weight: 800;">Código QR de Pago</h3>
+      <p id="enlargeQrSubtitle" style="font-size: 0.82rem; color: var(--color-muted); margin-bottom: 1.1rem; line-height: 1.3;">Muestra este código al cliente para escanear y transferir</p>
+      
+      <div style="background: #FFFFFF; padding: 0.85rem; border-radius: 14px; border: 2px solid var(--color-gold-light); display: inline-block; box-shadow: var(--shadow-sm); margin-bottom: 1.1rem;">
+        <img id="enlargeQrImage" src="" alt="Código QR Ampliado" style="width: 240px; height: 240px; object-fit: contain; border-radius: 8px; display: block;">
+      </div>
+      
+      <div id="enlargeQrDetails" style="font-size: 0.82rem; font-weight: 700; color: var(--color-espresso); background: var(--bg-main); padding: 0.5rem; border-radius: 8px; margin-bottom: 1.1rem;">
+        <!-- Detalles del método -->
+      </div>
+      
+      <button type="button" id="btnDoneEnlargeQr" class="btn-complete-sale" style="width: 100%; height: 42px; font-size: 0.9rem;">
+        <i data-lucide="check" class="icon-sm"></i> <span>Cerrar Vista QR</span>
+      </button>
     </div>
   </div>
 

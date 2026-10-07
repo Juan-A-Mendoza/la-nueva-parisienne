@@ -880,9 +880,37 @@
 /* MEDIOS DE PAGO Y CALCULADORA */
 .payment-methods-grid {
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 0.35rem;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 0.3rem;
   margin-bottom: 0.65rem;
+}
+
+.digital-option-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.3rem;
+  padding: 0.45rem 0.5rem;
+  border-radius: var(--radius-sm);
+  border: 1.5px solid var(--border-subtle);
+  background: #FFFFFF;
+  cursor: pointer;
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: var(--color-espresso);
+  transition: all 0.2s ease;
+}
+
+.digital-option-btn:hover {
+  border-color: var(--color-success);
+  background: rgba(46, 125, 50, 0.04);
+}
+
+.digital-option-btn.active {
+  background: var(--color-success);
+  color: #FFFFFF;
+  border-color: var(--color-success);
+  box-shadow: 0 2px 6px rgba(46, 125, 50, 0.3);
 }
 
 .method-btn {

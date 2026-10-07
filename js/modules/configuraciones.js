@@ -738,12 +738,20 @@ function inicializarModalesYEventos() {
     const modalAuthPassword = document.getElementById('modalAuthPassword');
     const modalUsuarioForm = document.getElementById('modalUsuarioForm');
     const modalExitoNotificacion = document.getElementById('modalExitoNotificacion');
+    const modalMetodoDigitalForm = document.getElementById('modalMetodoDigitalForm');
+    const modalConfirmarEliminacionMetodo = document.getElementById('modalConfirmarEliminacionMetodo');
 
     if (e.target === modalAuthPassword) {
       if (modalAuthPassword) modalAuthPassword.style.display = 'none';
     }
     if (e.target === modalUsuarioForm) {
       if (modalUsuarioForm) modalUsuarioForm.style.display = 'none';
+    }
+    if (e.target === modalMetodoDigitalForm) {
+      if (modalMetodoDigitalForm) modalMetodoDigitalForm.style.display = 'none';
+    }
+    if (e.target === modalConfirmarEliminacionMetodo) {
+      if (modalConfirmarEliminacionMetodo) modalConfirmarEliminacionMetodo.style.display = 'none';
     }
     if (e.target === modalExitoNotificacion) {
       closeSuccessModal();
@@ -806,11 +814,335 @@ function inicializarModoLoginConfig() {
   }
 }
 
+const DEFAULT_DIGITAL_METHODS = [
+  { id: 'met_binance', name: 'Binance Pay', details: 'Pay ID: 29849201 | Correo: binance@lanuevaparisienne.com', icon: '🌐', active: true },
+  { id: 'met_zelle', name: 'Zelle (USD)', details: 'zelle@lanuevaparisienne.com | Titular: La Nueva Parisienne C.A.', icon: '💸', active: true },
+  { id: 'met_zinli', name: 'Zinli', details: 'zinli@lanuevaparisienne.com | Tel: +58 412 555 1234', icon: '💳', active: true },
+  { id: 'met_paypal', name: 'PayPal', details: 'paypal@lanuevaparisienne.com', icon: '🅿️', active: true },
+  { id: 'met_reserve', name: 'Reserve', details: 'Usuario: @lanuevaparisienne', icon: '🟢', active: true }
+];
+
+function getDigitalMethodsFromStorage() {
+  try {
+    const raw = localStorage.getItem('metodos_pago_digitales');
+    if (raw) {
+      const parsed = JSON.parse(raw);
+      if (Array.isArray(parsed) && parsed.length > 0) {
+        return parsed;
+      } else if (parsed && parsed.methods) {
+        // Migración automática desde el formato anterior de checkboxes
+        const migrated = [];
+        const m = parsed.methods;
+        if (m.binance !== false) migrated.push({ id: 'met_binance', name: 'Binance Pay', details: 'Pay ID: 29849201 | Correo: binance@lanuevaparisienne.com', icon: '🌐', active: true });
+        if (m.zelle !== false) migrated.push({ id: 'met_zelle', name: 'Zelle (USD)', details: 'zelle@lanuevaparisienne.com | Titular: La Nueva Parisienne C.A.', icon: '💸', active: true });
+        if (m.zinli !== false) migrated.push({ id: 'met_zinli', name: 'Zinli', details: 'zinli@lanuevaparisienne.com | Tel: +58 412 555 1234', icon: '💳', active: true });
+        if (m.paypal !== false) migrated.push({ id: 'met_paypal', name: 'PayPal', details: 'paypal@lanuevaparisienne.com', icon: '🅿️', active: true });
+        if (m.reserve !== false) migrated.push({ id: 'met_reserve', name: 'Reserve', details: 'Usuario: @lanuevaparisienne', icon: '🟢', active: true });
+        if (parsed.customName && parsed.customName.trim()) {
+          migrated.push({ id: `met_${Date.now()}`, name: parsed.customName.trim(), details: 'Detalles de cuenta personalizados', icon: '✨', active: true });
+        }
+        localStorage.setItem('metodos_pago_digitales', JSON.stringify(migrated));
+        return migrated;
+      }
+    }
+  } catch (e) {
+    console.warn('Error leyendo metodos_pago_digitales:', e);
+  }
+  const defaultList = [...DEFAULT_DIGITAL_METHODS];
+  try { localStorage.setItem('metodos_pago_digitales', JSON.stringify(defaultList)); } catch (e) {}
+  return defaultList;
+}
+
+function saveDigitalMethodsToStorage(methodsArray) {
+  try {
+    const listToSave = Array.isArray(methodsArray) ? methodsArray : [];
+    localStorage.setItem('metodos_pago_digitales', JSON.stringify(listToSave));
+    window.dispatchEvent(new Event('storage'));
+  } catch (e) {
+    console.error('Error guardando métodos digitales:', e);
+  }
+}
+
+/**
+ * Control CRUD de Métodos de Pago Digitales & Adicionales (5to Medio de Pago POS)
+ */
+function inicializarMetodosDigitalesConfig() {
+  const metodosDigitalesTbody = document.getElementById('metodosDigitalesTbody');
+  const btnOpenNuevoMetodoDigitalModal = document.getElementById('btnOpenNuevoMetodoDigitalModal');
+  const modalMetodoDigitalForm = document.getElementById('modalMetodoDigitalForm');
+  const modalMetodoDigitalTitle = document.getElementById('modalMetodoDigitalTitle');
+  const metodoDigitalForm = document.getElementById('metodoDigitalForm');
+  const closeMetodoDigitalModalBtn = document.getElementById('closeMetodoDigitalModalBtn');
+  const cancelMetodoDigitalModalBtn = document.getElementById('cancelMetodoDigitalModalBtn');
+
+  // Campos de Código QR
+  const modalMetodoQrActivo = document.getElementById('modalMetodoQrActivo');
+  const modalQrFieldsWrapper = document.getElementById('modalQrFieldsWrapper');
+  const modalMetodoQrFile = document.getElementById('modalMetodoQrFile');
+  const modalMetodoQrPreview = document.getElementById('modalMetodoQrPreview');
+  const modalMetodoQrPreviewContainer = document.getElementById('modalMetodoQrPreviewContainer');
+  const btnRemoveQrImage = document.getElementById('btnRemoveQrImage');
+  let currentQrBase64 = '';
+
+  // Modal de Confirmación de Eliminación
+  const modalConfirmarEliminacionMetodo = document.getElementById('modalConfirmarEliminacionMetodo');
+  const confirmEliminarMetodoText = document.getElementById('confirmEliminarMetodoText');
+  const cancelEliminarMetodoBtn = document.getElementById('cancelEliminarMetodoBtn');
+  const acceptEliminarMetodoBtn = document.getElementById('acceptEliminarMetodoBtn');
+
+  let digitalMethods = getDigitalMethodsFromStorage();
+  let pendingMethodToDelete = null;
+
+  // Escuchadores del módulo de Código QR
+  modalMetodoQrActivo?.addEventListener('change', (e) => {
+    if (modalQrFieldsWrapper) {
+      modalQrFieldsWrapper.style.display = e.target.checked ? 'block' : 'none';
+    }
+  });
+
+  modalMetodoQrFile?.addEventListener('change', (e) => {
+    const file = e.target.files ? e.target.files[0] : null;
+    if (file) {
+      const reader = new FileReader();
+      reader.onload = (evt) => {
+        currentQrBase64 = evt.target.result;
+        if (modalMetodoQrPreview) modalMetodoQrPreview.src = currentQrBase64;
+        if (modalMetodoQrPreviewContainer) modalMetodoQrPreviewContainer.style.display = 'block';
+        if (btnRemoveQrImage) btnRemoveQrImage.style.display = 'inline-flex';
+      };
+      reader.readAsDataURL(file);
+    }
+  });
+
+  btnRemoveQrImage?.addEventListener('click', () => {
+    currentQrBase64 = '';
+    if (modalMetodoQrFile) modalMetodoQrFile.value = '';
+    if (modalMetodoQrPreview) modalMetodoQrPreview.src = '';
+    if (modalMetodoQrPreviewContainer) modalMetodoQrPreviewContainer.style.display = 'none';
+    if (btnRemoveQrImage) btnRemoveQrImage.style.display = 'none';
+  });
+
+  function renderTable() {
+    if (!metodosDigitalesTbody) return;
+    metodosDigitalesTbody.innerHTML = '';
+
+    if (digitalMethods.length === 0) {
+      metodosDigitalesTbody.innerHTML = `
+        <tr>
+          <td colspan="4" style="text-align: center; color: var(--color-muted); padding: 1.5rem;">
+            No hay métodos digitales configurados. Haga clic en "+ Nuevo Método Digital" para agregar uno.
+          </td>
+        </tr>
+      `;
+      return;
+    }
+
+    digitalMethods.forEach(method => {
+      const tr = document.createElement('tr');
+      tr.style.borderBottom = '1px solid var(--border-subtle)';
+
+      const hasQrBadge = method.qrEnabled && method.qrImage ? `<span style="font-size: 0.7rem; font-weight: 800; color: var(--color-success); background: rgba(46,125,50,0.1); padding: 0.15rem 0.45rem; border-radius: 4px; border: 1px solid rgba(46,125,50,0.25); margin-left: 0.35rem;" title="Código QR habilitado en Caja">📷 QR</span>` : '';
+
+      tr.innerHTML = `
+        <td style="padding: 0.65rem 0.85rem;">
+          <strong style="display: flex; align-items: center; gap: 0.4rem; font-size: 0.9rem; color: var(--color-espresso);">
+            <span style="font-size: 1.1rem;">${method.icon || '🌐'}</span> ${method.name} ${hasQrBadge}
+          </strong>
+        </td>
+        <td style="padding: 0.65rem 0.85rem; font-size: 0.82rem; color: var(--color-muted);">
+          ${method.details || 'Sin datos de cuenta'}
+        </td>
+        <td style="padding: 0.65rem 0.85rem; text-align: center;">
+          <button type="button" class="btn-toggle-status" style="border: none; background: none; cursor: pointer; padding: 0;" title="Haga clic para cambiar estado">
+            <span class="table-status-tag ${method.active ? 'active' : 'inactive'}" style="${method.active ? 'background: rgba(46,125,50,0.1); color: var(--color-success); border: 1px solid rgba(46,125,50,0.3); font-weight: 700;' : 'background: rgba(198,40,40,0.1); color: var(--color-danger); border: 1px solid rgba(198,40,40,0.3); font-weight: 700;'} padding: 0.25rem 0.6rem; border-radius: 12px; font-size: 0.75rem;">
+              ${method.active ? '✓ Habilitado' : '✕ Deshabilitado'}
+            </span>
+          </button>
+        </td>
+        <td style="padding: 0.65rem 0.85rem; text-align: center;">
+          <div style="display: flex; gap: 0.35rem; justify-content: center;">
+            <button type="button" class="btn-table-action-sm btn-edit-method" style="background: rgba(212,155,84,0.15); color: var(--color-gold-dark); border: 1px solid rgba(212,155,84,0.4); padding: 0.25rem 0.55rem; border-radius: 4px; font-size: 0.75rem; font-weight: 700; cursor: pointer;" title="Editar canal digital">
+              <i data-lucide="edit-3" class="icon-xs"></i> <span>Editar</span>
+            </button>
+            <button type="button" class="btn-table-action-sm btn-del-method" style="background: rgba(198,40,40,0.1); color: var(--color-danger); border: 1px solid rgba(198,40,40,0.3); padding: 0.25rem 0.55rem; border-radius: 4px; font-size: 0.75rem; font-weight: 700; cursor: pointer;" title="Eliminar canal digital">
+              <i data-lucide="trash-2" class="icon-xs"></i>
+            </button>
+          </div>
+        </td>
+      `;
+
+      tr.querySelector('.btn-toggle-status')?.addEventListener('click', () => {
+        method.active = !method.active;
+        saveDigitalMethodsToStorage(digitalMethods);
+        renderTable();
+        showStatus(`¡Estado de "${method.name}" actualizado a ${method.active ? 'Habilitado' : 'Deshabilitado'}!`, 'success');
+      });
+
+      tr.querySelector('.btn-edit-method')?.addEventListener('click', () => openModal(method));
+      tr.querySelector('.btn-del-method')?.addEventListener('click', () => openConfirmDeleteModal(method));
+
+      metodosDigitalesTbody.appendChild(tr);
+    });
+
+    setTimeout(() => window.LucideIcons?.refresh(), 0);
+  }
+
+  function openModal(itemToEdit = null) {
+    if (itemToEdit) {
+      if (modalMetodoDigitalTitle) modalMetodoDigitalTitle.textContent = 'Editar Método Digital';
+      document.getElementById('modalMetodoId').value = itemToEdit.id;
+      document.getElementById('modalMetodoNombre').value = itemToEdit.name;
+      document.getElementById('modalMetodoDetalles').value = itemToEdit.details || '';
+      document.getElementById('modalMetodoIcono').value = itemToEdit.icon || '🌐';
+      document.getElementById('modalMetodoActivo').checked = Boolean(itemToEdit.active);
+
+      currentQrBase64 = itemToEdit.qrImage || '';
+      const isQrActive = Boolean(itemToEdit.qrEnabled);
+      if (modalMetodoQrActivo) modalMetodoQrActivo.checked = isQrActive;
+      if (modalQrFieldsWrapper) modalQrFieldsWrapper.style.display = isQrActive ? 'block' : 'none';
+
+      if (currentQrBase64) {
+        if (modalMetodoQrPreview) modalMetodoQrPreview.src = currentQrBase64;
+        if (modalMetodoQrPreviewContainer) modalMetodoQrPreviewContainer.style.display = 'block';
+        if (btnRemoveQrImage) btnRemoveQrImage.style.display = 'inline-flex';
+      } else {
+        if (modalMetodoQrPreviewContainer) modalMetodoQrPreviewContainer.style.display = 'none';
+        if (btnRemoveQrImage) btnRemoveQrImage.style.display = 'none';
+      }
+    } else {
+      if (modalMetodoDigitalTitle) modalMetodoDigitalTitle.textContent = 'Crear Nuevo Método Digital';
+      metodoDigitalForm?.reset();
+      document.getElementById('modalMetodoId').value = '';
+      document.getElementById('modalMetodoIcono').value = '🌐';
+      document.getElementById('modalMetodoActivo').checked = true;
+
+      currentQrBase64 = '';
+      if (modalMetodoQrActivo) modalMetodoQrActivo.checked = false;
+      if (modalQrFieldsWrapper) modalQrFieldsWrapper.style.display = 'none';
+      if (modalMetodoQrFile) modalMetodoQrFile.value = '';
+      if (modalMetodoQrPreviewContainer) modalMetodoQrPreviewContainer.style.display = 'none';
+      if (btnRemoveQrImage) btnRemoveQrImage.style.display = 'none';
+    }
+
+    if (modalMetodoDigitalForm) {
+      modalMetodoDigitalForm.style.display = 'flex';
+      modalMetodoDigitalForm.setAttribute('aria-hidden', 'false');
+      setTimeout(() => document.getElementById('modalMetodoNombre')?.focus(), 100);
+    }
+  }
+
+  function closeModal() {
+    if (modalMetodoDigitalForm) {
+      modalMetodoDigitalForm.style.display = 'none';
+      modalMetodoDigitalForm.setAttribute('aria-hidden', 'true');
+      metodoDigitalForm?.reset();
+      currentQrBase64 = '';
+      if (modalMetodoQrFile) modalMetodoQrFile.value = '';
+      if (modalMetodoQrPreviewContainer) modalMetodoQrPreviewContainer.style.display = 'none';
+    }
+  }
+
+  function openConfirmDeleteModal(method) {
+    pendingMethodToDelete = method;
+    if (confirmEliminarMetodoText) {
+      confirmEliminarMetodoText.innerHTML = `¿Está seguro de que desea eliminar el canal digital <strong>"${method.icon || ''} ${method.name}"</strong>?<br><span style="font-size: 0.8rem; color: var(--color-muted); display: block; margin-top: 0.3rem;">Esta acción no se puede deshacer.</span>`;
+    }
+    if (modalConfirmarEliminacionMetodo) {
+      modalConfirmarEliminacionMetodo.style.display = 'flex';
+      modalConfirmarEliminacionMetodo.setAttribute('aria-hidden', 'false');
+    }
+  }
+
+  function closeConfirmDeleteModal() {
+    if (modalConfirmarEliminacionMetodo) {
+      modalConfirmarEliminacionMetodo.style.display = 'none';
+      modalConfirmarEliminacionMetodo.setAttribute('aria-hidden', 'true');
+      pendingMethodToDelete = null;
+    }
+  }
+
+  btnOpenNuevoMetodoDigitalModal?.addEventListener('click', () => openModal());
+  closeMetodoDigitalModalBtn?.addEventListener('click', closeModal);
+  cancelMetodoDigitalModalBtn?.addEventListener('click', closeModal);
+  cancelEliminarMetodoBtn?.addEventListener('click', closeConfirmDeleteModal);
+
+  acceptEliminarMetodoBtn?.addEventListener('click', () => {
+    if (!pendingMethodToDelete) return;
+    const targetName = pendingMethodToDelete.name;
+    const targetIcon = pendingMethodToDelete.icon || '🌐';
+
+    digitalMethods = digitalMethods.filter(m => m.id !== pendingMethodToDelete.id);
+    saveDigitalMethodsToStorage(digitalMethods);
+    closeConfirmDeleteModal();
+    renderTable();
+
+    // Notificación de éxito con animación SVG de checkmark verde
+    showSuccessModal('¡Método Eliminado!', `El canal digital "${targetName}" (${targetIcon}) fue removido exitosamente del sistema.`);
+  });
+
+  window.addEventListener('click', (e) => {
+    if (e.target === modalMetodoDigitalForm) closeModal();
+    if (e.target === modalConfirmarEliminacionMetodo) closeConfirmDeleteModal();
+  });
+
+  metodoDigitalForm?.addEventListener('submit', (e) => {
+    e.preventDefault();
+
+    const id = document.getElementById('modalMetodoId')?.value;
+    const name = document.getElementById('modalMetodoNombre')?.value?.trim();
+    const details = document.getElementById('modalMetodoDetalles')?.value?.trim();
+    const icon = document.getElementById('modalMetodoIcono')?.value || '🌐';
+    const active = document.getElementById('modalMetodoActivo')?.checked ?? true;
+    const qrEnabled = Boolean(modalMetodoQrActivo?.checked);
+    const qrImage = currentQrBase64;
+
+    if (!name || !details) return;
+
+    const isEdit = Boolean(id);
+
+    if (id) {
+      const existing = digitalMethods.find(m => m.id === id);
+      if (existing) {
+        existing.name = name;
+        existing.details = details;
+        existing.icon = icon;
+        existing.active = active;
+        existing.qrEnabled = qrEnabled;
+        existing.qrImage = qrImage;
+      }
+    } else {
+      digitalMethods.push({
+        id: `met_${Date.now()}`,
+        name,
+        details,
+        icon,
+        active,
+        qrEnabled,
+        qrImage
+      });
+    }
+
+    saveDigitalMethodsToStorage(digitalMethods);
+    closeModal();
+    renderTable();
+
+    // Notificación de éxito con animación SVG de checkmark verde
+    showSuccessModal(
+      isEdit ? '¡Método Digital Actualizado!' : '¡Método Digital Creado!',
+      `El canal "${name}" (${icon}) fue ${isEdit ? 'actualizado' : 'registrado'} con éxito${qrEnabled && qrImage ? ' (incluyendo Código QR para escaneo en POS)' : ''}.`
+    );
+  });
+
+  renderTable();
+}
+
 document.addEventListener('DOMContentLoaded', () => {
   try { inicializarSesionGerente(); } catch (e) { console.error('Error Sesión Gerente:', e); }
   try { inicializarEmpresaFiscalConfig(); } catch (e) { console.error('Error Empresa Config:', e); }
   try { inicializarTasaBcvConfig(); } catch (e) { console.error('Error Tasa BCV:', e); }
   try { inicializarModoLoginConfig(); } catch (e) { console.error('Error Modo Login Config:', e); }
+  try { inicializarMetodosDigitalesConfig(); } catch (e) { console.error('Error Métodos Digitales Config:', e); }
   try { inicializarGestionUsuarios(); } catch (e) { console.error('Error Gestión Usuarios:', e); }
   try { inicializarModalesYEventos(); } catch (e) { console.error('Error Modales Config:', e); }
 });
+

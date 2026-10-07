@@ -114,6 +114,12 @@ document.addEventListener('DOMContentLoaded', async () => {
   const btnCompleteSale = document.getElementById('btnCompleteSale');
   const cashCalculatorPanel = document.getElementById('cashCalculatorPanel');
   const cardTransferPanel = document.getElementById('cardTransferPanel');
+  const digitalPaymentPanel = document.getElementById('digitalPaymentPanel');
+  const digitalTotalUsdVal = document.getElementById('digitalTotalUsdVal');
+  const digitalTotalVesVal = document.getElementById('digitalTotalVesVal');
+  const digitalOptionsGrid = document.getElementById('digitalOptionsGrid');
+  const digitalRefInput = document.getElementById('digitalRefInput');
+  let selectedDigitalSubMethod = 'Binance Pay';
   
   const receiptModal = document.getElementById('receiptModal');
   const closeReceiptModalBtn = document.getElementById('closeReceiptModalBtn');
@@ -632,15 +638,91 @@ document.addEventListener('DOMContentLoaded', async () => {
       }
     }
 
-    // Actualizar Totales Prominentes Panel Tarjeta / Pago Móvil
+    // Actualizar Totales Prominentes Panel Tarjeta / Pago Móvil / Digitales
     if (cardTotalUsdVal) cardTotalUsdVal.textContent = `$${finalTotalUsd.toFixed(2)}`;
     if (cardTotalVesVal) {
       cardTotalVesVal.textContent = `Bs. ${finalTotalVes.toLocaleString('es-VE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+    }
+    if (digitalTotalUsdVal) digitalTotalUsdVal.textContent = `$${finalTotalUsd.toFixed(2)}`;
+    if (digitalTotalVesVal) {
+      digitalTotalVesVal.textContent = `Bs. ${finalTotalVes.toLocaleString('es-VE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
     }
 
     if (btnCompleteSale) btnCompleteSale.disabled = cart.length === 0;
 
     calculateChange(finalTotalUsd);
+  }
+
+  /**
+   * Renderiza dinámicamente los botones y detalles de métodos digitales activos (Módulo 9 CRUD -> localStorage)
+   */
+  function renderDigitalPaymentOptions() {
+    if (!digitalOptionsGrid) return;
+    digitalOptionsGrid.innerHTML = '';
+
+    const digitalInfoText = document.getElementById('digitalInfoText');
+    const digitalInfoTitle = document.getElementById('digitalInfoTitle');
+
+    let activeMethods = [];
+    try {
+      const stored = localStorage.getItem('metodos_pago_digitales');
+      if (stored) {
+        const parsed = JSON.parse(stored);
+        if (Array.isArray(parsed)) {
+          activeMethods = parsed.filter(m => m && m.active !== false);
+        } else if (parsed && parsed.methods) {
+          // Fallback migración
+          const m = parsed.methods;
+          if (m.binance !== false) activeMethods.push({ id: 'met_binance', name: 'Binance Pay', details: 'Pay ID: 29849201 | Correo: binance@lanuevaparisienne.com', icon: '🌐', active: true });
+          if (m.zelle !== false) activeMethods.push({ id: 'met_zelle', name: 'Zelle (USD)', details: 'zelle@lanuevaparisienne.com | Titular: La Nueva Parisienne C.A.', icon: '💸', active: true });
+          if (m.zinli !== false) activeMethods.push({ id: 'met_zinli', name: 'Zinli', details: 'zinli@lanuevaparisienne.com | Tel: +58 412 555 1234', icon: '💳', active: true });
+          if (m.paypal !== false) activeMethods.push({ id: 'met_paypal', name: 'PayPal', details: 'paypal@lanuevaparisienne.com', icon: '🅿️', active: true });
+          if (m.reserve !== false) activeMethods.push({ id: 'met_reserve', name: 'Reserve', details: 'Usuario: @lanuevaparisienne', icon: '🟢', active: true });
+          if (parsed.customName && parsed.customName.trim()) {
+            activeMethods.push({ id: 'met_custom', name: parsed.customName.trim(), details: 'Detalles de cuenta personalizados', icon: '✨', active: true });
+          }
+        }
+      }
+    } catch (e) {
+      console.warn('Error al cargar métodos digitales en POS:', e);
+    }
+
+    if (activeMethods.length === 0) {
+      activeMethods = [
+        { id: 'met_binance', name: 'Binance Pay', details: 'Pay ID: 29849201 | Correo: binance@lanuevaparisienne.com', icon: '🌐', active: true },
+        { id: 'met_zelle', name: 'Zelle (USD)', details: 'zelle@lanuevaparisienne.com | Titular: La Nueva Parisienne C.A.', icon: '💸', active: true }
+      ];
+    }
+
+    const currentItem = activeMethods.find(item => item.name === selectedDigitalSubMethod) || activeMethods[0];
+    selectedDigitalSubMethod = currentItem.name;
+
+    function updateInfoBanner(item) {
+      if (digitalInfoTitle) {
+        digitalInfoTitle.innerHTML = `📌 Cuenta / Datos de Recepción (${item.icon || '🌐'} ${item.name}):`;
+      }
+      if (digitalInfoText) {
+        digitalInfoText.textContent = item.details || 'Sin datos de cuenta registrados por la gerencia.';
+      }
+    }
+
+    updateInfoBanner(currentItem);
+
+    activeMethods.forEach(item => {
+      const btn = document.createElement('button');
+      btn.type = 'button';
+      btn.className = `digital-option-btn ${selectedDigitalSubMethod === item.name ? 'active' : ''}`;
+      btn.innerHTML = `<span>${item.icon || '🌐'} ${item.name}</span>`;
+
+      btn.addEventListener('click', () => {
+        selectedDigitalSubMethod = item.name;
+        document.querySelectorAll('.digital-option-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        updateInfoBanner(item);
+      });
+
+      digitalOptionsGrid.appendChild(btn);
+    });
   }
 
   function renderCheckoutCart() {
@@ -737,7 +819,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   // PASO 2: LÓGICA NUMPAD TÁCTIL Y DESPLAZAMIENTO DECIMAL DER -> IZQ (ATM STYLE)
   // ==========================================================================
 
-  // Manejador del cambio de método de pago (Efectivo, T. Débito, T. Crédito, Pago Móvil)
+  // Manejador del cambio de método de pago (Efectivo, T. Débito, T. Crédito, Pago Móvil, Digitales)
   document.querySelectorAll('.method-btn').forEach(btn => {
     btn.addEventListener('click', () => {
       document.querySelectorAll('.method-btn').forEach(b => b.classList.remove('active'));
@@ -747,9 +829,16 @@ document.addEventListener('DOMContentLoaded', async () => {
       if (selectedPaymentMethod === 'efectivo') {
         if (cashCalculatorPanel) cashCalculatorPanel.style.display = 'block';
         if (cardTransferPanel) cardTransferPanel.style.display = 'none';
+        if (digitalPaymentPanel) digitalPaymentPanel.style.display = 'none';
+      } else if (selectedPaymentMethod === 'digitales') {
+        if (cashCalculatorPanel) cashCalculatorPanel.style.display = 'none';
+        if (cardTransferPanel) cardTransferPanel.style.display = 'none';
+        if (digitalPaymentPanel) digitalPaymentPanel.style.display = 'block';
+        renderDigitalPaymentOptions();
       } else {
         if (cashCalculatorPanel) cashCalculatorPanel.style.display = 'none';
         if (cardTransferPanel) cardTransferPanel.style.display = 'block';
+        if (digitalPaymentPanel) digitalPaymentPanel.style.display = 'none';
         if (bankSelectGroup) {
           bankSelectGroup.style.display = selectedPaymentMethod === 'transferencia' ? 'flex' : 'none';
         }
@@ -766,6 +855,162 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
       }
     });
+  });
+
+  // ==========================================================================
+  // RENDERIZADO DINÁMICO DE CANALES DIGITALES Y VISTA QR DE PAGO EN CAJA
+  // ==========================================================================
+  const DEFAULT_DIGITAL_METHODS = [
+    { id: 'met_binance', name: 'Binance Pay', details: 'Pay ID: 283910482 (USDT / Crypto)', icon: '💛', active: true, qrEnabled: false, qrImage: '' },
+    { id: 'met_zelle', name: 'Zelle', details: 'Correo: pagos@lanuevaparisienne.com (Titular: La Nueva Parisienne C.A.)', icon: '⚡', active: true, qrEnabled: false, qrImage: '' },
+    { id: 'met_zinli', name: 'Zinli', details: 'Correo: ventas@lanuevaparisienne.com', icon: '🟣', active: true, qrEnabled: false, qrImage: '' },
+    { id: 'met_paypal', name: 'PayPal', details: 'Correo: paypal@lanuevaparisienne.com (+ 5.4% comisión)', icon: '🟦', active: true, qrEnabled: false, qrImage: '' },
+    { id: 'met_reserve', name: 'Reserve', details: 'Usuario: @ParisiennePanaderia', icon: '🟢', active: true, qrEnabled: false, qrImage: '' }
+  ];
+
+  function getDigitalMethodsFromStorage() {
+    try {
+      const raw = localStorage.getItem('metodos_pago_digitales');
+      if (raw) {
+        const parsed = JSON.parse(raw);
+        if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+      }
+    } catch (e) {
+      console.warn('Error leyendo metodos_pago_digitales:', e);
+    }
+    return DEFAULT_DIGITAL_METHODS;
+  }
+
+  function renderDigitalPaymentOptions() {
+    if (!digitalOptionsGrid) return;
+    const allMethods = getDigitalMethodsFromStorage();
+    const activeMethods = allMethods.filter(m => m.active !== false);
+
+    digitalOptionsGrid.innerHTML = '';
+
+    if (activeMethods.length === 0) {
+      digitalOptionsGrid.innerHTML = `<div style="grid-column: 1 / -1; font-size: 0.8rem; color: var(--color-muted); text-align: center; padding: 0.5rem;">No hay canales digitales activos configurados.</div>`;
+      updateDigitalMethodDetails(null);
+      return;
+    }
+
+    // Verificar si el seleccionado actual sigue existiendo
+    let currentMethodObj = activeMethods.find(m => m.name.toLowerCase() === (selectedDigitalSubMethod || '').toLowerCase()) || activeMethods[0];
+    selectedDigitalSubMethod = currentMethodObj.name;
+
+    activeMethods.forEach(method => {
+      const isSelected = method.name === selectedDigitalSubMethod;
+      const btn = document.createElement('button');
+      btn.type = 'button';
+      btn.className = `btn-digital-opt ${isSelected ? 'active' : ''}`;
+      btn.style.cssText = `
+        padding: 0.45rem 0.5rem;
+        border-radius: 8px;
+        border: 1.5px solid ${isSelected ? 'var(--color-success)' : 'var(--color-border-subtle)'};
+        background: ${isSelected ? 'rgba(46, 125, 50, 0.12)' : '#FFFFFF'};
+        color: ${isSelected ? 'var(--color-success)' : 'var(--color-espresso)'};
+        font-weight: 700;
+        font-size: 0.78rem;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.3rem;
+        transition: all 0.2s ease;
+      `;
+      btn.innerHTML = `<span>${method.icon || '💳'}</span> <span>${method.name}</span>`;
+
+      btn.addEventListener('click', () => {
+        selectedDigitalSubMethod = method.name;
+        renderDigitalPaymentOptions();
+      });
+
+      digitalOptionsGrid.appendChild(btn);
+    });
+
+    updateDigitalMethodDetails(currentMethodObj);
+  }
+
+  function updateDigitalMethodDetails(methodObj) {
+    const digitalInfoTitle = document.getElementById('digitalInfoTitle');
+    const digitalInfoText = document.getElementById('digitalInfoText');
+    const posDigitalQrContainer = document.getElementById('posDigitalQrContainer');
+    const posDigitalQrImage = document.getElementById('posDigitalQrImage');
+
+    if (!methodObj) {
+      if (digitalInfoTitle) digitalInfoTitle.innerHTML = `📌 Cuenta / Datos de Recepción:`;
+      if (digitalInfoText) digitalInfoText.textContent = `Seleccione un canal digital.`;
+      if (posDigitalQrContainer) posDigitalQrContainer.style.display = 'none';
+      return;
+    }
+
+    if (digitalInfoTitle) {
+      digitalInfoTitle.innerHTML = `📌 ${methodObj.icon || '💳'} ${methodObj.name} — Datos de Recepción:`;
+    }
+    if (digitalInfoText) {
+      digitalInfoText.textContent = methodObj.details || 'Sin datos de recepción registrados.';
+    }
+
+    // MOSTRAR U OCULTAR EL CÓDIGO QR EN CAJA
+    if (posDigitalQrContainer && posDigitalQrImage) {
+      if (methodObj.qrEnabled && methodObj.qrImage && methodObj.qrImage.trim() !== '') {
+        posDigitalQrImage.src = methodObj.qrImage;
+        posDigitalQrContainer.style.display = 'block';
+      } else {
+        posDigitalQrContainer.style.display = 'none';
+        posDigitalQrImage.src = '';
+      }
+    }
+  }
+
+  // LÓGICA DE AMPLIACIÓN DE QR EN MODAL EN CAJA
+  const posDigitalQrImage = document.getElementById('posDigitalQrImage');
+  const modalEnlargeQr = document.getElementById('modalEnlargeQr');
+  const enlargeQrImage = document.getElementById('enlargeQrImage');
+  const enlargeQrTitle = document.getElementById('enlargeQrTitle');
+  const enlargeQrSubtitle = document.getElementById('enlargeQrSubtitle');
+  const enlargeQrDetails = document.getElementById('enlargeQrDetails');
+  const btnCloseEnlargeQr = document.getElementById('btnCloseEnlargeQr');
+  const btnDoneEnlargeQr = document.getElementById('btnDoneEnlargeQr');
+
+  if (posDigitalQrImage) {
+    posDigitalQrImage.addEventListener('click', () => {
+      const allMethods = getDigitalMethodsFromStorage();
+      const currentMethodObj = allMethods.find(m => m.name === selectedDigitalSubMethod);
+      if (currentMethodObj && currentMethodObj.qrImage) {
+        if (enlargeQrImage) enlargeQrImage.src = currentMethodObj.qrImage;
+        if (enlargeQrTitle) enlargeQrTitle.textContent = `Código QR — ${currentMethodObj.name}`;
+        if (enlargeQrSubtitle) enlargeQrSubtitle.textContent = `Muestra este código al cliente para realizar la transferencia por ${currentMethodObj.name}`;
+        if (enlargeQrDetails) enlargeQrDetails.textContent = currentMethodObj.details || '';
+        
+        if (modalEnlargeQr) {
+          modalEnlargeQr.style.display = 'flex';
+          modalEnlargeQr.classList.add('active');
+        }
+      }
+    });
+  }
+
+  const closeEnlargeQrModal = () => {
+    if (modalEnlargeQr) {
+      modalEnlargeQr.style.display = 'none';
+      modalEnlargeQr.classList.remove('active');
+    }
+  };
+
+  btnCloseEnlargeQr?.addEventListener('click', closeEnlargeQrModal);
+  btnDoneEnlargeQr?.addEventListener('click', closeEnlargeQrModal);
+  modalEnlargeQr?.addEventListener('click', (e) => {
+    if (e.target === modalEnlargeQr) closeEnlargeQrModal();
+  });
+
+  // Escuchar eventos de cambios en métodos de pago desde Módulo 9 (Configuración)
+  window.addEventListener('storage', (e) => {
+    if (e.key === 'metodos_pago_digitales') {
+      if (selectedPaymentMethod === 'digitales') {
+        renderDigitalPaymentOptions();
+      }
+    }
   });
 
   // ALGORITMO MAESTRO: ENTRADA DECIMAL IMPLÍCITA DE DERECHA A IZQUIERDA (CENTAVOS)
@@ -941,8 +1186,8 @@ document.addEventListener('DOMContentLoaded', async () => {
         client_name: clientName,
         client_rif: clientRif,
         order_type: currentOrderType,
-        payment_method: selectedPaymentMethod,
-        bank_name: bankName,
+        payment_method: selectedPaymentMethod === 'digitales' ? selectedDigitalSubMethod : selectedPaymentMethod,
+        bank_name: selectedPaymentMethod === 'digitales' ? selectedDigitalSubMethod : bankName,
         discount_percent: currentDiscountPercent,
         subtotal: rawSubtotal,
         discount: discountVal,
@@ -952,7 +1197,9 @@ document.addEventListener('DOMContentLoaded', async () => {
         bcv_rate: bcvRate,
         tender_amount: currentTenderAmount,
         change_due: selectedPaymentMethod === 'efectivo' ? Math.max(0, currentTenderAmount - totalUsd) : 0,
-        reference_code: referenceInput ? referenceInput.value.trim() : '',
+        reference_code: selectedPaymentMethod === 'digitales' 
+          ? (digitalRefInput ? digitalRefInput.value.trim() : '')
+          : (referenceInput ? referenceInput.value.trim() : ''),
         items: cart.map(i => ({
           product_id: i.product.id,
           product_code: i.product.code,
@@ -1059,7 +1306,8 @@ document.addEventListener('DOMContentLoaded', async () => {
         let formattedPaymentMethod = 'Efectivo';
         if (selectedPaymentMethod === 'debito') formattedPaymentMethod = 'Tarjeta Débito';
         else if (selectedPaymentMethod === 'credito') formattedPaymentMethod = 'Tarjeta Crédito';
-        else if (selectedPaymentMethod === 'pagomovil') formattedPaymentMethod = 'Pago Móvil';
+        else if (selectedPaymentMethod === 'transferencia' || selectedPaymentMethod === 'pagomovil') formattedPaymentMethod = 'Pago Móvil';
+        else if (selectedPaymentMethod === 'digitales') formattedPaymentMethod = `Digital (${selectedDigitalSubMethod})`;
         else if (selectedPaymentMethod === 'efectivo') formattedPaymentMethod = 'Efectivo';
 
         const orderCodeText = salePayload.orderNumber || document.getElementById('orderNumber')?.textContent?.replace('Comprobante:', '')?.trim() || `FAC-2026-${Math.floor(1000 + Math.random() * 9000)}`;
@@ -1266,7 +1514,9 @@ document.addEventListener('DOMContentLoaded', async () => {
             saleData.payment_method === 'debito' ? 'TARJETA DE DÉBITO' :
             (saleData.payment_method === 'credito' ? 'TARJETA DE CRÉDITO' :
             (saleData.payment_method === 'transferencia' ? 'PAGO MÓVIL / QR' :
-            (saleData.payment_method === 'tarjeta' ? 'TARJETA (DÉBITO/CRÉDITO)' : 'EFECTIVO')))
+            (saleData.payment_method === 'digitales' ? `PAGO DIGITAL (${(selectedDigitalSubMethod || 'DIGITAL').toUpperCase()})` :
+            (saleData.payment_method === 'tarjeta' ? 'TARJETA (DÉBITO/CRÉDITO)' :
+            (saleData.payment_method === 'efectivo' ? 'EFECTIVO' : (saleData.payment_method || 'DIGITAL').toUpperCase())))))
           }</div>
           ${saleData.payment_method === 'efectivo' ? `
             <div>Monto Recibido ($): $${saleData.tender_amount.toFixed(2)}</div>
@@ -1325,7 +1575,9 @@ document.addEventListener('DOMContentLoaded', async () => {
     currentCategory = 'todos';
     if (tenderInput) tenderInput.value = '0.00';
     if (referenceInput) referenceInput.value = '';
+    if (digitalRefInput) digitalRefInput.value = '';
     if (bankSelect) bankSelect.value = '';
+    if (digitalPaymentPanel) digitalPaymentPanel.style.display = 'none';
     if (clientNameInput) clientNameInput.value = '';
     if (clientRifInput) {
       clientRifInput.value = '';
