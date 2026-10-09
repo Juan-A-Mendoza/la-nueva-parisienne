@@ -28,8 +28,8 @@
         </div>
 
         <div class="dashboard-controls">
-          <div id="bcvRateBadge" class="bcv-rate-badge" title="Tasa Oficial del Banco Central de Venezuela en Vivo">
-            <span><i data-lucide="coins" class="icon-xs"></i> Tasa BCV:</span> <strong id="bcvRateVal">Cargando...</strong>
+          <div id="bcvRateBadge" class="bcv-rate-badge" title="Tasa Oficial del Banco Central de Venezuela">
+            <span><i data-lucide="coins" class="icon-xs"></i> BCV Oficial:</span> <strong id="bcvRateVal">Cargando...</strong>
           </div>
 
           <div class="cashier-badge">
@@ -67,9 +67,6 @@
         </button>
         <button id="navBtnCashReports" type="button" class="dashboard-nav-tab">
           <i data-lucide="folder" class="icon-sm"></i> <span>Reportes de Caja</span>
-        </button>
-        <button id="navBtnAllModules" type="button" class="dashboard-nav-tab btn-nav-superadmin-hub" onclick="window.abrirLauncherModulos &amp;&amp; window.abrirLauncherModulos()" style="margin-left: auto; background: rgba(106, 27, 154, 0.08); border: 1.5px solid rgba(106, 27, 154, 0.28); color: #4A148C; font-weight: 700;" title="Abrir selector de los 4 módulos (Gerente, Cajero, Panadero, Contador)">
-          <i data-lucide="shield-alert" class="icon-sm" style="color: #6A1B9A;"></i> <span>Los 4 Módulos</span>
         </button>
       </div>
     </nav>
@@ -958,10 +955,22 @@
         <div class="rep-form-group" style="min-width: 220px;">
           <label for="repTypeSelect" class="rep-form-label"><i data-lucide="layers" class="icon-xs"></i> Tipo de Reporte</label>
           <select id="repTypeSelect" class="rep-form-select">
-            <option value="ventas_resumen" selected>Resumen Ejecutivo Financiero</option>
-            <option value="ventas_detalladas">Detalle de Ventas &amp; Facturación</option>
-            <option value="cierres_turno">Arqueos &amp; Cierres de Turno (Z)</option>
-            <option value="inventario_mermas">Balance de Inventario &amp; Insumos</option>
+            <optgroup label="👑 REPORTES GERENCIALES">
+              <option value="ventas_resumen" selected>1. Resumen Ejecutivo Financiero &amp; KPIs</option>
+              <option value="rentabilidad_productos">2. Rentabilidad &amp; Ranking de Productos (Top Ventas)</option>
+              <option value="balance_contable">3. Balance de Comprobación &amp; Asientos Contables</option>
+            </optgroup>
+            <optgroup label="⚙️ REPORTES OPERATIVOS">
+              <option value="ventas_detalladas">4. Detalle de Facturación POS (Renglón por Renglón)</option>
+              <option value="cierres_turno">5. Auditoría de Cierres de Turno (Cortes Z y Arqueos)</option>
+              <option value="eventos_anulaciones">6. Bitácora de Devoluciones &amp; Anulaciones de Caja</option>
+              <option value="produccion_hornos">7. Control de Producción, Hornos &amp; Lotes Panaderos</option>
+            </optgroup>
+            <optgroup label="📋 REPORTES GENERALES &amp; AUDITORÍA">
+              <option value="inventario_mermas">8. Valorización de Inventario &amp; Stock Mínimo</option>
+              <option value="compras_proveedores">9. Compras, Proveedores &amp; Cuentas por Pagar</option>
+              <option value="personal_rendimiento">10. Nómina, Turnos &amp; Rendimiento de Personal</option>
+            </optgroup>
           </select>
         </div>
 

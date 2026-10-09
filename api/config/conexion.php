@@ -6,6 +6,8 @@
 
 date_default_timezone_set('America/Caracas');
 
+require_once __DIR__ . '/security.php';
+
 define('DB_HOST', '127.0.0.1');
 define('DB_NAME', 'la_nueva_parisienne');
 define('DB_USER', 'root');

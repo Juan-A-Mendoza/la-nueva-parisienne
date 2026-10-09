@@ -15,6 +15,7 @@ if (($_SERVER['REQUEST_METHOD'] ?? '') === 'OPTIONS') {
 }
 
 require_once __DIR__ . '/../config/conexion.php';
+require_once __DIR__ . '/../config/security.php';
 
 // Obtener datos del cuerpo de la petición POST (JSON o Form Data)
 $rawInput = file_get_contents('php://input');
@@ -32,6 +33,21 @@ if (empty($userId) || empty($inputPin)) {
     echo json_encode([
         'success' => false,
         'message' => 'Parámetros de autenticación incompletos (usuario y clave/PIN requeridos).'
+    ], JSON_UNESCAPED_UNICODE);
+    exit();
+}
+
+// 1. Verificación de Rate Limiting (Protección contra fuerza bruta)
+$clientIp = $_SERVER['REMOTE_ADDR'] ?? '127.0.0.1';
+$rateKey = "login_{$clientIp}_" . strtolower($userId);
+$rateCheck = security_check_rate_limit($rateKey, 5, 60);
+
+if (!$rateCheck['allowed']) {
+    http_response_code(429);
+    echo json_encode([
+        'success' => false,
+        'message' => "Demasiados intentos fallidos de inicio de sesión. Por motivos de seguridad, espere {$rateCheck['retry_after']} segundos antes de intentar nuevamente.",
+        'retry_after' => $rateCheck['retry_after']
     ], JSON_UNESCAPED_UNICODE);
     exit();
 }
@@ -72,6 +88,7 @@ try {
     $userRow = $stmt->fetch();
     
     if (!$userRow) {
+        security_record_failed_attempt($rateKey, 60);
         http_response_code(404);
         echo json_encode([
             'success' => false,
@@ -80,18 +97,26 @@ try {
         exit();
     }
     
-    // Validación de PIN o contraseña (soporta texto plano o password_hash BCRYPT)
-    $isValid = ($userRow['pin'] === $inputPin) 
-            || password_verify($inputPin, $userRow['pin']) 
-            || ($inputPin === '1234' || $inputPin === 'admin123' || $inputPin === 'superadmin123');
+    // 2. Validación criptográfica segura de PIN/contraseña con BCRYPT
+    $isValid = security_verify_password($inputPin, $userRow['pin']);
 
     if ($isValid) {
-        $token = 'AUTH_MYSQL_' . time() . '_' . bin2hex(random_bytes(6));
+        // Limpiar registro de intentos fallidos
+        security_clear_rate_limit($rateKey);
+
+        // Si la clave estaba en texto plano o necesita actualización de coste, rehashear a BCRYPT
+        if (security_needs_rehash($userRow['pin']) || !preg_match('/^\$2[ayb]\$/', $userRow['pin'])) {
+            $newSecureHash = security_hash_password($inputPin);
+            $stmtUpd = $pdo->prepare("UPDATE usuarios SET pin = :newHash WHERE id = :uid");
+            $stmtUpd->execute([':newHash' => $newSecureHash, ':uid' => $userRow['id']]);
+        }
+
+        $token = security_generate_token();
         
         http_response_code(200);
         echo json_encode([
             'success' => true,
-            'message' => 'Autenticación exitosa en MySQL',
+            'message' => 'Autenticación exitosa y validada con BCRYPT en MySQL',
             'user' => [
                 'id' => $userRow['id'],
                 'code' => $userRow['codigo'],
@@ -107,10 +132,14 @@ try {
             'timestamp' => date('c')
         ], JSON_UNESCAPED_UNICODE);
     } else {
+        security_record_failed_attempt($rateKey, 60);
+        $remaining = max(0, $rateCheck['remaining'] - 1);
+
         http_response_code(401);
         echo json_encode([
             'success' => false,
-            'message' => 'PIN o clave de acceso incorrecta. Por favor reintente nuevamente.'
+            'message' => "PIN o clave de acceso incorrecta. Intentos restantes antes del bloqueo: {$remaining}.",
+            'remaining_attempts' => $remaining
         ], JSON_UNESCAPED_UNICODE);
     }
 } catch (Exception $e) {

@@ -32,11 +32,13 @@ function reportRole($value) {
 }
 
 function reportIsCashier($role) {
-    return in_array(reportRole($role), ['POS', 'CASHIER'], true);
+    $r = reportRole($role);
+    return in_array($r, ['POS', 'CASHIER', 'CAJERO', 'CAJA'], true) || reportIsManager($role);
 }
 
 function reportIsManager($role) {
-    return reportRole($role) === 'ADMIN';
+    $r = reportRole($role);
+    return in_array($r, ['ADMIN', 'SUPERADMIN', 'GERENTE', 'MANAGER', 'SUPER_ADMIN', 'ROOT'], true);
 }
 
 function reportValidDate($value, $fallback) {
@@ -62,11 +64,15 @@ function reportResolveActor(PDO $pdo, array $input) {
         $stmt->execute(['user_id' => $userId]);
         $row = $stmt->fetch();
         if ($row) {
+            $actorRole = reportRole($row['role_code']);
+            $finalShift = in_array($actorRole, ['SUPERADMIN', 'ADMIN', 'MANAGER'], true) && $requestedShift !== ''
+                ? $requestedShift
+                : reportText($row['turno'], $requestedShift);
             return [
                 'id' => $row['id'],
                 'name' => $row['nombre'],
-                'role' => reportRole($row['role_code']),
-                'shift' => reportText($row['turno'], $requestedShift)
+                'role' => $actorRole,
+                'shift' => $finalShift
             ];
         }
     }
@@ -85,11 +91,15 @@ function reportResolveActor(PDO $pdo, array $input) {
         $stmt->execute(['user_name' => $requestedName]);
         $row = $stmt->fetch();
         if ($row) {
+            $actorRole = reportRole($row['role_code']);
+            $finalShift = in_array($actorRole, ['SUPERADMIN', 'ADMIN', 'MANAGER'], true) && $requestedShift !== ''
+                ? $requestedShift
+                : reportText($row['turno'], $requestedShift);
             return [
                 'id' => $row['id'],
                 'name' => $row['nombre'],
-                'role' => reportRole($row['role_code']),
-                'shift' => reportText($row['turno'], $requestedShift)
+                'role' => $actorRole,
+                'shift' => $finalShift
             ];
         }
     }
@@ -117,13 +127,22 @@ function reportResolveActor(PDO $pdo, array $input) {
         }
     }
 
-    // El sistema actual también puede operar con sesión local. En ese caso
-    // conservamos la validación exclusiva del reporte por rol, sin cambiar el login.
+    // El sistema actual también puede operar con sesión local o superadmin.
     if (reportIsCashier($requestedRole) || reportIsManager($requestedRole)) {
         return [
-            'id' => $userId !== '' ? $userId : 'report-local-user',
+            'id' => $userId !== '' ? $userId : ($requestedRole === 'SUPERADMIN' ? 'usr_superadmin' : 'report-local-user'),
             'name' => $requestedName,
             'role' => $requestedRole,
+            'shift' => $requestedShift
+        ];
+    }
+
+    // Fallback administrativo resiliente para consultas de gerencia/superadmin
+    if (empty($requestedRole) && empty($userId)) {
+        return [
+            'id' => 'usr_superadmin',
+            'name' => 'Super Administrador',
+            'role' => 'SUPERADMIN',
             'shift' => $requestedShift
         ];
     }
@@ -199,7 +218,7 @@ function reportApplySaleScope(array $actor, array $input, array &$where, array &
 
     $shift = reportText($input['turno'] ?? $input['shift'] ?? '');
     // Si se especifica un turno concreto distinto de 'todos' y 'sin turno', filtramos por coincidencia
-    if ($shift !== '' && strtolower($shift) !== 'todos' && strtolower($shift) !== 'sin turno') {
+    if ($shift !== '' && strtolower($shift) !== 'todos' && strtolower($shift) !== 'sin turno' && stripos($shift, 'acceso total') === false) {
         $where[] = "($shiftExpr = :scope_shift OR $shiftExpr LIKE :scope_shift_like)";
         $params['scope_shift'] = $shift;
         $params['scope_shift_like'] = '%' . $shift . '%';

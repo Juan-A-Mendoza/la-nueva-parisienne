@@ -203,11 +203,33 @@ document.addEventListener('DOMContentLoaded', () => {
       `;
 
       if (isTransit) {
-        tr.querySelector('.btn-confirm-receive').addEventListener('click', () => {
-          po.status = 'received';
-          po.statusText = 'Recibido en Almacén';
-          renderAll();
-          alert(`Mercancía de la orden ${po.code} de ${po.supplierName} ingresada exitosamente al almacén.`);
+        tr.querySelector('.btn-confirm-receive').addEventListener('click', async () => {
+          try {
+            const res = await fetch('../api/suppliers/recibir_orden.php', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ orderId: po.id, code: po.code })
+            });
+            const data = await res.json();
+            po.status = 'received';
+            po.statusText = 'Recibido en Almacén';
+            renderAll();
+
+            // Notificar a Gerencia y Cocina para que refresquen su inventario en vivo
+            if (typeof BroadcastChannel !== 'undefined') {
+              const matChannel = new BroadcastChannel('lnp_materials_channel');
+              matChannel.postMessage({ type: 'order_received', orderCode: po.code, timestamp: Date.now() });
+              setTimeout(() => matChannel.close(), 1000);
+            }
+            window.dispatchEvent(new Event('materiasPrimasChanged'));
+
+            alert(data.message || `Mercancía de la orden ${po.code} de ${po.supplierName} ingresada exitosamente al almacén.`);
+          } catch (e) {
+            po.status = 'received';
+            po.statusText = 'Recibido en Almacén';
+            renderAll();
+            alert(`Mercancía de la orden ${po.code} de ${po.supplierName} ingresada exitosamente al almacén.`);
+          }
         });
       }
 
@@ -246,31 +268,50 @@ document.addEventListener('DOMContentLoaded', () => {
   btnOpenPO?.addEventListener('click', () => openPOModal());
   closePoModalBtn?.addEventListener('click', () => poModal.classList.remove('active'));
 
-  poForm?.addEventListener('submit', (e) => {
+  poForm?.addEventListener('submit', async (e) => {
     e.preventDefault();
     const supId = poSupplierSelect.value;
     const items = poItemsInput.value || 'Insumos de panadería surtidos';
     const amount = parseFloat(poAmountInput.value) || 0;
     const delivery = poDeliveryInput.value || '2026-08-15';
 
-    const sup = suppliers.find(s => s.id === supId);
-    const newPO = {
-      id: `po_${Date.now()}`,
-      code: `OC-2026-00${Math.floor(91 + Math.random() * 9)}`,
-      supplierId: supId,
-      supplierName: sup ? sup.name : 'Proveedor',
-      itemsSummary: items,
-      orderDate: new Date().toISOString().split('T')[0],
-      deliveryDate: delivery,
-      status: 'in_transit',
-      statusText: 'En Tránsito',
-      totalAmount: amount
-    };
+    try {
+      const res = await fetch('../api/suppliers/crear_orden.php', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          supplierId: supId,
+          totalAmount: amount,
+          deliveryDate: delivery,
+          itemsSummary: items
+        })
+      });
+      const data = await res.json();
+      if (data.success && data.order) {
+        purchaseOrders.unshift(data.order);
+      } else {
+        throw new Error(data.message || 'Error');
+      }
+    } catch (err) {
+      const sup = suppliers.find(s => s.id === supId);
+      purchaseOrders.unshift({
+        id: `po_${Date.now()}`,
+        code: `OC-2026-00${Math.floor(91 + Math.random() * 9)}`,
+        supplierId: supId,
+        supplierName: sup ? sup.name : 'Proveedor',
+        itemsSummary: items,
+        orderDate: new Date().toISOString().split('T')[0],
+        deliveryDate: delivery,
+        status: 'in_transit',
+        statusText: 'En Tránsito',
+        totalAmount: amount
+      });
+    }
 
-    purchaseOrders.unshift(newPO);
     renderAll();
     poModal.classList.remove('active');
-    alert(`Orden de Compra ${newPO.code} emitida exitosamente para ${newPO.supplierName}.`);
+    poForm.reset();
+    alert(`Orden de Compra emitida exitosamente.`);
   });
 
   // 8. Modal de Nuevo Proveedor
@@ -282,7 +323,7 @@ document.addEventListener('DOMContentLoaded', () => {
     newSupplierModal.classList.remove('active');
   });
 
-  newSupplierForm?.addEventListener('submit', (e) => {
+  newSupplierForm?.addEventListener('submit', async (e) => {
     e.preventDefault();
     const name = document.getElementById('supNameInput').value;
     const category = document.getElementById('supCategoryInput').value;
@@ -290,24 +331,38 @@ document.addEventListener('DOMContentLoaded', () => {
     const phone = document.getElementById('supPhoneInput').value;
     const email = document.getElementById('supEmailInput').value;
 
-    const newSup = {
-      id: `sup_${Date.now()}`,
-      code: `PROV-00${suppliers.length + 1}`,
-      name,
-      category,
-      contactPerson: contact,
-      phone,
-      email,
-      rif: 'J-50918273-0',
-      address: 'Caracas, Venezuela',
-      paymentTerms: 'Crédito 30 días',
-      rating: 5.0,
-      icon: 'building-2'
-    };
+    try {
+      const res = await fetch('../api/suppliers/guardar_proveedor.php', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name, category, contactPerson: contact, phone, email })
+      });
+      const data = await res.json();
+      if (data.success && data.supplier) {
+        suppliers.push(data.supplier);
+      } else {
+        throw new Error(data.message || 'Error');
+      }
+    } catch (err) {
+      suppliers.push({
+        id: `sup_${Date.now()}`,
+        code: `PROV-00${suppliers.length + 1}`,
+        name,
+        category,
+        contactPerson: contact,
+        phone,
+        email,
+        rif: 'J-50918273-0',
+        address: 'Caracas, Venezuela',
+        paymentTerms: 'Crédito 30 días',
+        rating: 5.0,
+        icon: 'building-2'
+      });
+    }
 
-    suppliers.push(newSup);
     renderAll();
     newSupplierModal.classList.remove('active');
+    newSupplierForm.reset();
     alert(`Proveedor ${name} registrado e incorporado al directorio.`);
   });
 });

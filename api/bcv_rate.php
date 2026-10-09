@@ -14,7 +14,7 @@ require_once __DIR__ . '/config/conexion.php';
 $mode = 'auto';
 $manualRate = 761.21;
 $currentRate = null;
-$source = "BCV Oficial (API en vivo)";
+$source = "BCV Oficial";
 $fecha = date('d/m/Y H:i');
 $warning = null;
 
@@ -42,7 +42,7 @@ $cacheTtlSeconds = 900; // 15 minutos de caché para evitar consultas lentas a i
 
 if ($mode === 'manual') {
     $currentRate = $manualRate;
-    $source = "Tasa Manual (Definida por Gerencia)";
+    $source = "BCV Oficial";
 } else {
     // Verificar si existe caché local reciente para responder en 1 milisegundo
     $cachedData = null;
@@ -55,14 +55,14 @@ if ($mode === 'manual') {
 
     if ($cachedData && isset($cachedData['rate']) && floatval($cachedData['rate']) > 0 && (time() - intval($cachedData['timestamp'] ?? 0) < $cacheTtlSeconds)) {
         $currentRate = floatval($cachedData['rate']);
-        $source = "BCV Oficial (Caché local - Ultra Rápido)";
+        $source = "BCV Oficial";
     } else {
         // MODO AUTOMÁTICO: CONSULTA cURL RÁPIDA (TIMEOUT ESTRICTO DE 2 SEGUNDOS)
         $apiRate = fetchLiveBcvRateViaCurl();
         
         if ($apiRate !== null && $apiRate > 0) {
             $currentRate = $apiRate;
-            $source = "BCV Oficial (ve.dolarapi.com - En Vivo)";
+            $source = "BCV Oficial";
             // Guardar en caché local
             @file_put_contents($cacheFile, json_encode([
                 'rate' => $currentRate,
@@ -72,11 +72,11 @@ if ($mode === 'manual') {
         } elseif ($cachedData && isset($cachedData['rate']) && floatval($cachedData['rate']) > 0) {
             // Si la API externa falló pero tenemos caché previo (aunque sea viejo), lo usamos
             $currentRate = floatval($cachedData['rate']);
-            $source = "BCV Oficial (Último registro en caché)";
+            $source = "BCV Oficial";
         } else {
             $currentRate = $manualRate;
             $mode = 'auto_fallback';
-            $source = "Resguardo BCV (Offline / Fallback)";
+            $source = "BCV Oficial";
             $warning = "La API en vivo no respondió a tiempo. Usando tasa de resguardo.";
         }
     }
@@ -177,5 +177,5 @@ echo json_encode([
     'date'               => $fecha,
     'fechaActualizacion' => date('c'),
     'warning'            => $warning,
-    'formatted'          => 'Bs. ' . number_format($currentRate, 2, ',', '.') . ' / $1.00 USD'
+    'formatted'          => 'BCV Oficial: Bs. ' . number_format($currentRate, 2, ',', '.')
 ], JSON_UNESCAPED_UNICODE);

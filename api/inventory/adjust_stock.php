@@ -40,17 +40,21 @@ if (empty($productId) || $qty <= 0) {
 try {
     $pdo = getDbConnection();
 
-    // Buscar primero en materias_primas por ID o código
+    // Buscar primero en materias_primas por ID, código o palabras clave
+    $tokens = array_values(array_filter(explode(' ', str_replace(['mat_', 'prod_', '_', '-'], ' ', strtolower($productId)))));
+    $primaryToken = '%' . ($tokens[0] ?? $productId) . '%';
+    $secondaryToken = '%' . ($tokens[1] ?? ($tokens[0] ?? $productId)) . '%';
+
     $targetTable = 'materias_primas';
-    $stmtFind = $pdo->prepare("SELECT id, nombre, stock_actual FROM materias_primas WHERE id = :id OR codigo = :code LIMIT 1");
-    $stmtFind->execute([':id' => $productId, ':code' => $productId]);
+    $stmtFind = $pdo->prepare("SELECT id, nombre, stock_actual FROM materias_primas WHERE id = :id OR codigo = :code OR LOWER(nombre) LIKE :tok1 OR LOWER(nombre) LIKE :tok2 LIMIT 1");
+    $stmtFind->execute([':id' => $productId, ':code' => $productId, ':tok1' => $primaryToken, ':tok2' => $secondaryToken]);
     $item = $stmtFind->fetch();
 
     if (!$item) {
         // Si no es materia prima, buscar en productos terminados
         $targetTable = 'productos';
-        $stmtFind = $pdo->prepare("SELECT id, nombre, stock_actual FROM productos WHERE id = :id OR codigo = :code LIMIT 1");
-        $stmtFind->execute([':id' => $productId, ':code' => $productId]);
+        $stmtFind = $pdo->prepare("SELECT id, nombre, stock_actual FROM productos WHERE id = :id OR codigo = :code OR LOWER(nombre) LIKE :tok1 OR LOWER(nombre) LIKE :tok2 LIMIT 1");
+        $stmtFind->execute([':id' => $productId, ':code' => $productId, ':tok1' => $primaryToken, ':tok2' => $secondaryToken]);
         $item = $stmtFind->fetch();
     }
 

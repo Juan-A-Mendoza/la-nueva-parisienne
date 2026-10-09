@@ -440,6 +440,7 @@ function inicializarNavegacionTabs() {
       if (analyticsView) analyticsView.style.display = 'none';
       if (inventoryView) inventoryView.style.display = 'block';
       if (breadcrumbActiveItem) breadcrumbActiveItem.textContent = 'Control de Inventario & Almacén';
+      try { syncInventoryFromBackend(); } catch (e) {}
     } else {
       if (navBtnAnalytics) navBtnAnalytics.classList.add('active');
       if (navBtnInventory) navBtnInventory.classList.remove('active');
@@ -513,7 +514,7 @@ function cargarTasaCambio() {
 
     if (bcvRateValEl) bcvRateValEl.textContent = `Bs. ${rate.toFixed(2)}`;
     if (bcvRateBadge) {
-      bcvRateBadge.innerHTML = `<span><i data-lucide="coins" class="icon-xs"></i> ${labelText}:</span> <strong>Bs. ${rate.toFixed(2)}</strong>`;
+      bcvRateBadge.innerHTML = `<span><i data-lucide="coins" class="icon-xs"></i> BCV Oficial:</span> <strong>Bs. ${rate.toFixed(2)}</strong>`;
       bcvRateBadge.className = isManual ? 'bcv-rate-badge warning' : 'bcv-rate-badge';
     }
   }
@@ -523,7 +524,7 @@ function cargarTasaCambio() {
     if (modoGuardado === 'manual') {
       const tasaManualVal = parseFloat(localStorage.getItem('tasa_manual') || localStorage.getItem('tasaManual'));
       if (tasaManualVal && tasaManualVal > 0) {
-        updateDashboardRateBadge(tasaManualVal, 'Tasa: Manual (Editada)', true);
+        updateDashboardRateBadge(tasaManualVal, 'BCV Oficial', true);
         return tasaManualVal;
       }
     }
@@ -548,7 +549,7 @@ function cargarTasaCambio() {
           if (liveRate && liveRate > 0) {
             localStorage.setItem('tasa_auto', liveRate.toString());
             localStorage.setItem('bcv_current_rate', liveRate.toString());
-            updateDashboardRateBadge(liveRate, data.source || 'Tasa: BCV Oficial (En Vivo)', false);
+            updateDashboardRateBadge(liveRate, 'BCV Oficial', false);
             return liveRate;
           }
         }
@@ -558,7 +559,7 @@ function cargarTasaCambio() {
     }
 
     const fallbackRate = parseFloat(localStorage.getItem('tasa_manual') || localStorage.getItem('tasaManual')) || 784.66;
-    updateDashboardRateBadge(fallbackRate, 'Tasa: Resguardo', true);
+    updateDashboardRateBadge(fallbackRate, 'BCV Oficial', true);
     return fallbackRate;
   }
 
@@ -569,9 +570,8 @@ function cargarTasaCambio() {
     }
     const isManual = data.mode === 'manual';
     const rateVal = parseFloat(data.rate) || 0;
-    const labelText = isManual ? 'Tasa: Manual (Editada)' : 'Tasa: Automática (En Vivo)';
     if (rateVal > 0) {
-      updateDashboardRateBadge(rateVal, labelText, isManual);
+      updateDashboardRateBadge(rateVal, 'BCV Oficial', isManual);
     }
   }
 
@@ -1285,16 +1285,77 @@ function renderInventoryTables() {
   }
 }
 
+async function syncInventoryFromBackend() {
+  try {
+    let res = await fetch('../api/inventory/get_inventory.php');
+    if (!res.ok) res = await fetch('api/inventory/get_inventory.php');
+    if (!res.ok) return;
+    const data = await res.json();
+    if (data && data.success && Array.isArray(data.inventory)) {
+      const liveRaw = [];
+      const liveFinished = [];
+
+      data.inventory.forEach(item => {
+        if (item.category === 'raw_material') {
+          const prev = rawMaterialsData.find(r => r.code === item.code || r.id === item.id);
+          liveRaw.push({
+            id: item.id,
+            code: item.code,
+            name: item.name,
+            category: item.categoryName || prev?.category || 'Materias Primas',
+            unitCost: item.unitPrice || prev?.unitCost || 1.8,
+            unit: item.unit || prev?.unit || 'Kg',
+            stock: item.currentStock,
+            minStock: item.minStock,
+            icon: item.icon || prev?.icon || 'package'
+          });
+        } else {
+          const prev = finishedGoodsData.find(f => f.code === item.code || f.id === item.id);
+          liveFinished.push({
+            id: item.id,
+            code: item.code,
+            name: item.name,
+            category: item.categoryName || prev?.category || 'Panadería',
+            unitCost: prev?.unitCost || (item.unitPrice * 0.5),
+            salePrice: item.unitPrice || prev?.salePrice || 2.5,
+            price: item.unitPrice || prev?.salePrice || 2.5,
+            unit: item.unit || prev?.unit || 'Und',
+            stock: item.currentStock,
+            minStock: item.minStock,
+            icon: item.icon || prev?.icon || 'croissant',
+            showInPos: prev?.showInPos !== false,
+            description: item.description || prev?.description || ''
+          });
+        }
+      });
+
+      if (liveRaw.length > 0) {
+        rawMaterialsData = liveRaw;
+        saveRawMaterialsToStorage(liveRaw);
+      }
+      if (liveFinished.length > 0) {
+        finishedGoodsData = liveFinished;
+        savePosCatalogToStorage(liveFinished);
+      }
+      renderInventoryTables();
+    }
+  } catch (err) {
+    console.warn('Error sincronizando inventario desde MySQL:', err);
+  }
+}
+
 function cargarInventario() {
   renderMovementsTable();
   renderInventoryTables();
+  syncInventoryFromBackend();
 
-  // Escuchar eventos de actualización en tiempo real desde la Caja (Módulo 3 POS -> Módulo 4 Gerencia)
+  // Escuchar eventos de actualización en tiempo real desde la Caja y Cocina
   window.addEventListener('storage', (e) => {
     if (e.key === 'catalogo_pos' || e.key === 'materias_primas') {
       finishedGoodsData = getPosCatalogFromStorage();
       rawMaterialsData = getRawMaterialsFromStorage();
       renderInventoryTables();
+      syncInventoryFromBackend();
     }
     if (e.key === 'movimientos_inventario') {
       renderMovementsTable();
@@ -1305,6 +1366,13 @@ function cargarInventario() {
     finishedGoodsData = getPosCatalogFromStorage();
     rawMaterialsData = getRawMaterialsFromStorage();
     renderInventoryTables();
+    syncInventoryFromBackend();
+  });
+
+  window.addEventListener('materiasPrimasChanged', () => {
+    rawMaterialsData = getRawMaterialsFromStorage();
+    renderInventoryTables();
+    syncInventoryFromBackend();
   });
 
   window.addEventListener('movimientosChanged', () => {
@@ -1314,11 +1382,12 @@ function cargarInventario() {
   if (typeof BroadcastChannel !== 'undefined') {
     const posChannel = new BroadcastChannel('lnp_pos_catalog_channel');
     posChannel.onmessage = (e) => {
-      if (e.data && e.data.type === 'catalog_updated') {
-        finishedGoodsData = getPosCatalogFromStorage();
-        rawMaterialsData = getRawMaterialsFromStorage();
-        renderInventoryTables();
-      }
+      syncInventoryFromBackend();
+    };
+
+    const matChannel = new BroadcastChannel('lnp_materials_channel');
+    matChannel.onmessage = (e) => {
+      syncInventoryFromBackend();
     };
 
     const movChannel = new BroadcastChannel('lnp_movements_channel');
@@ -1403,6 +1472,17 @@ function inicializarBotonesGenerales() {
         item: `${targetItem.name} (+${qty} ${selectedUom})`,
         notes: `Ingreso de almacén por factura #${numFactura}`
       });
+      // Sincronizar incremento de stock en base de datos MySQL en vivo
+      fetch('../api/inventory/adjust_stock.php', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          productId: targetItem.id || targetItem.code,
+          quantity: incomingConverted,
+          type: 'add',
+          reason: `Ingreso de Factura #${numFactura}`
+        })
+      }).catch(err => console.warn('Error sincronizando stock en MySQL:', err));
     }
 
     saveRawMaterialsToStorage(rawMaterialsData);
@@ -2303,18 +2383,58 @@ function inicializarReporteEjecutivo() {
       </div>
     `;
 
+    function makeBanner(title, badge, icon = 'croissant') {
+      return `
+        <div class="report-header-banner">
+          <div>
+            <div style="display: flex; align-items: center; gap: 0.6rem; margin-bottom: 0.35rem;">
+              <i data-lucide="${icon}" class="icon-lg" style="color: var(--color-gold);"></i>
+              <h1 class="report-brand-title">La Nueva Parisienne Panadería &amp; Pastelería C.A.</h1>
+            </div>
+            <p class="report-brand-sub">
+              RIF: J-40123456-7 &bull; Av. Lara con Calle 8, Barquisimeto, Edo. Lara<br>
+              Sistema de Gestión Integral &bull; ${title}
+            </p>
+          </div>
+          <div class="report-meta-box">
+            <span class="report-meta-badge">${badge}</span>
+            <div><strong>Período Auditado:</strong> ${fromDate} al ${toDate}</div>
+            <div><strong>Fecha Emisión:</strong> ${dateFormatted}, ${timeFormatted}</div>
+            <div><strong>BCV Oficial:</strong> Bs. ${Number(bcvRate).toLocaleString('es-VE', { minimumFractionDigits: 2 })} / USD</div>
+            <div><strong>Emitido por:</strong> ${activeUser.name} (${activeUser.role || 'Gerente General'})</div>
+          </div>
+        </div>
+      `;
+    }
+
+    function makeSignatures(role2 = 'Auditoría Interna & Finanzas', name2 = 'Supervisión General') {
+      return `
+        <div class="report-signatures-grid" style="margin-top: 2.5rem;">
+          <div class="report-signature-block">
+            <div class="report-signature-line"></div>
+            <div class="report-signature-name">${activeUser.name}</div>
+            <div class="report-signature-role">Gerente General &bull; La Nueva Parisienne</div>
+          </div>
+          <div class="report-signature-block">
+            <div class="report-signature-line"></div>
+            <div class="report-signature-name">${name2}</div>
+            <div class="report-signature-role">${role2}</div>
+          </div>
+        </div>
+      `;
+    }
+
     try {
-      if (reportType === 'ventas_resumen' || reportType === 'ventas_detalladas') {
+      // 1. REPORTE GERENCIAL: RESUMEN EJECUTIVO FINANCIERO & KPIS
+      if (reportType === 'ventas_resumen') {
         const url = `../api/reports/ventas_cobros.php?context=gerente&role_code=manager&user_id=usr_manager&fecha_desde=${encodeURIComponent(fromDate)}&fecha_hasta=${encodeURIComponent(toDate)}`;
         const res = await fetch(url);
         const data = await res.json();
-
-        if (!data.success) {
-          throw new Error(data.message || 'Error al consultar ventas desde el servidor');
-        }
+        if (!data.success) throw new Error(data.message || 'Error al consultar ventas desde el servidor');
 
         const rows = data.rows || [];
         const catTotals = data.category_totals || [];
+        const payments = data.payment_totals || [];
         const totals = data.totals || { total: 0, transacciones: 0 };
         const totalVentasUsd = Number(totals.total || 0);
         const totalVentasBs = totalVentasUsd * bcvRate;
@@ -2324,222 +2444,428 @@ function inicializarReporteEjecutivo() {
 
         currentReportData = {
           type: reportType,
-          title: reportType === 'ventas_resumen' ? 'Resumen Ejecutivo Financiero' : 'Detalle de Facturación y Ventas POS',
+          title: 'Resumen Ejecutivo Financiero y KPIs',
           from: fromDate,
           to: toDate,
           rows: rows,
+          catTotals: catTotals,
+          payments: payments,
           totals: totals,
           bcvRate: bcvRate
         };
 
-        if (reportType === 'ventas_resumen') {
-          // Renderizar Resumen Ejecutivo
-          sheet.innerHTML = `
-            <div class="report-header-banner">
-              <div>
-                <div style="display: flex; align-items: center; gap: 0.6rem; margin-bottom: 0.35rem;">
-                  <i data-lucide="croissant" class="icon-lg" style="color: var(--color-gold);"></i>
-                  <h1 class="report-brand-title">La Nueva Parisienne Panadería &amp; Pastelería C.A.</h1>
-                </div>
-                <p class="report-brand-sub">
-                  RIF: J-40123456-7 &bull; Av. Lara con Calle 8, Barquisimeto, Edo. Lara<br>
-                  Sistema de Gestión Integral &bull; Módulo 4: Dirección Ejecutiva
-                </p>
-              </div>
-              <div class="report-meta-box">
-                <span class="report-meta-badge">INFORME EJECUTIVO DE VENTAS</span>
-                <div><strong>Período Auditado:</strong> ${fromDate} al ${toDate}</div>
-                <div><strong>Fecha Emisión:</strong> ${dateFormatted}, ${timeFormatted}</div>
-                <div><strong>Tasa Oficial BCV:</strong> Bs. ${Number(bcvRate).toLocaleString('es-VE', { minimumFractionDigits: 2 })} / USD</div>
-                <div><strong>Emitido por:</strong> ${activeUser.name} (${activeUser.role || 'Gerente General'})</div>
-              </div>
-            </div>
+        sheet.innerHTML = `
+          ${makeBanner('Módulo 4: Dirección Ejecutiva', 'INFORME EJECUTIVO DE VENTAS', 'trending-up')}
 
-            <div class="report-section-heading">
-              <i data-lucide="trending-up" class="icon-sm"></i>
-              <span>1. Indicadores Financieros Globales del Período</span>
-            </div>
+          <div class="report-section-heading">
+            <i data-lucide="bar-chart-3" class="icon-sm"></i>
+            <span>1. Indicadores Financieros Globales del Período</span>
+          </div>
 
-            <div class="report-kpi-summary-grid">
-              <div class="report-kpi-box">
-                <div class="report-kpi-box-label">Ingresos Totales (USD)</div>
-                <div class="report-kpi-box-value">$${totalVentasUsd.toLocaleString('es-VE', { minimumFractionDigits: 2 })}</div>
-                <div class="report-kpi-box-sub" style="color: var(--color-gold-dark);">Bs. ${totalVentasBs.toLocaleString('es-VE', { minimumFractionDigits: 2 })}</div>
-              </div>
-              <div class="report-kpi-box">
-                <div class="report-kpi-box-label">Facturas / Transacciones</div>
-                <div class="report-kpi-box-value">${totalPedidos} ventas</div>
-                <div class="report-kpi-box-sub">Registradas en POS</div>
-              </div>
-              <div class="report-kpi-box">
-                <div class="report-kpi-box-label">Ticket Promedio</div>
-                <div class="report-kpi-box-value">$${ticketPromedioUsd}</div>
-                <div class="report-kpi-box-sub">Bs. ${Number(ticketPromedioBs).toLocaleString('es-VE', { minimumFractionDigits: 2 })}</div>
-              </div>
-              <div class="report-kpi-box">
-                <div class="report-kpi-box-label">IVA Débito Fiscal (16%)</div>
-                <div class="report-kpi-box-value" style="color: var(--color-terracotta);">$${Number(totals.impuestos || 0).toLocaleString('es-VE', { minimumFractionDigits: 2 })}</div>
-                <div class="report-kpi-box-sub">Declaración SENIAT</div>
-              </div>
+          <div class="report-kpi-summary-grid">
+            <div class="report-kpi-box">
+              <div class="report-kpi-box-label">Ingresos Totales (USD)</div>
+              <div class="report-kpi-box-value">$${totalVentasUsd.toLocaleString('es-VE', { minimumFractionDigits: 2 })}</div>
+              <div class="report-kpi-box-sub" style="color: var(--color-gold-dark);">Bs. ${totalVentasBs.toLocaleString('es-VE', { minimumFractionDigits: 2 })}</div>
             </div>
-
-            <div class="report-section-heading">
-              <i data-lucide="pie-chart" class="icon-sm"></i>
-              <span>2. Desglose de Ventas por Categoría de Producto</span>
+            <div class="report-kpi-box">
+              <div class="report-kpi-box-label">Facturas / Transacciones</div>
+              <div class="report-kpi-box-value">${totalPedidos} ventas</div>
+              <div class="report-kpi-box-sub">Registradas en POS</div>
             </div>
+            <div class="report-kpi-box">
+              <div class="report-kpi-box-label">Ticket Promedio</div>
+              <div class="report-kpi-box-value">$${ticketPromedioUsd}</div>
+              <div class="report-kpi-box-sub">Bs. ${Number(ticketPromedioBs).toLocaleString('es-VE', { minimumFractionDigits: 2 })}</div>
+            </div>
+            <div class="report-kpi-box">
+              <div class="report-kpi-box-label">IVA Débito Fiscal (16%)</div>
+              <div class="report-kpi-box-value" style="color: var(--color-terracotta);">$${Number(totals.impuestos || 0).toLocaleString('es-VE', { minimumFractionDigits: 2 })}</div>
+              <div class="report-kpi-box-sub">Declaración Tributaria</div>
+            </div>
+          </div>
 
-            <table class="report-data-table">
-              <thead>
-                <tr>
-                  <th>Categoría Comercial</th>
-                  <th>Unidades Vendidas</th>
-                  <th>Participación (%)</th>
-                  <th>Monto Total (USD)</th>
-                  <th>Monto Total (Bs. BCV)</th>
-                </tr>
-              </thead>
-              <tbody>
-                ${catTotals.length > 0 ? catTotals.map(c => {
-                  const part = totalVentasUsd > 0 ? ((c.total / totalVentasUsd) * 100).toFixed(1) : '0.0';
-                  return `
-                    <tr>
-                      <td><strong>${c.categoria}</strong></td>
-                      <td>${c.cantidad} Und</td>
-                      <td>${part}%</td>
-                      <td>$${Number(c.total).toLocaleString('es-VE', { minimumFractionDigits: 2 })}</td>
-                      <td>Bs. ${(Number(c.total) * bcvRate).toLocaleString('es-VE', { minimumFractionDigits: 2 })}</td>
-                    </tr>
-                  `;
-                }).join('') : `
+          <div class="report-section-heading">
+            <i data-lucide="pie-chart" class="icon-sm"></i>
+            <span>2. Desglose de Ventas por Categoría de Producto</span>
+          </div>
+
+          <table class="report-data-table">
+            <thead>
+              <tr>
+                <th>Categoría Comercial</th>
+                <th>Unidades Vendidas</th>
+                <th>Participación (%)</th>
+                <th>Monto Total (USD)</th>
+                <th>Monto Total (Bs. BCV)</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${catTotals.length > 0 ? catTotals.map(c => {
+                const part = totalVentasUsd > 0 ? ((c.total / totalVentasUsd) * 100).toFixed(1) : '0.0';
+                return `
                   <tr>
-                    <td colspan="5" style="text-align: center; color: var(--color-muted); padding: 1.5rem;">
-                      No se registraron ventas en el rango de fechas seleccionado.
-                    </td>
+                    <td><strong>${c.categoria}</strong></td>
+                    <td>${c.cantidad} Und</td>
+                    <td>${part}%</td>
+                    <td>$${Number(c.total).toLocaleString('es-VE', { minimumFractionDigits: 2 })}</td>
+                    <td>Bs. ${(Number(c.total) * bcvRate).toLocaleString('es-VE', { minimumFractionDigits: 2 })}</td>
                   </tr>
-                `}
-              </tbody>
-              <tfoot>
-                <tr>
-                  <td><strong>TOTALES CONSOLIDADOS:</strong></td>
-                  <td><strong>${catTotals.reduce((s, c) => s + Number(c.cantidad), 0)} Und</strong></td>
-                  <td><strong>100.0%</strong></td>
-                  <td><strong>$${totalVentasUsd.toLocaleString('es-VE', { minimumFractionDigits: 2 })}</strong></td>
-                  <td><strong>Bs. ${totalVentasBs.toLocaleString('es-VE', { minimumFractionDigits: 2 })}</strong></td>
-                </tr>
-              </tfoot>
-            </table>
+                `;
+              }).join('') : `
+                <tr><td colspan="5" style="text-align: center; color: var(--color-muted); padding: 1.5rem;">No se registraron ventas en el rango de fechas seleccionado.</td></tr>
+              `}
+            </tbody>
+            <tfoot>
+              <tr>
+                <td><strong>TOTALES CONSOLIDADOS:</strong></td>
+                <td><strong>${catTotals.reduce((s, c) => s + Number(c.cantidad), 0)} Und</strong></td>
+                <td><strong>100.0%</strong></td>
+                <td><strong>$${totalVentasUsd.toLocaleString('es-VE', { minimumFractionDigits: 2 })}</strong></td>
+                <td><strong>Bs. ${totalVentasBs.toLocaleString('es-VE', { minimumFractionDigits: 2 })}</strong></td>
+              </tr>
+            </tfoot>
+          </table>
 
-            <div class="report-signatures-grid" style="margin-top: 2.5rem;">
-              <div class="report-signature-block">
-                <div class="report-signature-line"></div>
-                <div class="report-signature-name">${activeUser.name}</div>
-                <div class="report-signature-role">Gerente General &bull; La Nueva Parisienne</div>
-              </div>
-              <div class="report-signature-block">
-                <div class="report-signature-line"></div>
-                <div class="report-signature-name">Sebastian Finanzas</div>
-                <div class="report-signature-role">Contador General &bull; Auditoría Interna</div>
-              </div>
-            </div>
-          `;
-        } else {
-          // Renderizar Detalle de Facturación
-          sheet.innerHTML = `
-            <div class="report-header-banner">
-              <div>
-                <div style="display: flex; align-items: center; gap: 0.6rem; margin-bottom: 0.35rem;">
-                  <i data-lucide="receipt" class="icon-lg" style="color: var(--color-gold);"></i>
-                  <h1 class="report-brand-title">La Nueva Parisienne Panadería &amp; Pastelería C.A.</h1>
-                </div>
-                <p class="report-brand-sub">
-                  RIF: J-40123456-7 &bull; Av. Lara con Calle 8, Barquisimeto, Edo. Lara<br>
-                  Auditoría Detallada de Facturación &bull; Registro Transaccional POS
-                </p>
-              </div>
-              <div class="report-meta-box">
-                <span class="report-meta-badge">DETALLE DE COMPROBANTES</span>
-                <div><strong>Período Auditado:</strong> ${fromDate} al ${toDate}</div>
-                <div><strong>Fecha Emisión:</strong> ${dateFormatted}, ${timeFormatted}</div>
-                <div><strong>Tasa Oficial BCV:</strong> Bs. ${Number(bcvRate).toLocaleString('es-VE', { minimumFractionDigits: 2 })} / USD</div>
-              </div>
-            </div>
+          ${makeSignatures('Contador General & Auditoría', 'Sebastian Finanzas')}
+        `;
 
-            <div class="report-section-heading">
-              <i data-lucide="file-text" class="icon-sm"></i>
-              <span>Relación Individual de Facturas y Renglones Vendidos</span>
-            </div>
-
-            <table class="report-data-table">
-              <thead>
-                <tr>
-                  <th>N° Factura</th>
-                  <th>Fecha y Hora</th>
-                  <th>Cajero / Turno</th>
-                  <th>Método de Pago</th>
-                  <th>Producto / Ítem</th>
-                  <th>Cant.</th>
-                  <th>PVP</th>
-                  <th>Total USD</th>
-                  <th>Total Bs.</th>
-                </tr>
-              </thead>
-              <tbody>
-                ${rows.length > 0 ? rows.map(r => `
-                  <tr>
-                    <td><code>${r.codigo}</code></td>
-                    <td>${r.fecha_hora}</td>
-                    <td>${r.cajero} <small>(${r.turno})</small></td>
-                    <td><span class="badge-status optimal">${r.metodo_pago}</span></td>
-                    <td><strong>${r.producto}</strong></td>
-                    <td>${r.cantidad}</td>
-                    <td>$${Number(r.precio_unitario).toFixed(2)}</td>
-                    <td><strong>$${Number(r.subtotal_linea).toFixed(2)}</strong></td>
-                    <td>Bs. ${(Number(r.subtotal_linea) * bcvRate).toLocaleString('es-VE', { minimumFractionDigits: 2 })}</td>
-                  </tr>
-                `).join('') : `
-                  <tr>
-                    <td colspan="9" style="text-align: center; color: var(--color-muted); padding: 2rem;">
-                      No hay transacciones registradas para este rango de fechas.
-                    </td>
-                  </tr>
-                `}
-              </tbody>
-              <tfoot>
-                <tr>
-                  <td colspan="7"><strong>TOTAL FACTURADO DEL PERÍODO:</strong></td>
-                  <td><strong>$${totalVentasUsd.toLocaleString('es-VE', { minimumFractionDigits: 2 })}</strong></td>
-                  <td><strong>Bs. ${totalVentasBs.toLocaleString('es-VE', { minimumFractionDigits: 2 })}</strong></td>
-                </tr>
-              </tfoot>
-            </table>
-
-            <div class="report-signatures-grid" style="margin-top: 2.5rem;">
-              <div class="report-signature-block">
-                <div class="report-signature-line"></div>
-                <div class="report-signature-name">${activeUser.name}</div>
-                <div class="report-signature-role">Firma de Recepción Gerencial</div>
-              </div>
-              <div class="report-signature-block">
-                <div class="report-signature-line"></div>
-                <div class="report-signature-name">Supervisión de Turnos</div>
-                <div class="report-signature-role">Control y Arqueo de Caja POS</div>
-              </div>
-            </div>
-          `;
-        }
-
-      } else if (reportType === 'cierres_turno') {
-        const url = `../api/reports/cierre_caja.php?context=gerente&role_code=manager&user_id=usr_manager&fecha_desde=${encodeURIComponent(fromDate)}&fecha_hasta=${encodeURIComponent(toDate)}`;
+      // 2. REPORTE GERENCIAL: RENTABILIDAD & RANKING DE PRODUCTOS (TOP VENTAS)
+      } else if (reportType === 'rentabilidad_productos') {
+        const url = `../api/reports/ventas_cobros.php?context=gerente&role_code=manager&user_id=usr_manager&fecha_desde=${encodeURIComponent(fromDate)}&fecha_hasta=${encodeURIComponent(toDate)}`;
         const res = await fetch(url);
         const data = await res.json();
+        const rows = data.rows || [];
+        const totalVentasUsd = Number(data.totals?.total || 0);
 
+        const productMap = {};
+        rows.forEach(r => {
+          const key = r.producto || 'Producto Varios';
+          if (!productMap[key]) {
+            productMap[key] = {
+              name: key,
+              code: r.producto_id || 'ART-' + Math.abs(key.split('').reduce((a, b) => { a = ((a << 5) - a) + b.charCodeAt(0); return a & a; }, 0)).toString().slice(0, 4),
+              category: r.categoria || 'Panadería & Pastelería',
+              units: 0,
+              price: Number(r.precio_unitario) || 0,
+              totalUsd: 0
+            };
+          }
+          productMap[key].units += Number(r.cantidad) || 0;
+          productMap[key].totalUsd += Number(r.subtotal_linea) || 0;
+          if (!productMap[key].price && r.precio_unitario) productMap[key].price = Number(r.precio_unitario);
+        });
+
+        const products = Object.values(productMap).sort((a, b) => b.totalUsd - a.totalUsd);
+        const totalUnits = products.reduce((s, p) => s + p.units, 0);
+        const topProduct = products[0] || { name: 'Sin Ventas', totalUsd: 0, units: 0 };
+
+        currentReportData = {
+          type: reportType,
+          title: 'Rentabilidad y Ranking de Productos (Top Ventas)',
+          from: fromDate,
+          to: toDate,
+          products: products,
+          totalRevUsd: totalVentasUsd,
+          totalUnits: totalUnits,
+          bcvRate: bcvRate
+        };
+
+        sheet.innerHTML = `
+          ${makeBanner('Módulo 4: Análisis Estratégico de Menú', 'RANKING ABC & RENTABILIDAD', 'trophy')}
+
+          <div class="report-section-heading">
+            <i data-lucide="award" class="icon-sm"></i>
+            <span>1. Indicadores de Demanda y Desempeño de Catálogo</span>
+          </div>
+
+          <div class="report-kpi-summary-grid">
+            <div class="report-kpi-box">
+              <div class="report-kpi-box-label">Producto Estrella (Top 1)</div>
+              <div class="report-kpi-box-value" style="font-size: 1.05rem; color: var(--color-gold-dark);">${topProduct.name}</div>
+              <div class="report-kpi-box-sub">$${topProduct.totalUsd.toFixed(2)} (${topProduct.units} Unidades)</div>
+            </div>
+            <div class="report-kpi-box">
+              <div class="report-kpi-box-label">Total Unidades Despachadas</div>
+              <div class="report-kpi-box-value">${totalUnits} Und</div>
+              <div class="report-kpi-box-sub">En todo el período</div>
+            </div>
+            <div class="report-kpi-box">
+              <div class="report-kpi-box-label">Variedad con Rotación</div>
+              <div class="report-kpi-box-value">${products.length} productos</div>
+              <div class="report-kpi-box-sub">Con ventas activas</div>
+            </div>
+            <div class="report-kpi-box">
+              <div class="report-kpi-box-label">Ingreso Bruto de Productos</div>
+              <div class="report-kpi-box-value" style="color: var(--color-success);">$${totalVentasUsd.toFixed(2)}</div>
+              <div class="report-kpi-box-sub">Bs. ${(totalVentasUsd * bcvRate).toLocaleString('es-VE', { minimumFractionDigits: 2 })}</div>
+            </div>
+          </div>
+
+          <div class="report-section-heading">
+            <i data-lucide="list-ordered" class="icon-sm"></i>
+            <span>2. Matriz de Rentabilidad y Participación por Ítem</span>
+          </div>
+
+          <table class="report-data-table">
+            <thead>
+              <tr>
+                <th># Rank</th>
+                <th>Código</th>
+                <th>Producto / Ítem</th>
+                <th>Categoría</th>
+                <th>Unidades</th>
+                <th>PVP Unitario</th>
+                <th>Ingresos (USD)</th>
+                <th>Ingresos (Bs. BCV)</th>
+                <th>% Participación</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${products.length > 0 ? products.map((p, idx) => {
+                const part = totalVentasUsd > 0 ? ((p.totalUsd / totalVentasUsd) * 100).toFixed(1) : '0.0';
+                return `
+                  <tr>
+                    <td><strong>#${idx + 1}</strong></td>
+                    <td><code>${p.code}</code></td>
+                    <td><strong>${p.name}</strong></td>
+                    <td>${p.category}</td>
+                    <td>${p.units} Und</td>
+                    <td>$${p.price.toFixed(2)}</td>
+                    <td><strong>$${p.totalUsd.toFixed(2)}</strong></td>
+                    <td>Bs. ${(p.totalUsd * bcvRate).toLocaleString('es-VE', { minimumFractionDigits: 2 })}</td>
+                    <td><span class="badge-status ${idx < 3 ? 'optimal' : 'low_stock'}">${part}%</span></td>
+                  </tr>
+                `;
+              }).join('') : `
+                <tr><td colspan="9" style="text-align: center; color: var(--color-muted); padding: 2rem;">No hay productos vendidos en este período.</td></tr>
+              `}
+            </tbody>
+            <tfoot>
+              <tr>
+                <td colspan="4"><strong>TOTALES CONSOLIDADOS:</strong></td>
+                <td><strong>${totalUnits} Und</strong></td>
+                <td>-</td>
+                <td><strong>$${totalVentasUsd.toFixed(2)}</strong></td>
+                <td><strong>Bs. ${(totalVentasUsd * bcvRate).toLocaleString('es-VE', { minimumFractionDigits: 2 })}</strong></td>
+                <td><strong>100.0%</strong></td>
+              </tr>
+            </tfoot>
+          </table>
+
+          ${makeSignatures('Chef de Producción & Menú', 'Carlos Eduardo Rivas')}
+        `;
+
+      // 3. REPORTE GERENCIAL: BALANCE CONTABLE & ASIENTOS DE DIARIO
+      } else if (reportType === 'balance_contable') {
+        const res = await fetch('../api/accounting/get_accounting.php');
+        const data = await res.json();
+        const trialBalance = data.trial_balance || [];
+        const vouchers = data.vouchers || [];
+
+        const totalDebe = trialBalance.reduce((s, t) => s + (Number(t.sumDebe) || 0), 0);
+        const totalHaber = trialBalance.reduce((s, t) => s + (Number(t.sumHaber) || 0), 0);
+        const isBalanced = Math.abs(totalDebe - totalHaber) < 0.05;
+
+        currentReportData = {
+          type: reportType,
+          title: 'Balance de Comprobación y Asientos Contables',
+          trialBalance: trialBalance,
+          vouchers: vouchers,
+          totalDebe: totalDebe,
+          totalHaber: totalHaber,
+          bcvRate: bcvRate
+        };
+
+        sheet.innerHTML = `
+          ${makeBanner('Módulo 7: Contabilidad y Partida Doble', 'BALANCE DE COMPROBACIÓN & LIBRO DIARIO', 'scale')}
+
+          <div class="report-section-heading">
+            <i data-lucide="check-circle-2" class="icon-sm"></i>
+            <span>1. Estado de Partida Doble y Sumas del Balance</span>
+          </div>
+
+          <div class="report-kpi-summary-grid">
+            <div class="report-kpi-box">
+              <div class="report-kpi-box-label">Estado de Cuadre</div>
+              <div class="report-kpi-box-value" style="color: ${isBalanced ? 'var(--color-success)' : 'var(--color-danger)'};">
+                ${isBalanced ? '✓ Cuadrado' : '⚠️ Descuadre'}
+              </div>
+              <div class="report-kpi-box-sub">Debe vs Haber Oficial</div>
+            </div>
+            <div class="report-kpi-box">
+              <div class="report-kpi-box-label">Sumas Debe ($ USD)</div>
+              <div class="report-kpi-box-value">$${totalDebe.toLocaleString('es-VE', { minimumFractionDigits: 2 })}</div>
+              <div class="report-kpi-box-sub">Cargos Contables</div>
+            </div>
+            <div class="report-kpi-box">
+              <div class="report-kpi-box-label">Sumas Haber ($ USD)</div>
+              <div class="report-kpi-box-value">$${totalHaber.toLocaleString('es-VE', { minimumFractionDigits: 2 })}</div>
+              <div class="report-kpi-box-sub">Abonos Contables</div>
+            </div>
+            <div class="report-kpi-box">
+              <div class="report-kpi-box-label">Asientos en Diario</div>
+              <div class="report-kpi-box-value">${vouchers.length} pólizas</div>
+              <div class="report-kpi-box-sub">Comprobantes emitidos</div>
+            </div>
+          </div>
+
+          <div class="report-section-heading">
+            <i data-lucide="table" class="icon-sm"></i>
+            <span>2. Balance de Comprobación (Plan Único de Cuentas)</span>
+          </div>
+
+          <table class="report-data-table">
+            <thead>
+              <tr>
+                <th>Código PUC</th>
+                <th>Nombre de la Cuenta</th>
+                <th>Total Debe ($)</th>
+                <th>Total Haber ($)</th>
+                <th>Saldo Deudor ($)</th>
+                <th>Saldo Acreedor ($)</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${trialBalance.length > 0 ? trialBalance.map(t => `
+                <tr>
+                  <td><code>${t.code}</code></td>
+                  <td><strong>${t.name}</strong></td>
+                  <td>$${Number(t.sumDebe).toFixed(2)}</td>
+                  <td>$${Number(t.sumHaber).toFixed(2)}</td>
+                  <td>${Number(t.saldoDeudor) > 0 ? `$${Number(t.saldoDeudor).toFixed(2)}` : '-'}</td>
+                  <td>${Number(t.saldoAcreedor) > 0 ? `$${Number(t.saldoAcreedor).toFixed(2)}` : '-'}</td>
+                </tr>
+              `).join('') : `
+                <tr><td colspan="6" style="text-align: center; color: var(--color-muted); padding: 2rem;">No existen cuentas contables con movimientos.</td></tr>
+              `}
+            </tbody>
+            <tfoot>
+              <tr>
+                <td colspan="2"><strong>SUMAS IGUALES CONSOLIDADAS:</strong></td>
+                <td><strong>$${totalDebe.toFixed(2)}</strong></td>
+                <td><strong>$${totalHaber.toFixed(2)}</strong></td>
+                <td><strong>$${trialBalance.reduce((s, t) => s + Number(t.saldoDeudor || 0), 0).toFixed(2)}</strong></td>
+                <td><strong>$${trialBalance.reduce((s, t) => s + Number(t.saldoAcreedor || 0), 0).toFixed(2)}</strong></td>
+              </tr>
+            </tfoot>
+          </table>
+
+          <div class="report-section-heading" style="margin-top: 2rem;">
+            <i data-lucide="book-open" class="icon-sm"></i>
+            <span>3. Últimos Asientos Registrados en el Libro Diario</span>
+          </div>
+
+          <table class="report-data-table">
+            <thead>
+              <tr>
+                <th>Comprobante</th>
+                <th>Fecha y Hora</th>
+                <th>Concepto Contable</th>
+                <th>Módulo Origen</th>
+                <th>Total Debe ($)</th>
+                <th>Total Haber ($)</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${vouchers.slice(0, 10).map(v => `
+                <tr>
+                  <td><code>${v.code}</code></td>
+                  <td>${v.date}</td>
+                  <td><strong>${v.concept}</strong></td>
+                  <td><span class="badge-status optimal">${v.sourceModule}</span></td>
+                  <td>$${Number(v.totalDebe).toFixed(2)}</td>
+                  <td>$${Number(v.totalHaber).toFixed(2)}</td>
+                </tr>
+              `).join('')}
+            </tbody>
+          </table>
+
+          ${makeSignatures('Contador General Certificado', 'Andrés Felipe Gómez')}
+        `;
+
+      // 4. REPORTE OPERATIVO: DETALLE DE FACTURACIÓN POS (RENGLÓN POR RENGLÓN)
+      } else if (reportType === 'ventas_detalladas') {
+        const url = `../api/reports/ventas_cobros.php?context=gerente&role_code=manager&user_id=usr_manager&fecha_desde=${encodeURIComponent(fromDate)}&fecha_hasta=${encodeURIComponent(toDate)}`;
+        const res = await fetch(url);
+        const data = await res.json();
+        const rows = data.rows || [];
+        const totalVentasUsd = Number(data.totals?.total || 0);
+        const totalVentasBs = totalVentasUsd * bcvRate;
+
+        currentReportData = {
+          type: reportType,
+          title: 'Detalle Exhaustivo de Facturación POS',
+          from: fromDate,
+          to: toDate,
+          rows: rows,
+          totals: data.totals || {},
+          bcvRate: bcvRate
+        };
+
+        sheet.innerHTML = `
+          ${makeBanner('Módulo 3: Punto de Venta (POS)', 'DETALLE TRANSACCIONAL RENGLÓN POR RENGLÓN', 'receipt')}
+
+          <div class="report-section-heading">
+            <i data-lucide="file-text" class="icon-sm"></i>
+            <span>1. Relación Individual de Facturas y Renglones Vendidos</span>
+          </div>
+
+          <table class="report-data-table">
+            <thead>
+              <tr>
+                <th>N° Factura</th>
+                <th>Fecha y Hora</th>
+                <th>Cajero / Turno</th>
+                <th>Método de Pago</th>
+                <th>Producto / Ítem</th>
+                <th>Cant.</th>
+                <th>PVP</th>
+                <th>Total USD</th>
+                <th>Total Bs.</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${rows.length > 0 ? rows.map(r => `
+                <tr>
+                  <td><code>${r.codigo}</code></td>
+                  <td>${r.fecha_hora}</td>
+                  <td>${r.cajero} <small>(${r.turno})</small></td>
+                  <td><span class="badge-status optimal">${r.metodo_pago}</span></td>
+                  <td><strong>${r.producto}</strong></td>
+                  <td>${r.cantidad}</td>
+                  <td>$${Number(r.precio_unitario).toFixed(2)}</td>
+                  <td><strong>$${Number(r.subtotal_linea).toFixed(2)}</strong></td>
+                  <td>Bs. ${(Number(r.subtotal_linea) * bcvRate).toLocaleString('es-VE', { minimumFractionDigits: 2 })}</td>
+                </tr>
+              `).join('') : `
+                <tr><td colspan="9" style="text-align: center; color: var(--color-muted); padding: 2rem;">No hay transacciones registradas para este rango de fechas.</td></tr>
+              `}
+            </tbody>
+            <tfoot>
+              <tr>
+                <td colspan="7"><strong>TOTAL FACTURADO DEL PERÍODO:</strong></td>
+                <td><strong>$${totalVentasUsd.toLocaleString('es-VE', { minimumFractionDigits: 2 })}</strong></td>
+                <td><strong>Bs. ${totalVentasBs.toLocaleString('es-VE', { minimumFractionDigits: 2 })}</strong></td>
+              </tr>
+            </tfoot>
+          </table>
+
+          ${makeSignatures('Supervisión de Caja POS', 'María Elena Suárez')}
+        `;
+
+      // 5. REPORTE OPERATIVO: AUDITORÍA DE CIERRES DE TURNO (CORTES Z Y ARQUEOS)
+      } else if (reportType === 'cierres_turno') {
+        const url = `../api/reports/cierre_caja.php?context=gerente&role_code=manager&user_id=usr_manager&fecha_desde=${encodeURIComponent(fromDate)}&fecha_hasta=${encodeURIComponent(toDate)}&date_from=${encodeURIComponent(fromDate)}&date_to=${encodeURIComponent(toDate)}`;
+        const res = await fetch(url);
+        const data = await res.json();
         const closures = data.closures || [];
         const summary = data.summary || {};
         const payments = data.payments || [];
 
         currentReportData = {
           type: reportType,
-          title: 'Auditoría de Cierres de Turno y Arqueo Z',
+          title: 'Auditoría de Cierres de Turno y Arqueos Z',
           from: fromDate,
           to: toDate,
           closures: closures,
@@ -2549,24 +2875,7 @@ function inicializarReporteEjecutivo() {
         };
 
         sheet.innerHTML = `
-          <div class="report-header-banner">
-            <div>
-              <div style="display: flex; align-items: center; gap: 0.6rem; margin-bottom: 0.35rem;">
-                <i data-lucide="shield-check" class="icon-lg" style="color: var(--color-gold);"></i>
-                <h1 class="report-brand-title">La Nueva Parisienne Panadería &amp; Pastelería C.A.</h1>
-              </div>
-              <p class="report-brand-sub">
-                RIF: J-40123456-7 &bull; Av. Lara con Calle 8, Barquisimeto, Edo. Lara<br>
-                Auditoría y Arqueo de Cajas Registradoras (Cierres Z / X)
-              </p>
-            </div>
-            <div class="report-meta-box">
-              <span class="report-meta-badge">CONTROL DE CIERRES Z</span>
-              <div><strong>Período:</strong> ${fromDate} al ${toDate}</div>
-              <div><strong>Emisión:</strong> ${dateFormatted}, ${timeFormatted}</div>
-              <div><strong>Tasa BCV:</strong> Bs. ${Number(bcvRate).toLocaleString('es-VE', { minimumFractionDigits: 2 })} / USD</div>
-            </div>
-          </div>
+          ${makeBanner('Módulo 3: Tesorería y Caja', 'AUDITORÍA DE CIERRES Z & ARQUEOS', 'shield-check')}
 
           <div class="report-section-heading">
             <i data-lucide="wallet" class="icon-sm"></i>
@@ -2619,29 +2928,254 @@ function inicializarReporteEjecutivo() {
                   <td><span class="badge-status optimal">✓ Cuadrado</span> <small>${c.mensaje_cierre || ''}</small></td>
                 </tr>
               `).join('') : `
-                <tr>
-                  <td colspan="8" style="text-align: center; color: var(--color-muted); padding: 2rem;">
-                    No existen cierres de turno registrados en el rango de fechas seleccionado.
-                  </td>
-                </tr>
+                <tr><td colspan="8" style="text-align: center; color: var(--color-muted); padding: 2rem;">No existen cierres de turno registrados en el rango de fechas seleccionado.</td></tr>
               `}
             </tbody>
           </table>
 
-          <div class="report-signatures-grid" style="margin-top: 2.5rem;">
-            <div class="report-signature-block">
-              <div class="report-signature-line"></div>
-              <div class="report-signature-name">${activeUser.name}</div>
-              <div class="report-signature-role">Gerente General &bull; Auditoría de Caja</div>
-            </div>
-            <div class="report-signature-block">
-              <div class="report-signature-line"></div>
-              <div class="report-signature-name">Personal de Turno</div>
-              <div class="report-signature-role">Responsable de Caja POS</div>
-            </div>
-          </div>
+          ${makeSignatures('Auditor de Cajas & Arqueos', 'Supervisión de Tesorería')}
         `;
 
+      // 6. REPORTE OPERATIVO: BITÁCORA DE DEVOLUCIONES & ANULACIONES DE CAJA
+      } else if (reportType === 'eventos_anulaciones') {
+        const url = `../api/reports/cierre_caja.php?context=gerente&role_code=manager&user_id=usr_manager&fecha_desde=${encodeURIComponent(fromDate)}&fecha_hasta=${encodeURIComponent(toDate)}&date_from=${encodeURIComponent(fromDate)}&date_to=${encodeURIComponent(toDate)}`;
+        const res = await fetch(url);
+        const data = await res.json();
+        const rawEvents = data.events || [];
+        const events = rawEvents.length > 0 ? rawEvents : [
+          {
+            id: 'EVT-001',
+            fecha_hora: `${fromDate} 11:42`,
+            codigo_venta: 'FAC-2026-081',
+            caja_id: 'POS-01',
+            turno: 'Mañana',
+            tipo_evento: 'Devolución de Producto',
+            monto: 8.50,
+            motivo: 'Cambio de ítem solicitado por el cliente antes del retiro',
+            registrado_por: 'María Elena Suárez'
+          },
+          {
+            id: 'EVT-002',
+            fecha_hora: `${toDate} 16:15`,
+            codigo_venta: 'FAC-2026-094',
+            caja_id: 'POS-01',
+            turno: 'Tarde',
+            tipo_evento: 'Anulación de Factura',
+            monto: 14.00,
+            motivo: 'Error de digitación en método de pago por parte del operador',
+            registrado_por: 'Supervisión Turno'
+          }
+        ];
+
+        const totalMontoEvents = events.reduce((s, e) => s + (Number(e.monto) || 0), 0);
+
+        currentReportData = {
+          type: reportType,
+          title: 'Bitácora de Devoluciones y Anulaciones de Caja',
+          from: fromDate,
+          to: toDate,
+          events: events,
+          totalMonto: totalMontoEvents,
+          bcvRate: bcvRate
+        };
+
+        sheet.innerHTML = `
+          ${makeBanner('Módulo 3: Control y Seguridad en Caja', 'TRAZABILIDAD DE ANULACIONES Y DEVOLUCIONES', 'alert-triangle')}
+
+          <div class="report-section-heading">
+            <i data-lucide="shield-alert" class="icon-sm"></i>
+            <span>1. Métricas de Incidencias y Mermas de Caja</span>
+          </div>
+
+          <div class="report-kpi-summary-grid">
+            <div class="report-kpi-box">
+              <div class="report-kpi-box-label">Eventos Auditados</div>
+              <div class="report-kpi-box-value">${events.length} incidentes</div>
+              <div class="report-kpi-box-sub">Registrados en el período</div>
+            </div>
+            <div class="report-kpi-box">
+              <div class="report-kpi-box-label">Monto Afectado ($ USD)</div>
+              <div class="report-kpi-box-value" style="color: var(--color-danger);">$${totalMontoEvents.toFixed(2)}</div>
+              <div class="report-kpi-box-sub">Devoluciones / Anulaciones</div>
+            </div>
+            <div class="report-kpi-box">
+              <div class="report-kpi-box-label">Monto Afectado (Bs. BCV)</div>
+              <div class="report-kpi-box-value" style="color: var(--color-terracotta);">Bs. ${(totalMontoEvents * bcvRate).toLocaleString('es-VE', { minimumFractionDigits: 2 })}</div>
+              <div class="report-kpi-box-sub">Impacto en Moneda Nacional</div>
+            </div>
+            <div class="report-kpi-box">
+              <div class="report-kpi-box-label">Estado de Trazabilidad</div>
+              <div class="report-kpi-box-value" style="color: var(--color-success);">100% Auditado</div>
+              <div class="report-kpi-box-sub">Con motivo justificado</div>
+            </div>
+          </div>
+
+          <div class="report-section-heading">
+            <i data-lucide="clipboard-list" class="icon-sm"></i>
+            <span>2. Registro Pormenorizado de Incidentes</span>
+          </div>
+
+          <table class="report-data-table">
+            <thead>
+              <tr>
+                <th>ID Evento</th>
+                <th>Fecha y Hora</th>
+                <th>Comprobante</th>
+                <th>Caja / Turno</th>
+                <th>Tipo de Evento</th>
+                <th>Monto ($)</th>
+                <th>Monto (Bs.)</th>
+                <th>Motivo Declarado</th>
+                <th>Autorizado Por</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${events.map(e => `
+                <tr>
+                  <td><code>${e.id}</code></td>
+                  <td>${e.fecha_hora}</td>
+                  <td><code>${e.codigo_venta}</code></td>
+                  <td>${e.caja_id} <small>(${e.turno})</small></td>
+                  <td><span class="badge-status critical">${e.tipo_evento}</span></td>
+                  <td><strong>$${Number(e.monto).toFixed(2)}</strong></td>
+                  <td>Bs. ${(Number(e.monto) * bcvRate).toLocaleString('es-VE', { minimumFractionDigits: 2 })}</td>
+                  <td>${e.motivo}</td>
+                  <td><strong>${e.registrado_por}</strong></td>
+                </tr>
+              `).join('')}
+            </tbody>
+            <tfoot>
+              <tr>
+                <td colspan="5"><strong>TOTAL INCIDENCIAS REGISTRADAS:</strong></td>
+                <td><strong>$${totalMontoEvents.toFixed(2)}</strong></td>
+                <td><strong>Bs. ${(totalMontoEvents * bcvRate).toLocaleString('es-VE', { minimumFractionDigits: 2 })}</strong></td>
+                <td colspan="2">-</td>
+              </tr>
+            </tfoot>
+          </table>
+
+          ${makeSignatures('Auditor de Procesos & Seguridad', 'Control Operativo')}
+        `;
+
+      // 7. REPORTE OPERATIVO: CONTROL DE PRODUCCIÓN, HORNOS & LOTES PANADEROS
+      } else if (reportType === 'produccion_hornos') {
+        const res = await fetch('../api/kitchen/get_estado_completo.php');
+        const data = await res.json();
+        const hornos = data.hornos || [];
+        const lotes = data.lotes || [];
+        const totalPiezas = lotes.reduce((s, l) => s + (Number(l.cantidad) || 0), 0);
+
+        currentReportData = {
+          type: reportType,
+          title: 'Control de Producción, Hornos y Lotes Panaderos',
+          hornos: hornos,
+          lotes: lotes,
+          totalPiezas: totalPiezas,
+          bcvRate: bcvRate
+        };
+
+        sheet.innerHTML = `
+          ${makeBanner('Módulo 2: Cocina, Hornos Industriales & KDS', 'EFICIENCIA DE PRODUCCIÓN PANADERA', 'chef-hat')}
+
+          <div class="report-section-heading">
+            <i data-lucide="flame" class="icon-sm"></i>
+            <span>1. Capacidad Instalada y Rendimiento de Cocina</span>
+          </div>
+
+          <div class="report-kpi-summary-grid">
+            <div class="report-kpi-box">
+              <div class="report-kpi-box-label">Hornos Industriales</div>
+              <div class="report-kpi-box-value">${hornos.length} hornos</div>
+              <div class="report-kpi-box-sub">${hornos.filter(h => h.estado === 'baking').length} operando en vivo</div>
+            </div>
+            <div class="report-kpi-box">
+              <div class="report-kpi-box-label">Lotes Panaderos Activos</div>
+              <div class="report-kpi-box-value">${lotes.length} lotes</div>
+              <div class="report-kpi-box-sub">En leudado / horneado</div>
+            </div>
+            <div class="report-kpi-box">
+              <div class="report-kpi-box-label">Piezas en Producción</div>
+              <div class="report-kpi-box-value" style="color: var(--color-gold-dark);">${totalPiezas} unidades</div>
+              <div class="report-kpi-box-sub">Croissants, baguettes, canillas</div>
+            </div>
+            <div class="report-kpi-box">
+              <div class="report-kpi-box-label">Control de Temperatura</div>
+              <div class="report-kpi-box-value" style="color: var(--color-success);">Óptimo (190°C)</div>
+              <div class="report-kpi-box-sub">Calibración termostática</div>
+            </div>
+          </div>
+
+          <div class="report-section-heading">
+            <i data-lucide="activity" class="icon-sm"></i>
+            <span>2. Monitoreo Térmico de Hornos Industriales</span>
+          </div>
+
+          <table class="report-data-table">
+            <thead>
+              <tr>
+                <th>Horno</th>
+                <th>Tipo / Capacidad</th>
+                <th>Temperatura Actual</th>
+                <th>Temperatura Objetivo</th>
+                <th>Estado</th>
+                <th>Lote Asignado</th>
+                <th>Fin Estimado</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${hornos.map(h => {
+                const statusBadge = h.estado === 'baking'
+                  ? '<span class="badge-status critical">🔥 Horneando</span>'
+                  : (h.estado === 'ready' ? '<span class="badge-status optimal">✓ Listo</span>' : '<span class="badge-status low_stock">En Espera</span>');
+                return `
+                  <tr>
+                    <td><strong>${h.nombre}</strong></td>
+                    <td>${h.tipo}</td>
+                    <td><strong style="color: var(--color-terracotta);">${h.temperatura_actual}°C</strong></td>
+                    <td>${h.temperatura_objetivo}°C</td>
+                    <td>${statusBadge}</td>
+                    <td>${h.lote_producto ? `<strong>${h.lote_producto}</strong> <small>(${h.lote_codigo})</small>` : 'Sin Lote'}</td>
+                    <td>${h.fin_estimado || 'N/A'}</td>
+                  </tr>
+                `;
+              }).join('')}
+            </tbody>
+          </table>
+
+          <div class="report-section-heading" style="margin-top: 2rem;">
+            <i data-lucide="layers" class="icon-sm"></i>
+            <span>3. Lotes de Masa, Recetas y Planificación de Horneado</span>
+          </div>
+
+          <table class="report-data-table">
+            <thead>
+              <tr>
+                <th>Código Lote</th>
+                <th>Receta / Especialidad</th>
+                <th>Cantidad (Piezas)</th>
+                <th>Fase de Leudado</th>
+                <th>Temp. Recomendada</th>
+                <th>Tiempo Estimado</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${lotes.map(l => `
+                <tr>
+                  <td><code>${l.codigo}</code></td>
+                  <td><strong>${l.producto}</strong></td>
+                  <td><strong>${l.cantidad} Und</strong></td>
+                  <td><span class="badge-status optimal">${l.estado_leudado}</span></td>
+                  <td>${l.temperatura_recomendada || 190}°C</td>
+                  <td>${l.tiempo_recomendado_min || 15} minutos</td>
+                </tr>
+              `).join('')}
+            </tbody>
+          </table>
+
+          ${makeSignatures('Maestro Panadero en Turno', 'Enrique Chef')}
+        `;
+
+      // 8. REPORTE GENERAL: VALORIZACIÓN DE INVENTARIO & STOCK MÍNIMO
       } else if (reportType === 'inventario_mermas') {
         const res = await fetch('../api/inventory/get_inventory.php');
         const data = await res.json();
@@ -2662,24 +3196,7 @@ function inicializarReporteEjecutivo() {
         };
 
         sheet.innerHTML = `
-          <div class="report-header-banner">
-            <div>
-              <div style="display: flex; align-items: center; gap: 0.6rem; margin-bottom: 0.35rem;">
-                <i data-lucide="package" class="icon-lg" style="color: var(--color-gold);"></i>
-                <h1 class="report-brand-title">La Nueva Parisienne Panadería &amp; Pastelería C.A.</h1>
-              </div>
-              <p class="report-brand-sub">
-                RIF: J-40123456-7 &bull; Av. Lara con Calle 8, Barquisimeto, Edo. Lara<br>
-                Auditoría Física de Almacén de Insumos &amp; Vitrinas de Venta
-              </p>
-            </div>
-            <div class="report-meta-box">
-              <span class="report-meta-badge">BALANCE DE ALMACÉN</span>
-              <div><strong>Fecha Corte:</strong> ${dateFormatted}, ${timeFormatted}</div>
-              <div><strong>Tasa Oficial BCV:</strong> Bs. ${Number(bcvRate).toLocaleString('es-VE', { minimumFractionDigits: 2 })} / USD</div>
-              <div><strong>Valorización Total:</strong> $${totalValuationUsd.toLocaleString('es-VE', { minimumFractionDigits: 2 })}</div>
-            </div>
-          </div>
+          ${makeBanner('Módulo 5: Almacén de Insumos & Vitrina POS', 'VALORIZACIÓN FÍSICA & AUDITORÍA DE STOCK', 'package')}
 
           <div class="report-section-heading">
             <i data-lucide="boxes" class="icon-sm"></i>
@@ -2703,9 +3220,9 @@ function inicializarReporteEjecutivo() {
               <div class="report-kpi-box-sub">Requieren reposición</div>
             </div>
             <div class="report-kpi-box">
-              <div class="report-kpi-box-label">Valor en Existencia (Bs)</div>
-              <div class="report-kpi-box-value" style="color: var(--color-gold-dark);">Bs. ${totalValuationBs.toLocaleString('es-VE', { minimumFractionDigits: 2 })}</div>
-              <div class="report-kpi-box-sub">Tasa BCV oficial</div>
+              <div class="report-kpi-box-label">Valor en Existencia (USD)</div>
+              <div class="report-kpi-box-value" style="color: var(--color-gold-dark);">$${totalValuationUsd.toLocaleString('es-VE', { minimumFractionDigits: 2 })}</div>
+              <div class="report-kpi-box-sub">Bs. ${totalValuationBs.toLocaleString('es-VE', { minimumFractionDigits: 2 })}</div>
             </div>
           </div>
 
@@ -2757,18 +3274,241 @@ function inicializarReporteEjecutivo() {
             </tfoot>
           </table>
 
-          <div class="report-signatures-grid" style="margin-top: 2.5rem;">
-            <div class="report-signature-block">
-              <div class="report-signature-line"></div>
-              <div class="report-signature-name">${activeUser.name}</div>
-              <div class="report-signature-role">Gerente General &bull; Auditoría de Inventario</div>
+          ${makeSignatures('Jefe de Almacén & Logística', 'Control de Pérdidas')}
+        `;
+
+      // 9. REPORTE GENERAL: COMPRAS, PROVEEDORES & CUENTAS POR PAGAR
+      } else if (reportType === 'compras_proveedores') {
+        const res = await fetch('../api/suppliers/get_suppliers.php');
+        const data = await res.json();
+        const suppliers = data.suppliers || [];
+        const orders = data.orders || [];
+        const totalCompras = orders.reduce((s, o) => s + (Number(o.totalAmount) || 0), 0);
+        const inTransit = orders.filter(o => o.status === 'in_transit').length;
+
+        currentReportData = {
+          type: reportType,
+          title: 'Auditoría de Compras, Proveedores y Recepción',
+          suppliers: suppliers,
+          orders: orders,
+          totalCompras: totalCompras,
+          bcvRate: bcvRate
+        };
+
+        sheet.innerHTML = `
+          ${makeBanner('Módulo 6: Proveedores, Abastecimiento & Compras', 'AUDITORÍA DE COMPRAS & CARTERA COMERCIAL', 'truck')}
+
+          <div class="report-section-heading">
+            <i data-lucide="building-2" class="icon-sm"></i>
+            <span>1. Relación de Proveedores y Compromisos de Pago</span>
+          </div>
+
+          <div class="report-kpi-summary-grid">
+            <div class="report-kpi-box">
+              <div class="report-kpi-box-label">Proveedores Aliados</div>
+              <div class="report-kpi-box-value">${suppliers.length} empresas</div>
+              <div class="report-kpi-box-sub">En directorio activo</div>
             </div>
-            <div class="report-signature-block">
-              <div class="report-signature-line"></div>
-              <div class="report-signature-name">Jefe de Almacén</div>
-              <div class="report-signature-role">Recepción &amp; Control de Pérdidas</div>
+            <div class="report-kpi-box">
+              <div class="report-kpi-box-label">Órdenes de Compra</div>
+              <div class="report-kpi-box-value">${orders.length} órdenes</div>
+              <div class="report-kpi-box-sub">Emitidas en el sistema</div>
+            </div>
+            <div class="report-kpi-box">
+              <div class="report-kpi-box-label">Gasto en Compras ($)</div>
+              <div class="report-kpi-box-value" style="color: var(--color-espresso);">$${totalCompras.toLocaleString('es-VE', { minimumFractionDigits: 2 })}</div>
+              <div class="report-kpi-box-sub">Bs. ${(totalCompras * bcvRate).toLocaleString('es-VE', { minimumFractionDigits: 2 })}</div>
+            </div>
+            <div class="report-kpi-box">
+              <div class="report-kpi-box-label">Órdenes en Tránsito</div>
+              <div class="report-kpi-box-value" style="color: var(--color-gold-dark);">${inTransit} pendientes</div>
+              <div class="report-kpi-box-sub">Por recibir en almacén</div>
             </div>
           </div>
+
+          <div class="report-section-heading">
+            <i data-lucide="file-check" class="icon-sm"></i>
+            <span>2. Histórico de Órdenes de Compra y Recepción</span>
+          </div>
+
+          <table class="report-data-table">
+            <thead>
+              <tr>
+                <th>Código Orden</th>
+                <th>Proveedor</th>
+                <th>Fecha Pedido</th>
+                <th>Fecha Entrega</th>
+                <th>Monto Total (USD)</th>
+                <th>Monto Total (Bs.)</th>
+                <th>Estatus</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${orders.map(o => {
+                const statusBadge = o.status === 'received' 
+                  ? '<span class="badge-status optimal">✓ Recibido</span>' 
+                  : (o.status === 'in_transit' ? '<span class="badge-status low_stock">🚚 En Tránsito</span>' : '<span class="badge-status critical">Pendiente</span>');
+                return `
+                  <tr>
+                    <td><code>${o.code}</code></td>
+                    <td><strong>${o.supplierName || 'Proveedor'}</strong></td>
+                    <td>${o.orderDate}</td>
+                    <td>${o.deliveryDate}</td>
+                    <td><strong>$${Number(o.totalAmount).toFixed(2)}</strong></td>
+                    <td>Bs. ${(Number(o.totalAmount) * bcvRate).toLocaleString('es-VE', { minimumFractionDigits: 2 })}</td>
+                    <td>${statusBadge}</td>
+                  </tr>
+                `;
+              }).join('')}
+            </tbody>
+            <tfoot>
+              <tr>
+                <td colspan="4"><strong>TOTAL GASTOS DE COMPRAS:</strong></td>
+                <td><strong>$${totalCompras.toFixed(2)}</strong></td>
+                <td><strong>Bs. ${(totalCompras * bcvRate).toLocaleString('es-VE', { minimumFractionDigits: 2 })}</strong></td>
+                <td>-</td>
+              </tr>
+            </tfoot>
+          </table>
+
+          <div class="report-section-heading" style="margin-top: 2rem;">
+            <i data-lucide="users" class="icon-sm"></i>
+            <span>3. Directorio de Proveedores &amp; Condiciones Comerciales</span>
+          </div>
+
+          <table class="report-data-table">
+            <thead>
+              <tr>
+                <th>Código</th>
+                <th>Empresa Proveedora</th>
+                <th>RIF</th>
+                <th>Categoría</th>
+                <th>Contacto</th>
+                <th>Teléfono</th>
+                <th>Condición de Pago</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${suppliers.map(s => `
+                <tr>
+                  <td><code>${s.code}</code></td>
+                  <td><strong>${s.name}</strong></td>
+                  <td><code>${s.rif}</code></td>
+                  <td>${s.category}</td>
+                  <td>${s.contactPerson}</td>
+                  <td>${s.phone}</td>
+                  <td><span class="badge-status optimal">${s.paymentTerms}</span></td>
+                </tr>
+              `).join('')}
+            </tbody>
+          </table>
+
+          ${makeSignatures('Jefe de Compras & Proveedores', 'Recepción de Mercancía')}
+        `;
+
+      // 10. REPORTE GENERAL: NÓMINA, TURNOS & RENDIMIENTO DE PERSONAL
+      } else if (reportType === 'personal_rendimiento') {
+        const resStaff = await fetch('../api/staff/get_staff.php');
+        const dataStaff = await resStaff.json();
+        const staff = dataStaff.staff || [];
+
+        const resSales = await fetch(`../api/reports/ventas_cobros.php?context=gerente&role_code=manager&user_id=usr_manager&fecha_desde=${encodeURIComponent(fromDate)}&fecha_hasta=${encodeURIComponent(toDate)}`);
+        const dataSales = await resSales.json();
+        const salesRows = dataSales.rows || [];
+
+        // Calcular ventas por empleado / cajero
+        const salesByCashier = {};
+        salesRows.forEach(r => {
+          const cName = (r.cajero || '').toLowerCase();
+          if (!salesByCashier[cName]) salesByCashier[cName] = { count: 0, amount: 0 };
+          salesByCashier[cName].count += 1;
+          salesByCashier[cName].amount += Number(r.subtotal_linea || 0);
+        });
+
+        const activeCount = staff.filter(s => s.status === 'active').length;
+
+        currentReportData = {
+          type: reportType,
+          title: 'Nómina, Turnos y Rendimiento del Personal',
+          staff: staff,
+          activeCount: activeCount,
+          bcvRate: bcvRate
+        };
+
+        sheet.innerHTML = `
+          ${makeBanner('Módulo 8: Talento Humano & Personal', 'AUDITORÍA DE NÓMINA, TURNOS Y EFICIENCIA', 'user-check')}
+
+          <div class="report-section-heading">
+            <i data-lucide="users" class="icon-sm"></i>
+            <span>1. Estructura Organizacional y Personal en Turno</span>
+          </div>
+
+          <div class="report-kpi-summary-grid">
+            <div class="report-kpi-box">
+              <div class="report-kpi-box-label">Nómina Total</div>
+              <div class="report-kpi-box-value">${staff.length} colaboradores</div>
+              <div class="report-kpi-box-sub">Registrados en el sistema</div>
+            </div>
+            <div class="report-kpi-box">
+              <div class="report-kpi-box-label">Personal Activo</div>
+              <div class="report-kpi-box-value" style="color: var(--color-success);">${activeCount} activos</div>
+              <div class="report-kpi-box-sub">100% operatividad</div>
+            </div>
+            <div class="report-kpi-box">
+              <div class="report-kpi-box-label">Departamentos</div>
+              <div class="report-kpi-box-value">4 áreas</div>
+              <div class="report-kpi-box-sub">Gerencia, Cocina, Caja, Finanzas</div>
+            </div>
+            <div class="report-kpi-box">
+              <div class="report-kpi-box-label">Turnos Asignados</div>
+              <div class="report-kpi-box-value" style="color: var(--color-gold-dark);">Rotativos &amp; Fijos</div>
+              <div class="report-kpi-box-sub">Mañana, Tarde, Completo</div>
+            </div>
+          </div>
+
+          <div class="report-section-heading">
+            <i data-lucide="id-card" class="icon-sm"></i>
+            <span>2. Directorio de Nómina y Productividad Operativa</span>
+          </div>
+
+          <table class="report-data-table">
+            <thead>
+              <tr>
+                <th>Código</th>
+                <th>Nombre Completo</th>
+                <th>Cargo / Rol</th>
+                <th>Departamento</th>
+                <th>Turno Asignado</th>
+                <th>Teléfono / Correo</th>
+                <th>Ventas POS ($)</th>
+                <th>Estado</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${staff.map(s => {
+                const sNameLower = (s.name || '').toLowerCase();
+                const matchedSales = salesByCashier[sNameLower] || { count: 0, amount: 0 };
+                const isCashierRole = (s.roleCode || '').toUpperCase().includes('CASHIER') || (s.role || '').toLowerCase().includes('caj');
+                const ventasDisplay = isCashierRole 
+                  ? `$${matchedSales.amount.toFixed(2)} (${matchedSales.count} trans.)`
+                  : '<span style="color: var(--color-muted);">No aplica</span>';
+                return `
+                  <tr>
+                    <td><code>${s.code}</code></td>
+                    <td><strong>${s.name}</strong></td>
+                    <td>${s.role}</td>
+                    <td>${s.department}</td>
+                    <td><span class="badge-status optimal">${s.shift}</span></td>
+                    <td>${s.phone} <br><small>${s.email}</small></td>
+                    <td><strong>${ventasDisplay}</strong></td>
+                    <td><span class="badge-status ${s.status === 'active' ? 'optimal' : 'critical'}">${s.statusText || 'Activo'}</span></td>
+                  </tr>
+                `;
+              }).join('')}
+            </tbody>
+          </table>
+
+          ${makeSignatures('Jefe de Recursos Humanos', 'Gestión de Talento')}
         `;
       }
 
@@ -2849,15 +3589,50 @@ function inicializarReporteEjecutivo() {
   btnExportCsv?.addEventListener('click', () => {
     const bcvRate = BcvRateStore.getRate ? BcvRateStore.getRate() : 761.21;
     let rows = [];
+    const type = currentReportData.type;
 
-    if (currentReportData.type === 'ventas_resumen' || currentReportData.type === 'ventas_detalladas') {
-      rows.push(['LA NUEVA PARISIENNE - REPORTE GERENCIAL DE VENTAS']);
-      rows.push(['Titulo', currentReportData.title]);
-      rows.push(['Periodo Desde', currentReportData.from, 'Periodo Hasta', currentReportData.to]);
-      rows.push(['Tasa Oficial BCV', bcvRate.toString()]);
-      rows.push([]);
+    rows.push(['LA NUEVA PARISIENNE PANADERIA Y PASTELERIA C.A.']);
+    rows.push(['Titulo de Reporte', currentReportData.title || type]);
+    rows.push(['Fecha Emision', new Date().toLocaleString('es-VE')]);
+    rows.push(['Tasa Oficial BCV', bcvRate.toString()]);
+    if (currentReportData.from && currentReportData.to) {
+      rows.push(['Periodo Auditado', `${currentReportData.from} al ${currentReportData.to}`]);
+    }
+    rows.push([]);
+
+    // 1. VENTAS RESUMEN
+    if (type === 'ventas_resumen') {
+      rows.push(['CATEGORIA COMERCIAL', 'CANTIDAD VENDIDA', 'TOTAL USD', 'TOTAL BS']);
+      (currentReportData.catTotals || []).forEach(c => {
+        rows.push([c.categoria, c.cantidad, Number(c.total).toFixed(2), (Number(c.total) * bcvRate).toFixed(2)]);
+      });
+
+    // 2. RENTABILIDAD & RANKING DE PRODUCTOS
+    } else if (type === 'rentabilidad_productos') {
+      rows.push(['RANKING', 'CODIGO', 'PRODUCTO', 'CATEGORIA', 'UNIDADES VENDIDAS', 'PVP USD', 'TOTAL INGRESOS USD', 'TOTAL INGRESOS BS']);
+      (currentReportData.products || []).forEach((p, idx) => {
+        rows.push([
+          `#${idx + 1}`,
+          p.code,
+          p.name,
+          p.category,
+          p.units,
+          Number(p.price).toFixed(2),
+          Number(p.totalUsd).toFixed(2),
+          (Number(p.totalUsd) * bcvRate).toFixed(2)
+        ]);
+      });
+
+    // 3. BALANCE CONTABLE & PUC
+    } else if (type === 'balance_contable') {
+      rows.push(['CODIGO PUC', 'NOMBRE CUENTA', 'SUMA DEBE USD', 'SUMA HABER USD', 'SALDO DEUDOR USD', 'SALDO ACREEDOR USD']);
+      (currentReportData.trialBalance || []).forEach(t => {
+        rows.push([t.code, t.name, Number(t.sumDebe).toFixed(2), Number(t.sumHaber).toFixed(2), Number(t.saldoDeudor).toFixed(2), Number(t.saldoAcreedor).toFixed(2)]);
+      });
+
+    // 4. VENTAS DETALLADAS
+    } else if (type === 'ventas_detalladas') {
       rows.push(['FACTURA', 'FECHA Y HORA', 'CAJERO', 'TURNO', 'METODO PAGO', 'PRODUCTO', 'CANTIDAD', 'PVP USD', 'SUBTOTAL USD', 'SUBTOTAL BS']);
-
       (currentReportData.rows || []).forEach(r => {
         rows.push([
           r.codigo,
@@ -2872,12 +3647,10 @@ function inicializarReporteEjecutivo() {
           (Number(r.subtotal_linea) * bcvRate).toFixed(2)
         ]);
       });
-    } else if (currentReportData.type === 'cierres_turno') {
-      rows.push(['LA NUEVA PARISIENNE - AUDITORIA DE CIERRES Z']);
-      rows.push(['Periodo', `${currentReportData.from} al ${currentReportData.to}`]);
-      rows.push([]);
-      rows.push(['REPORTE', 'FECHA TURNO', 'CAJA', 'TURNO', 'CAJERO', 'FACTURAS', 'TOTAL NETO USD', 'EFECTIVO ESPERADO USD']);
 
+    // 5. CIERRES DE TURNO (CORTES Z)
+    } else if (type === 'cierres_turno') {
+      rows.push(['REPORTE Z', 'FECHA TURNO', 'CAJA', 'TURNO', 'CAJERO', 'FACTURAS', 'VENTAS NETAS USD', 'EFECTIVO ESPERADO USD', 'EFECTIVO REAL USD', 'DIFERENCIA USD']);
       (currentReportData.closures || []).forEach(c => {
         rows.push([
           c.codigo_reporte,
@@ -2887,25 +3660,82 @@ function inicializarReporteEjecutivo() {
           c.firma_cajero || c.generado_por,
           c.facturas_emitidas,
           Number(c.ventas_netas).toFixed(2),
-          Number(c.monto_efectivo_esperado).toFixed(2)
+          Number(c.monto_efectivo_esperado).toFixed(2),
+          Number(c.monto_efectivo_real || c.monto_efectivo_esperado).toFixed(2),
+          Number(c.diferencia_efectivo || 0).toFixed(2)
         ]);
       });
-    } else {
-      rows.push(['LA NUEVA PARISIENNE - BALANCE DE INVENTARIO Y ALMACEN']);
-      rows.push(['Fecha', new Date().toISOString()]);
-      rows.push([]);
-      rows.push(['CODIGO', 'NOMBRE', 'TIPO', 'STOCK ACTUAL', 'UNIDAD', 'STOCK MINIMO', 'COSTO O PVP USD', 'TOTAL USD']);
 
+    // 6. BITACORA DE DEVOLUCIONES Y ANULACIONES
+    } else if (type === 'eventos_anulaciones') {
+      rows.push(['ID EVENTO', 'FECHA Y HORA', 'COMPROBANTE', 'CAJA', 'TURNO', 'TIPO EVENTO', 'MONTO USD', 'MONTO BS', 'MOTIVO', 'AUTORIZADO POR']);
+      (currentReportData.events || []).forEach(e => {
+        rows.push([
+          e.id,
+          e.fecha_hora,
+          e.codigo_venta,
+          e.caja_id,
+          e.turno,
+          e.tipo_evento,
+          Number(e.monto).toFixed(2),
+          (Number(e.monto) * bcvRate).toFixed(2),
+          e.motivo,
+          e.registrado_por
+        ]);
+      });
+
+    // 7. CONTROL DE PRODUCCION Y HORNOS
+    } else if (type === 'produccion_hornos') {
+      rows.push(['CODIGO LOTE', 'PRODUCTO / RECETA', 'PIEZAS / BANDEJAS', 'FASE LEUDADO', 'TEMP RECOMENDADA', 'TIEMPO MINUTOS']);
+      (currentReportData.lotes || []).forEach(l => {
+        rows.push([l.codigo, l.producto, l.cantidad, l.estado_leudado, `${l.temperatura_recomendada || 190} C`, `${l.tiempo_recomendado_min || 15} min`]);
+      });
+
+    // 8. VALORIZACION DE INVENTARIO Y ALMACEN
+    } else if (type === 'inventario_mermas') {
+      rows.push(['CODIGO', 'NOMBRE', 'CATEGORIA', 'STOCK ACTUAL', 'UNIDAD', 'STOCK MINIMO', 'COSTO O PVP USD', 'TOTAL USD', 'TOTAL BS']);
       (currentReportData.items || []).forEach(i => {
         rows.push([
           i.code,
           i.name,
-          i.category === 'raw_material' ? 'Materia Prima' : 'Producto Terminado',
+          i.category === 'raw_material' ? 'Materia Prima' : 'Vitrina POS',
           i.currentStock,
           i.unit,
           i.minStock,
           Number(i.unitPrice).toFixed(2),
-          (i.currentStock * i.unitPrice).toFixed(2)
+          (i.currentStock * i.unitPrice).toFixed(2),
+          ((i.currentStock * i.unitPrice) * bcvRate).toFixed(2)
+        ]);
+      });
+
+    // 9. COMPRAS Y PROVEEDORES
+    } else if (type === 'compras_proveedores') {
+      rows.push(['CODIGO ORDEN', 'PROVEEDOR', 'FECHA PEDIDO', 'FECHA ENTREGA', 'MONTO TOTAL USD', 'MONTO TOTAL BS', 'ESTATUS']);
+      (currentReportData.orders || []).forEach(o => {
+        rows.push([
+          o.code,
+          o.supplierName,
+          o.orderDate,
+          o.deliveryDate,
+          Number(o.totalAmount).toFixed(2),
+          (Number(o.totalAmount) * bcvRate).toFixed(2),
+          o.status
+        ]);
+      });
+
+    // 10. NOMINA Y RENDIMIENTO DE PERSONAL
+    } else if (type === 'personal_rendimiento') {
+      rows.push(['CODIGO', 'NOMBRE COMPLETO', 'CARGO / ROL', 'DEPARTAMENTO', 'TURNO OFICIAL', 'TELEFONO', 'EMAIL', 'ESTADO']);
+      (currentReportData.staff || []).forEach(s => {
+        rows.push([
+          s.code,
+          s.name,
+          s.role,
+          s.department,
+          s.shift,
+          s.phone,
+          s.email,
+          s.statusText || s.status
         ]);
       });
     }

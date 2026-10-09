@@ -35,7 +35,10 @@ function closureEventScope(array $actor, array $input, $context, array &$where, 
         $params['close_event_date_from'] = $date . ' 00:00:00';
         $params['close_event_date_to'] = date('Y-m-d H:i:s', strtotime($date . ' +1 day'));
         $shift = reportText($actor['shift']);
-        if ($shift !== '') { $where[] = "COALESCE(e.turno, 'SIN TURNO') = :close_event_shift"; $params['close_event_shift'] = $shift; }
+        if ($shift !== '' && !reportIsManager($actor['role']) && stripos($shift, 'Acceso Total') === false) {
+            $where[] = "COALESCE(e.turno, 'SIN TURNO') = :close_event_shift";
+            $params['close_event_shift'] = $shift;
+        }
     }
 }
 

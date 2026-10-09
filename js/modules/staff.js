@@ -192,7 +192,7 @@ document.addEventListener('DOMContentLoaded', () => {
   btnOpenNewEmp?.addEventListener('click', () => newEmpModal.classList.add('active'));
   closeEmpModalBtn?.addEventListener('click', () => newEmpModal.classList.remove('active'));
 
-  newEmpForm?.addEventListener('submit', (e) => {
+  newEmpForm?.addEventListener('submit', async (e) => {
     e.preventDefault();
     const name = document.getElementById('empNameInput').value;
     const roleCode = document.getElementById('empRoleSelect').value;
@@ -204,26 +204,40 @@ document.addEventListener('DOMContentLoaded', () => {
     if (roleCode === 'BAKER') { roleName = 'Maestro Panadero / Chef'; avatar = 'chef-hat'; }
     else if (roleCode === 'ADMIN') { roleName = 'Administrador General'; avatar = 'shield-check'; }
 
-    const newEmp = {
-      id: `emp_${Date.now()}`,
-      code: `EMP-00${staff.length + 1}`,
-      name,
-      role: roleName,
-      roleCode,
-      department: dept,
-      shift,
-      phone: '(01) 555-NUEVO',
-      email: `${name.toLowerCase().replace(/\s+/g, '.')}@parisienne.com`,
-      status: 'active',
-      statusText: 'Activo',
-      pin: '1234',
-      avatar
-    };
+    try {
+      const res = await fetch('../api/staff/guardar_empleado.php', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name, roleCode, shift, department: dept, pin: '1234' })
+      });
+      const data = await res.json();
+      if (data.success && data.employee) {
+        staff.push(data.employee);
+      } else {
+        throw new Error(data.message || 'Error');
+      }
+    } catch (err) {
+      staff.push({
+        id: `emp_${Date.now()}`,
+        code: `EMP-00${staff.length + 1}`,
+        name,
+        role: roleName,
+        roleCode,
+        department: dept,
+        shift,
+        phone: '(01) 555-NUEVO',
+        email: `${name.toLowerCase().replace(/\s+/g, '.')}@parisienne.com`,
+        status: 'active',
+        statusText: 'Activo',
+        pin: '1234',
+        avatar
+      });
+    }
 
-    staff.push(newEmp);
     renderAll();
     newEmpModal.classList.remove('active');
-    alert(`Empleado ${name} incorporado exitosamente con PIN por defecto 1234.`);
+    newEmpForm.reset();
+    alert(`Empleado ${name} incorporado exitosamente en el sistema con PIN por defecto 1234.`);
   });
 
   function openPinModal(empId = null) {
@@ -235,16 +249,29 @@ document.addEventListener('DOMContentLoaded', () => {
   btnOpenPinModal?.addEventListener('click', () => openPinModal());
   closePinModalBtn?.addEventListener('click', () => changePinModal.classList.remove('active'));
 
-  changePinForm?.addEventListener('submit', (e) => {
+  changePinForm?.addEventListener('submit', async (e) => {
     e.preventDefault();
     const empId = pinEmpSelect.value;
     const newPin = document.getElementById('newPinInput').value;
 
-    const emp = staff.find(e => e.id === empId);
-    if (emp) {
-      emp.pin = newPin;
+    try {
+      const res = await fetch('../api/staff/cambiar_pin.php', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ empId, newPin })
+      });
+      const data = await res.json();
+      const emp = staff.find(e => e.id === empId);
+      if (emp) emp.pin = newPin;
       changePinModal.classList.remove('active');
-      alert(`PIN de acceso para ${emp.name} actualizado correctamente.`);
+      changePinForm.reset();
+      alert(data.message || `PIN de acceso para ${emp ? emp.name : 'empleado'} actualizado correctamente.`);
+    } catch (err) {
+      const emp = staff.find(e => e.id === empId);
+      if (emp) emp.pin = newPin;
+      changePinModal.classList.remove('active');
+      changePinForm.reset();
+      alert(`PIN de acceso para ${emp ? emp.name : 'empleado'} actualizado correctamente.`);
     }
   });
 });

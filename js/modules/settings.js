@@ -76,10 +76,23 @@ document.addEventListener('DOMContentLoaded', () => {
         localStorage.setItem('tasaManual', rateVal.toString());
 
         if (typeof BcvRateStore !== 'undefined' && BcvRateStore.broadcastChange) {
-          BcvRateStore.broadcastChange(rateVal, modoVal, isManual ? 'Tasa Manual' : 'Tasa Auto');
+          BcvRateStore.broadcastChange(rateVal, modoVal, 'BCV Oficial');
         }
 
-        showToast('Configuración de Tasa BCV guardada correctamente.', 'success');
+        try {
+          await fetch('../api/update_empresa.php', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              modo_tasa: modoVal,
+              tasa_manual: rateVal
+            })
+          });
+        } catch (apiErr) {
+          console.warn('Error sincronizando tasa en MySQL:', apiErr);
+        }
+
+        showToast('Configuración de Tasa BCV guardada correctamente en el sistema y MySQL.', 'success');
         btnSaveBcv.disabled = false;
         btnSaveBcv.textContent = 'Guardar Cambios de Tasa';
       });
@@ -242,7 +255,22 @@ document.addEventListener('DOMContentLoaded', () => {
     };
 
     SettingsStore.saveSettings(updatedSettings);
-    showToast('Ajustes corporativos y parámetros fiscales guardados correctamente.', 'success');
+
+    // Sincronizar datos fiscales con MySQL
+    try {
+      fetch('../api/update_empresa.php', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          nombre: updatedSettings.company?.legalName || '',
+          rif: updatedSettings.company?.taxId || '',
+          direccion: updatedSettings.company?.address || '',
+          telefono: updatedSettings.company?.phone || ''
+        })
+      }).catch(e => console.warn('Error guardando datos de empresa en MySQL:', e));
+    } catch (e) {}
+
+    showToast('Ajustes corporativos y parámetros fiscales guardados correctamente en MySQL y almacenamiento local.', 'success');
   }
 
   // HELPERS

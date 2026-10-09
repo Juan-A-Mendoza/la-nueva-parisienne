@@ -221,16 +221,37 @@ export const ProductsStore = {
       console.warn('Error al sincronizar catalogo_pos desde localStorage:', err);
     }
 
-    // 2. Intentar API PHP/MySQL si está disponible (deshabilitado en entorno local estático)
-    /*
+    // 1. Intentar API PHP/MySQL en vivo para obtener el stock más reciente de la base de datos
     try {
       let response = await fetch('../api/pos/get_products.php');
-      if (!response.ok) {
-        response = await fetch('../api/get_products.php');
-      }
+      if (!response.ok) response = await fetch('api/pos/get_products.php');
       if (response.ok) {
         const result = await response.json();
         if (result.success && Array.isArray(result.products) && result.products.length > 0) {
+          try {
+            const existingRaw = localStorage.getItem('catalogo_pos');
+            const existing = existingRaw ? JSON.parse(existingRaw) : [];
+            const merged = result.products.map(p => {
+              const prev = existing.find(e => e.code === p.code || e.id === p.id);
+              return {
+                id: p.id,
+                code: p.code,
+                name: p.name,
+                category: p.category,
+                salePrice: p.price,
+                price: p.price,
+                unitCost: prev?.unitCost || 1.5,
+                unit: prev?.unit || 'Und',
+                stock: p.stock,
+                minStock: prev?.minStock || 15,
+                icon: p.icon || prev?.icon || 'croissant',
+                showInPos: true,
+                description: p.description
+              };
+            });
+            localStorage.setItem('catalogo_pos', JSON.stringify(merged));
+          } catch (e) {}
+
           return {
             categories: result.categories || CATEGORIES,
             products: result.products
@@ -238,9 +259,8 @@ export const ProductsStore = {
         }
       }
     } catch (err) {
-      console.warn('API get_products.php no disponible. Usando catálogo local por defecto:', err);
+      console.warn('API get_products.php no disponible o sin conexión. Usando caché local:', err);
     }
-    */
 
     // 3. Fallback a catálogo base local
     localStorage.setItem('catalogo_pos', JSON.stringify(PRODUCTS_DATABASE));

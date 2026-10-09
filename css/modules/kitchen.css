@@ -1477,3 +1477,186 @@
   border-color: #B57F3A;
 }
 
+/* ==========================================================================
+   RECETARIO MAESTRO - BOTONES DE ACCIÓN (AGREGAR / MODIFICAR) Y MODAL FORM
+   ========================================================================== */
+
+/* Botones en el Header del Recetario */
+.btn-recetario-head-action {
+  height: 36px;
+  padding: 0 0.95rem;
+  border-radius: var(--radius-pill);
+  font-size: 0.8rem;
+  font-weight: 700;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  white-space: nowrap;
+  font-family: inherit;
+}
+.btn-recetario-head-action.primary {
+  background: linear-gradient(135deg, #D49B54 0%, #C48B44 100%);
+  color: #FFFFFF;
+  border: 1px solid rgba(212, 155, 84, 0.5);
+  box-shadow: 0 3px 10px rgba(212, 155, 84, 0.3);
+}
+.btn-recetario-head-action.primary:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 5px 15px rgba(212, 155, 84, 0.45);
+  background: linear-gradient(135deg, #DFAC67 0%, #CE934A 100%);
+}
+.btn-recetario-head-action.secondary {
+  background: #FFFFFF;
+  color: var(--color-espresso);
+  border: 1.5px solid rgba(44, 29, 17, 0.18);
+}
+.btn-recetario-head-action.secondary:hover {
+  background: rgba(212, 155, 84, 0.08);
+  border-color: var(--color-gold);
+  color: var(--color-gold-dark);
+  transform: translateY(-1px);
+}
+
+
+/* Modal Formulario de Receta */
+.receta-form-modal-card {
+  box-shadow: 0 25px 65px -15px rgba(44, 29, 17, 0.5);
+  border-radius: var(--radius-lg);
+  border: 1px solid rgba(212, 155, 84, 0.3);
+  background: #FFFFFF;
+}
+
+.receta-form-card-section {
+  background: #FAF7F2;
+  border: 1px solid rgba(44, 29, 17, 0.08);
+  border-radius: var(--radius-md);
+  padding: 1.15rem 1.3rem;
+  transition: border-color 0.2s ease;
+}
+.receta-form-card-section:hover {
+  border-color: rgba(212, 155, 84, 0.3);
+}
+
+.receta-section-header {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+}
+
+.receta-section-number {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: var(--gradient-espresso);
+  color: var(--color-gold);
+  font-size: 0.78rem;
+  font-weight: 800;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.btn-receta-add-row {
+  background: #FFFFFF;
+  border: 1.5px dashed var(--color-gold);
+  color: var(--color-gold-dark);
+  font-weight: 700;
+  font-size: 0.78rem;
+  padding: 0.35rem 0.85rem;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  transition: all 0.2s ease;
+  font-family: inherit;
+}
+.btn-receta-add-row:hover {
+  background: rgba(212, 155, 84, 0.15);
+  transform: translateY(-1px);
+}
+
+.btn-emoji-quick {
+  background: #FFFFFF;
+  border: 1px solid var(--border-subtle);
+  border-radius: 6px;
+  padding: 0.2rem 0.4rem;
+  cursor: pointer;
+  font-size: 1.05rem;
+  transition: all 0.15s ease;
+}
+.btn-emoji-quick:hover {
+  background: rgba(212, 155, 84, 0.25);
+  transform: scale(1.15);
+}
+
+.receta-ingredients-form-table {
+  background: #FFFFFF;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border-subtle);
+}
+.receta-ingredients-form-table th {
+  color: var(--color-espresso);
+  font-weight: 800;
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+.receta-ingredients-form-table td {
+  padding: 6px 8px;
+  border-bottom: 1px solid rgba(44, 29, 17, 0.06);
+}
+.receta-ingredients-form-table tr:last-child td {
+  border-bottom: none;
+}
+
+.receta-step-form-item {
+  background: #FFFFFF;
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-sm);
+  padding: 0.75rem 0.85rem;
+  display: flex;
+  gap: 0.75rem;
+  align-items: flex-start;
+  transition: border-color 0.2s ease;
+}
+.receta-step-form-item:hover {
+  border-color: rgba(212, 155, 84, 0.4);
+}
+.receta-step-number-badge {
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: rgba(212, 155, 84, 0.15);
+  color: var(--color-gold-dark);
+  font-size: 0.75rem;
+  font-weight: 800;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  margin-top: 0.25rem;
+}
+.btn-remove-step-row,
+.btn-remove-ing-row {
+  background: transparent;
+  border: none;
+  color: var(--color-muted);
+  cursor: pointer;
+  padding: 0.3rem;
+  border-radius: 4px;
+  transition: all 0.15s ease;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+.btn-remove-step-row:hover,
+.btn-remove-ing-row:hover {
+  color: var(--color-danger);
+  background: rgba(198, 40, 40, 0.08);
+}
+
+

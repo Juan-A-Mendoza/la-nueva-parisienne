@@ -210,11 +210,35 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
-  function quickAdjust(itemId, delta) {
+  function broadcastInventoryChange() {
+    if (typeof BroadcastChannel !== 'undefined') {
+      try {
+        new BroadcastChannel('lnp_pos_catalog_channel').postMessage({ type: 'inventory_updated', timestamp: Date.now() });
+        new BroadcastChannel('lnp_materials_channel').postMessage({ type: 'materials_updated', timestamp: Date.now() });
+      } catch (e) {}
+    }
+    window.dispatchEvent(new CustomEvent('catalogoPosChanged'));
+    window.dispatchEvent(new CustomEvent('materiasPrimasChanged'));
+  }
+
+  async function quickAdjust(itemId, delta) {
     const item = inventory.find(i => i.id === itemId);
     if (item) {
       item.currentStock = Math.max(0, item.currentStock + delta);
       renderAll();
+      try {
+        await fetch('../api/inventory/adjust_stock.php', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            productId: itemId,
+            quantity: Math.abs(delta),
+            type: delta > 0 ? 'add' : 'subtract',
+            reason: 'Ajuste rápido táctil (+/-)'
+          })
+        });
+        broadcastInventoryChange();
+      } catch (e) {}
     }
   }
 
@@ -279,6 +303,7 @@ document.addEventListener('DOMContentLoaded', () => {
       const data = await res.json();
       if (data.success) {
         await loadInventoryFromApi();
+        broadcastInventoryChange();
         adjustModal.classList.remove('active');
         adjustForm.reset();
         alert(`${data.message}`);
@@ -334,6 +359,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const lostValue = qty * (item ? item.unitPrice : 0);
         monthlyWasteTotal += lostValue;
         await loadInventoryFromApi();
+        broadcastInventoryChange();
         mermaModal.classList.remove('active');
         mermaForm.reset();
         alert(`Merma registrada en MySQL para ${item ? item.name : itemId}.\nCantidad descontada: ${qty}\nMotivo: ${reason}`);
@@ -420,6 +446,7 @@ document.addEventListener('DOMContentLoaded', () => {
       const data = await res.json();
       if (data && data.success) {
         await loadInventoryFromApi();
+        broadcastInventoryChange();
         closeNuevoItemModal();
         alert(`¡Ítem guardado con éxito en MySQL!\n${data.message}`);
       } else {

@@ -22,8 +22,17 @@ document.addEventListener('DOMContentLoaded', async () => {
   };
   const cashierAvatar = document.getElementById('cashierAvatar');
   const cashierName = document.getElementById('cashierName');
+  const cashierShiftStatus = document.querySelector('.cashier-badge .shift-status');
   if (cashierAvatar) { cashierAvatar.innerHTML = window.LucideIcons ? window.LucideIcons.render(activeCashier.icon || 'banknote') : ''; window.LucideIcons?.refresh(); }
   if (cashierName) cashierName.textContent = activeCashier.name;
+  if (cashierShiftStatus) {
+    const isSuper = (String(activeCashier.roleCode || '').toUpperCase() === 'SUPERADMIN' || String(activeCashier.role || '').toLowerCase().includes('superadmin'));
+    if (isSuper) {
+      cashierShiftStatus.textContent = '● Superadmin (Acceso Total)';
+    } else if (activeCashier.shift) {
+      cashierShiftStatus.textContent = `● ${activeCashier.shift}`;
+    }
+  }
 
   const logoutBtn = document.getElementById('logoutBtn');
   if (logoutBtn) {
@@ -205,7 +214,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     if (modoGuardado === 'manual') {
       const tasaManualVal = parseFloat(localStorage.getItem('tasa_manual') || localStorage.getItem('tasaManual'));
       if (tasaManualVal && tasaManualVal > 0) {
-        updatePosRateBadge(tasaManualVal, 'Tasa: Manual (Editada)', true);
+        updatePosRateBadge(tasaManualVal, 'BCV Oficial', true);
         return tasaManualVal;
       }
     }
@@ -228,7 +237,7 @@ document.addEventListener('DOMContentLoaded', async () => {
           if (liveRate && liveRate > 0) {
             localStorage.setItem('tasa_auto', liveRate.toString());
             localStorage.setItem('bcv_current_rate', liveRate.toString());
-            updatePosRateBadge(liveRate, 'Tasa: BCV Oficial (En Vivo)', false);
+            updatePosRateBadge(liveRate, 'BCV Oficial', false);
             return liveRate;
           }
         }
@@ -238,7 +247,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
 
     const fallbackRate = parseFloat(localStorage.getItem('tasa_manual') || localStorage.getItem('tasaManual')) || 784.66;
-    updatePosRateBadge(fallbackRate, 'Tasa: Resguardo', true);
+    updatePosRateBadge(fallbackRate, 'BCV Oficial', true);
     return fallbackRate;
   }
 
@@ -251,7 +260,7 @@ document.addEventListener('DOMContentLoaded', async () => {
       bcvRateValEl.textContent = `Bs. ${rate.toFixed(2)}`;
     }
     if (bcvRateBadge) {
-      bcvRateBadge.innerHTML = `<span><i data-lucide="coins" class="icon-xs"></i> ${labelText}:</span> <strong>Bs. ${rate.toFixed(2)}</strong>`;
+      bcvRateBadge.innerHTML = `<span><i data-lucide="coins" class="icon-xs"></i> BCV Oficial:</span> <strong>Bs. ${rate.toFixed(2)}</strong>`;
       bcvRateBadge.className = isManual ? 'bcv-rate-badge warning' : 'bcv-rate-badge';
     }
   }

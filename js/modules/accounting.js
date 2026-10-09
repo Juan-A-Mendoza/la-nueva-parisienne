@@ -83,6 +83,15 @@ function initAccounting() {
     }
   }
 
+  // Escuchar movimientos de ventas POS y compras en vivo para refrescar asientos
+  if (typeof BroadcastChannel !== 'undefined') {
+    const movChannel = new BroadcastChannel('lnp_movements_channel');
+    movChannel.onmessage = () => {
+      loadAccountingFromApi();
+    };
+  }
+  window.addEventListener('movimientosChanged', () => loadAccountingFromApi());
+
   function renderAll() {
     renderVouchers();
     renderTAccounts();

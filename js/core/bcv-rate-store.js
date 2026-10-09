@@ -8,7 +8,7 @@ class BcvRateStoreManager {
   constructor() {
     this.mode = localStorage.getItem('modo_tasa') || localStorage.getItem('modoTasa') || 'auto';
     this.rate = parseFloat(localStorage.getItem('tasa_manual') || localStorage.getItem('tasaManual')) || 780.00;
-    this.source = this.mode === 'manual' ? 'Tasa: Manual Gerencial (Editada)' : 'Tasa: Automática (En Vivo)';
+    this.source = 'BCV Oficial';
     this.date = '';
     this.listeners = [];
 
@@ -18,7 +18,7 @@ class BcvRateStoreManager {
         if (e.key === 'modo_tasa' || e.key === 'modoTasa' || e.key === 'tasa_manual' || e.key === 'tasaManual' || e.key === 'bcv_current_rate') {
           this.mode = localStorage.getItem('modo_tasa') || localStorage.getItem('modoTasa') || 'auto';
           this.rate = parseFloat(localStorage.getItem('tasa_manual') || localStorage.getItem('tasaManual')) || 780.00;
-          this.source = this.mode === 'manual' ? 'Tasa: Manual Gerencial (Editada)' : 'Tasa: Automática (En Vivo)';
+          this.source = 'BCV Oficial';
           this.notifyListeners();
         }
       });
@@ -26,7 +26,7 @@ class BcvRateStoreManager {
       window.addEventListener('bcvRateChanged', (e) => {
         this.mode = localStorage.getItem('modo_tasa') || localStorage.getItem('modoTasa') || (e.detail && e.detail.mode) || 'auto';
         this.rate = parseFloat(localStorage.getItem('tasa_manual') || localStorage.getItem('tasaManual')) || (e.detail && parseFloat(e.detail.rate)) || 780.00;
-        this.source = this.mode === 'manual' ? 'Tasa: Manual Gerencial (Editada)' : 'Tasa: Automática (En Vivo)';
+        this.source = 'BCV Oficial';
         this.notifyListeners();
       });
     }
@@ -72,7 +72,7 @@ class BcvRateStoreManager {
       if (manualVal && manualVal > 0) {
         this.mode = 'manual';
         this.rate = manualVal;
-        this.source = 'Tasa: Manual (Editada)';
+        this.source = 'BCV Oficial';
         this.notifyListeners();
         return { success: true, rate: this.rate, mode: this.mode, source: this.source };
       }
@@ -100,7 +100,7 @@ class BcvRateStoreManager {
           if (rateVal && rateVal > 0) {
             this.rate = rateVal;
             this.mode = 'auto';
-            this.source = data.source || 'Tasa: BCV Oficial (En Vivo)';
+            this.source = 'BCV Oficial';
 
             localStorage.setItem('tasa_auto', this.rate.toString());
             localStorage.setItem('tasaAuto', this.rate.toString());

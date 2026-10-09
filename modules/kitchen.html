@@ -533,7 +533,15 @@
             <span style="font-size: 0.8rem; color: var(--color-muted);">Selecciona un pan en la cuadrícula y ajusta la cantidad deseada</span>
           </div>
         </div>
-        <button id="btnCloseRecetarioModal" type="button" class="btn-modal-close" aria-label="Cerrar recetario">&times;</button>
+        <div style="display: flex; align-items: center; gap: 0.6rem; flex-wrap: wrap;">
+          <button id="btnOpenModificarRecetaModal" type="button" class="btn-recetario-head-action secondary" title="Modificar los parámetros e insumos de la receta seleccionada">
+            <i data-lucide="edit-3" class="icon-xs"></i> <span>Modificar Receta</span>
+          </button>
+          <button id="btnOpenAgregarRecetaModal" type="button" class="btn-recetario-head-action primary" title="Crear y agregar una nueva receta al recetario">
+            <i data-lucide="plus-circle" class="icon-xs"></i> <span>Agregar Receta</span>
+          </button>
+          <button id="btnCloseRecetarioModal" type="button" class="btn-modal-close" aria-label="Cerrar recetario">&times;</button>
+        </div>
       </div>
 
       <!-- CUERPO PRINCIPAL DEL RECETARIO -->
@@ -675,13 +683,7 @@
       </div>
 
       <!-- FOOTER DE ACCIONES DEL RECETARIO -->
-      <div style="padding: 1rem 1.6rem; background: var(--bg-surface); border-top: 1px solid rgba(44, 29, 17, 0.08); display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.75rem;">
-        <div style="display: flex; gap: 0.5rem;">
-          <button id="btnPrintRecipeSheet" type="button" class="btn-acc-action secondary" style="padding: 0.55rem 1rem; border-radius: var(--radius-sm); border: 1px solid var(--border-subtle); background: white; cursor: pointer; display: flex; align-items: center; gap: 0.4rem; font-weight: 700; color: var(--color-espresso);">
-            <i data-lucide="printer" class="icon-sm"></i> <span>Imprimir Ficha Técnica</span>
-          </button>
-        </div>
-
+      <div style="padding: 1rem 1.6rem; background: var(--bg-surface); border-top: 1px solid rgba(44, 29, 17, 0.08); display: flex; justify-content: flex-end; align-items: center; flex-wrap: wrap; gap: 0.75rem;">
         <div style="display: flex; gap: 0.75rem;">
           <button id="btnCloseRecetarioFooter" type="button" class="btn-modal-action secondary" style="padding: 0.6rem 1.25rem; border-radius: var(--radius-sm); border: 1px solid var(--border-subtle); background: white; cursor: pointer;">Cerrar</button>
           
@@ -691,6 +693,229 @@
         </div>
       </div>
 
+    </div>
+  </div>
+
+  <!-- MODAL: AGREGAR / MODIFICAR RECETA ARTESANAL -->
+  <div id="modalRecetaForm" class="pin-modal-overlay" role="dialog" aria-modal="true" aria-labelledby="modalRecetaFormTitle" style="display: none; z-index: 10500;">
+    <div class="modal-card-container receta-form-modal-card" style="max-width: 900px; width: 95%; max-height: 90vh; display: flex; flex-direction: column;">
+      
+      <!-- HEADER -->
+      <div class="modal-card-header" style="background: linear-gradient(135deg, #FAF7F2 0%, #FFFFFF 100%); padding: 1.1rem 1.5rem; border-bottom: 1px solid var(--border-subtle); display: flex; justify-content: space-between; align-items: center;">
+        <div class="modal-header-title" style="display: flex; align-items: center; gap: 0.75rem;">
+          <span class="modal-header-icon" style="width: 42px; height: 42px; border-radius: var(--radius-pill); background: var(--gradient-espresso); color: var(--color-gold); display: flex; align-items: center; justify-content: center;">
+            <i data-lucide="book-open" class="icon-md"></i>
+          </span>
+          <div>
+            <h2 id="modalRecetaFormTitle" class="modal-title-text" style="font-size: 1.2rem; font-weight: 800; color: var(--color-espresso); margin: 0;">Agregar Nueva Receta</h2>
+            <span id="modalRecetaFormSubtitle" class="modal-subtitle-text" style="font-size: 0.8rem; color: var(--color-muted);">Fórmula artesanal, perfiles de horneado y materias primas</span>
+          </div>
+        </div>
+        <button id="closeRecetaFormModalBtn" type="button" class="btn-modal-close" aria-label="Cerrar ventana">&times;</button>
+      </div>
+
+      <!-- FORMULARIO -->
+      <form id="recetaForm" style="display: flex; flex-direction: column; overflow: hidden; flex: 1;">
+        <input type="hidden" id="recetaFormId" value="" />
+
+        <div class="modal-card-body" style="padding: 1.25rem 1.5rem; overflow-y: auto; display: flex; flex-direction: column; gap: 1.25rem; flex: 1;">
+          
+          <!-- SECCIÓN 1: DATOS BÁSICOS -->
+          <div class="receta-form-card-section">
+            <div class="receta-section-header">
+              <span class="receta-section-number">1</span>
+              <div>
+                <h3 style="font-size: 0.95rem; font-weight: 800; color: var(--color-espresso); margin: 0;">Identificación y Catálogo de Producto</h3>
+                <span style="font-size: 0.78rem; color: var(--color-muted);">Nombre del pan, código único, categoría e icono representativo</span>
+              </div>
+            </div>
+
+            <div style="display: grid; grid-template-columns: 2fr 1fr 1fr; gap: 0.85rem; margin-top: 0.85rem;">
+              <div class="form-group-custom">
+                <label for="recetaInputName" class="form-label-custom" style="font-weight: 700; font-size: 0.82rem; margin-bottom: 0.3rem; display: block;">Nombre de la Receta / Pan *</label>
+                <input type="text" id="recetaInputName" class="form-control-custom" placeholder="Ej: Baguette Tradicional Parisina" required style="width: 100%; height: 40px; padding: 0 0.85rem; border-radius: var(--radius-sm); border: 1px solid var(--border-subtle); font-weight: 600;" />
+              </div>
+
+              <div class="form-group-custom">
+                <label for="recetaInputCode" class="form-label-custom" style="font-weight: 700; font-size: 0.82rem; margin-bottom: 0.3rem; display: block;">Código *</label>
+                <input type="text" id="recetaInputCode" class="form-control-custom" placeholder="Ej: PAN-008" required style="width: 100%; height: 40px; padding: 0 0.85rem; border-radius: var(--radius-sm); border: 1px solid var(--border-subtle); font-weight: 700; text-transform: uppercase;" />
+              </div>
+
+              <div class="form-group-custom">
+                <label for="recetaInputIcon" class="form-label-custom" style="font-weight: 700; font-size: 0.82rem; margin-bottom: 0.3rem; display: block;">Icono / Emoji *</label>
+                <div style="display: flex; gap: 0.4rem; align-items: center;">
+                  <input type="text" id="recetaInputIcon" class="form-control-custom" value="🥖" maxlength="4" style="width: 52px; height: 40px; text-align: center; font-size: 1.3rem; border-radius: var(--radius-sm); border: 1px solid var(--border-subtle);" />
+                  <div class="emoji-fast-picker" style="display: flex; gap: 0.2rem; align-items: center; flex-wrap: wrap;">
+                    <button type="button" class="btn-emoji-quick" data-emoji="🥖">🥖</button>
+                    <button type="button" class="btn-emoji-quick" data-emoji="🥐">🥐</button>
+                    <button type="button" class="btn-emoji-quick" data-emoji="🍞">🍞</button>
+                    <button type="button" class="btn-emoji-quick" data-emoji="🥯">🥯</button>
+                    <button type="button" class="btn-emoji-quick" data-emoji="🍫">🍫</button>
+                    <button type="button" class="btn-emoji-quick" data-emoji="🥧">🥧</button>
+                    <button type="button" class="btn-emoji-quick" data-emoji="🥨">🥨</button>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div style="display: grid; grid-template-columns: 1.5fr 1fr 1fr; gap: 0.85rem; margin-top: 0.75rem;">
+              <div class="form-group-custom">
+                <label for="recetaInputCategory" class="form-label-custom" style="font-weight: 700; font-size: 0.82rem; margin-bottom: 0.3rem; display: block;">Categoría de Panadería *</label>
+                <select id="recetaInputCategory" class="form-control-custom" required style="width: 100%; height: 40px; padding: 0 0.85rem; border-radius: var(--radius-sm); border: 1px solid var(--border-subtle); font-weight: 600;">
+                  <option value="Panadería Francesa">Panadería Francesa</option>
+                  <option value="Bollería Hojaldrada">Bollería Hojaldrada</option>
+                  <option value="Panadería Rústica">Panadería Rústica / Masa Madre</option>
+                  <option value="Panadería Tradicional">Panadería Tradicional / Venezolana</option>
+                  <option value="Salados &amp; Especialidades">Salados &amp; Especialidades</option>
+                  <option value="Dulces &amp; Repostería">Dulces &amp; Repostería</option>
+                </select>
+              </div>
+
+              <div class="form-group-custom">
+                <label for="recetaInputUnitWeight" class="form-label-custom" style="font-weight: 700; font-size: 0.82rem; margin-bottom: 0.3rem; display: block;">Peso Unitario (g) *</label>
+                <input type="number" id="recetaInputUnitWeight" class="form-control-custom" value="250" min="10" max="5000" step="5" required style="width: 100%; height: 40px; padding: 0 0.85rem; border-radius: var(--radius-sm); border: 1px solid var(--border-subtle); font-weight: 700;" />
+              </div>
+
+              <div class="form-group-custom">
+                <label for="recetaInputDefaultQty" class="form-label-custom" style="font-weight: 700; font-size: 0.82rem; margin-bottom: 0.3rem; display: block;">Lote Sugerido (ud)</label>
+                <input type="number" id="recetaInputDefaultQty" class="form-control-custom" value="50" min="1" max="1000" step="1" style="width: 100%; height: 40px; padding: 0 0.85rem; border-radius: var(--radius-sm); border: 1px solid var(--border-subtle); font-weight: 700;" />
+              </div>
+            </div>
+
+            <div class="form-group-custom" style="margin-top: 0.75rem;">
+              <label for="recetaInputDesc" class="form-label-custom" style="font-weight: 700; font-size: 0.82rem; margin-bottom: 0.3rem; display: block;">Descripción Artesanal</label>
+              <textarea id="recetaInputDesc" class="form-control-custom" rows="2" placeholder="Corteza dorada, greñado tradicional, miga suave..." style="width: 100%; padding: 0.5rem 0.85rem; border-radius: var(--radius-sm); border: 1px solid var(--border-subtle); resize: vertical; font-family: inherit; font-size: 0.85rem;"></textarea>
+            </div>
+          </div>
+
+          <!-- SECCIÓN 2: PARÁMETROS TÉCNICOS DE HORNEADO -->
+          <div class="receta-form-card-section">
+            <div class="receta-section-header">
+              <span class="receta-section-number">2</span>
+              <div>
+                <h3 style="font-size: 0.95rem; font-weight: 800; color: var(--color-espresso); margin: 0;">Parámetros Técnicos de Horneado</h3>
+                <span style="font-size: 0.78rem; color: var(--color-muted);">Configuración de horno, temperatura, inyección de vapor y tiempos</span>
+              </div>
+            </div>
+
+            <div style="display: grid; grid-template-columns: 1fr 1fr 2fr; gap: 0.85rem; margin-top: 0.85rem;">
+              <div class="form-group-custom">
+                <label for="recetaInputTemp" class="form-label-custom" style="font-weight: 700; font-size: 0.82rem; margin-bottom: 0.3rem; display: block;">Temp. Horno (°C) *</label>
+                <input type="number" id="recetaInputTemp" class="form-control-custom" value="240" min="120" max="320" required style="width: 100%; height: 40px; padding: 0 0.85rem; border-radius: var(--radius-sm); border: 1px solid var(--border-subtle); font-weight: 700;" />
+              </div>
+
+              <div class="form-group-custom">
+                <label for="recetaInputTime" class="form-label-custom" style="font-weight: 700; font-size: 0.82rem; margin-bottom: 0.3rem; display: block;">Tiempo (Minutos) *</label>
+                <input type="number" id="recetaInputTime" class="form-control-custom" value="22" min="1" max="180" required style="width: 100%; height: 40px; padding: 0 0.85rem; border-radius: var(--radius-sm); border: 1px solid var(--border-subtle); font-weight: 700;" />
+              </div>
+
+              <div class="form-group-custom">
+                <label for="recetaInputOvenType" class="form-label-custom" style="font-weight: 700; font-size: 0.82rem; margin-bottom: 0.3rem; display: block;">Horno Recomendado *</label>
+                <select id="recetaInputOvenType" class="form-control-custom" required style="width: 100%; height: 40px; padding: 0 0.85rem; border-radius: var(--radius-sm); border: 1px solid var(--border-subtle); font-weight: 600;">
+                  <option value="Bóveda de Piedra / Giratorio Industrial">Bóveda de Piedra / Giratorio Industrial</option>
+                  <option value="Convección Fina Industrial">Convección Fina Industrial</option>
+                  <option value="Giratorio / Rotativo Industrial">Giratorio / Rotativo Industrial</option>
+                  <option value="Horno de Solera / Piso">Horno de Solera / Piso</option>
+                </select>
+              </div>
+            </div>
+
+            <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 0.85rem; margin-top: 0.75rem;">
+              <div class="form-group-custom">
+                <label for="recetaInputSteam" class="form-label-custom" style="font-weight: 700; font-size: 0.82rem; margin-bottom: 0.3rem; display: block;">Vapor / Inyección</label>
+                <input type="text" id="recetaInputSteam" class="form-control-custom" value="Vapor inicial abundante (5 segundos)" placeholder="Ej: Vapor abundante 5 seg" style="width: 100%; height: 40px; padding: 0 0.85rem; border-radius: var(--radius-sm); border: 1px solid var(--border-subtle); font-size: 0.82rem;" />
+              </div>
+
+              <div class="form-group-custom">
+                <label for="recetaInputFerm" class="form-label-custom" style="font-weight: 700; font-size: 0.82rem; margin-bottom: 0.3rem; display: block;">Fermentación / Leudado</label>
+                <input type="text" id="recetaInputFerm" class="form-control-custom" value="18h fermentación lenta en frío (Poolish)" placeholder="Ej: 2h a 26°C" style="width: 100%; height: 40px; padding: 0 0.85rem; border-radius: var(--radius-sm); border: 1px solid var(--border-subtle); font-size: 0.82rem;" />
+              </div>
+
+              <div class="form-group-custom">
+                <label for="recetaInputDamper" class="form-label-custom" style="font-weight: 700; font-size: 0.82rem; margin-bottom: 0.3rem; display: block;">Tiro de Horno</label>
+                <input type="text" id="recetaInputDamper" class="form-control-custom" value="Cerrado 17 min, abrir últimos 5 min" placeholder="Ej: Tiro medio" style="width: 100%; height: 40px; padding: 0 0.85rem; border-radius: var(--radius-sm); border: 1px solid var(--border-subtle); font-size: 0.82rem;" />
+              </div>
+            </div>
+
+            <div class="form-group-custom" style="margin-top: 0.75rem;">
+              <label for="recetaInputChefTip" class="form-label-custom" style="font-weight: 700; font-size: 0.82rem; margin-bottom: 0.3rem; display: block;">Secreto del Maestro Panadero</label>
+              <input type="text" id="recetaInputChefTip" class="form-control-custom" placeholder="Ej: Nunca abras el tiro antes de los 17 minutos para fijar el crujiente..." style="width: 100%; height: 40px; padding: 0 0.85rem; border-radius: var(--radius-sm); border: 1px solid var(--border-subtle); font-size: 0.82rem;" />
+            </div>
+          </div>
+
+          <!-- SECCIÓN 3: INSUMOS & MATERIAS PRIMAS -->
+          <div class="receta-form-card-section">
+            <div class="receta-section-header" style="justify-content: space-between; flex-wrap: wrap; gap: 0.5rem;">
+              <div style="display: flex; align-items: center; gap: 0.6rem;">
+                <span class="receta-section-number">3</span>
+                <div>
+                  <h3 style="font-size: 0.95rem; font-weight: 800; color: var(--color-espresso); margin: 0;">Insumos Requeridos (Por Unidad)</h3>
+                  <span style="font-size: 0.78rem; color: var(--color-muted);">Indica la cantidad requerida para producir 1 unidad en crudo</span>
+                </div>
+              </div>
+              <button type="button" id="btnAddIngredientRow" class="btn-receta-add-row" title="Agregar otro ingrediente">
+                <i data-lucide="plus" class="icon-xs"></i> <span>+ Agregar Ingrediente</span>
+              </button>
+            </div>
+
+            <div style="margin-top: 0.85rem; overflow-x: auto;">
+              <table class="receta-ingredients-form-table" style="width: 100%; border-collapse: collapse; font-size: 0.82rem;">
+                <thead>
+                  <tr style="background: rgba(44, 29, 17, 0.04); border-bottom: 1.5px solid var(--border-subtle);">
+                    <th style="padding: 8px 10px; text-align: left;">Nombre del Insumo *</th>
+                    <th style="padding: 8px 10px; text-align: left; width: 170px;">Código Almacén</th>
+                    <th style="padding: 8px 10px; text-align: right; width: 110px;">Cant. / Unidad *</th>
+                    <th style="padding: 8px 10px; text-align: left; width: 90px;">Unidad *</th>
+                    <th style="padding: 8px 10px; text-align: center; width: 80px;">Clave</th>
+                    <th style="padding: 8px 10px; text-align: center; width: 45px;"></th>
+                  </tr>
+                </thead>
+                <tbody id="recetaIngredientsTableBody">
+                  <!-- Filas dinámicas -->
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <!-- SECCIÓN 4: PASOS DE ELABORACIÓN -->
+          <div class="receta-form-card-section">
+            <div class="receta-section-header" style="justify-content: space-between; flex-wrap: wrap; gap: 0.5rem;">
+              <div style="display: flex; align-items: center; gap: 0.6rem;">
+                <span class="receta-section-number">4</span>
+                <div>
+                  <h3 style="font-size: 0.95rem; font-weight: 800; color: var(--color-espresso); margin: 0;">Pasos de Elaboración Artesanal</h3>
+                  <span style="font-size: 0.78rem; color: var(--color-muted);">Guía secuencial de amasado, reposo, formado y cocción</span>
+                </div>
+              </div>
+              <button type="button" id="btnAddStepRow" class="btn-receta-add-row" title="Agregar otro paso">
+                <i data-lucide="plus" class="icon-xs"></i> <span>+ Agregar Paso</span>
+              </button>
+            </div>
+
+            <div id="recetaStepsContainerForm" style="display: flex; flex-direction: column; gap: 0.65rem; margin-top: 0.85rem;">
+              <!-- Pasos dinámicos -->
+            </div>
+          </div>
+
+        </div>
+
+        <!-- FOOTER -->
+        <div class="modal-card-footer" style="padding: 1rem 1.5rem; background: var(--bg-surface); border-top: 1px solid var(--border-subtle); display: flex; justify-content: space-between; align-items: center; gap: 0.75rem;">
+          <div>
+            <button id="btnEliminarRecetaBtn" type="button" class="btn-modal-action danger" style="display: none; padding: 0.6rem 1.15rem; border-radius: var(--radius-sm); border: 1px solid var(--color-danger); background: rgba(198,40,40,0.06); color: var(--color-danger); font-weight: 700; cursor: pointer; align-items: center; gap: 0.4rem;">
+              <i data-lucide="trash-2" class="icon-xs"></i> <span>Eliminar Receta</span>
+            </button>
+          </div>
+          
+          <div style="display: flex; gap: 0.75rem;">
+            <button id="cancelRecetaFormModalBtn" type="button" class="btn-modal-action secondary" style="padding: 0.6rem 1.25rem; border-radius: var(--radius-sm); border: 1px solid var(--border-subtle); background: white; cursor: pointer; font-weight: 600;">Cancelar</button>
+            <button id="saveRecetaFormBtn" type="submit" class="btn-primary-action gold-variant" style="padding: 0.6rem 1.5rem; border-radius: var(--radius-sm); border: none; background: linear-gradient(135deg, #D49B54 0%, #C48B44 100%); color: white; font-weight: 800; cursor: pointer; display: flex; align-items: center; gap: 0.5rem; box-shadow: 0 4px 12px rgba(212,155,84,0.35);">
+              <i data-lucide="check" class="icon-sm"></i> <span id="saveRecetaFormBtnText">Guardar Receta</span>
+            </button>
+          </div>
+        </div>
+
+      </form>
     </div>
   </div>
 
@@ -777,8 +1002,6 @@
     </div>
   </div>
 
-  <!-- CONTENEDOR OCULTO PARA IMPRESIÓN DE FICHA TÉCNICA -->
-  <div id="recetarioPrintContainer" style="display: none;"></div>
 
   <!-- SCRIPT MODULAR COCINA -->
   <script src="../js/vendor/lucide.min.js"></script>

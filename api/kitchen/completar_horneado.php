@@ -65,22 +65,25 @@ try {
 
     // 1. Localizar el producto terminado en la tabla `productos` con coincidencia robusta
     $prod = null;
+    $cleanName = trim(preg_replace('/^\d+x\s*/i', '', $productName));
+
     if (!empty($productCode)) {
         $stmtFindCode = $pdo->prepare("SELECT id, codigo, nombre, stock_actual FROM productos WHERE codigo = :code LIMIT 1");
         $stmtFindCode->execute([':code' => $productCode]);
         $prod = $stmtFindCode->fetch();
     }
-    if (!$prod && !empty($productName)) {
-        $stmtFindName = $pdo->prepare("SELECT id, codigo, nombre, stock_actual FROM productos WHERE nombre = :name OR nombre LIKE :likename OR :name2 LIKE CONCAT('%', nombre, '%') LIMIT 1");
+    if (!$prod && !empty($cleanName)) {
+        $stmtFindName = $pdo->prepare("SELECT id, codigo, nombre, stock_actual FROM productos WHERE nombre = :name OR nombre LIKE :likename OR :name2 LIKE CONCAT('%', nombre, '%') OR :cleanname LIKE CONCAT('%', nombre, '%') LIMIT 1");
         $stmtFindName->execute([
-            ':name' => $productName,
-            ':likename' => '%' . $productName . '%',
-            ':name2' => $productName
+            ':name' => $cleanName,
+            ':likename' => '%' . $cleanName . '%',
+            ':name2' => $productName,
+            ':cleanname' => $cleanName
         ]);
         $prod = $stmtFindName->fetch();
     }
     if (!$prod) {
-        $pLower = strtolower($productName);
+        $pLower = strtolower($cleanName ?: $productName);
         $kw = '';
         if (strpos($pLower, 'baguette') !== false) $kw = 'Baguette';
         elseif (strpos($pLower, 'croissant') !== false) $kw = 'Croissant';
@@ -99,7 +102,7 @@ try {
     $prevStock = 0;
     $newStock = 0;
     $matchedProdCode = $productCode ?: 'PAN-001';
-    $matchedProdName = $productName;
+    $matchedProdName = $cleanName ?: $productName;
 
     if ($prod) {
         $prevStock = (float)$prod['stock_actual'];
@@ -111,7 +114,19 @@ try {
         $stmtUpdProd = $pdo->prepare("UPDATE productos SET stock_actual = :newStock WHERE id = :id");
         $stmtUpdProd->execute([':newStock' => $newStock, ':id' => $prod['id']]);
     } else {
+        // Si no existía en el catálogo previo, insertarlo para que aparezca en POS e Inventario
+        $newProdId = 'prod_' . strtolower(preg_replace('/[^a-zA-Z0-9]/', '', $productCode ?: $cleanName));
+        $pCode = $productCode ?: ('PAN-' . rand(100, 999));
+        $stmtInsProd = $pdo->prepare("INSERT INTO productos (id, codigo, categoria_id, nombre, descripcion, precio_unitario, stock_actual, stock_minimo, unidad_medida, icono, ubicacion) VALUES (:id, :code, 'cat_panaderia', :name, 'Horneado fresco en cocina', 2.50, :stock, 15, 'Und', 'croissant', 'Vitrina POS')");
+        $stmtInsProd->execute([
+            ':id' => $newProdId,
+            ':code' => $pCode,
+            ':name' => $cleanName,
+            ':stock' => $netQty
+        ]);
         $newStock = $netQty;
+        $matchedProdCode = $pCode;
+        $matchedProdName = $cleanName;
     }
 
     // 2. Liberar el horno en `estado_hornos`

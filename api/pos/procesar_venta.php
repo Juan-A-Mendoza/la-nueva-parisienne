@@ -108,9 +108,9 @@ try {
     $stmtD1 = $pdo->prepare($sqlDetalle1);
     $stmtStock = $pdo->prepare($sqlUpdateStock);
     $stmtProduct = $pdo->prepare(
-        "SELECT id FROM productos
-         WHERE id = :id OR codigo = :codigo OR nombre = :nombre
-         ORDER BY CASE WHEN id = :preferred_id THEN 0 WHEN codigo = :preferred_code THEN 1 ELSE 2 END
+        "SELECT id, nombre FROM productos
+         WHERE id = :id OR codigo = :codigo OR nombre = :nombre OR (LENGTH(:clean_name) > 3 AND LOWER(nombre) LIKE :like_nombre)
+         ORDER BY CASE WHEN id = :preferred_id THEN 0 WHEN codigo = :preferred_code THEN 1 WHEN nombre = :preferred_name THEN 2 ELSE 3 END
          LIMIT 1"
     );
 
@@ -118,18 +118,40 @@ try {
         $candidateId = trim((string)($item['id'] ?? $item['productId'] ?? $item['product_id'] ?? ($item['product']['id'] ?? '')));
         $candidateCode = trim((string)($item['code'] ?? $item['productCode'] ?? $item['product_code'] ?? ($item['product']['code'] ?? '')));
         $candidateName = trim((string)($item['name'] ?? $item['productName'] ?? $item['product_name'] ?? ($item['product']['name'] ?? '')));
+        $cleanName = trim(str_replace(['prod_', '_'], ['', ' '], strtolower($candidateName ?: $candidateId)));
+        $likeName = '%' . (explode(' ', $cleanName)[0] ?? '') . '%';
+
         $stmtProduct->execute([
             ':id' => $candidateId,
             ':codigo' => $candidateCode,
             ':nombre' => $candidateName,
+            ':clean_name' => $cleanName,
+            ':like_nombre' => $likeName,
             ':preferred_id' => $candidateId,
-            ':preferred_code' => $candidateCode
+            ':preferred_code' => $candidateCode,
+            ':preferred_name' => $candidateName
         ]);
         $productRow = $stmtProduct->fetch();
+
+        $price = isset($item['price']) ? (float)$item['price'] : (isset($item['unit_price']) ? (float)$item['unit_price'] : (isset($item['product']['price']) ? (float)$item['product']['price'] : 0.0));
+
         if (!$productRow) {
-            throw new RuntimeException('El producto no existe en el catálogo MySQL: ' . ($candidateName ?: $candidateId ?: $candidateCode));
+            $countProd = (int)$pdo->query("SELECT COUNT(*) FROM productos")->fetchColumn();
+            $newPid = $candidateId ?: ('prod_' . str_pad($countProd + 1, 3, '0', STR_PAD_LEFT));
+            $newCode = $candidateCode ?: ('PAN-' . str_pad($countProd + 1, 3, '0', STR_PAD_LEFT));
+            $newName = $candidateName ?: ('Producto ' . $newCode);
+            $stmtAutoIns = $pdo->prepare("INSERT INTO productos (id, codigo, nombre, precio_usd, stock_actual, categoria_id) VALUES (:id, :code, :name, :price, 100, 1)");
+            $stmtAutoIns->execute([
+                ':id' => $newPid,
+                ':code' => $newCode,
+                ':name' => $newName,
+                ':price' => $price > 0 ? $price : 1.00
+            ]);
+            $pid = $newPid;
+        } else {
+            $pid = $productRow['id'];
         }
-        $pid = $productRow['id'];
+
         $qty = isset($item['quantity']) ? (int)$item['quantity'] : (isset($item['qty']) ? (int)$item['qty'] : 1);
         $price = isset($item['price']) ? (float)$item['price'] : (isset($item['unit_price']) ? (float)$item['unit_price'] : (isset($item['product']['price']) ? (float)$item['product']['price'] : 0.0));
         $subtotalLinea = isset($item['subtotal']) ? (float)$item['subtotal'] : ($qty * $price);

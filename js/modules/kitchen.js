@@ -46,6 +46,38 @@ document.addEventListener('DOMContentLoaded', () => {
   // Función compartida para abrir el recetario pre-seleccionado desde alertas de reposición
   let openRecetarioForReplenishment = null;
 
+  // Clave de almacenamiento y gestión reactiva de Recetas (Local & Persistente)
+  const LOCAL_STORAGE_RECIPES_KEY = 'recetas_panaderia';
+
+  function loadActiveRecipes() {
+    try {
+      const raw = localStorage.getItem(LOCAL_STORAGE_RECIPES_KEY);
+      if (raw) {
+        const parsed = JSON.parse(raw);
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          return parsed;
+        }
+      }
+    } catch (e) {
+      console.warn('Error leyendo recetas de localStorage:', e);
+    }
+    const defaultList = JSON.parse(JSON.stringify(BAKERY_RECIPES));
+    try {
+      localStorage.setItem(LOCAL_STORAGE_RECIPES_KEY, JSON.stringify(defaultList));
+    } catch (e) {}
+    return defaultList;
+  }
+
+  function saveActiveRecipes(list) {
+    try {
+      localStorage.setItem(LOCAL_STORAGE_RECIPES_KEY, JSON.stringify(list));
+    } catch (e) {
+      console.error('Error guardando recetas en localStorage:', e);
+    }
+  }
+
+  let activeRecipes = loadActiveRecipes();
+
   // Lotes por defecto con trazabilidad de 3 fases
   const DEFAULT_STAGING_BATCHES = [
     {
@@ -987,7 +1019,7 @@ document.addEventListener('DOMContentLoaded', () => {
       // Grupo B: Catálogo de Panes Artesanales (Recetario)
       const groupRecipes = document.createElement('optgroup');
       groupRecipes.label = '🥖 Panes Artesanales (Recetario Maestro)';
-      BAKERY_RECIPES.forEach(r => {
+      activeRecipes.forEach(r => {
         const opt = document.createElement('option');
         opt.value = `recipe:${r.id}`;
         opt.textContent = `${r.icon} ${r.name} (${r.code}) — Receta Estándar`;
@@ -1697,11 +1729,9 @@ document.addEventListener('DOMContentLoaded', () => {
       const btnQtyPlus = document.getElementById('btnQtyPlus');
       const btnSendBatchToKitchen = document.getElementById('btnSendBatchToKitchen');
       const btnSendBatchText = document.getElementById('btnSendBatchText');
-      const btnPrintRecipeSheet = document.getElementById('btnPrintRecipeSheet');
       const btnSolicitarInsumosFaltantesWrapper = document.getElementById('btnSolicitarInsumosFaltantesWrapper');
       const btnSolicitarInsumosFaltantes = document.getElementById('btnSolicitarInsumosFaltantes');
       const btnSolicitarInsumosFaltantesText = document.getElementById('btnSolicitarInsumosFaltantesText');
-      const recetarioPrintContainer = document.getElementById('recetarioPrintContainer');
       const tabBtnInsumos = document.getElementById('tabBtnInsumos');
       const tabBtnHorno = document.getElementById('tabBtnHorno');
       const recetarioTabInsumos = document.getElementById('recetarioTabInsumos');
@@ -1784,7 +1814,7 @@ document.addEventListener('DOMContentLoaded', () => {
       }
 
       openRecetarioForReplenishment = function(code, suggestedQty) {
-        const matched = BAKERY_RECIPES.find(r => r.code === code || r.name.toLowerCase().includes((code || '').toLowerCase()));
+        const matched = activeRecipes.find(r => r.code === code || r.name.toLowerCase().includes((code || '').toLowerCase()));
         if (matched) {
           currentRecipeId = matched.id;
           if (recetarioQtyInput) {
@@ -1814,7 +1844,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (!breadChipsContainer) return;
         breadChipsContainer.innerHTML = '';
 
-        BAKERY_RECIPES.forEach(recipe => {
+        activeRecipes.forEach(recipe => {
           const card = document.createElement('div');
           card.className = `bread-grid-card ${recipe.id === currentRecipeId ? 'active' : ''}`;
           card.dataset.recipeId = recipe.id;
@@ -1823,9 +1853,9 @@ document.addEventListener('DOMContentLoaded', () => {
             <div class="bread-grid-icon-box">${recipe.icon}</div>
             <div class="bread-grid-name">${recipe.name}</div>
             <div class="bread-grid-meta">
-              <span>${recipe.bakingProfile.temp}°C</span>
+              <span>${recipe.bakingProfile?.temp || 200}°C</span>
               <span>&bull;</span>
-              <span>${recipe.bakingProfile.timeMin}m</span>
+              <span>${recipe.bakingProfile?.timeMin || 20}m</span>
             </div>
           `;
 
@@ -1842,7 +1872,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
       // Cálculo reactivo de ingredientes y parámetros técnicos sin saturación
       function calculateAndRenderRecipe() {
-        const recipe = BAKERY_RECIPES.find(r => r.id === currentRecipeId) || BAKERY_RECIPES[0];
+        const recipe = activeRecipes.find(r => r.id === currentRecipeId) || activeRecipes[0];
+        if (!recipe) return;
+        currentRecipeId = recipe.id;
         let qty = parseInt(recetarioQtyInput?.value || 50, 10);
         if (isNaN(qty) || qty < 1) qty = 1;
         if (qty > 1000) qty = 1000;
@@ -2070,7 +2102,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
       // Acción: Enviar Lote al Staging de Cocina con Consumo Real de Materia Prima
       btnSendBatchToKitchen?.addEventListener('click', async () => {
-        const recipe = BAKERY_RECIPES.find(r => r.id === currentRecipeId) || BAKERY_RECIPES[0];
+        const recipe = activeRecipes.find(r => r.id === currentRecipeId) || activeRecipes[0];
         const nextBatchNum = stagingBatches.length + 48;
         const batchCode = `Lote #${String(nextBatchNum).padStart(3, '0')}`;
 
@@ -2124,6 +2156,46 @@ document.addEventListener('DOMContentLoaded', () => {
                 const item = liveInventory.find(i => i.code === d.code || i.id === d.code);
                 if (item) item.currentStock = d.newStock;
               });
+
+              // Sincronizar 'materias_primas' en localStorage para que Gerencia e Inventario lo vean de inmediato
+              try {
+                const rawMp = localStorage.getItem('materias_primas');
+                let mpList = rawMp ? JSON.parse(rawMp) : [];
+                if (Array.isArray(mpList)) {
+                  data.deductions.forEach(d => {
+                    const m = mpList.find(x => x.code === d.code || x.id === d.code || x.name === d.name);
+                    if (m) m.stock = d.newStock;
+                  });
+                  localStorage.setItem('materias_primas', JSON.stringify(mpList));
+                }
+              } catch (e) {}
+
+              // Registrar auditoría en movimientos_inventario
+              try {
+                const rawMovs = localStorage.getItem('movimientos_inventario');
+                let movs = rawMovs ? JSON.parse(rawMovs) : [];
+                movs.unshift({
+                  id: 'mov_' + Date.now(),
+                  timestamp: new Date().toISOString().replace('T', ' ').slice(0, 19),
+                  type: 'Consumo Producción',
+                  category: 'materia_prima',
+                  concept: `Amasado de Lote: ${batchCode} (${currentRecipeQty}x ${recipe.name})`,
+                  user: activeChef.name || 'Maestro Panadero',
+                  status: 'Completado',
+                  itemsCount: data.deductions.length,
+                  breakdown: data.deductions.map(d => ({ name: `${d.name}: -${d.qtyNeeded} ${d.unit}`, price: `Stock restante: ${d.newStock} ${d.unit}` }))
+                });
+                localStorage.setItem('movimientos_inventario', JSON.stringify(movs.slice(0, 100)));
+              } catch (e) {}
+
+              // Notificar en tiempo real a Gerencia y demás módulos
+              window.dispatchEvent(new Event('materiasPrimasChanged'));
+              window.dispatchEvent(new Event('movimientosChanged'));
+              if (typeof BroadcastChannel !== 'undefined') {
+                const matChannel = new BroadcastChannel('lnp_materials_channel');
+                matChannel.postMessage({ type: 'materials_deducted', batch: batchCode, deductions: data.deductions, timestamp: Date.now() });
+                setTimeout(() => matChannel.close(), 1000);
+              }
             }
 
             const newBatch = {
@@ -2194,120 +2266,463 @@ document.addEventListener('DOMContentLoaded', () => {
         }
       });
 
-      // Acción: Imprimir Ficha Técnica de Cocina
-      btnPrintRecipeSheet?.addEventListener('click', () => {
-        const recipe = BAKERY_RECIPES.find(r => r.id === currentRecipeId) || BAKERY_RECIPES[0];
-        const totalDoughKg = (currentRecipeQty * recipe.unitWeightGrams / 1000);
-        const now = new Date();
-        const dateStr = now.toLocaleDateString('es-VE', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
-        const timeStr = now.toLocaleTimeString('es-VE', { hour: '2-digit', minute: '2-digit' });
 
-        if (!recetarioPrintContainer) return;
+      // ======================================================================
+      // MODAL DE GESTIÓN Y EDICIÓN DE RECETAS (AGREGAR / MODIFICAR)
+      // ======================================================================
+      const modalRecetaForm = document.getElementById('modalRecetaForm');
+      const modalRecetaFormTitle = document.getElementById('modalRecetaFormTitle');
+      const modalRecetaFormSubtitle = document.getElementById('modalRecetaFormSubtitle');
+      const closeRecetaFormModalBtn = document.getElementById('closeRecetaFormModalBtn');
+      const cancelRecetaFormModalBtn = document.getElementById('cancelRecetaFormModalBtn');
+      const recetaForm = document.getElementById('recetaForm');
+      const recetaFormId = document.getElementById('recetaFormId');
+      const btnEliminarRecetaBtn = document.getElementById('btnEliminarRecetaBtn');
+      const saveRecetaFormBtnText = document.getElementById('saveRecetaFormBtnText');
 
-        let ingHtml = '';
-        recipe.ingredients.forEach(ing => {
-          const needed = ing.qty * currentRecipeQty;
-          const neededStr = ing.unit === 'kg' 
-            ? (needed < 1 ? `${(needed*1000).toFixed(0)} g (${needed.toFixed(3)} kg)` : `${needed.toFixed(2)} kg`)
-            : (ing.unit === 'L' ? (needed < 1 ? `${(needed*1000).toFixed(0)} ml` : `${needed.toFixed(2)} L`) : `${Math.ceil(needed)} ud`);
-          ingHtml += `
-            <tr>
-              <td style="padding: 6px 10px; border-bottom: 1px solid #ddd;"><strong>${ing.name}</strong> ${ing.matCode ? `(${ing.matCode})` : ''}</td>
-              <td style="padding: 6px 10px; border-bottom: 1px solid #ddd; text-align: right; font-weight: 700;">${neededStr}</td>
-            </tr>
-          `;
+      const btnOpenAgregarRecetaModal = document.getElementById('btnOpenAgregarRecetaModal');
+      const btnOpenModificarRecetaModal = document.getElementById('btnOpenModificarRecetaModal');
+
+      const recetaIngredientsTableBody = document.getElementById('recetaIngredientsTableBody');
+      const btnAddIngredientRow = document.getElementById('btnAddIngredientRow');
+      const recetaStepsContainerForm = document.getElementById('recetaStepsContainerForm');
+      const btnAddStepRow = document.getElementById('btnAddStepRow');
+
+      // Selector rápido de emojis para el icono del pan
+      document.querySelectorAll('.btn-emoji-quick').forEach(btn => {
+        btn.addEventListener('click', () => {
+          const iconInput = document.getElementById('recetaInputIcon');
+          if (iconInput) iconInput.value = btn.dataset.emoji || '🥖';
         });
+      });
 
-        let stepsHtml = '';
-        recipe.steps.forEach((st, idx) => {
-          stepsHtml += `
-            <li style="margin-bottom: 8px; font-size: 0.9rem; line-height: 1.4;">
-              <strong>${idx + 1}. ${st.title}:</strong> ${st.desc}
-            </li>
-          `;
-        });
+      // Función para añadir una fila de insumo a la tabla del formulario
+      function addIngredientRow(data = {}) {
+        if (!recetaIngredientsTableBody) return;
+        const tr = document.createElement('tr');
 
-        recetarioPrintContainer.innerHTML = `
-          <div style="font-family: Arial, sans-serif; color: #2C1D11; max-width: 800px; margin: 0 auto; padding: 20px;">
-            <div style="display: flex; justify-content: space-between; border-bottom: 2px solid #2C1D11; padding-bottom: 12px; margin-bottom: 16px;">
-              <div>
-                <h1 style="font-size: 1.4rem; margin: 0; text-transform: uppercase;">La Nueva Parisienne Panadería &amp; Pastelería C.A.</h1>
-                <p style="margin: 3px 0 0 0; font-size: 0.85rem; color: #666;">FICHA TÉCNICA DE PRODUCCIÓN Y HORNEADO DE PANADERÍA &bull; RIF: J-40123456-7</p>
-              </div>
-              <div style="text-align: right; font-size: 0.85rem;">
-                <div><strong>Fecha:</strong> ${dateStr}, ${timeStr}</div>
-                <div><strong>Maestro Panadero:</strong> ${activeChef.name}</div>
-              </div>
-            </div>
+        let matOptions = '<option value="">(Sin código / Insumo externo)</option>';
+        if (Array.isArray(liveInventory) && liveInventory.length > 0) {
+          liveInventory.forEach(inv => {
+            const isSel = (data.matCode && (data.matCode === inv.code || data.matCode === inv.id)) ? 'selected' : '';
+            matOptions += `<option value="${inv.code || inv.id}" data-name="${inv.name}" data-unit="${inv.unit}" ${isSel}>${inv.code || ''} - ${inv.name}</option>`;
+          });
+        }
 
-            <div style="background: #FAF7F2; border: 1px solid #E5D5C5; border-radius: 8px; padding: 12px 16px; margin-bottom: 18px; display: flex; justify-content: space-between; align-items: center;">
-              <div>
-                <span style="font-size: 0.8rem; text-transform: uppercase; color: #C48B44; font-weight: bold;">FÓRMULA ARTESANAL:</span>
-                <h2 style="margin: 2px 0 0 0; font-size: 1.3rem;">${recipe.icon} ${recipe.name} (${recipe.code})</h2>
-                <span style="font-size: 0.85rem; color: #666;">Categoría: ${recipe.category} &bull; Peso unitario cocido: ~${recipe.unitWeightGrams} g</span>
-              </div>
-              <div style="text-align: right;">
-                <div style="font-size: 1.5rem; font-weight: 800; color: #2C1D11;">${currentRecipeQty} Unidades</div>
-                <div style="font-size: 0.85rem; font-weight: bold; color: #C48B44;">Masa Total Requerida: ${totalDoughKg.toFixed(2)} kg</div>
-              </div>
-            </div>
+        const nameVal = data.name || '';
+        const qtyVal = (typeof data.qty === 'number') ? data.qty : (data.qty || 0.100);
+        const unitVal = data.unit || 'kg';
+        const isKeyVal = Boolean(data.isKey);
 
-            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 18px;">
-              <div>
-                <h3 style="font-size: 1rem; border-bottom: 1px solid #ccc; padding-bottom: 4px; margin-top: 0;">1. INSUMOS Y MATERIAS PRIMAS REQUERIDAS</h3>
-                <table style="width: 100%; border-collapse: collapse; font-size: 0.88rem;">
-                  <thead>
-                    <tr style="background: #f0f0f0;">
-                      <th style="padding: 6px 10px; text-align: left;">Ingrediente</th>
-                      <th style="padding: 6px 10px; text-align: right;">Cantidad Neta</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    ${ingHtml}
-                  </tbody>
-                </table>
-              </div>
-
-              <div>
-                <h3 style="font-size: 1rem; border-bottom: 1px solid #ccc; padding-bottom: 4px; margin-top: 0;">2. PARÁMETROS DE HORNEADO</h3>
-                <div style="background: #f9f9f9; padding: 10px 14px; border-radius: 6px; font-size: 0.88rem; line-height: 1.6;">
-                  <div><strong>🌡️ Temperatura:</strong> ${recipe.bakingProfile.temp} °C</div>
-                  <div><strong>⏱️ Tiempo de Horno:</strong> ${recipe.bakingProfile.timeMin} minutos</div>
-                  <div><strong>🔥 Horno Recomendado:</strong> ${recipe.bakingProfile.ovenType}</div>
-                  <div><strong>💨 Inyección de Vapor:</strong> ${recipe.bakingProfile.steam}</div>
-                  <div><strong>⏳ Leudado / Fermentación:</strong> ${recipe.bakingProfile.fermentationTime}</div>
-                  <div><strong>🚪 Tiro de Salida:</strong> ${recipe.bakingProfile.damper}</div>
-                </div>
-
-                <div style="margin-top: 10px; padding: 8px 12px; background: #FFF8E7; border-left: 4px solid #C48B44; font-size: 0.82rem; font-style: italic;">
-                  <strong>Secreto del Maestro:</strong> ${recipe.chefTip}
-                </div>
-              </div>
-            </div>
-
-            <h3 style="font-size: 1rem; border-bottom: 1px solid #ccc; padding-bottom: 4px; margin-bottom: 8px;">3. MÉTODO DE PREPARACIÓN Y HORNEADO</h3>
-            <ol style="padding-left: 20px; margin-top: 0;">
-              ${stepsHtml}
-            </ol>
-
-            <div style="margin-top: 30px; display: flex; justify-content: space-between; padding-top: 20px; border-top: 1px solid #ccc; font-size: 0.85rem;">
-              <div style="text-align: center; width: 200px;">
-                <div style="border-top: 1px solid #000; margin-bottom: 4px;"></div>
-                <span>${activeChef.name}<br/><strong>Maestro Panadero</strong></span>
-              </div>
-              <div style="text-align: center; width: 200px;">
-                <div style="border-top: 1px solid #000; margin-bottom: 4px;"></div>
-                <span>Control de Calidad / Horno<br/><strong>Firma &amp; Sello</strong></span>
-              </div>
-            </div>
-          </div>
+        tr.innerHTML = `
+          <td>
+            <input type="text" class="form-control-custom ing-name-input" placeholder="Nombre insumo" value="${nameVal}" required style="width: 100%; height: 34px; padding: 0 0.5rem; font-size: 0.82rem; border-radius: var(--radius-sm); border: 1px solid var(--border-subtle);" />
+          </td>
+          <td>
+            <select class="form-control-custom ing-matcode-select" style="width: 100%; height: 34px; padding: 0 0.4rem; font-size: 0.78rem; border-radius: var(--radius-sm); border: 1px solid var(--border-subtle);">
+              ${matOptions}
+            </select>
+          </td>
+          <td>
+            <input type="number" step="0.0001" min="0.0001" class="form-control-custom ing-qty-input" value="${qtyVal}" required style="width: 100%; height: 34px; padding: 0 0.5rem; text-align: right; font-weight: 700; font-size: 0.82rem; border-radius: var(--radius-sm); border: 1px solid var(--border-subtle);" />
+          </td>
+          <td>
+            <select class="form-control-custom ing-unit-select" style="width: 100%; height: 34px; padding: 0 0.35rem; font-size: 0.8rem; border-radius: var(--radius-sm); border: 1px solid var(--border-subtle);">
+              <option value="kg" ${unitVal === 'kg' ? 'selected' : ''}>kg</option>
+              <option value="g" ${unitVal === 'g' ? 'selected' : ''}>g</option>
+              <option value="L" ${unitVal === 'L' ? 'selected' : ''}>L</option>
+              <option value="ml" ${unitVal === 'ml' ? 'selected' : ''}>ml</option>
+              <option value="ud" ${unitVal === 'ud' ? 'selected' : ''}>ud</option>
+            </select>
+          </td>
+          <td style="text-align: center;">
+            <input type="checkbox" class="ing-key-checkbox" ${isKeyVal ? 'checked' : ''} title="Insumo clave / crítico" style="transform: scale(1.1); cursor: pointer;" />
+          </td>
+          <td style="text-align: center;">
+            <button type="button" class="btn-remove-ing-row" title="Eliminar fila" style="background: transparent; border: none; color: var(--color-danger); cursor: pointer; padding: 4px;">
+              <i data-lucide="trash-2" class="icon-xs"></i>
+            </button>
+          </td>
         `;
 
-        document.body.classList.add('printing-recipe');
-        window.print();
-        setTimeout(() => {
-          document.body.classList.remove('printing-recipe');
-        }, 1000);
+        const selectEl = tr.querySelector('.ing-matcode-select');
+        const nameInput = tr.querySelector('.ing-name-input');
+        const unitSelect = tr.querySelector('.ing-unit-select');
+
+        selectEl?.addEventListener('change', () => {
+          const selectedOpt = selectEl.options[selectEl.selectedIndex];
+          if (selectedOpt && selectedOpt.value) {
+            if (!nameInput.value || nameInput.value.trim() === '') {
+              nameInput.value = selectedOpt.dataset.name || '';
+            }
+            if (selectedOpt.dataset.unit) {
+              unitSelect.value = selectedOpt.dataset.unit;
+            }
+          }
+        });
+
+        tr.querySelector('.btn-remove-ing-row')?.addEventListener('click', () => {
+          if (recetaIngredientsTableBody.children.length > 1) {
+            tr.remove();
+          } else {
+            alert('La receta debe contener al menos un insumo.');
+          }
+        });
+
+        recetaIngredientsTableBody.appendChild(tr);
+        window.LucideIcons?.refresh();
+      }
+
+      // Función para añadir un paso de preparación artesanal al formulario
+      function addStepRow(data = {}) {
+        if (!recetaStepsContainerForm) return;
+        const stepIndex = recetaStepsContainerForm.children.length + 1;
+        const stepDiv = document.createElement('div');
+        stepDiv.className = 'receta-step-form-item';
+
+        const titleVal = data.title || `Paso ${stepIndex}`;
+        const descVal = data.desc || '';
+
+        stepDiv.innerHTML = `
+          <div class="receta-step-number-badge">${stepIndex}</div>
+          <div style="flex: 1; display: flex; flex-direction: column; gap: 0.4rem;">
+            <input type="text" class="form-control-custom step-title-input" placeholder="Título del paso (ej: Amasado, Autólisis, etc.)" value="${titleVal}" required style="width: 100%; height: 34px; padding: 0 0.65rem; font-weight: 700; font-size: 0.82rem; border-radius: var(--radius-sm); border: 1px solid var(--border-subtle);" />
+            <textarea class="form-control-custom step-desc-input" rows="2" placeholder="Descripción detallada de la técnica artesanal..." required style="width: 100%; padding: 0.4rem 0.65rem; font-size: 0.8rem; font-family: inherit; border-radius: var(--radius-sm); border: 1px solid var(--border-subtle);">${descVal}</textarea>
+          </div>
+          <button type="button" class="btn-remove-step-row" title="Eliminar paso">
+            <i data-lucide="trash-2" class="icon-xs"></i>
+          </button>
+        `;
+
+        stepDiv.querySelector('.btn-remove-step-row')?.addEventListener('click', () => {
+          if (recetaStepsContainerForm.children.length > 1) {
+            stepDiv.remove();
+            Array.from(recetaStepsContainerForm.children).forEach((child, i) => {
+              const badge = child.querySelector('.receta-step-number-badge');
+              if (badge) badge.textContent = i + 1;
+            });
+          } else {
+            alert('La receta debe contener al menos un paso de elaboración.');
+          }
+        });
+
+        recetaStepsContainerForm.appendChild(stepDiv);
+        window.LucideIcons?.refresh();
+      }
+
+      // Apertura del modal en modo Crear o Modificar
+      function openRecipeFormModal(recipeIdToEdit = null) {
+        if (!modalRecetaForm) return;
+
+        if (recetaIngredientsTableBody) recetaIngredientsTableBody.innerHTML = '';
+        if (recetaStepsContainerForm) recetaStepsContainerForm.innerHTML = '';
+
+        if (recipeIdToEdit) {
+          // MODO MODIFICAR
+          const rec = activeRecipes.find(r => r.id === recipeIdToEdit);
+          if (!rec) return;
+
+          if (modalRecetaFormTitle) modalRecetaFormTitle.textContent = `Modificar Receta: ${rec.name}`;
+          if (modalRecetaFormSubtitle) modalRecetaFormSubtitle.textContent = `Edita los parámetros, insumos y guía de horneado de (${rec.code})`;
+          if (saveRecetaFormBtnText) saveRecetaFormBtnText.textContent = 'Guardar Cambios';
+
+          if (recetaFormId) recetaFormId.value = rec.id;
+          const inputName = document.getElementById('recetaInputName');
+          const inputCode = document.getElementById('recetaInputCode');
+          const inputIcon = document.getElementById('recetaInputIcon');
+          const inputCat = document.getElementById('recetaInputCategory');
+          const inputWeight = document.getElementById('recetaInputUnitWeight');
+          const inputDefaultQty = document.getElementById('recetaInputDefaultQty');
+          const inputDesc = document.getElementById('recetaInputDesc');
+
+          if (inputName) inputName.value = rec.name || '';
+          if (inputCode) inputCode.value = rec.code || '';
+          if (inputIcon) inputIcon.value = rec.icon || '🥖';
+          if (inputCat) inputCat.value = rec.category || 'Panadería Francesa';
+          if (inputWeight) inputWeight.value = rec.unitWeightGrams || 250;
+          if (inputDefaultQty) inputDefaultQty.value = rec.defaultQty || 50;
+          if (inputDesc) inputDesc.value = rec.description || '';
+
+          const inputTemp = document.getElementById('recetaInputTemp');
+          const inputTime = document.getElementById('recetaInputTime');
+          const inputOvenType = document.getElementById('recetaInputOvenType');
+          const inputSteam = document.getElementById('recetaInputSteam');
+          const inputFerm = document.getElementById('recetaInputFerm');
+          const inputDamper = document.getElementById('recetaInputDamper');
+          const inputChefTip = document.getElementById('recetaInputChefTip');
+
+          if (inputTemp) inputTemp.value = rec.bakingProfile?.temp || 220;
+          if (inputTime) inputTime.value = rec.bakingProfile?.timeMin || 20;
+          if (inputOvenType) inputOvenType.value = rec.bakingProfile?.ovenType || 'Bóveda de Piedra / Giratorio Industrial';
+          if (inputSteam) inputSteam.value = rec.bakingProfile?.steam || '';
+          if (inputFerm) inputFerm.value = rec.bakingProfile?.fermentationTime || '';
+          if (inputDamper) inputDamper.value = rec.bakingProfile?.damper || '';
+          if (inputChefTip) inputChefTip.value = rec.chefTip || '';
+
+          if (Array.isArray(rec.ingredients) && rec.ingredients.length > 0) {
+            rec.ingredients.forEach(ing => addIngredientRow(ing));
+          } else {
+            addIngredientRow({ name: 'Harina de Trigo Tradicional T55', matCode: 'MAT-001', qty: 0.160, unit: 'kg', isKey: true });
+          }
+
+          if (Array.isArray(rec.steps) && rec.steps.length > 0) {
+            rec.steps.forEach(st => addStepRow(st));
+          } else {
+            addStepRow({ title: 'Amasado', desc: 'Amasar todos los ingredientes hasta desarrollar membrana elástica.' });
+            addStepRow({ title: 'Horneado', desc: 'Hornear a temperatura indicada según especificaciones.' });
+          }
+
+          if (btnEliminarRecetaBtn) {
+            btnEliminarRecetaBtn.style.display = rec.id.startsWith('rec_custom_') ? 'inline-flex' : 'none';
+          }
+        } else {
+          // MODO AGREGAR NUEVA
+          if (modalRecetaFormTitle) modalRecetaFormTitle.textContent = 'Agregar Nueva Receta Artesanal';
+          if (modalRecetaFormSubtitle) modalRecetaFormSubtitle.textContent = 'Registra una nueva fórmula con perfiles de horneado e insumos';
+          if (saveRecetaFormBtnText) saveRecetaFormBtnText.textContent = 'Crear Receta';
+
+          if (recetaFormId) recetaFormId.value = '';
+          const nextNum = activeRecipes.length + 1;
+          const suggestedCode = `PAN-${String(nextNum).padStart(3, '0')}`;
+
+          const inputName = document.getElementById('recetaInputName');
+          const inputCode = document.getElementById('recetaInputCode');
+          const inputIcon = document.getElementById('recetaInputIcon');
+          const inputCat = document.getElementById('recetaInputCategory');
+          const inputWeight = document.getElementById('recetaInputUnitWeight');
+          const inputDefaultQty = document.getElementById('recetaInputDefaultQty');
+          const inputDesc = document.getElementById('recetaInputDesc');
+
+          if (inputName) inputName.value = '';
+          if (inputCode) inputCode.value = suggestedCode;
+          if (inputIcon) inputIcon.value = '🥖';
+          if (inputCat) inputCat.value = 'Panadería Francesa';
+          if (inputWeight) inputWeight.value = 250;
+          if (inputDefaultQty) inputDefaultQty.value = 50;
+          if (inputDesc) inputDesc.value = '';
+
+          const inputTemp = document.getElementById('recetaInputTemp');
+          const inputTime = document.getElementById('recetaInputTime');
+          const inputOvenType = document.getElementById('recetaInputOvenType');
+          const inputSteam = document.getElementById('recetaInputSteam');
+          const inputFerm = document.getElementById('recetaInputFerm');
+          const inputDamper = document.getElementById('recetaInputDamper');
+          const inputChefTip = document.getElementById('recetaInputChefTip');
+
+          if (inputTemp) inputTemp.value = 220;
+          if (inputTime) inputTime.value = 20;
+          if (inputOvenType) inputOvenType.value = 'Bóveda de Piedra / Giratorio Industrial';
+          if (inputSteam) inputSteam.value = 'Vapor inicial abundante (5 segundos)';
+          if (inputFerm) inputFerm.value = '2h fermentación controlada a 26°C';
+          if (inputDamper) inputDamper.value = 'Cerrado 15 min, abrir últimos 5 min';
+          if (inputChefTip) inputChefTip.value = 'Mantener la temperatura del amasado en torno a 24°C para preservar los aromas.';
+
+          addIngredientRow({ name: 'Harina de Trigo Tradicional T55', matCode: 'MAT-001', qty: 0.160, unit: 'kg', isKey: true });
+          addIngredientRow({ name: 'Agua Filtrada', matCode: '', qty: 0.100, unit: 'L', isKey: false });
+          addIngredientRow({ name: 'Levadura Madre Activa Tostada', matCode: 'MAT-003', qty: 0.003, unit: 'kg', isKey: true });
+          addIngredientRow({ name: 'Sal Marina Fina', matCode: '', qty: 0.003, unit: 'kg', isKey: false });
+
+          addStepRow({ title: 'Amasado y Fuerza', desc: 'Mezclar harina, agua y levadura; amasar 8 minutos hasta obtener membrana suave.' });
+          addStepRow({ title: 'Fermentación en Bloque', desc: 'Reposo en cubeta engrasada durante 1h 30m realizando pliegues.' });
+          addStepRow({ title: 'División y Formado', desc: 'Dividir en porciones uniformes, bolear y dejar reposar 15 minutos.' });
+          addStepRow({ title: 'Horneado con Vapor', desc: 'Hornear con vapor inicial hasta obtener corteza dorada y crujiente.' });
+
+          if (btnEliminarRecetaBtn) btnEliminarRecetaBtn.style.display = 'none';
+        }
+
+        modalRecetaForm.style.display = 'flex';
+        modalRecetaForm.classList.add('active');
+        modalRecetaForm.setAttribute('aria-hidden', 'false');
+        window.LucideIcons?.refresh();
+      }
+
+      function closeRecipeFormModal() {
+        if (!modalRecetaForm) return;
+        modalRecetaForm.style.display = 'none';
+        modalRecetaForm.classList.remove('active');
+        modalRecetaForm.setAttribute('aria-hidden', 'true');
+      }
+
+      // Procesar guardado de receta (Agregar o Modificar)
+      recetaForm?.addEventListener('submit', (e) => {
+        e.preventDefault();
+
+        const idVal = recetaFormId ? recetaFormId.value.trim() : '';
+        const nameVal = document.getElementById('recetaInputName')?.value.trim();
+        const codeVal = document.getElementById('recetaInputCode')?.value.trim().toUpperCase();
+        const iconVal = document.getElementById('recetaInputIcon')?.value.trim() || '🥖';
+        const catVal = document.getElementById('recetaInputCategory')?.value || 'Panadería Francesa';
+        const weightVal = parseFloat(document.getElementById('recetaInputUnitWeight')?.value) || 250;
+        const defaultQtyVal = parseInt(document.getElementById('recetaInputDefaultQty')?.value, 10) || 50;
+        const descVal = document.getElementById('recetaInputDesc')?.value.trim();
+
+        const tempVal = parseInt(document.getElementById('recetaInputTemp')?.value, 10) || 220;
+        const timeVal = parseInt(document.getElementById('recetaInputTime')?.value, 10) || 20;
+        const ovenVal = document.getElementById('recetaInputOvenType')?.value || 'Bóveda de Piedra / Giratorio Industrial';
+        const steamVal = document.getElementById('recetaInputSteam')?.value.trim();
+        const fermVal = document.getElementById('recetaInputFerm')?.value.trim();
+        const damperVal = document.getElementById('recetaInputDamper')?.value.trim();
+        const chefTipVal = document.getElementById('recetaInputChefTip')?.value.trim();
+
+        if (!nameVal || !codeVal) {
+          alert('Por favor completa el nombre y el código de la receta.');
+          return;
+        }
+
+        const ingRows = recetaIngredientsTableBody ? Array.from(recetaIngredientsTableBody.querySelectorAll('tr')) : [];
+        const ingredients = [];
+        ingRows.forEach(row => {
+          const ingName = row.querySelector('.ing-name-input')?.value.trim();
+          const ingMatCode = row.querySelector('.ing-matcode-select')?.value.trim() || null;
+          const ingQty = parseFloat(row.querySelector('.ing-qty-input')?.value) || 0;
+          const ingUnit = row.querySelector('.ing-unit-select')?.value || 'kg';
+          const ingIsKey = Boolean(row.querySelector('.ing-key-checkbox')?.checked);
+
+          if (ingName && ingQty > 0) {
+            ingredients.push({
+              name: ingName,
+              matCode: ingMatCode || null,
+              qty: ingQty,
+              unit: ingUnit,
+              isKey: ingIsKey
+            });
+          }
+        });
+
+        if (ingredients.length === 0) {
+          alert('Por favor especifica al menos un ingrediente válido para la receta.');
+          return;
+        }
+
+        const stepRows = recetaStepsContainerForm ? Array.from(recetaStepsContainerForm.querySelectorAll('.receta-step-form-item')) : [];
+        const steps = [];
+        stepRows.forEach((row, i) => {
+          const stepTitle = row.querySelector('.step-title-input')?.value.trim() || `Paso ${i + 1}`;
+          const stepDesc = row.querySelector('.step-desc-input')?.value.trim() || '';
+          if (stepTitle || stepDesc) {
+            steps.push({
+              title: stepTitle,
+              desc: stepDesc
+            });
+          }
+        });
+
+        if (steps.length === 0) {
+          steps.push({ title: 'Horneado Artesanal', desc: 'Hornear según los parámetros térmicos establecidos.' });
+        }
+
+        const isEditing = Boolean(idVal);
+        let targetId = idVal;
+
+        if (isEditing) {
+          const index = activeRecipes.findIndex(r => r.id === idVal);
+          if (index !== -1) {
+            activeRecipes[index] = {
+              ...activeRecipes[index],
+              name: nameVal,
+              code: codeVal,
+              icon: iconVal,
+              category: catVal,
+              unitWeightGrams: weightVal,
+              defaultQty: defaultQtyVal,
+              description: descVal || activeRecipes[index].description,
+              bakingProfile: {
+                temp: tempVal,
+                timeMin: timeVal,
+                ovenType: ovenVal,
+                steam: steamVal,
+                fermentationTime: fermVal,
+                damper: damperVal
+              },
+              ingredients: ingredients,
+              steps: steps,
+              chefTip: chefTipVal
+            };
+          }
+        } else {
+          targetId = `rec_custom_${Date.now()}`;
+          const newRecipe = {
+            id: targetId,
+            code: codeVal,
+            name: nameVal,
+            category: catVal,
+            icon: iconVal,
+            lucideIcon: 'croissant',
+            description: descVal || `Fórmula artesanal de ${nameVal} creada por el Maestro Panadero.`,
+            unitWeightGrams: weightVal,
+            defaultQty: defaultQtyVal,
+            bakingProfile: {
+              temp: tempVal,
+              timeMin: timeVal,
+              ovenType: ovenVal,
+              steam: steamVal,
+              fermentationTime: fermVal,
+              damper: damperVal
+            },
+            ingredients: ingredients,
+            steps: steps,
+            chefTip: chefTipVal || 'Supervisar el greñado y el golpe de vapor para asegurar el desarrollo óptimo de corteza.'
+          };
+          activeRecipes.push(newRecipe);
+        }
+
+        saveActiveRecipes(activeRecipes);
+        currentRecipeId = targetId;
+
+        renderBreadChips();
+        calculateAndRenderRecipe();
+        closeRecipeFormModal();
+
+        const modalExito = document.getElementById('modalExitoNotificacion');
+        const titleEl = document.getElementById('modalExitoTitle');
+        const msgEl = document.getElementById('modalExitoMsg');
+        if (titleEl) titleEl.textContent = isEditing ? '¡Receta Modificada con Éxito!' : '¡Nueva Receta Creada con Éxito!';
+        if (msgEl) {
+          msgEl.innerHTML = `La fórmula de <strong>"${nameVal}" (${codeVal})</strong> ha sido guardada en el <strong>Recetario Maestro &amp; Calculadora</strong>.<br/><br/>Ya está lista para calcular insumos y crear lotes de horneado en cocina.`;
+        }
+        if (modalExito) {
+          modalExito.style.display = 'flex';
+          modalExito.classList.add('active');
+          modalExito.setAttribute('aria-hidden', 'false');
+        }
+
+        window.LucideIcons?.refresh();
+      });
+
+      // Eliminar receta personalizada
+      btnEliminarRecetaBtn?.addEventListener('click', () => {
+        const idVal = recetaFormId ? recetaFormId.value.trim() : '';
+        if (!idVal) return;
+        const rec = activeRecipes.find(r => r.id === idVal);
+        if (!rec) return;
+
+        if (confirm(`¿Deseas eliminar la receta "${rec.name}" (${rec.code}) del catálogo?`)) {
+          activeRecipes = activeRecipes.filter(r => r.id !== idVal);
+          saveActiveRecipes(activeRecipes);
+          currentRecipeId = activeRecipes[0]?.id || 'rec_baguette';
+          renderBreadChips();
+          calculateAndRenderRecipe();
+          closeRecipeFormModal();
+        }
+      });
+
+      // Vincular botones superiores de apertura para Agregar y Modificar Receta
+      btnOpenAgregarRecetaModal?.addEventListener('click', (e) => {
+        e.preventDefault();
+        openRecipeFormModal(null);
+      });
+      btnAddIngredientRow?.addEventListener('click', () => addIngredientRow());
+      btnAddStepRow?.addEventListener('click', () => addStepRow());
+
+      btnOpenModificarRecetaModal?.addEventListener('click', (e) => {
+        e.preventDefault();
+        openRecipeFormModal(currentRecipeId);
+      });
+
+      closeRecetaFormModalBtn?.addEventListener('click', closeRecipeFormModal);
+      cancelRecetaFormModalBtn?.addEventListener('click', closeRecipeFormModal);
+      modalRecetaForm?.addEventListener('click', (e) => {
+        if (e.target === modalRecetaForm) closeRecipeFormModal();
       });
 
       renderBreadChips();
@@ -2321,6 +2736,15 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // Cargar estado inicial inmediato desde almacenamiento local para evitar parpadeos
   loadOvensFromLocalStorage();
+
+  // Escuchar actualizaciones de POS y Caja para refrescar alertas de vitrina en tiempo real
+  if (typeof BroadcastChannel !== 'undefined') {
+    const listenPosChannel = new BroadcastChannel('lnp_pos_catalog_channel');
+    listenPosChannel.onmessage = () => {
+      fetchKitchenState();
+    };
+  }
+  window.addEventListener('catalogoPosChanged', () => fetchKitchenState());
 
   // Cargar estado inicial integral desde la base de datos MySQL
   fetchKitchenState();

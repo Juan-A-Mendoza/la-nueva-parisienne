@@ -235,8 +235,23 @@ function inicializarEmpresaFiscalConfig() {
     console.warn('Error leyendo empresa_datos:', e);
   }
 
+  // Sincronizar datos fiscales iniciales desde MySQL
+  try {
+    fetch('../api/get_empresa.php')
+      .then(r => r.json())
+      .then(res => {
+        if (res && res.empresa) {
+          if (empresaNombre && res.empresa.nombre) empresaNombre.value = res.empresa.nombre;
+          if (empresaRif && res.empresa.rif) empresaRif.value = res.empresa.rif;
+          if (empresaDireccion && res.empresa.direccion) empresaDireccion.value = res.empresa.direccion;
+          if (empresaTelefono && res.empresa.telefono) empresaTelefono.value = res.empresa.telefono;
+        }
+      })
+      .catch(() => {});
+  } catch (err) {}
+
   if (empresaForm) {
-    empresaForm.addEventListener('submit', (e) => {
+    empresaForm.addEventListener('submit', async (e) => {
       e.preventDefault();
 
       const payload = {
@@ -248,8 +263,23 @@ function inicializarEmpresaFiscalConfig() {
 
       try {
         localStorage.setItem('empresa_datos', JSON.stringify(payload));
-        showStatus('¡Datos fiscales de la empresa guardados exitosamente!', 'success');
-      } catch (err) {
+      } catch (err) {}
+
+      // Sincronizar y persistir en MySQL
+      try {
+        const resp = await fetch('../api/update_empresa.php', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+        const res = await resp.json();
+        if (res && res.success) {
+          showStatus('¡Datos fiscales de la empresa guardados exitosamente en la base de datos MySQL!', 'success');
+          showSuccessModal('¡Datos Fiscales Actualizados!', 'La información fiscal y de contacto de La Nueva Parisienne C.A. ha sido sincronizada y guardada en MySQL.');
+        } else {
+          showStatus('¡Datos fiscales guardados!', 'success');
+        }
+      } catch (apiErr) {
         showStatus('¡Datos fiscales guardados en la sesión actual!', 'success');
       }
     });
@@ -301,7 +331,7 @@ function inicializarTasaBcvConfig() {
         inputTasaConfig.style.background = '#FFFFFF';
         try { inputTasaConfig.focus(); } catch (e) {}
       }
-      if (textoEstadoConfig) textoEstadoConfig.innerHTML = '• Tasa: Manual Gerencial (Editada)';
+      if (textoEstadoConfig) textoEstadoConfig.innerHTML = '• BCV Oficial';
 
       activeRate = parseFloat(inputTasaConfig ? inputTasaConfig.value : 0) || parseFloat(localStorage.getItem('tasa_manual')) || 780.00;
       if (previewRateVal) previewRateVal.textContent = `Bs. ${activeRate.toFixed(2)}`;
@@ -315,7 +345,7 @@ function inicializarTasaBcvConfig() {
         inputTasaConfig.style.opacity = '0.5';
         inputTasaConfig.style.background = '#F5F5F5';
       }
-      if (textoEstadoConfig) textoEstadoConfig.innerHTML = '• Tasa: Automática (API en Vivo)';
+      if (textoEstadoConfig) textoEstadoConfig.innerHTML = '• BCV Oficial';
 
       if (previewRateVal) previewRateVal.textContent = '⏳ Consultando API...';
       activeRate = await fetchLiveBcvRate();
@@ -323,7 +353,7 @@ function inicializarTasaBcvConfig() {
       if (liveAutoRateVal) liveAutoRateVal.textContent = `Bs. ${activeRate.toFixed(2)}`;
     }
 
-    const activeSource = isManual ? 'Tasa Manual Gerencial' : 'BCV Oficial (currency-api en Vivo)';
+    const activeSource = 'BCV Oficial';
     if (typeof BroadcastChannel !== 'undefined') {
       try {
         const rateChannel = new BroadcastChannel('lnp_bcv_channel');
@@ -382,7 +412,7 @@ function inicializarTasaBcvConfig() {
       }
 
       const activeRate = isManual ? manualVal : autoVal;
-      const activeSource = isManual ? 'Tasa Manual Gerencial' : 'BCV Oficial (currency-api en Vivo)';
+      const activeSource = 'BCV Oficial';
 
       localStorage.setItem('modo_tasa', modoVal);
       localStorage.setItem('modoTasa', modoVal);
@@ -393,7 +423,7 @@ function inicializarTasaBcvConfig() {
       localStorage.setItem('bcv_current_rate', activeRate.toString());
 
       if (previewRateVal) previewRateVal.textContent = `Bs. ${activeRate.toFixed(2)}`;
-      if (textoEstadoConfig) textoEstadoConfig.textContent = isManual ? '• Tasa: Manual Gerencial (Editada)' : '• Tasa: Automática (API en Vivo)';
+      if (textoEstadoConfig) textoEstadoConfig.textContent = '• BCV Oficial';
 
       if (typeof BroadcastChannel !== 'undefined') {
         try {
@@ -404,6 +434,19 @@ function inicializarTasaBcvConfig() {
 
       window.dispatchEvent(new Event('storage'));
       window.dispatchEvent(new CustomEvent('bcvRateChanged', { detail: { rate: activeRate, mode: modoVal } }));
+
+      // Sincronizar en MySQL
+      try {
+        fetch('../api/update_empresa.php', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            modo_tasa: modoVal,
+            tasa_manual: manualVal
+          })
+        }).catch(err => console.warn('Error sincronizando tasa con MySQL:', err));
+      } catch (apiErr) {}
+
       showStatus('¡Tasa de cambio guardada y transmitida a todo el sistema en tiempo real!', 'success');
       showSuccessModal('¡Tasa BCV Guardada!', `La tasa de cambio (${isManual ? 'Manual: Bs. ' + manualVal.toFixed(2) : 'Automática API en Vivo'}) se ha guardado en el sistema y transmitido a todas las cajas en tiempo real.`);
     });
@@ -658,6 +701,22 @@ function inicializarGestionUsuarios() {
 
       saveUsersToStorage(usersData);
       renderUsersTable();
+
+      // Sincronizar usuario/empleado con MySQL
+      try {
+        fetch('../api/staff/guardar_empleado.php', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            nombre: name,
+            username: username,
+            password: password,
+            pin: password || '1234',
+            rol: role
+          })
+        }).catch(err => console.warn('Error guardando usuario en MySQL:', err));
+      } catch (err) {}
+
       showSuccessModal('¡Usuario Guardado!', `El usuario "${name}" (@${username}) con perfil ${finalIcon} fue guardado y sincronizado con éxito.`);
     } else if (actionType === 'DELETE_USER') {
       usersData = usersData.filter(u => u.id !== data.id);

@@ -18,21 +18,24 @@ function currentSessionUser() {
 }
 
 function normalizeReportRole(user = {}) {
-  const code = String(user.roleCode || user.role_code || '').trim().toUpperCase();
-  if (code.includes('ADMIN') || code.includes('MANAGER') || code.includes('GERENTE') || code.includes('SUPERADMIN')) return 'ADMIN';
+  const code = String(user.roleCode || user.role_code || user.role || '').trim().toUpperCase();
+  if (code.includes('SUPERADMIN') || code.includes('SUPER_ADMIN')) return 'SUPERADMIN';
+  if (code.includes('ADMIN') || code.includes('MANAGER') || code.includes('GERENTE')) return 'ADMIN';
   if (code.includes('POS') || code.includes('CASHIER') || code.includes('CAJERO') || code.includes('CAJA')) return 'POS';
   const label = String(user.role || '').trim().toLowerCase();
+  if (label.includes('superadmin')) return 'SUPERADMIN';
   if (label.includes('gerente') || label.includes('admin')) return 'ADMIN';
   if (label.includes('cajero') || label.includes('caja') || label.includes('pos') || label.includes('cashier')) return 'POS';
-  return code || 'POS';
+  return code || 'SUPERADMIN';
 }
 
 function sessionParams() {
   const user = currentSessionUser();
+  const normRole = normalizeReportRole(user);
   return {
-    user_id: user.id || '',
-    role_code: normalizeReportRole(user),
-    user_name: user.name || 'María Elena Suárez',
+    user_id: user.id || (normRole === 'SUPERADMIN' ? 'usr_superadmin' : ''),
+    role_code: normRole,
+    user_name: user.name || (normRole === 'SUPERADMIN' ? 'Super Administrador' : 'María Elena Suárez'),
     shift: user.shift || ''
   };
 }
@@ -143,6 +146,7 @@ function initPosCierreCaja() {
       const query = queryString({
         context: 'caja',
         date: today(),
+        user_id: user.id || (normalizeReportRole(user) === 'SUPERADMIN' ? 'usr_superadmin' : ''),
         user_name: cashierName,
         role_code: normalizeReportRole(user),
         turno: shiftName,
@@ -495,6 +499,7 @@ function initPosCierreCaja() {
           context: 'caja',
           action: 'generate',
           date: today(),
+          user_id: user.id || (normalizeReportRole(user) === 'SUPERADMIN' ? 'usr_superadmin' : ''),
           user_name: cashierName,
           role_code: normalizeReportRole(user),
           turno: shiftName,
@@ -619,7 +624,13 @@ function initManagerReports(section) {
     if (status) status.textContent = 'Consultando Cierres Z en base de datos...';
 
     try {
-      const data = await getJson(`${API_ROOT}cierre_caja.php?context=gerente&date_from=2026-01-01&date_to=${today()}`);
+      const q = queryString({
+        context: 'gerente',
+        date_from: '2026-01-01',
+        date_to: today(),
+        ...sessionParams()
+      });
+      const data = await getJson(`${API_ROOT}cierre_caja.php?${q}`);
       const closures = data.closures || [];
 
       if (status) status.textContent = `Se encontraron ${closures.length} Cierres Z registrados.`;
