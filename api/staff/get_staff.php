@@ -20,15 +20,16 @@ try {
     $pdo = getDbConnection();
 
     $sql = "
-        SELECT u.id, u.codigo AS code, u.nombre AS name,
-               r.nombre AS role, r.codigo AS roleCode,
-               r.descripcion AS department,
+        SELECT u.id, u.codigo AS code, u.username, u.nombre AS name,
+               COALESCE(r.nombre, 'Personal Autorizado') AS role, 
+               COALESCE(r.codigo, 'STAFF') AS roleCode,
+               COALESCE(r.descripcion, 'Operaciones') AS department,
                COALESCE(u.turno, 'Turno Completo') AS shift,
                u.telefono AS phone, u.email,
                u.estado AS status,
-               u.icono AS avatar
+               COALESCE(u.icono, 'user') AS avatar
         FROM usuarios u
-        INNER JOIN roles r ON u.rol_id = r.id
+        LEFT JOIN roles r ON u.rol_id = r.id
         ORDER BY u.codigo ASC
     ";
 
@@ -40,6 +41,7 @@ try {
         return [
             'id' => $r['id'],
             'code' => $r['code'],
+            'username' => $r['username'] ?: ($r['code'] ?: $r['id']),
             'name' => $r['name'],
             'role' => $r['role'],
             'roleCode' => $r['roleCode'],
@@ -49,7 +51,8 @@ try {
             'email' => $r['email'],
             'status' => $r['status'],
             'statusText' => $isActive ? 'Activo' : 'Inactivo',
-            'avatar' => $r['avatar'] ?: 'user'
+            'avatar' => $r['avatar'] ?: 'user',
+            'icon' => $r['avatar'] ?: 'user'
         ];
     }, $rows);
 

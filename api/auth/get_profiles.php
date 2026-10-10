@@ -21,10 +21,13 @@ try {
     
     // Consulta para obtener usuarios activos y sus roles asignados (redirect_url está en roles - 2FN)
     $sql = "SELECT u.id, u.codigo, u.username, u.nombre AS name, u.email, u.telefono, u.icono AS icon, 
-                   u.turno, r.redirect_url AS redirectUrl, r.nombre AS role, 
-                   r.codigo AS roleCode, r.descripcion
+                   u.turno, 
+                   COALESCE(r.redirect_url, 'modules/dashboard.html') AS redirectUrl, 
+                   COALESCE(r.nombre, 'Personal Autorizado') AS role, 
+                   COALESCE(r.codigo, 'STAFF') AS roleCode, 
+                   COALESCE(r.descripcion, 'Perfil de acceso al sistema La Nueva Parisienne.') AS descripcion
             FROM usuarios u 
-            INNER JOIN roles r ON u.rol_id = r.id 
+            LEFT JOIN roles r ON u.rol_id = r.id 
             WHERE u.estado = 'active' 
             ORDER BY u.nombre ASC";
             
@@ -36,13 +39,13 @@ try {
         return [
             'id' => $user['id'],
             'code' => $user['codigo'],
-            'username' => $user['username'] ?: $user['codigo'],
+            'username' => $user['username'] ?: ($user['codigo'] ?: $user['id']),
             'name' => $user['name'],
             'email' => $user['email'],
             'role' => $user['role'],
             'roleCode' => $user['roleCode'],
             'icon' => $user['icon'] ? $user['icon'] : 'shield-check',
-            'description' => $user['descripcion'] ? $user['descripcion'] : 'Perfil de acceso al sistema La Nueva Parisienne.',
+            'description' => $user['descripcion'],
             'redirectUrl' => $user['redirectUrl'],
             'turno' => $user['turno']
         ];

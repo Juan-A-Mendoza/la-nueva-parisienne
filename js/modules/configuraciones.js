@@ -12,10 +12,13 @@ import { BcvRateStore } from '../core/bcv-rate-store.js';
 // ==========================================================================
 
 const INITIAL_USERS = [
-  { id: 'usr_001', name: 'Juan Mendoza', username: 'admin', role: 'Gerente General', roleCode: 'ADMIN', icon: 'shield-check', description: 'Acceso total a KPIs, contabilidad, producción y personal.', redirectUrl: 'modules/dashboard.html' },
-  { id: 'usr_002', name: 'María Elena Suárez', username: 'cajero1', role: 'Cajero', roleCode: 'POS', icon: 'banknote', description: 'Facturación directa a clientes, cobros rápidos y apertura de caja.', redirectUrl: 'modules/pos.html' },
-  { id: 'usr_003', name: 'Carlos Eduardo Rivas', username: 'panadero1', role: 'Panadero', roleCode: 'KITCHEN', icon: 'chef-hat', description: 'Gestión de hornos, recetas, orden del día y preparación de masa.', redirectUrl: 'modules/kitchen.html' },
-  { id: 'usr_004', name: 'Andrés Felipe Gómez', username: 'contador1', role: 'Contador', roleCode: 'ACCOUNTANT', icon: 'bar-chart-3', description: 'Auditoría financiera, margen de ganancias y estados contables.', redirectUrl: 'modules/accounting.html' }
+  { id: 'usr_superadmin', name: 'Super Administrador', username: 'superadmin', role: 'Super Administrador', roleCode: 'SUPERADMIN', icon: 'shield-check', description: 'Acceso total e irrestricto a todos los módulos y funciones del sistema.', redirectUrl: 'modules/dashboard.html' },
+  { id: 'usr_manager', name: 'Juan Mendoza', username: 'admin', role: 'Gerente General', roleCode: 'ADMIN', icon: 'shield-check', description: 'Gestión y auditoría del panel gerencial, ventas e inventario.', redirectUrl: 'modules/dashboard.html' },
+  { id: 'usr_carlos', name: 'Carlos Mendoza', username: 'panadero', role: 'Maestro Panadero / Chef de Cuisine', roleCode: 'BAKER', icon: 'chef-hat', description: 'Gestión de hornos industriales, comandas KDS e insumos de masa.', redirectUrl: 'modules/kitchen.html' },
+  { id: 'usr_ana', name: 'Ana Ramírez', username: 'cajero1', role: 'Personal de Caja / POS', roleCode: 'POS', icon: 'banknote', description: 'Facturación directa a clientes, cobros rápidos y arqueo de caja.', redirectUrl: 'modules/pos.html' },
+  { id: 'usr_baker', name: 'Enrique Chef', username: 'chef', role: 'Maestro Panadero / Chef de Cuisine', roleCode: 'BAKER', icon: 'chef-hat', description: 'Gestión de hornos industriales, comandas KDS e insumos de masa.', redirectUrl: 'modules/kitchen.html' },
+  { id: 'usr_cashier', name: 'Henry POS', username: 'cajero', role: 'Personal de Caja / POS', roleCode: 'POS', icon: 'shield-check', description: 'Facturación directa a clientes, cobros rápidos y arqueo de caja.', redirectUrl: 'modules/pos.html' },
+  { id: 'usr_accountant', name: 'Sebastian Finanzas', username: 'contador', role: 'Contador General', roleCode: 'ACCOUNTANT', icon: 'bar-chart-3', description: 'Auditoría financiera, balance de comprobación y libros contables.', redirectUrl: 'modules/accounting.html' }
 ];
 
 const VALID_MANAGER_PASSWORDS = ['admin123', '1234', 'gerente', 'admin', '0000'];
@@ -492,8 +495,58 @@ function inicializarGestionUsuarios() {
   const closeUserModalBtn = document.getElementById('closeUserModalBtn');
   const cancelUserModalBtn = document.getElementById('cancelUserModalBtn');
 
+  async function loadUsersFromDb() {
+    try {
+      const res = await fetch(`../api/staff/get_staff.php?t=${Date.now()}`, { cache: 'no-store' });
+      if (res.ok) {
+        const data = await res.json();
+        if (data.success && Array.isArray(data.staff) && data.staff.length > 0) {
+          usersData = data.staff.map(emp => {
+            let roleCode = emp.roleCode || 'POS';
+            const rLower = (emp.role || '').toLowerCase();
+            if (emp.roleCode === 'SUPERADMIN' || rLower.includes('superadmin')) {
+              roleCode = 'SUPERADMIN';
+            } else if (emp.roleCode === 'ADMIN' || rLower.includes('gerente') || rLower.includes('admin')) {
+              roleCode = 'ADMIN';
+            } else if (emp.roleCode === 'BAKER' || rLower.includes('panader') || rLower.includes('chef') || rLower.includes('cocina')) {
+              roleCode = 'BAKER';
+            } else if (emp.roleCode === 'ACCOUNTANT' || rLower.includes('contad') || rLower.includes('finanz')) {
+              roleCode = 'ACCOUNTANT';
+            } else if (emp.roleCode === 'CASHIER' || rLower.includes('cajer') || rLower.includes('pos')) {
+              roleCode = 'POS';
+            }
+
+            return {
+              id: emp.id,
+              code: emp.code,
+              name: emp.name,
+              username: emp.username || emp.code || emp.id,
+              role: emp.role,
+              roleCode: roleCode,
+              icon: emp.icon || emp.avatar || 'shield-check',
+              status: emp.status || 'active',
+              email: emp.email || '',
+              phone: emp.phone || '',
+              shift: emp.shift || ''
+            };
+          });
+
+          saveUsersToStorage(usersData);
+          if (isUsersUnlocked) {
+            renderUsersTable();
+          }
+        }
+      }
+    } catch (e) {
+      console.warn('Gestión de Usuarios: Error cargando usuarios desde MySQL, usando caché local.', e);
+    }
+  }
+
+  // Carga inicial asíncrona desde MySQL
+  loadUsersFromDb();
+
   function renderUsersTable() {
-  setTimeout(() => window.LucideIcons?.refresh(), 0);
+    setTimeout(() => window.LucideIcons?.refresh(), 0);
     if (!usuariosTbody) return;
     usuariosTbody.innerHTML = '';
     const safeList = Array.isArray(usersData) ? usersData : [];
@@ -503,31 +556,44 @@ function inicializarGestionUsuarios() {
       const tr = document.createElement('tr');
       
       let badgeStyle = 'background: rgba(46,125,50,0.1); color: var(--color-success); border: 1px solid rgba(46,125,50,0.25);';
-      if (user.roleCode === 'SUPERADMIN' || (user.role || '').toLowerCase().includes('superadmin')) {
+      const rLower = (user.role || '').toLowerCase();
+      const codeUpper = (user.roleCode || '').toUpperCase();
+
+      if (codeUpper === 'SUPERADMIN' || rLower.includes('superadmin')) {
         badgeStyle = 'background: rgba(106,27,154,0.15); color: #6A1B9A; border: 1px solid rgba(106,27,154,0.4); font-weight: 800;';
-      } else if (user.roleCode === 'ADMIN') {
+      } else if (codeUpper === 'ADMIN' || rLower.includes('gerente') || rLower.includes('admin')) {
         badgeStyle = 'background: rgba(212,155,84,0.15); color: var(--color-gold-dark); border: 1px solid rgba(212,155,84,0.4); font-weight: 800;';
-      } else if (user.roleCode === 'KITCHEN') {
+      } else if (codeUpper === 'BAKER' || codeUpper === 'KITCHEN' || rLower.includes('panader') || rLower.includes('chef') || rLower.includes('cocina')) {
         badgeStyle = 'background: rgba(255,152,0,0.1); color: #E65100; border: 1px solid rgba(255,152,0,0.3); font-weight: 700;';
-      } else if (user.roleCode === 'ACCOUNTANT') {
+      } else if (codeUpper === 'ACCOUNTANT' || rLower.includes('contad') || rLower.includes('finanz')) {
         badgeStyle = 'background: rgba(33,150,243,0.1); color: #1565C0; border: 1px solid rgba(33,150,243,0.3); font-weight: 700;';
       }
 
+      const isActive = (user.status !== 'inactive');
+      const statusBadgeHtml = isActive
+        ? `<span class="badge-stock-normal badge-clean-icon" style="color: var(--color-success);"><i data-lucide="check" class="icon-xs"></i> Activo</span>`
+        : `<span class="badge-stock-normal badge-clean-icon" style="color: var(--color-danger); background: rgba(198,40,40,0.1); border: 1px solid rgba(198,40,40,0.25);"><i data-lucide="x" class="icon-xs"></i> Inactivo</span>`;
+
+      const isProtectedSuperadmin = user.id === 'usr_superadmin' || codeUpper === 'SUPERADMIN' || rLower.includes('superadmin');
+      const deleteActionBtn = isProtectedSuperadmin
+        ? `<button type="button" class="btn-table-action-sm" disabled style="opacity: 0.35; cursor: not-allowed;" title="Super Administrador protegido"><i data-lucide="shield" class="icon-xs"></i></button>`
+        : `<button type="button" class="btn-table-action-sm btn-del-usr" style="background: rgba(198,40,40,0.1); color: var(--color-danger); border-color: rgba(198,40,40,0.3);" title="Eliminar usuario"><i data-lucide="trash-2" class="icon-xs"></i></button>`;
+
       tr.innerHTML = `
         <td><strong><i data-lucide="${user.icon || 'user'}" class="icon-sm" style="margin-right: 0.35rem;"></i>${user.name || 'Usuario'}</strong></td>
-        <td><span class="table-code-badge">@${user.username || user.id}</span></td>
+        <td><span class="table-code-badge">@${user.username || user.code || user.id}</span></td>
         <td>
           <span class="table-status-tag active" style="${badgeStyle}">
             ${user.role || 'Empleado'}
           </span>
         </td>
         <td>
-          <span class="badge-stock-normal badge-clean-icon" style="color: var(--color-success);"><i data-lucide="check" class="icon-xs"></i> Activo</span>
+          ${statusBadgeHtml}
         </td>
         <td>
           <div style="display: flex; gap: 0.35rem;">
             <button type="button" class="btn-table-action-sm btn-edit-usr" title="Editar usuario"><i data-lucide="edit-3" class="icon-xs"></i> <span>Editar</span></button>
-            <button type="button" class="btn-table-action-sm btn-del-usr" style="background: rgba(198,40,40,0.1); color: var(--color-danger); border-color: rgba(198,40,40,0.3);" title="Eliminar usuario"><i data-lucide="trash-2" class="icon-xs"></i></button>
+            ${deleteActionBtn}
           </div>
         </td>
       `;
@@ -588,9 +654,30 @@ function inicializarGestionUsuarios() {
       if (modalUserTitle) modalUserTitle.textContent = 'Editar Información de Usuario';
       document.getElementById('modalUserId').value = userToEdit.id;
       document.getElementById('modalUserNombre').value = userToEdit.name;
-      document.getElementById('modalUserUsername').value = userToEdit.username;
+      document.getElementById('modalUserUsername').value = userToEdit.username || userToEdit.code || userToEdit.id;
       document.getElementById('modalUserPassword').value = userToEdit.password || '••••••••';
-      document.getElementById('modalUserRol').value = userToEdit.role;
+      
+      const roleSelect = document.getElementById('modalUserRol');
+      if (roleSelect) {
+        let matched = false;
+        const uRole = (userToEdit.role || '').toLowerCase();
+        for (const opt of roleSelect.options) {
+          const optLower = opt.value.toLowerCase();
+          if (optLower === uRole ||
+              (uRole.includes('cajer') && optLower.includes('caja')) ||
+              (uRole.includes('panader') && optLower.includes('panader')) ||
+              (uRole.includes('contad') && optLower.includes('contad')) ||
+              (uRole.includes('superadmin') && optLower.includes('superadmin')) ||
+              (uRole.includes('gerente') && optLower.includes('gerente'))) {
+            roleSelect.value = opt.value;
+            matched = true;
+            break;
+          }
+        }
+        if (!matched && userToEdit.role) {
+          roleSelect.value = userToEdit.role;
+        }
+      }
       updateActiveEmojiButton(userToEdit.icon || 'shield-check');
     } else {
       if (modalUserTitle) modalUserTitle.textContent = 'Crear Nuevo Usuario';
@@ -615,6 +702,7 @@ function inicializarGestionUsuarios() {
 
   // RECONECTAR BOTÓN DE DESBLOQUEO DE USUARIOS Y SELECTOR DE EMOJI
   btnUnlockUserManagement?.addEventListener('click', () => {
+    loadUsersFromDb();
     if (isUsersUnlocked) {
       renderUsersTable();
       return;
@@ -632,11 +720,12 @@ function inicializarGestionUsuarios() {
   document.getElementById('modalUserRol')?.addEventListener('change', (e) => {
     const isNewUser = !document.getElementById('modalUserId')?.value;
     if (isNewUser) {
-      const role = e.target.value;
+      const role = (e.target.value || '').toLowerCase();
       let suggestedEmoji = 'shield-check';
-      if (role === 'Cajero') suggestedEmoji = 'banknote';
-      else if (role === 'Panadero') suggestedEmoji = 'chef-hat';
-      else if (role === 'Contador') suggestedEmoji = 'bar-chart-3';
+      if (role.includes('caja') || role.includes('cajer')) suggestedEmoji = 'banknote';
+      else if (role.includes('panader') || role.includes('cocina')) suggestedEmoji = 'chef-hat';
+      else if (role.includes('contad') || role.includes('finanz')) suggestedEmoji = 'bar-chart-3';
+      else if (role.includes('superadmin')) suggestedEmoji = 'shield-check';
       updateActiveEmojiButton(suggestedEmoji);
     }
   });
@@ -668,9 +757,11 @@ function inicializarGestionUsuarios() {
       isUsersUnlocked = true;
       if (usersLockedPlaceholder) usersLockedPlaceholder.style.display = 'none';
       if (usersCrudPanel) usersCrudPanel.style.display = 'block';
-      if (btnUnlockUserManagement) btnUnlockUserManagement.innerHTML = '<i data-lucide="unlock" class="icon-sm"></i> <span>Gestión Desbloqueada</span>'; window.LucideIcons?.refresh();
+      if (btnUnlockUserManagement) btnUnlockUserManagement.innerHTML = '<i data-lucide="unlock" class="icon-sm"></i> <span>Gestión Desbloqueada</span>'; 
+      window.LucideIcons?.refresh();
       renderUsersTable();
-      showSuccessModal('¡Acceso Autorizado!', 'Gestión de Usuarios y Roles desbloqueada exitosamente.');
+      loadUsersFromDb();
+      showSuccessModal('¡Acceso Autorizado!', 'Gestión de Usuarios y Roles sincronizada con MySQL exitosamente.');
     } else if (actionType === 'SAVE_USER') {
       const { id, name, username, password, role, icon } = data;
       let roleCode = 'POS';
@@ -682,14 +773,47 @@ function inicializarGestionUsuarios() {
         finalIcon = 'shield-check';
       } else if (rLower.includes('gerente') || rLower.includes('admin')) {
         roleCode = 'ADMIN';
-      } else if (rLower.includes('panadero') || rLower.includes('cocina')) {
-        roleCode = 'KITCHEN';
-      } else if (rLower.includes('contador') || rLower.includes('contabilidad')) {
+      } else if (rLower.includes('panadero') || rLower.includes('cocina') || rLower.includes('chef')) {
+        roleCode = 'BAKER';
+      } else if (rLower.includes('contador') || rLower.includes('contabilidad') || rLower.includes('finanz')) {
         roleCode = 'ACCOUNTANT';
-      } else if (rLower.includes('cajero')) {
+      } else if (rLower.includes('cajero') || rLower.includes('caja')) {
         roleCode = 'POS';
       }
 
+      // Sincronizar de forma robusta con MySQL
+      try {
+        fetch('../api/staff/guardar_empleado.php', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            id: id || '',
+            nombre: name,
+            username: username,
+            password: password,
+            pin: password || '1234',
+            rol: role,
+            roleCode: roleCode,
+            icon: finalIcon,
+            estado: 'active'
+          })
+        }).then(res => res.json()).then(resp => {
+          if (resp && resp.success && resp.employee) {
+            const serverEmp = resp.employee;
+            const idx = usersData.findIndex(u => u.id === serverEmp.id || (id && u.id === id));
+            if (idx >= 0) {
+              usersData[idx] = { ...usersData[idx], ...serverEmp, roleCode, icon: finalIcon };
+            } else {
+              usersData.push({ ...serverEmp, roleCode, icon: finalIcon });
+            }
+            saveUsersToStorage(usersData);
+            renderUsersTable();
+          }
+          loadUsersFromDb();
+        }).catch(err => console.warn('Error guardando usuario en MySQL:', err));
+      } catch (err) {}
+
+      // Actualización optimista local
       if (id) {
         const existing = usersData.find(u => u.id === id);
         if (existing) {
@@ -709,34 +833,31 @@ function inicializarGestionUsuarios() {
           password: password || '123456',
           role,
           roleCode,
-          icon: finalIcon
+          icon: finalIcon,
+          status: 'active'
         });
       }
 
       saveUsersToStorage(usersData);
       renderUsersTable();
-
-      // Sincronizar usuario/empleado con MySQL
+      showSuccessModal('¡Usuario Guardado!', `El usuario "${name}" (@${username}) con perfil ${role} fue guardado y sincronizado con la base de datos.`);
+    } else if (actionType === 'DELETE_USER') {
+      const userToDelete = data;
+      // Llamar a eliminación en MySQL
       try {
-        fetch('../api/staff/guardar_empleado.php', {
+        fetch('../api/staff/eliminar_empleado.php', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            nombre: name,
-            username: username,
-            password: password,
-            pin: password || '1234',
-            rol: role
-          })
-        }).catch(err => console.warn('Error guardando usuario en MySQL:', err));
+          body: JSON.stringify({ id: userToDelete.id })
+        }).then(res => res.json()).then(resp => {
+          loadUsersFromDb();
+        }).catch(err => console.warn('Error eliminando usuario en MySQL:', err));
       } catch (err) {}
 
-      showSuccessModal('¡Usuario Guardado!', `El usuario "${name}" (@${username}) con perfil ${finalIcon} fue guardado y sincronizado con éxito.`);
-    } else if (actionType === 'DELETE_USER') {
-      usersData = usersData.filter(u => u.id !== data.id);
+      usersData = usersData.filter(u => u.id !== userToDelete.id);
       saveUsersToStorage(usersData);
       renderUsersTable();
-      showSuccessModal('¡Usuario Eliminado!', `El usuario "${data.name}" (@${data.username}) fue eliminado correctamente del sistema.`);
+      showSuccessModal('¡Usuario Eliminado!', `El usuario "${userToDelete.name}" (@${userToDelete.username}) fue eliminado correctamente del sistema.`);
     }
   });
 
