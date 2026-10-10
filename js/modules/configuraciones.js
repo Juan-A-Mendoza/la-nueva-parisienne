@@ -187,11 +187,25 @@ function inicializarSesionGerente() {
   } catch (e) {}
 
   const activeUser = (session && session.user) ? session.user : {
-    name: 'Juan Mendoza',
-    role: 'Gerente General',
-    roleCode: 'ADMIN',
+    name: 'Super Administrador',
+    role: 'Super Administrador',
+    roleCode: 'SUPERADMIN',
     icon: 'shield-check'
   };
+
+  // Verificación estricta: Módulo de configuración exclusiva del SUPERADMIN
+  const userRole = (activeUser.role || '').toLowerCase();
+  const userRoleCode = (activeUser.roleCode || activeUser.role_code || '').toUpperCase();
+  const isSuperadmin = userRoleCode === 'SUPERADMIN' || userRole.includes('superadmin');
+
+  if (!isSuperadmin) {
+    let redirectUrl = 'dashboard.html';
+    if (userRoleCode === 'ACCOUNTANT' || userRole.includes('contador')) redirectUrl = 'accounting.html';
+    else if (userRoleCode === 'POS' || userRoleCode === 'CASHIER' || userRole.includes('cajero')) redirectUrl = 'pos.html';
+    else if (userRoleCode === 'KITCHEN' || userRoleCode === 'BAKER' || userRole.includes('panadero')) redirectUrl = 'kitchen.html';
+    window.location.replace(redirectUrl);
+    return;
+  }
 
   const managerAvatar = document.getElementById('managerAvatar');
   const managerName = document.getElementById('managerName');

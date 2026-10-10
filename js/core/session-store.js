@@ -8,10 +8,10 @@ const STORAGE_KEY = 'LN_PARISIENNE_SESSION';
 // Arreglo de usuarios por defecto (Semilla Inicial con Superadmin)
 const INITIAL_USERS = [
   { id: 'usr_superadmin', name: 'Super Administrador', username: 'superadmin', role: 'Super Administrador', roleCode: 'SUPERADMIN', icon: 'shield-check', description: 'Acceso total e irrestricto a todos los módulos y funciones del sistema.', redirectUrl: 'modules/dashboard.html', allowedModules: ['all'] },
-  { id: 'usr_001', name: 'Juan Mendoza', username: 'admin', role: 'Gerente General', roleCode: 'ADMIN', icon: 'shield-check', description: 'Acceso total a KPIs, contabilidad, producción y personal.', redirectUrl: 'modules/dashboard.html', allowedModules: ['all'] },
+  { id: 'usr_001', name: 'Juan Mendoza', username: 'admin', role: 'Gerente General', roleCode: 'ADMIN', icon: 'shield-check', description: 'Gestión y auditoría del panel gerencial, ventas e inventario.', redirectUrl: 'modules/dashboard.html', allowedModules: ['dashboard', 'inventory', 'suppliers'] },
   { id: 'usr_002', name: 'María Elena Suárez', username: 'cajero1', role: 'Cajero', roleCode: 'POS', icon: 'banknote', description: 'Facturación directa a clientes, cobros rápidos y apertura de caja.', redirectUrl: 'modules/pos.html', allowedModules: ['pos'] },
   { id: 'usr_003', name: 'Carlos Eduardo Rivas', username: 'panadero1', role: 'Panadero', roleCode: 'KITCHEN', icon: 'chef-hat', description: 'Gestión de hornos, recetas, orden del día y preparación de masa.', redirectUrl: 'modules/kitchen.html', allowedModules: ['kitchen', 'inventory'] },
-  { id: 'usr_004', name: 'Andrés Felipe Gómez', username: 'contador1', role: 'Contador', roleCode: 'ACCOUNTANT', icon: 'bar-chart-3', description: 'Auditoría financiera, margen de ganancias y estados contables.', redirectUrl: 'modules/accounting.html', allowedModules: ['accounting', 'settings'] }
+  { id: 'usr_004', name: 'Sebastian Finanzas', username: 'contador', role: 'Contador General', roleCode: 'ACCOUNTANT', icon: 'bar-chart-3', description: 'Auditoría financiera, balance de comprobación y libros contables.', redirectUrl: 'modules/accounting.html', allowedModules: ['accounting'] }
 ];
 
 // Base de datos simulada de empleados y perfiles (Fallback local)
@@ -36,9 +36,9 @@ const USERS_DATABASE = [
     roleCode: 'ADMIN',
     icon: 'shield-check',
     pin: '1234',
-    description: 'Acceso total a KPIs, contabilidad, producción y personal.',
+    description: 'Gestión y auditoría del panel gerencial, ventas e inventario.',
     redirectUrl: 'modules/dashboard.html',
-    allowedModules: ['all']
+    allowedModules: ['dashboard', 'inventory', 'suppliers']
   },
   {
     id: 'usr_carlos',
@@ -66,15 +66,15 @@ const USERS_DATABASE = [
   },
   {
     id: 'usr_accountant',
-    name: 'Andrés Felipe Gómez',
-    username: 'contador1',
-    role: 'Contador',
+    name: 'Sebastian Finanzas',
+    username: 'contador',
+    role: 'Contador General',
     roleCode: 'ACCOUNTANT',
     icon: 'bar-chart-3',
     pin: '1234',
-    description: 'Auditoría financiera, margen de ganancias y órdenes de compra.',
+    description: 'Auditoría financiera, balance de comprobación y libros contables.',
     redirectUrl: 'modules/accounting.html',
-    allowedModules: ['accounting', 'suppliers', 'inventory', 'settings']
+    allowedModules: ['accounting']
   }
 ];
 
@@ -175,12 +175,12 @@ export const SessionStore = {
           icon = user.icon || 'chef-hat';
         } else if (roleLower.includes('contador') || roleLower.includes('contabilidad')) {
           redirectUrl = 'modules/accounting.html';
-          allowedModules = ['accounting', 'settings'];
+          allowedModules = ['accounting'];
           roleCode = 'ACCOUNTANT';
           icon = user.icon || 'bar-chart-3';
         } else if (roleLower.includes('gerente') || codeUpper === 'ADMIN') {
           redirectUrl = 'modules/dashboard.html';
-          allowedModules = ['all'];
+          allowedModules = ['dashboard', 'inventory', 'suppliers'];
           roleCode = 'ADMIN';
           icon = user.icon || 'shield-check';
         }
@@ -416,6 +416,38 @@ export const SessionStore = {
 
     const isInModules = window.location.pathname.includes('/modules/');
     window.location.href = isInModules ? '../index.html' : 'index.html';
+  },
+
+  /**
+   * Helper que determina si el usuario en sesión es SUPERADMIN con acceso y control total
+   */
+  isSuperadmin(user) {
+    const u = user || this.getSession()?.user || {};
+    const code = String(u.roleCode || u.role_code || '').toUpperCase();
+    const name = String(u.role || '').toLowerCase();
+    return code === 'SUPERADMIN' || name === 'super administrador' || name === 'superadmin' || name.includes('superadmin');
+  },
+
+  /**
+   * Helper que determina si el usuario es Gerente General (ADMIN)
+   */
+  isManager(user) {
+    const u = user || this.getSession()?.user || {};
+    if (this.isSuperadmin(u)) return false;
+    const code = String(u.roleCode || u.role_code || '').toUpperCase();
+    const name = String(u.role || '').toLowerCase();
+    return code === 'ADMIN' || code === 'MANAGER' || (name.includes('gerente') && !name.includes('contador'));
+  },
+
+  /**
+   * Helper que determina si el usuario es Contador General (ACCOUNTANT)
+   */
+  isAccountant(user) {
+    const u = user || this.getSession()?.user || {};
+    if (this.isSuperadmin(u)) return false;
+    const code = String(u.roleCode || u.role_code || '').toUpperCase();
+    const name = String(u.role || '').toLowerCase();
+    return code === 'ACCOUNTANT' || name.includes('contador');
   }
 };
 

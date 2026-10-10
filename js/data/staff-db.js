@@ -97,10 +97,10 @@ export const STAFF_DATABASE = [
   {
     id: 'emp_06',
     code: 'EMP-006',
-    name: 'Sebastian',
-    role: 'Contador & Administrador',
-    roleCode: 'ADMIN',
-    department: 'Finanzas & Auditoría',
+    name: 'Sebastian Finanzas',
+    role: 'Contador General',
+    roleCode: 'ACCOUNTANT',
+    department: 'Finanzas & Contabilidad',
     shift: 'Horario Oficina (08:00 - 17:00)',
     phone: '(01) 555-SEBASTIAN',
     email: 'sebastian.finanzas@parisienne.com',
@@ -116,42 +116,48 @@ export const ROLE_PERMISSIONS_MATRIX = [
     permissionId: 'pos_access',
     permissionName: 'Facturación y Cobro en Caja (POS)',
     category: 'Ventas',
-    roles: { SUPERADMIN: true, ADMIN: true, BAKER: false, CASHIER: true }
+    roles: { SUPERADMIN: true, ADMIN: false, BAKER: false, CASHIER: true, ACCOUNTANT: false }
   },
   {
     permissionId: 'kitchen_access',
     permissionName: 'Monitoreo de Hornos y Comandas KDS',
     category: 'Cocina',
-    roles: { SUPERADMIN: true, ADMIN: true, BAKER: true, CASHIER: false }
+    roles: { SUPERADMIN: true, ADMIN: false, BAKER: true, CASHIER: false, ACCOUNTANT: false }
   },
   {
     permissionId: 'inventory_view',
     permissionName: 'Consulta de Existencias de Almacén',
     category: 'Inventario',
-    roles: { SUPERADMIN: true, ADMIN: true, BAKER: true, CASHIER: true }
+    roles: { SUPERADMIN: true, ADMIN: true, BAKER: true, CASHIER: true, ACCOUNTANT: true }
   },
   {
     permissionId: 'inventory_adjust',
     permissionName: 'Ajustes Manuales de Stock y Mermas',
     category: 'Inventario',
-    roles: { SUPERADMIN: true, ADMIN: true, BAKER: true, CASHIER: false }
+    roles: { SUPERADMIN: true, ADMIN: true, BAKER: true, CASHIER: false, ACCOUNTANT: false }
   },
   {
     permissionId: 'suppliers_po',
     permissionName: 'Emisión de Órdenes de Compra a Proveedores',
     category: 'Compras',
-    roles: { SUPERADMIN: true, ADMIN: true, BAKER: false, CASHIER: false }
+    roles: { SUPERADMIN: true, ADMIN: true, BAKER: false, CASHIER: false, ACCOUNTANT: false }
   },
   {
     permissionId: 'accounting_view',
-    permissionName: 'Consulta de Contabilidad y Balance General',
+    permissionName: 'Contabilidad, Asientos y Balance de Comprobación',
     category: 'Finanzas',
-    roles: { SUPERADMIN: true, ADMIN: true, BAKER: false, CASHIER: false }
+    roles: { SUPERADMIN: true, ADMIN: false, BAKER: false, CASHIER: false, ACCOUNTANT: true }
   },
   {
     permissionId: 'staff_manage',
-    permissionName: 'Gestión de Empleados y Cambio de PINs',
+    permissionName: 'Gestión de Empleados, Roles y Cambio de PINs',
     category: 'RRHH',
-    roles: { SUPERADMIN: true, ADMIN: true, BAKER: false, CASHIER: false }
+    roles: { SUPERADMIN: true, ADMIN: false, BAKER: false, CASHIER: false, ACCOUNTANT: false }
+  },
+  {
+    permissionId: 'system_control',
+    permissionName: 'Selector de 4 Módulos y Control Total del Sistema',
+    category: 'Superadmin',
+    roles: { SUPERADMIN: true, ADMIN: false, BAKER: false, CASHIER: false, ACCOUNTANT: false }
   }
 ];

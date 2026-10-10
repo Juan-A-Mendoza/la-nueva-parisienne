@@ -371,27 +371,23 @@ function inicializarSesionYBarraSuperior() {
     icon: 'shield-check'
   };
 
-  // 1. Verificación Estricta de Permisos de Gerencia
+  // 1. Verificación Estricta de Permisos de Gerencia (Solo Superadmin y Gerente)
   const userRole = (activeUser.role || '').toLowerCase();
   const userRoleCode = (activeUser.roleCode || activeUser.role_code || '').toUpperCase();
-  const isGerente = userRoleCode === 'SUPERADMIN' ||
+  const isSuperadmin = userRoleCode === 'SUPERADMIN' || userRole.includes('superadmin');
+  const isGerente = isSuperadmin ||
                     userRoleCode === 'ADMIN' ||
                     userRoleCode === 'MANAGER' ||
                     userRoleCode === 'GERENTE' ||
-                    userRole.includes('superadmin') ||
-                    userRole.includes('gerente') ||
-                    userRole.includes('administrador') ||
-                    userRole.includes('manager') ||
-                    userRole.includes('admin');
+                    (userRole.includes('gerente') && !userRole.includes('contador'));
 
   if (!isGerente) {
-    alert(`Acceso Restringido: El Panel Central de Gerencia es de uso exclusivo para el Gerente General.\nTu rol actual es: ${activeUser.role || 'Empleado'}.\nRedirigiendo a tu módulo correspondiente...`);
     let redirectUrl = 'accounting.html';
-    if (userRoleCode === 'POS' || userRole.includes('cajero')) redirectUrl = 'pos.html';
-    else if (userRoleCode === 'KITCHEN' || userRole.includes('panadero')) redirectUrl = 'kitchen.html';
+    if (userRoleCode === 'POS' || userRoleCode === 'CASHIER' || userRole.includes('cajero')) redirectUrl = 'pos.html';
+    else if (userRoleCode === 'KITCHEN' || userRoleCode === 'BAKER' || userRole.includes('panadero')) redirectUrl = 'kitchen.html';
     else if (userRoleCode === 'ACCOUNTANT' || userRole.includes('contador')) redirectUrl = 'accounting.html';
     else redirectUrl = '../index.html';
-    window.location.href = redirectUrl;
+    window.location.replace(redirectUrl);
     return false;
   }
 

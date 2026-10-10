@@ -7,13 +7,27 @@ import { SessionStore } from '../core/session-store.js';
 import { SettingsStore } from '../data/settings-db.js';
 
 document.addEventListener('DOMContentLoaded', () => {
-  // 1. Verificación de Sesión Activa
+  // 1. Verificación de Sesión Activa (Exclusivo SUPERADMIN)
   const session = SessionStore.getSession();
+  const activeUser = session?.user || {};
+  const userRole = (activeUser.role || '').toLowerCase();
+  const userRoleCode = (activeUser.roleCode || activeUser.role_code || '').toUpperCase();
+  const isSuperadmin = userRoleCode === 'SUPERADMIN' || userRole.includes('superadmin');
+
+  if (!isSuperadmin) {
+    let redirectUrl = 'dashboard.html';
+    if (userRoleCode === 'ACCOUNTANT' || userRole.includes('contador')) redirectUrl = 'accounting.html';
+    else if (userRoleCode === 'POS' || userRoleCode === 'CASHIER' || userRole.includes('cajero')) redirectUrl = 'pos.html';
+    else if (userRoleCode === 'KITCHEN' || userRoleCode === 'BAKER' || userRole.includes('panadero')) redirectUrl = 'kitchen.html';
+    window.location.replace(redirectUrl);
+    return;
+  }
+
   if (session && session.user) {
     const userAvatar = document.getElementById('userAvatar');
     const userName = document.getElementById('userName');
     if (userAvatar) { userAvatar.innerHTML = window.LucideIcons ? window.LucideIcons.render(session.user.icon || 'shield-check') : ''; window.LucideIcons?.refresh(); }
-    if (userName) userName.textContent = session.user.name || 'Sebastian / Juan';
+    if (userName) userName.textContent = session.user.name || 'Super Administrador';
   }
 
   // Event listener para cerrar sesión

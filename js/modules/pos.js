@@ -20,6 +20,20 @@ document.addEventListener('DOMContentLoaded', async () => {
     roleCode: 'POS',
     icon: 'banknote'
   };
+
+  // 1.1 Verificación de Permisos (Solo Superadmin y Cajero)
+  const userRole = (activeCashier.role || '').toLowerCase();
+  const userRoleCode = (activeCashier.roleCode || activeCashier.role_code || '').toUpperCase();
+  const isSuperadmin = userRoleCode === 'SUPERADMIN' || userRole.includes('superadmin');
+  const isCashier = isSuperadmin || userRoleCode === 'POS' || userRoleCode === 'CASHIER' || userRole.includes('cajero');
+
+  if (!isCashier) {
+    let redirectUrl = 'dashboard.html';
+    if (userRoleCode === 'ACCOUNTANT' || userRole.includes('contador')) redirectUrl = 'accounting.html';
+    else if (userRoleCode === 'KITCHEN' || userRoleCode === 'BAKER' || userRole.includes('panadero')) redirectUrl = 'kitchen.html';
+    window.location.replace(redirectUrl);
+    return;
+  }
   const cashierAvatar = document.getElementById('cashierAvatar');
   const cashierName = document.getElementById('cashierName');
   const cashierShiftStatus = document.querySelector('.cashier-badge .shift-status');

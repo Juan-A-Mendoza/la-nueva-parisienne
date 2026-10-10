@@ -25,6 +25,20 @@ document.addEventListener('DOMContentLoaded', () => {
     icon: 'chef-hat'
   };
 
+  // 1.1 Verificación de Permisos (Solo Superadmin y Panadero)
+  const userRole = (activeChef.role || '').toLowerCase();
+  const userRoleCode = (activeChef.roleCode || activeChef.role_code || '').toUpperCase();
+  const isSuperadmin = userRoleCode === 'SUPERADMIN' || userRole.includes('superadmin');
+  const isBaker = isSuperadmin || userRoleCode === 'KITCHEN' || userRoleCode === 'BAKER' || userRole.includes('panadero') || userRole.includes('chef');
+
+  if (!isBaker) {
+    let redirectUrl = 'dashboard.html';
+    if (userRoleCode === 'ACCOUNTANT' || userRole.includes('contador')) redirectUrl = 'accounting.html';
+    else if (userRoleCode === 'POS' || userRoleCode === 'CASHIER' || userRole.includes('cajero')) redirectUrl = 'pos.html';
+    window.location.replace(redirectUrl);
+    return;
+  }
+
   // Actualizar datos del Chef activo
   const chefNameEl = document.getElementById('chefName');
   const chefAvatarEl = document.getElementById('chefAvatar');

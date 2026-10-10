@@ -62,6 +62,51 @@ export const SECONDARY_MODULES = [
   { id: 'settings', name: 'Ajustes del Sistema', path: 'settings.html', icon: 'sliders-horizontal' }
 ];
 
+// MATRIZ ESTRICTA DE PERMISOS POR PÁGINA (SOLO SUPERADMIN TIENE ACCESO TOTAL)
+export const PAGE_PERMISSIONS = {
+  'dashboard.html': ['SUPERADMIN', 'ADMIN'],
+  'pos.html': ['SUPERADMIN', 'CASHIER', 'POS'],
+  'kitchen.html': ['SUPERADMIN', 'BAKER', 'KITCHEN'],
+  'accounting.html': ['SUPERADMIN', 'ACCOUNTANT'],
+  'inventory.html': ['SUPERADMIN', 'ADMIN', 'BAKER', 'KITCHEN'],
+  'suppliers.html': ['SUPERADMIN', 'ADMIN'],
+  'staff.html': ['SUPERADMIN'],
+  'configuraciones.html': ['SUPERADMIN'],
+  'settings.html': ['SUPERADMIN']
+};
+
+/**
+ * Control estricto de acceso por URL para evitar accesos cruzados entre departamentos
+ */
+function enforceAccessControl(activeUser, currentPath) {
+  const roleCode = String(activeUser.roleCode || activeUser.role_code || '').toUpperCase();
+  const roleName = String(activeUser.role || '').toLowerCase();
+  const isSuperadmin = roleCode === 'SUPERADMIN' || roleName === 'super administrador' || roleName === 'superadmin' || roleName.includes('superadmin');
+
+  // El Superadmin tiene acceso irrestricto y control total de todo
+  if (isSuperadmin) return true;
+
+  const allowedRoles = PAGE_PERMISSIONS[currentPath];
+  if (allowedRoles && !allowedRoles.includes(roleCode)) {
+    console.warn(`[Seguridad] Acceso no autorizado a ${currentPath} para rol ${roleCode}. Redirigiendo a módulo asignado.`);
+    let homeUrl = 'dashboard.html';
+    if (roleCode === 'ACCOUNTANT' || roleName.includes('contador')) {
+      homeUrl = 'accounting.html';
+    } else if (roleCode === 'POS' || roleCode === 'CASHIER' || roleName.includes('cajero')) {
+      homeUrl = 'pos.html';
+    } else if (roleCode === 'BAKER' || roleCode === 'KITCHEN' || roleName.includes('panadero')) {
+      homeUrl = 'kitchen.html';
+    } else if (roleCode === 'ADMIN' || roleName.includes('gerente')) {
+      homeUrl = 'dashboard.html';
+    } else {
+      homeUrl = '../index.html';
+    }
+    window.location.replace(homeUrl);
+    return false;
+  }
+  return true;
+}
+
 export function initModulesNav() {
   let session = null;
   try {
@@ -71,16 +116,23 @@ export function initModulesNav() {
   }
 
   const activeUser = session?.user || {};
+  const currentPath = window.location.pathname.split('/').pop() || 'dashboard.html';
+
+  // 1. Control de acceso: ni el contador ni el gerente tienen acceso cruzado a módulos ajenos
+  if (!enforceAccessControl(activeUser, currentPath)) {
+    return;
+  }
+
   const roleCode = String(activeUser.roleCode || activeUser.role_code || '').toUpperCase();
   const roleName = String(activeUser.role || '').toLowerCase();
+  const isSuperadmin = roleCode === 'SUPERADMIN' || roleName === 'super administrador' || roleName === 'superadmin' || roleName.includes('superadmin');
 
-  const isSuperadmin = roleCode === 'SUPERADMIN' || roleName.includes('superadmin') || roleName.includes('super');
-  const isAdmin = isSuperadmin || roleCode === 'ADMIN' || roleName.includes('gerente') || roleName.includes('administrador');
-
-  // Si no es admin ni superadmin, no inyectar launcher
-  if (!isAdmin && !isSuperadmin) return;
-
-  const currentPath = window.location.pathname.split('/').pop() || 'dashboard.html';
+  // El selector de los 4 módulos es de uso exclusivo del SUPERADMIN (el único con control total)
+  if (!isSuperadmin) {
+    document.getElementById('btnGlobalModulesLauncher')?.remove();
+    document.getElementById('globalModulesModalOverlay')?.remove();
+    return;
+  }
 
   // 1. Crear Modal Overlay enfocado en los 4 módulos
   let modalOverlay = document.getElementById('globalModulesModalOverlay');

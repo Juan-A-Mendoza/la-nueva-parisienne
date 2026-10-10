@@ -631,3 +631,201 @@
 .cash-reports-table { width: 100%; border-collapse: collapse; font-size: .76rem; }
 .cash-reports-table th { color: #776c61; background: #faf7f3; font-size: .68rem; text-align: left; text-transform: uppercase; letter-spacing: .04em; padding: .62rem .5rem; border-bottom: 1px solid #f0eae2; }
 .cash-reports-table td { padding: .62rem .5rem; border-bottom: 1px solid #f0eae2; color: #443c35; white-space: nowrap; }
+
+/* ============================================================================
+   MODAL ELEGANTE Y BONITO DE CONFIRMACIÓN / ALERTAS (CIERRE DE CAJA & ARQUEO)
+   ============================================================================ */
+.cierre-dialog-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(18, 14, 10, 0.75);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 12000;
+  padding: 1.25rem;
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 0.25s cubic-bezier(0.16, 1, 0.3, 1), visibility 0.25s;
+}
+
+.cierre-dialog-overlay.active {
+  opacity: 1;
+  visibility: visible;
+}
+
+.cierre-dialog-card {
+  background: #FFFFFF;
+  border-radius: 20px;
+  max-width: 480px;
+  width: 100%;
+  box-shadow: 0 25px 60px rgba(0, 0, 0, 0.35), 0 0 1px rgba(0, 0, 0, 0.15);
+  overflow: hidden;
+  position: relative;
+  border: 1.5px solid rgba(212, 155, 84, 0.35);
+  transform: scale(0.92) translateY(12px);
+  transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.cierre-dialog-overlay.active .cierre-dialog-card {
+  transform: scale(1) translateY(0);
+}
+
+.cierre-dialog-banner-line {
+  height: 6px;
+  width: 100%;
+  background: linear-gradient(90deg, #D49B54 0%, #F5D061 50%, #C85A32 100%);
+}
+
+.cierre-dialog-body {
+  padding: 2rem 1.75rem 1.5rem 1.75rem;
+  text-align: center;
+}
+
+.cierre-dialog-icon-wrap {
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  margin: 0 auto 1.25rem auto;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.06);
+}
+
+.cierre-dialog-icon-wrap.gold {
+  background: linear-gradient(135deg, rgba(212, 155, 84, 0.15) 0%, rgba(212, 155, 84, 0.28) 100%);
+  color: #B88037;
+  border: 2px solid rgba(212, 155, 84, 0.35);
+}
+
+.cierre-dialog-icon-wrap.warning {
+  background: linear-gradient(135deg, rgba(245, 158, 11, 0.15) 0%, rgba(245, 158, 11, 0.25) 100%);
+  color: #D97706;
+  border: 2px solid rgba(245, 158, 11, 0.35);
+}
+
+.cierre-dialog-icon-wrap.danger {
+  background: linear-gradient(135deg, rgba(239, 68, 68, 0.15) 0%, rgba(239, 68, 68, 0.25) 100%);
+  color: #DC2626;
+  border: 2px solid rgba(239, 68, 68, 0.35);
+}
+
+.cierre-dialog-icon-wrap.success {
+  background: linear-gradient(135deg, rgba(16, 185, 129, 0.15) 0%, rgba(16, 185, 129, 0.25) 100%);
+  color: #059669;
+  border: 2px solid rgba(16, 185, 129, 0.35);
+}
+
+.cierre-dialog-icon-wrap.info {
+  background: linear-gradient(135deg, rgba(59, 130, 246, 0.15) 0%, rgba(59, 130, 246, 0.25) 100%);
+  color: #2563EB;
+  border: 2px solid rgba(59, 130, 246, 0.35);
+}
+
+.cierre-dialog-title {
+  margin: 0 0 0.35rem 0;
+  font-size: 1.28rem;
+  font-weight: 800;
+  color: #1E1B18;
+  letter-spacing: -0.01em;
+  font-family: 'Plus Jakarta Sans', var(--font-heading, sans-serif);
+}
+
+.cierre-dialog-subtitle {
+  font-size: 0.78rem;
+  color: #8C7868;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-bottom: 0.85rem;
+}
+
+.cierre-dialog-message {
+  font-size: 0.93rem;
+  color: #4A4540;
+  line-height: 1.5;
+  margin: 0;
+}
+
+.cierre-dialog-details {
+  margin-top: 1rem;
+}
+
+.cierre-dialog-footer {
+  padding: 1rem 1.75rem 1.5rem 1.75rem;
+  display: flex;
+  gap: 0.75rem;
+  justify-content: center;
+  background: #FAF8F5;
+  border-top: 1px solid #EFEAE3;
+}
+
+.cierre-dialog-btn {
+  height: 44px;
+  padding: 0 1.5rem;
+  border-radius: 12px;
+  font-weight: 700;
+  font-size: 0.88rem;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.45rem;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  border: none;
+  flex: 1;
+}
+
+.cierre-dialog-btn.cancel {
+  background: #FFFFFF;
+  color: #59483B;
+  border: 1.5px solid #D8D1C7;
+}
+
+.cierre-dialog-btn.cancel:hover {
+  background: #F3EEE7;
+  border-color: #BCAE9E;
+}
+
+.cierre-dialog-btn.gold {
+  background: linear-gradient(135deg, #D49B54 0%, #B88037 100%);
+  color: #FFFFFF;
+  box-shadow: 0 4px 14px rgba(212, 155, 84, 0.35);
+}
+
+.cierre-dialog-btn.gold:hover {
+  background: linear-gradient(135deg, #E2A860 0%, #C48A41 100%);
+  box-shadow: 0 6px 18px rgba(212, 155, 84, 0.5);
+  transform: translateY(-1px);
+}
+
+.cierre-dialog-btn.danger {
+  background: linear-gradient(135deg, #DC2626 0%, #B91C1C 100%);
+  color: #FFFFFF;
+  box-shadow: 0 4px 14px rgba(220, 38, 38, 0.35);
+}
+
+.cierre-dialog-btn.danger:hover {
+  background: linear-gradient(135deg, #EF4444 0%, #DC2626 100%);
+  box-shadow: 0 6px 18px rgba(220, 38, 38, 0.5);
+  transform: translateY(-1px);
+}
+
+.cierre-dialog-btn.primary {
+  background: linear-gradient(135deg, #2E241E 0%, #452618 100%);
+  color: #FFFFFF;
+  box-shadow: 0 4px 14px rgba(46, 36, 30, 0.25);
+}
+
+.cierre-dialog-btn.primary:hover {
+  background: linear-gradient(135deg, #452618 0%, #5C3320 100%);
+  box-shadow: 0 6px 18px rgba(46, 36, 30, 0.35);
+  transform: translateY(-1px);
+}
+

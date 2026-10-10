@@ -22,6 +22,20 @@ document.addEventListener('DOMContentLoaded', () => {
     icon: 'package'
   };
 
+  // 1.1 Verificación de Permisos (Superadmin, Gerente y Panadero)
+  const userRole = (activeUser.role || '').toLowerCase();
+  const userRoleCode = (activeUser.roleCode || activeUser.role_code || '').toUpperCase();
+  const isSuperadmin = userRoleCode === 'SUPERADMIN' || userRole.includes('superadmin');
+  const isAllowed = isSuperadmin || userRoleCode === 'ADMIN' || userRoleCode === 'BAKER' || userRoleCode === 'KITCHEN' || userRole.includes('gerente') || userRole.includes('panadero');
+
+  if (!isAllowed) {
+    let redirectUrl = 'dashboard.html';
+    if (userRoleCode === 'ACCOUNTANT' || userRole.includes('contador')) redirectUrl = 'accounting.html';
+    else if (userRoleCode === 'POS' || userRoleCode === 'CASHIER' || userRole.includes('cajero')) redirectUrl = 'pos.html';
+    window.location.replace(redirectUrl);
+    return;
+  }
+
   // Actualizar datos del usuario activo
   const userNameEl = document.getElementById('userName');
   const userAvatarEl = document.getElementById('userAvatar');

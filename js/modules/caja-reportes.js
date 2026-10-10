@@ -55,6 +55,118 @@ function getBcvRate() {
   return parseFloat(localStorage.getItem('bcv_current_rate') || localStorage.getItem('tasa_auto') || localStorage.getItem('tasa_manual') || localStorage.getItem('tasaManual')) || 784.66;
 }
 
+/**
+ * MODAL ELEGANTE Y BONITO PARA ALERTAS Y CONFIRMACIONES DE CIERRE Y ARQUEO
+ * Reemplaza los window.alert y window.confirm nativos por una interfaz estética.
+ */
+function showCierrePrettyDialog({
+  type = 'gold', // 'gold', 'warning', 'danger', 'success', 'info'
+  icon = 'shield-check',
+  title = '¿Confirmar Acción?',
+  subtitle = '',
+  message = '',
+  detailsHtml = '',
+  confirmText = 'Sí, Continuar',
+  confirmClass = 'gold', // 'gold', 'danger', 'primary'
+  cancelText = 'Cancelar',
+  showCancel = true
+}) {
+  return new Promise((resolve) => {
+    let overlay = document.getElementById('cierrePrettyDialogOverlay');
+    if (!overlay) {
+      overlay = document.createElement('div');
+      overlay.id = 'cierrePrettyDialogOverlay';
+      overlay.className = 'cierre-dialog-overlay no-print';
+      overlay.innerHTML = `
+        <div class="cierre-dialog-card" role="dialog" aria-modal="true">
+          <div class="cierre-dialog-banner-line"></div>
+          <div class="cierre-dialog-body">
+            <div id="cierrePrettyIconWrap" class="cierre-dialog-icon-wrap gold">
+              <span id="cierrePrettyIconHolder"></span>
+            </div>
+            <h3 id="cierrePrettyTitle" class="cierre-dialog-title"></h3>
+            <div id="cierrePrettySubtitle" class="cierre-dialog-subtitle"></div>
+            <div id="cierrePrettyMessage" class="cierre-dialog-message"></div>
+            <div id="cierrePrettyDetails" class="cierre-dialog-details"></div>
+          </div>
+          <div class="cierre-dialog-footer">
+            <button type="button" id="cierrePrettyBtnCancel" class="cierre-dialog-btn cancel">
+              <i data-lucide="x" class="icon-xs"></i> <span id="cierrePrettyBtnCancelText">Cancelar</span>
+            </button>
+            <button type="button" id="cierrePrettyBtnConfirm" class="cierre-dialog-btn gold">
+              <i data-lucide="check" class="icon-xs"></i> <span id="cierrePrettyBtnConfirmText">Confirmar</span>
+            </button>
+          </div>
+        </div>
+      `;
+      document.body.appendChild(overlay);
+    }
+
+    const iconWrap = document.getElementById('cierrePrettyIconWrap');
+    const iconHolder = document.getElementById('cierrePrettyIconHolder');
+    const titleEl = document.getElementById('cierrePrettyTitle');
+    const subtitleEl = document.getElementById('cierrePrettySubtitle');
+    const messageEl = document.getElementById('cierrePrettyMessage');
+    const detailsEl = document.getElementById('cierrePrettyDetails');
+    const btnCancel = document.getElementById('cierrePrettyBtnCancel');
+    const btnCancelText = document.getElementById('cierrePrettyBtnCancelText');
+    const btnConfirm = document.getElementById('cierrePrettyBtnConfirm');
+    const btnConfirmText = document.getElementById('cierrePrettyBtnConfirmText');
+
+    if (iconWrap) iconWrap.className = `cierre-dialog-icon-wrap ${type}`;
+    if (iconHolder) {
+      iconHolder.innerHTML = window.LucideIcons ? window.LucideIcons.render(icon, 'icon-2xl') : `<i data-lucide="${icon}" class="icon-xl"></i>`;
+    }
+    if (titleEl) titleEl.textContent = title;
+    if (subtitleEl) {
+      subtitleEl.textContent = subtitle;
+      subtitleEl.style.display = subtitle ? 'block' : 'none';
+    }
+    if (messageEl) messageEl.innerHTML = message;
+    if (detailsEl) {
+      detailsEl.innerHTML = detailsHtml || '';
+      detailsEl.style.display = detailsHtml ? 'block' : 'none';
+    }
+
+    if (btnCancel) {
+      btnCancel.style.display = showCancel ? 'inline-flex' : 'none';
+      if (btnCancelText) btnCancelText.textContent = cancelText;
+    }
+    if (btnConfirm) {
+      btnConfirm.className = `cierre-dialog-btn ${confirmClass}`;
+      if (btnConfirmText) btnConfirmText.textContent = confirmText;
+    }
+
+    setTimeout(() => window.LucideIcons?.refresh(), 0);
+
+    overlay.style.display = 'flex';
+    requestAnimationFrame(() => {
+      overlay.classList.add('active');
+    });
+
+    const cleanup = (result) => {
+      overlay.classList.remove('active');
+      setTimeout(() => {
+        overlay.style.display = 'none';
+      }, 200);
+      btnConfirm.removeEventListener('click', onConfirm);
+      btnCancel.removeEventListener('click', onCancel);
+      overlay.removeEventListener('click', onBackdrop);
+      resolve(result);
+    };
+
+    const onConfirm = () => cleanup(true);
+    const onCancel = () => cleanup(false);
+    const onBackdrop = (e) => {
+      if (e.target === overlay && showCancel) cleanup(false);
+    };
+
+    btnConfirm.addEventListener('click', onConfirm);
+    btnCancel.addEventListener('click', onCancel);
+    overlay.addEventListener('click', onBackdrop);
+  });
+}
+
 // ============================================================================
 // 1. CONTROLADOR EXCLUSIVO DE CIERRE DE CAJA (POS / CAJA)
 // ============================================================================
@@ -438,12 +550,43 @@ function initPosCierreCaja() {
 
   // Imprimir Corte X preliminar
   if (btnImprimirX) {
-    btnImprimirX.addEventListener('click', () => {
+    btnImprimirX.addEventListener('click', async () => {
       if (!currentClosureData) return;
       const contado = parseFloat(efectivoInput?.value) || 0;
       const esperado = Number(currentClosureData.summary?.monto_efectivo_esperado || 0);
       const diff = Math.round((contado - esperado) * 100) / 100;
       const obs = obsInput?.value?.trim() || '';
+
+      const proceed = await showCierrePrettyDialog({
+        type: 'info',
+        icon: 'printer',
+        title: 'Generar Arqueo Parcial (Corte X)',
+        subtitle: 'Comprobante de Control Interno (No Fiscal)',
+        message: '¿Deseas generar e imprimir el arqueo preliminar de caja con el cuadre actual?',
+        detailsHtml: `
+          <div style="background: rgba(33, 150, 243, 0.08); border: 1.5px solid rgba(33, 150, 243, 0.25); border-radius: 12px; padding: 0.85rem 1rem; text-align: left; font-size: 0.84rem; color: #1E293B;">
+            <div style="display: flex; justify-content: space-between; margin-bottom: 0.35rem;">
+              <span style="color: #64748B;">Efectivo Físico Contado:</span>
+              <strong style="color: #0F172A;">$${contado.toFixed(2)} USD</strong>
+            </div>
+            <div style="display: flex; justify-content: space-between; margin-bottom: 0.35rem;">
+              <span style="color: #64748B;">Efectivo Teórico Esperado:</span>
+              <strong style="color: #0F172A;">$${esperado.toFixed(2)} USD</strong>
+            </div>
+            <div style="display: flex; justify-content: space-between; border-top: 1px dashed rgba(33, 150, 243, 0.3); padding-top: 0.35rem; font-weight: 700;">
+              <span>Diferencia en Gaveta:</span>
+              <span style="color: ${Math.abs(diff) < 0.01 ? '#10B981' : (diff > 0 ? '#10B981' : '#EF4444')};">
+                ${Math.abs(diff) < 0.01 ? '$0.00 (Cuadrada)' : (diff > 0 ? `+$${diff.toFixed(2)} USD (Sobrante)` : `-$${Math.abs(diff).toFixed(2)} USD (Faltante)`)}
+              </span>
+            </div>
+          </div>
+        `,
+        confirmText: 'Ver e Imprimir Corte X',
+        confirmClass: 'primary',
+        cancelText: 'Cancelar'
+      });
+
+      if (!proceed) return;
 
       const xData = {
         ...currentClosureData,
@@ -472,22 +615,84 @@ function initPosCierreCaja() {
       const obs = obsInput?.value?.trim() || '';
       const hasData = currentClosureData.has_data;
 
-      // Confirmaciones de seguridad
+      // Confirmaciones con Modal Bonito (Sin browser popups feos)
       if (!hasData) {
-        if (!window.confirm('No hay ventas registradas en este turno. ¿Deseas sellar el Cierre de Caja (Z) de todos modos?')) {
-          return;
-        }
+        const proceed = await showCierrePrettyDialog({
+          type: 'warning',
+          icon: 'alert-triangle',
+          title: 'Turno Sin Ventas Registradas',
+          subtitle: `${shiftName} • Cajero: ${cashierName}`,
+          message: 'No se encontraron ventas registradas en este turno. ¿Deseas sellar y cerrar la caja en cero de todos modos?',
+          confirmText: 'Sí, Sellar Turno en Cero',
+          confirmClass: 'gold',
+          cancelText: 'Cancelar'
+        });
+        if (!proceed) return;
       } else if (Math.abs(diff) >= 0.01) {
-        const msg = diff > 0
-          ? `Existe un SOBRANTE de +$${diff.toFixed(2)} USD en efectivo.\n\n¿Deseas confirmar y sellar el Cierre Z con este valor?`
-          : `Existe un FALTANTE de -$${Math.abs(diff).toFixed(2)} USD en efectivo.\n\n¿Deseas confirmar y sellar el Cierre Z con este valor?`;
-        if (!window.confirm(msg)) {
-          return;
-        }
+        const isSobrante = diff > 0;
+        const proceed = await showCierrePrettyDialog({
+          type: isSobrante ? 'warning' : 'danger',
+          icon: isSobrante ? 'arrow-up-right' : 'alert-triangle',
+          title: isSobrante ? 'Sobrante de Efectivo Detectado' : 'Faltante de Efectivo Detectado',
+          subtitle: `${shiftName} • Cajero: ${cashierName}`,
+          message: isSobrante 
+            ? `Se ha registrado un <strong style="color: #2E7D32;">SOBRANTE</strong> de <strong style="color: #2E7D32;">+$${diff.toFixed(2)} USD</strong> en el arqueo físico de efectivo.` 
+            : `Se ha detectado un <strong style="color: #C62828;">FALTANTE</strong> de <strong style="color: #C62828;">-$${Math.abs(diff).toFixed(2)} USD</strong> en el arqueo físico de efectivo.`,
+          detailsHtml: `
+            <div style="background: rgba(212, 155, 84, 0.08); border: 1.5px solid rgba(212, 155, 84, 0.25); border-radius: 12px; padding: 0.9rem 1rem; text-align: left; font-size: 0.85rem;">
+              <div style="display: flex; justify-content: space-between; margin-bottom: 0.35rem;">
+                <span style="color: #8C7868;">Ventas Netas Turno:</span>
+                <strong style="color: #2E241E;">$${Number(currentClosureData.summary.ventas_netas).toFixed(2)} USD</strong>
+              </div>
+              <div style="display: flex; justify-content: space-between; margin-bottom: 0.35rem;">
+                <span style="color: #8C7868;">Efectivo Teórico Esperado:</span>
+                <strong style="color: #2E241E;">$${esperado.toFixed(2)} USD</strong>
+              </div>
+              <div style="display: flex; justify-content: space-between; margin-bottom: 0.35rem;">
+                <span style="color: #8C7868;">Efectivo Físico Contado:</span>
+                <strong style="color: #2E241E;">$${contado.toFixed(2)} USD</strong>
+              </div>
+              <div style="display: flex; justify-content: space-between; border-top: 1px dashed rgba(212,155,84,0.3); padding-top: 0.35rem; font-weight: 700;">
+                <span>Discrepancia a Justificar:</span>
+                <span style="color: ${isSobrante ? '#2E7D32' : '#C62828'}; font-weight: 800;">
+                  ${isSobrante ? `+$${diff.toFixed(2)} USD (Sobrante)` : `-$${Math.abs(diff).toFixed(2)} USD (Faltante)`}
+                </span>
+              </div>
+            </div>
+          `,
+          confirmText: isSobrante ? 'Confirmar y Sellar con Sobrante' : 'Confirmar y Sellar con Faltante',
+          confirmClass: isSobrante ? 'gold' : 'danger',
+          cancelText: 'Recontar Gaveta'
+        });
+        if (!proceed) return;
       } else {
-        if (!window.confirm(`¿Confirmar y sellar el Cierre Z de Caja para el ${shiftName}?\n\nTotal Ventas: $${Number(currentClosureData.summary.ventas_netas).toFixed(2)} USD\nCajero: ${cashierName}`)) {
-          return;
-        }
+        const proceed = await showCierrePrettyDialog({
+          type: 'success',
+          icon: 'check-circle-2',
+          title: 'Caja Perfectamente Cuadrada ($0.00)',
+          subtitle: `${shiftName} • Cajero: ${cashierName}`,
+          message: 'El arqueo físico coincide exactamente con las ventas del turno. ¿Deseas emitir el <strong>Cierre Z Oficial</strong> definitivo?',
+          detailsHtml: `
+            <div style="background: rgba(16, 185, 129, 0.08); border: 1.5px solid rgba(16, 185, 129, 0.25); border-radius: 12px; padding: 0.9rem 1rem; text-align: left; font-size: 0.85rem;">
+              <div style="display: flex; justify-content: space-between; margin-bottom: 0.35rem;">
+                <span style="color: #64748B;">Total Ventas Netas:</span>
+                <strong style="color: #065F46;">$${Number(currentClosureData.summary.ventas_netas).toFixed(2)} USD</strong>
+              </div>
+              <div style="display: flex; justify-content: space-between; margin-bottom: 0.35rem;">
+                <span style="color: #64748B;">Efectivo en Gaveta:</span>
+                <strong style="color: #065F46;">$${contado.toFixed(2)} USD</strong>
+              </div>
+              <div style="display: flex; justify-content: space-between; border-top: 1px dashed rgba(16, 185, 129, 0.3); padding-top: 0.35rem;">
+                <span style="color: #64748B;">Tasa de Cambio BCV:</span>
+                <strong style="color: #065F46;">Bs. ${currentBcvRate.toFixed(2)} / USD</strong>
+              </div>
+            </div>
+          `,
+          confirmText: 'Sí, Sellar Cierre Z',
+          confirmClass: 'gold',
+          cancelText: 'Seguir Vendiendo'
+        });
+        if (!proceed) return;
       }
 
       btnConfirmarZ.disabled = true;
@@ -539,7 +744,16 @@ function initPosCierreCaja() {
         renderAndShowTicket(res.closure, false);
       } catch (err) {
         console.error('Error generando Cierre Z:', err);
-        alert('Error al generar el Cierre Z: ' + err.message);
+        await showCierrePrettyDialog({
+          type: 'danger',
+          icon: 'alert-triangle',
+          title: 'No se pudo generar el Cierre Z',
+          subtitle: 'Error en la Base de Datos MySQL',
+          message: esc(err.message || 'Error al comunicarse con el servidor.'),
+          confirmText: 'Entendido',
+          confirmClass: 'primary',
+          showCancel: false
+        });
       } finally {
         btnConfirmarZ.disabled = false;
         btnConfirmarZ.innerHTML = '<i data-lucide="lock" class="icon-sm"></i> <span>Realizar Cierre de Caja (Z)</span>';
@@ -563,8 +777,18 @@ function initPosCierreCaja() {
   }
 
   if (btnFinalizarTurno) {
-    btnFinalizarTurno.addEventListener('click', () => {
-      if (window.confirm('¿Deseas cerrar la sesión activa del cajero tras finalizar el turno?')) {
+    btnFinalizarTurno.addEventListener('click', async () => {
+      const salir = await showCierrePrettyDialog({
+        type: 'danger',
+        icon: 'log-out',
+        title: 'Finalizar Turno de Trabajo',
+        subtitle: 'Cierre de Sesión del Cajero',
+        message: '¿Deseas cerrar la sesión activa del cajero en este equipo y volver a la pantalla de bienvenida?',
+        confirmText: 'Sí, Cerrar Sesión',
+        confirmClass: 'danger',
+        cancelText: 'Permanecer en el Sistema'
+      });
+      if (salir) {
         SessionStore.logout();
       } else {
         ticketModal.style.display = 'none';

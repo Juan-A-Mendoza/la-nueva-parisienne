@@ -22,6 +22,21 @@ document.addEventListener('DOMContentLoaded', () => {
     icon: 'truck'
   };
 
+  // 1.1 Verificación de Permisos (Solo Superadmin y Gerente)
+  const userRole = (activeUser.role || '').toLowerCase();
+  const userRoleCode = (activeUser.roleCode || activeUser.role_code || '').toUpperCase();
+  const isSuperadmin = userRoleCode === 'SUPERADMIN' || userRole.includes('superadmin');
+  const isAllowed = isSuperadmin || userRoleCode === 'ADMIN' || (userRole.includes('gerente') && !userRole.includes('contador'));
+
+  if (!isAllowed) {
+    let redirectUrl = 'dashboard.html';
+    if (userRoleCode === 'ACCOUNTANT' || userRole.includes('contador')) redirectUrl = 'accounting.html';
+    else if (userRoleCode === 'POS' || userRoleCode === 'CASHIER' || userRole.includes('cajero')) redirectUrl = 'pos.html';
+    else if (userRoleCode === 'KITCHEN' || userRoleCode === 'BAKER' || userRole.includes('panadero')) redirectUrl = 'kitchen.html';
+    window.location.replace(redirectUrl);
+    return;
+  }
+
   // Actualizar datos del usuario activo
   const userNameEl = document.getElementById('userName');
   const userAvatarEl = document.getElementById('userAvatar');

@@ -16,11 +16,25 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   const activeUser = (session && session.user) ? session.user : {
-    name: 'Juan Mendoza',
-    role: 'Gerente General',
-    roleCode: 'ADMIN',
-    icon: 'users'
+    name: 'Super Administrador',
+    role: 'Super Administrador',
+    roleCode: 'SUPERADMIN',
+    icon: 'shield-check'
   };
+
+  // 1.1 Verificación de Seguridad: Gestión de Personal y PINs es EXCLUSIVA de SUPERADMIN
+  const userRole = (activeUser.role || '').toLowerCase();
+  const userRoleCode = (activeUser.roleCode || activeUser.role_code || '').toUpperCase();
+  const isSuperadmin = userRoleCode === 'SUPERADMIN' || userRole.includes('superadmin');
+
+  if (!isSuperadmin) {
+    let redirectUrl = 'dashboard.html';
+    if (userRoleCode === 'ACCOUNTANT' || userRole.includes('contador')) redirectUrl = 'accounting.html';
+    else if (userRoleCode === 'POS' || userRoleCode === 'CASHIER' || userRole.includes('cajero')) redirectUrl = 'pos.html';
+    else if (userRoleCode === 'KITCHEN' || userRoleCode === 'BAKER' || userRole.includes('panadero')) redirectUrl = 'kitchen.html';
+    window.location.replace(redirectUrl);
+    return;
+  }
 
   // Actualizar datos del usuario activo
   const userNameEl = document.getElementById('userName');
