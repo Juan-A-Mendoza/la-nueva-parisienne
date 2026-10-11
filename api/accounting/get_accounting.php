@@ -81,12 +81,12 @@ try {
 
     // 4. Calcular Balance de Comprobación Dinámico agrupado por cuenta
     $stmtBalance = $pdo->query("
-        SELECT c.codigo AS code, c.nombre AS name, c.naturaleza,
+        SELECT c.codigo AS code, c.nombre AS name, c.tipo AS type, c.naturaleza,
                COALESCE(SUM(d.debe), 0) AS sumDebe,
                COALESCE(SUM(d.haber), 0) AS sumHaber
         FROM plan_cuentas c
         LEFT JOIN asientos_detalle d ON c.codigo = d.cuenta_codigo
-        GROUP BY c.codigo, c.nombre, c.naturaleza
+        GROUP BY c.codigo, c.nombre, c.tipo, c.naturaleza
         ORDER BY c.codigo ASC
     ");
     $balanceRaw = $stmtBalance->fetchAll();
@@ -119,6 +119,8 @@ try {
         $trialBalance[] = [
             'code' => $b['code'],
             'name' => $b['name'],
+            'type' => $b['type'] ?? 'Activo',
+            'nature' => $b['naturaleza'] ?? 'Deudor',
             'sumDebe' => round($debe, 2),
             'sumHaber' => round($haber, 2),
             'saldoDeudor' => round($saldoDeudor, 2),

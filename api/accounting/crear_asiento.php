@@ -24,25 +24,75 @@ if (!$data) {
 }
 
 $concept = trim($data['concept'] ?? 'Asiento Contable Manual');
-$debeCode = trim($data['debeCode'] ?? '');
-$debeAmount = (float)($data['debeAmount'] ?? 0);
-$haberCode = trim($data['haberCode'] ?? '');
-$haberAmount = (float)($data['haberAmount'] ?? 0);
+$fechaInput = trim($data['date'] ?? $data['fecha'] ?? '');
+$fechaHora = !empty($fechaInput) ? date('Y-m-d H:i:s', strtotime($fechaInput)) : date('Y-m-d H:i:s');
+$sourceModule = trim($data['sourceModule'] ?? 'Manual Contador');
+$icon = trim($data['icon'] ?? 'file-edit');
 
-if (empty($debeCode) || empty($haberCode) || $debeAmount <= 0 || $haberAmount <= 0) {
+$items = [];
+
+// Si se envía array de renglones/items
+if (!empty($data['items']) && is_array($data['items'])) {
+    foreach ($data['items'] as $item) {
+        $cCode = trim($item['accountCode'] ?? $item['cuenta_codigo'] ?? '');
+        $d = (float)($item['debe'] ?? 0);
+        $h = (float)($item['haber'] ?? 0);
+        if (!empty($cCode) && ($d > 0 || $h > 0)) {
+            $items[] = [
+                'code' => $cCode,
+                'debe' => round($d, 2),
+                'haber' => round($h, 2)
+            ];
+        }
+    }
+} else {
+    // Modo simple de 2 partidas
+    $debeCode = trim($data['debeCode'] ?? '');
+    $debeAmount = (float)($data['debeAmount'] ?? 0);
+    $haberCode = trim($data['haberCode'] ?? '');
+    $haberAmount = (float)($data['haberAmount'] ?? 0);
+
+    if (!empty($debeCode) && $debeAmount > 0) {
+        $items[] = ['code' => $debeCode, 'debe' => round($debeAmount, 2), 'haber' => 0.00];
+    }
+    if (!empty($haberCode) && $haberAmount > 0) {
+        $items[] = ['code' => $haberCode, 'debe' => 0.00, 'haber' => round($haberAmount, 2)];
+    }
+}
+
+if (empty($items) || count($items) < 2) {
     http_response_code(400);
     echo json_encode([
         'success' => false,
-        'message' => 'Cuentas o montos inválidos. Debe y Haber deben ser mayores a cero.'
+        'message' => 'El asiento requiere al menos dos partidas contables (débito y crédito).'
     ], JSON_UNESCAPED_UNICODE);
     exit();
 }
 
-if (round($debeAmount, 2) !== round($haberAmount, 2)) {
+$totalDebe = 0.00;
+$totalHaber = 0.00;
+foreach ($items as $it) {
+    $totalDebe += $it['debe'];
+    $totalHaber += $it['haber'];
+}
+
+$totalDebe = round($totalDebe, 2);
+$totalHaber = round($totalHaber, 2);
+
+if ($totalDebe <= 0 || $totalHaber <= 0) {
     http_response_code(400);
     echo json_encode([
         'success' => false,
-        'message' => 'Principio de Partida Doble no cumplido: El Debe debe ser igual al Haber.'
+        'message' => 'Montos inválidos. El total de débitos y créditos debe ser superior a cero.'
+    ], JSON_UNESCAPED_UNICODE);
+    exit();
+}
+
+if (abs($totalDebe - $totalHaber) > 0.01) {
+    http_response_code(400);
+    echo json_encode([
+        'success' => false,
+        'message' => 'Principio de Partida Doble no cumplido: Total Debe ($' . number_format($totalDebe, 2) . ') debe ser igual al Total Haber ($' . number_format($totalHaber, 2) . ').'
     ], JSON_UNESCAPED_UNICODE);
     exit();
 }
@@ -51,23 +101,36 @@ try {
     $pdo = getDbConnection();
     $pdo->beginTransaction();
 
+    // Generar código correlativo de Asiento
+    $stmtSeq = $pdo->query("SELECT COUNT(*) AS total FROM asientos_contables");
+    $seqRow = $stmtSeq->fetch();
+    $seqNum = ($seqRow ? (int)$seqRow['total'] : 0) + 1;
+    $codigo = 'AS-' . date('Y') . '-' . str_pad($seqNum, 4, '0', STR_PAD_LEFT);
+
+    // Verificar unicidad por si acaso
+    $stmtCheck = $pdo->prepare("SELECT id FROM asientos_contables WHERE codigo = :c");
+    $stmtCheck->execute([':c' => $codigo]);
+    if ($stmtCheck->fetch()) {
+        $codigo .= '-' . rand(10, 99);
+    }
+
     $asientoId = 'as_man_' . time() . '_' . rand(100, 999);
-    $codigo = 'AS-' . date('Y') . '-' . rand(1000, 9999);
-    $now = date('Y-m-d H:i:s');
 
     $stmtAsiento = $pdo->prepare("
         INSERT INTO asientos_contables 
             (id, codigo, fecha_hora, concepto, modulo_origen, icono, total_debe, total_haber) 
         VALUES 
-            (:id, :codigo, :fecha, :concepto, 'Manual Administrador', 'file-edit', :debe, :haber)
+            (:id, :codigo, :fecha, :concepto, :origen, :icono, :debe, :haber)
     ");
     $stmtAsiento->execute([
         ':id' => $asientoId,
         ':codigo' => $codigo,
-        ':fecha' => $now,
+        ':fecha' => $fechaHora,
         ':concepto' => $concept,
-        ':debe' => $debeAmount,
-        ':haber' => $haberAmount
+        ':origen' => $sourceModule,
+        ':icono' => $icon,
+        ':debe' => $totalDebe,
+        ':haber' => $totalHaber
     ]);
 
     $stmtDetalle = $pdo->prepare("
@@ -75,21 +138,14 @@ try {
         VALUES (:aid, :cuenta, :debe, :haber)
     ");
 
-    // Renglón Débito
-    $stmtDetalle->execute([
-        ':aid' => $asientoId,
-        ':cuenta' => $debeCode,
-        ':debe' => $debeAmount,
-        ':haber' => 0.00
-    ]);
-
-    // Renglón Crédito
-    $stmtDetalle->execute([
-        ':aid' => $asientoId,
-        ':cuenta' => $haberCode,
-        ':debe' => 0.00,
-        ':haber' => $haberAmount
-    ]);
+    foreach ($items as $it) {
+        $stmtDetalle->execute([
+            ':aid' => $asientoId,
+            ':cuenta' => $it['code'],
+            ':debe' => $it['debe'],
+            ':haber' => $it['haber']
+        ]);
+    }
 
     $pdo->commit();
 

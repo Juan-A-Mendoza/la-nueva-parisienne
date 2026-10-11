@@ -3,8 +3,8 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Contabilidad y Salud Financiera - La Nueva Parisienne</title>
-  <meta name="description" content="Módulo 7: Asientos Contables Automáticos, Libro Diario y Mayor, y Balance de Comprobación para La Nueva Parisienne.">
+  <title>Sistema Contable Administrativo - La Nueva Parisienne</title>
+  <meta name="description" content="Módulo de Contabilidad General: Libro Diario, Libro Mayor, Balance de Comprobación y Catálogo PUC para La Nueva Parisienne.">
   
   <!-- Hojas de Estilos Separadas (CSS3 Estricto) -->
   <link rel="stylesheet" href="../css/main.css">
@@ -21,17 +21,17 @@
         <div class="accounting-brand-group">
           <div class="accounting-brand-icon" aria-hidden="true"><i data-lucide="scale"></i></div>
           <div>
-            <h1 class="brand-title">La Nueva Parisienne</h1>
-            <span class="sub-title">Módulo 7 &bull; Contabilidad, Libro Diario &amp; Mayor</span>
+            <h1 class="brand-title">La Nueva Parisienne Panadería &amp; Pastelería C.A.</h1>
+            <span class="sub-title">RIF: J-40123456-7 &bull; Sistema de Contabilidad General &amp; Auditoría</span>
           </div>
         </div>
 
         <div class="navbar-controls">
           <div class="cashier-badge">
-            <span id="userAvatar" class="cashier-avatar"><i data-lucide="bar-chart-3"></i></span>
+            <span id="userAvatar" class="cashier-avatar"><i data-lucide="user-check"></i></span>
             <div class="cashier-info">
               <span id="userName" class="cashier-name">Andrés Felipe Gómez</span>
-              <span class="shift-status">● Contador General</span>
+              <span class="shift-status">● Contador General Colegiado</span>
             </div>
           </div>
 
@@ -43,127 +43,309 @@
     </header>
 
 
-    <!-- BARRA DE ACCIONES PRINCIPALES (BOTONES TÁCTILES MIN 48X48PX) -->
-    <section class="accounting-action-toolbar" aria-label="Acciones Contables">
+    <!-- BARRA SUPERIOR DE ACCIONES Y CONTROL DE AUDITORÍA -->
+    <section class="accounting-action-toolbar" aria-label="Herramientas Contables">
       <div class="action-buttons-group">
         <button id="btnOpenManualEntry" type="button" class="btn-acc-action primary">
-          <span>+ Registrar Asiento Manual</span>
+          <i data-lucide="plus-circle" class="icon-sm"></i> <span>+ Nuevo Comprobante de Diario</span>
         </button>
 
         <button id="btnPrintBalance" type="button" class="btn-acc-action secondary">
-          <i data-lucide="bar-chart-3" class="icon-sm"></i> <span>Balance de Comprobación</span>
+          <i data-lucide="printer" class="icon-sm"></i> <span>Imprimir Balance de Comprobación</span>
+        </button>
+
+        <button id="btnExportBalanceCsvTop" type="button" class="btn-acc-action outline">
+          <i data-lucide="download" class="icon-sm"></i> <span>Exportar Libros a Excel (CSV)</span>
         </button>
       </div>
 
-      <div style="font-size: 0.85rem; color: var(--color-muted); font-weight: 600;">
+      <div class="audit-status-strip">
         <span>Estado Auditoría Contable:</span>
-        <strong style="color: var(--color-success);" class="badge-clean-icon"><i data-lucide="check-circle-2" class="icon-xs"></i> Ecuación Patrimonial Verificada</strong>
+        <strong id="auditStatusBadge" style="color: var(--color-success);" class="badge-clean-icon">
+          <i data-lucide="check-circle-2" class="icon-xs"></i> Ecuación Patrimonial Verificada
+        </strong>
       </div>
     </section>
 
     <!-- CONTENIDO PRINCIPAL DE CONTABILIDAD -->
     <main class="accounting-content">
 
-      <!-- SECCIÓN DE KPIS FINANCIEROS -->
-      <section class="inventory-kpi-grid" aria-label="Resumen Financiero">
-        <div class="inventory-kpi-card">
-          <div class="kpi-icon-container"><i data-lucide="landmark"></i></div>
-          <div class="kpi-details">
-            <h3>Activos Circulantes</h3>
-            <div class="kpi-number">$28,450.00</div>
-          </div>
+      <!-- FRANJA DE CONTROL ADMINISTRATIVO / FISCAL (SOBRIA, SIN TARJETAS INFANTILES) -->
+      <section class="accounting-control-bar" aria-label="Información Fiscal y del Ejercicio">
+        <div class="control-item">
+          <span class="control-label">Ejercicio Fiscal:</span>
+          <span class="control-val">2026 (Período Regular)</span>
         </div>
-
-        <div class="inventory-kpi-card">
-          <div class="kpi-icon-container" style="color: var(--color-success);"><i data-lucide="banknote"></i></div>
-          <div class="kpi-details">
-            <h3>Ventas del Mes (Abono)</h3>
-            <div class="kpi-number" style="color: var(--color-success);">$18,920.00</div>
-          </div>
+        <div class="control-divider"></div>
+        <div class="control-item">
+          <span class="control-label">Moneda Funcional:</span>
+          <span class="control-val">USD ($) &bull; Ref. BCV Oficial</span>
         </div>
-
-        <div class="inventory-kpi-card">
-          <div class="kpi-icon-container" style="color: var(--color-terracotta);"><i data-lucide="trending-down"></i></div>
-          <div class="kpi-details">
-            <h3>Gastos & Costos (Débito)</h3>
-            <div class="kpi-number" style="color: var(--color-terracotta);">$11,480.00</div>
-          </div>
+        <div class="control-divider"></div>
+        <div class="control-item">
+          <span class="control-label">Total Comprobantes:</span>
+          <span id="statTotalVouchers" class="control-val">0 Asientos</span>
         </div>
-
-        <div class="inventory-kpi-card">
-          <div class="kpi-icon-container" style="color: var(--color-gold-dark);"><i data-lucide="scale"></i></div>
-          <div class="kpi-details">
-            <h3>Estado del Balance</h3>
-            <div class="kpi-number badge-clean-icon" style="font-size: 1.1rem; color: var(--color-success);"><i data-lucide="check" class="icon-xs"></i> Debe = Haber</div>
-          </div>
+        <div class="control-divider"></div>
+        <div class="control-item">
+          <span class="control-label">Sumas Iguales Débito:</span>
+          <span id="statTotalDebe" class="control-val highlight-debe">$0.00</span>
+        </div>
+        <div class="control-divider"></div>
+        <div class="control-item">
+          <span class="control-label">Sumas Iguales Crédito:</span>
+          <span id="statTotalHaber" class="control-val highlight-haber">$0.00</span>
+        </div>
+        <div class="control-divider"></div>
+        <div class="control-item">
+          <span class="control-label">Partida Doble:</span>
+          <span id="statBalanceStatus" class="control-val status-balanced">
+            <i data-lucide="check" class="icon-xs"></i> Cuadrada (Debe = Haber)
+          </span>
         </div>
       </section>
 
-      <!-- BARRA DE PESTAÑAS DE NAVEGACIÓN CONTABLE -->
-      <div class="accounting-tabs-bar">
-        <button type="button" class="acc-tab-btn active" data-tab="tabVouchers">Asientos Contables Automáticos</button>
-        <button type="button" class="acc-tab-btn" data-tab="tabLedger">Libro Mayor (Cuentas T)</button>
-        <button type="button" class="acc-tab-btn" data-tab="tabBalance">Balance de Comprobación</button>
+      <!-- BARRA DE PESTAÑAS DE NAVEGACIÓN CONTABLE (4 SECCIONES CLARAS) -->
+      <div class="accounting-tabs-bar" role="tablist">
+        <button type="button" class="acc-tab-btn active" data-tab="tabVouchers" role="tab" aria-selected="true">
+          <i data-lucide="book-open" class="icon-xs"></i> 1. Libro Diario General
+        </button>
+        <button type="button" class="acc-tab-btn" data-tab="tabLedger" role="tab" aria-selected="false">
+          <i data-lucide="columns" class="icon-xs"></i> 2. Libro Mayor General
+        </button>
+        <button type="button" class="acc-tab-btn" data-tab="tabBalance" role="tab" aria-selected="false">
+          <i data-lucide="scale" class="icon-xs"></i> 3. Balance de Comprobación
+        </button>
+        <button type="button" class="acc-tab-btn" data-tab="tabPUC" role="tab" aria-selected="false">
+          <i data-lucide="list-tree" class="icon-xs"></i> 4. Plan de Cuentas (PUC)
+        </button>
       </div>
 
-      <!-- PANEL 1: ASIENTOS CONTABLES AUTOMÁTICOS -->
+      <!-- ====================================================================
+           PANEL 1: LIBRO DIARIO GENERAL (COMPROBANTES DE DIARIO)
+           ==================================================================== -->
       <section id="tabVouchers" class="tab-panel-content">
-        <div class="section-title-group" style="margin-bottom: 1.25rem;">
-          <h2><i data-lucide="receipt" class="icon-sm"></i> Asientos Contables Automáticos (Vouchers de Partida Doble)</h2>
-          <p>Comprobantes generados en tiempo real por transacciones de POS, recepción de insumos y mermas.</p>
+        <div class="section-title-group" style="margin-bottom: 0.85rem;">
+          <h2>Libro Diario General (Comprobantes y Asientos Cronológicos)</h2>
+          <p>Registro oficial sistemático de cada operación comercial con número correlativo, cuentas imputadas, débitos, créditos y glosa justificativa.</p>
         </div>
 
+        <!-- BARRA DE HERRAMIENTAS Y FILTROS DEL DIARIO -->
+        <div class="accounting-section-toolbar">
+          <div style="display: flex; align-items: center; gap: 0.75rem; flex-wrap: wrap;">
+            <div class="accounting-search-box">
+              <i data-lucide="search" class="icon-xs" style="color: var(--color-muted);"></i>
+              <input type="text" id="journalSearchInput" placeholder="Buscar por concepto, N° asiento o código PUC...">
+            </div>
+
+            <select id="journalFilterType" class="pos-search-input" style="padding: 0.35rem 0.75rem; font-size: 0.82rem; width: auto;">
+              <option value="all">Todos los Orígenes</option>
+              <option value="pos">Ventas Punto de Venta (POS)</option>
+              <option value="proveedores">Compras &amp; Proveedores</option>
+              <option value="inventario">Inventario &amp; Mermas</option>
+              <option value="manual">Comprobantes Manuales / Ajustes</option>
+            </select>
+          </div>
+
+          <div style="display: flex; align-items: center; gap: 0.75rem;">
+            <span id="journalCountBadge" class="table-counter-badge">
+              0 Comprobantes
+            </span>
+
+            <div class="accounting-view-toggle">
+              <button id="btnViewVouchers" type="button" class="btn-toggle-view active" title="Ver en fichas de comprobantes individuales">
+                <i data-lucide="file-text" class="icon-xs"></i> Comprobantes
+              </button>
+              <button id="btnViewJournalTable" type="button" class="btn-toggle-view" title="Ver en formato formal de Libro Diario oficial continuo">
+                <i data-lucide="table" class="icon-xs"></i> Formato Diario Continuo
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- VISTA 1: FICHAS DE COMPROBANTE DE DIARIO (ESTILO SAINT / PROFIT) -->
         <div id="vouchersListContainer" class="vouchers-list-container">
           <!-- Renderizado dinámico vía js/modules/accounting.js -->
         </div>
+
+        <!-- VISTA 2: TABLA FORMAL CONTINUA DE LIBRO DIARIO -->
+        <div id="journalTableContainer" class="table-responsive-container clean-paper-card" style="display: none; padding: 0; overflow: hidden;">
+          <table class="journal-continuous-table">
+            <thead>
+              <tr>
+                <th style="width: 120px;">Fecha</th>
+                <th style="width: 130px;">Comprobante</th>
+                <th>Cuentas Contables y Glosa Explicativa (P/R)</th>
+                <th style="width: 100px; text-align: center;">Folio / PUC</th>
+                <th style="width: 130px; text-align: right;">Debe ($)</th>
+                <th style="width: 130px; text-align: right;">Haber ($)</th>
+              </tr>
+            </thead>
+            <tbody id="journalTableBody">
+              <!-- Renderizado dinámico continuo -->
+            </tbody>
+          </table>
+        </div>
       </section>
 
 
-      <!-- PANEL 2: LIBRO MAYOR (CUENTAS T) -->
+      <!-- ====================================================================
+           PANEL 2: LIBRO MAYOR GENERAL (FOLIOS ANALÍTICOS Y CUENTAS T)
+           ==================================================================== -->
       <section id="tabLedger" class="tab-panel-content" style="display: none;">
-        <div class="section-title-group" style="margin-bottom: 1.25rem;">
-          <h2><i data-lucide="book-open" class="icon-sm"></i> Libro Mayor General (Esquema de Cuentas T)</h2>
-          <p>Resumen analítico por cuenta PUC mostrando débitos, créditos y saldos netos.</p>
+        <div class="section-title-group" style="margin-bottom: 0.85rem;">
+          <h2>Libro Mayor General (Folios de Cuenta y Esquema de Mayor)</h2>
+          <p>Centralización cronológica y acumulativa de los movimientos de débito y crédito por cada cuenta contable para determinar saldos netos.</p>
         </div>
 
-        <div id="tAccountsGridContainer" class="t-accounts-grid">
+        <!-- BARRA DE HERRAMIENTAS Y FILTROS DEL MAYOR -->
+        <div class="accounting-section-toolbar">
+          <div style="display: flex; align-items: center; gap: 0.75rem; flex-wrap: wrap;">
+            <div class="accounting-search-box">
+              <i data-lucide="search" class="icon-xs" style="color: var(--color-muted);"></i>
+              <input type="text" id="ledgerSearchInput" placeholder="Buscar cuenta (ej: 1105, Caja, Proveedores, Ventas)...">
+            </div>
+
+            <select id="ledgerAccountPicker" class="pos-search-input" style="padding: 0.35rem 0.75rem; font-size: 0.82rem; width: auto; max-width: 260px;">
+              <option value="all">Todas las Cuentas con Movimiento</option>
+              <!-- Poblado dinámicamente con cuentas del PUC -->
+            </select>
+
+            <select id="ledgerFilterSelect" class="pos-search-input" style="padding: 0.35rem 0.75rem; font-size: 0.82rem; width: auto;">
+              <option value="with_movements" selected>Solo con Movimientos</option>
+              <option value="all">Todas las Cuentas PUC</option>
+              <option value="activo">Activos (1xxx)</option>
+              <option value="pasivo">Pasivos (2xxx)</option>
+              <option value="patrimonio">Patrimonio (3xxx)</option>
+              <option value="ingreso">Ingresos (4xxx)</option>
+              <option value="gasto_costo">Gastos y Costos (5xxx/6xxx)</option>
+            </select>
+          </div>
+
+          <div style="display: flex; align-items: center; gap: 0.75rem;">
+            <span id="ledgerCountBadge" class="table-counter-badge">
+              0 Cuentas
+            </span>
+
+            <div class="accounting-view-toggle">
+              <button id="btnLedgerFolioView" type="button" class="btn-toggle-view active" title="Ver en formato analítico de Folio de Mayor con saldo progresivo">
+                <i data-lucide="list" class="icon-xs"></i> Folios Analíticos
+              </button>
+              <button id="btnLedgerTView" type="button" class="btn-toggle-view" title="Ver en esquema clásico de Cuentas T">
+                <i data-lucide="columns" class="icon-xs"></i> Cuentas T
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- VISTA A: FOLIOS ANALÍTICOS DE MAYOR (TABLAS POR CUENTA CON SALDO PROGRESIVO) -->
+        <div id="ledgerFolioContainer" class="ledger-folios-container">
+          <!-- Renderizado dinámico vía js/modules/accounting.js -->
+        </div>
+
+        <!-- VISTA B: CUADRÍCULA DE CUENTAS T CLÁSICAS -->
+        <div id="tAccountsGridContainer" class="t-accounts-grid" style="display: none;">
           <!-- Renderizado dinámico vía js/modules/accounting.js -->
         </div>
       </section>
 
 
-      <!-- PANEL 3: BALANCE DE COMPROBACIÓN -->
+      <!-- ====================================================================
+           PANEL 3: BALANCE DE COMPROBACIÓN DE SUMAS Y SALDOS
+           ==================================================================== -->
       <section id="tabBalance" class="tab-panel-content" style="display: none;">
-        <div class="orders-section-card">
-          <div class="section-title-group" style="margin-bottom: 1rem;">
-            <h2><i data-lucide="bar-chart-3" class="icon-sm"></i> Balance de Comprobación de Sumas y Saldos</h2>
-            <p>Verificación matemática del principio de Partida Doble (Total Sumas Debe = Total Sumas Haber).</p>
+        <div class="clean-paper-card">
+          <div class="section-title-group" style="margin-bottom: 0.85rem;">
+            <h2>Balance de Comprobación de Sumas y Saldos</h2>
+            <p>Demostración formal del equilibrio aritmético de la contabilidad por partida doble: Total Sumas Debe = Total Sumas Haber y Total Saldos Deudores = Total Saldos Acreedores.</p>
+          </div>
+
+          <!-- HERRAMIENTAS DEL BALANCE -->
+          <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 0.75rem; margin-bottom: 0.85rem;">
+            <div style="display: flex; align-items: center; gap: 0.6rem;">
+              <select id="balanceFilterSelect" class="pos-search-input" style="padding: 0.35rem 0.75rem; font-size: 0.82rem; width: auto;">
+                <option value="with_movements" selected>Solo Cuentas con Movimiento o Saldo</option>
+                <option value="all">Ver Todas las Cuentas PUC (Incluso sin saldo)</option>
+              </select>
+            </div>
+
+            <div style="display: flex; align-items: center; gap: 0.5rem;">
+              <button id="btnPrintBalanceQuick" type="button" class="btn-acc-action secondary" style="min-height: 36px; padding: 0.35rem 0.85rem; font-size: 0.82rem;">
+                <i data-lucide="printer" class="icon-xs"></i> <span>Reporte Certificado / PDF</span>
+              </button>
+              <button id="btnExportBalanceCsvQuick" type="button" class="btn-acc-action outline" style="min-height: 36px; padding: 0.35rem 0.85rem; font-size: 0.82rem;">
+                <i data-lucide="download" class="icon-xs"></i> <span>Exportar CSV</span>
+              </button>
+            </div>
           </div>
 
           <div class="table-responsive-container">
-            <table class="dashboard-table">
+            <table class="accounting-official-table">
               <thead>
                 <tr>
-                  <th>Código PUC</th>
-                  <th>Nombre de la Cuenta</th>
-                  <th>Sumas Debe ($)</th>
-                  <th>Sumas Haber ($)</th>
-                  <th>Saldo Deudor ($)</th>
-                  <th>Saldo Acreedor ($)</th>
+                  <th style="width: 100px;">Código PUC</th>
+                  <th>Denominación de la Cuenta</th>
+                  <th style="width: 110px;">Clasificación</th>
+                  <th style="text-align: right; width: 140px;">Sumas Debe ($)</th>
+                  <th style="text-align: right; width: 140px;">Sumas Haber ($)</th>
+                  <th style="text-align: right; width: 140px;">Saldo Deudor ($)</th>
+                  <th style="text-align: right; width: 140px;">Saldo Acreedor ($)</th>
                 </tr>
               </thead>
               <tbody id="balanceBody">
                 <!-- Renderizado dinámico vía js/modules/accounting.js -->
               </tbody>
+              <tfoot id="balanceFoot" class="official-table-footer">
+                <!-- Totales generales del Balance -->
+              </tfoot>
             </table>
           </div>
 
-          <div class="balance-verification-bar" style="margin-top: 1rem;">
-            <span>TOTALES BALANCE DE COMPROBACIÓN:</span>
-            <div>
-              <span style="margin-right: 2rem;">DEBE: <strong id="verificationDebeTotal">$24,850.70</strong></span>
-              <span>HABER: <strong id="verificationHaberTotal">$24,850.70</strong></span>
+          <!-- BARRA DE VERIFICACIÓN OFICIAL DE PARTIDA DOBLE -->
+          <div class="official-verification-strip">
+            <div class="verification-title-box">
+              <i data-lucide="shield-check" class="icon-md" style="color: #2E7D32;"></i>
+              <div>
+                <strong>Auditoría Contable Verificada</strong>
+                <p>Cumple con el principio de Partida Doble conforme a NIIF para PYMES.</p>
+              </div>
             </div>
+            <div class="verification-numbers-grid">
+              <div><span>TOTAL SUMAS DEBE:</span> <strong id="verificationDebeTotal">$0.00</strong></div>
+              <div><span>TOTAL SUMAS HABER:</span> <strong id="verificationHaberTotal">$0.00</strong></div>
+              <div><span>TOTAL SALDOS DEUDORES:</span> <strong id="verificationDeudorTotal">$0.00</strong></div>
+              <div><span>TOTAL SALDOS ACREEDORES:</span> <strong id="verificationAcreedorTotal">$0.00</strong></div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+
+      <!-- ====================================================================
+           PANEL 4: PLAN ÚNICO DE CUENTAS (PUC) - CATÁLOGO MAESTRO
+           ==================================================================== -->
+      <section id="tabPUC" class="tab-panel-content" style="display: none;">
+        <div class="clean-paper-card">
+          <div class="section-title-group" style="margin-bottom: 0.85rem;">
+            <h2>Plan Único de Cuentas (PUC) &bull; Catálogo Maestro</h2>
+            <p>Codificación sistemática y nomenclatura oficial de las cuentas contables habilitadas para la operación de la panadería y pastelería.</p>
+          </div>
+
+          <div class="table-responsive-container">
+            <table class="accounting-official-table">
+              <thead>
+                <tr>
+                  <th style="width: 120px;">Código PUC</th>
+                  <th>Nombre de la Cuenta</th>
+                  <th style="width: 140px;">Grupo / Tipo</th>
+                  <th style="width: 140px;">Naturaleza</th>
+                  <th>Uso y Aplicación Operativa</th>
+                </tr>
+              </thead>
+              <tbody id="pucTableBody">
+                <!-- Renderizado dinámico del catálogo -->
+              </tbody>
+            </table>
           </div>
         </div>
       </section>
@@ -173,80 +355,120 @@
   </div>
 
 
-  <!-- MODAL DE REGISTRO DE ASIENTO MANUAL -->
-  <div id="manualEntryModal" class="pin-modal-overlay" role="dialog" aria-modal="true" aria-labelledby="entryModalTitle">
-    <div class="pin-modal-card payment-modal-card">
-      <button id="closeEntryModalBtn" class="modal-close-btn" aria-label="Cerrar modal">&times;</button>
+  <!-- ====================================================================
+       MODAL DE NUEVO COMPROBANTE DE DIARIO (MULTI-RENGLÓN ESTILO SAINT / PROFIT)
+       ==================================================================== -->
+  <div id="manualEntryModal" class="pin-modal-overlay" role="dialog" aria-modal="true" aria-labelledby="entryModalTitle" style="display: none;">
+    <div class="voucher-modal-card" style="max-width: 920px; width: 100%;">
+      <button id="closeEntryModalBtn" class="modules-modal-close" aria-label="Cerrar modal">&times;</button>
 
-      <div class="selected-user-header" style="margin-bottom: 1.25rem;">
-        <div class="selected-user-avatar"><i data-lucide="file-edit"></i></div>
-        <h3 id="entryModalTitle" class="selected-user-name">Registro de Asiento Manual</h3>
-        <span class="selected-user-role">Comprobante de Diario / Ajuste de Auditoría</span>
+      <div class="voucher-modal-header">
+        <div class="voucher-modal-badge"><i data-lucide="file-spreadsheet"></i></div>
+        <div>
+          <h3 id="entryModalTitle" class="voucher-modal-title">Nuevo Comprobante de Diario</h3>
+          <span class="voucher-modal-sub">Registro Contable Multi-Partida &bull; Principio de Partida Doble NIIF</span>
+        </div>
       </div>
 
-      <form id="manualEntryForm" class="manual-entry-form" style="display: flex; flex-direction: column; gap: 1.25rem; text-align: left;">
-        <div>
-          <label for="entryConceptInput" style="font-weight: 700; font-size: 0.9rem; display: block; margin-bottom: 0.4rem;">Concepto de la Transacción:</label>
-          <input type="text" id="entryConceptInput" class="pos-search-input" placeholder="Ej: Pago de Mantenimiento de Hornos Industriales" required>
-        </div>
-
-        <div class="manual-entry-row" style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+      <form id="manualEntryForm" class="manual-entry-form" style="display: flex; flex-direction: column; gap: 1rem; text-align: left;">
+        
+        <!-- DATOS DE ENCABEZADO DEL COMPROBANTE -->
+        <div class="voucher-header-fields">
           <div>
-            <label for="debeAccountSelect" style="font-weight: 700; font-size: 0.85rem; display: block; margin-bottom: 0.4rem;">Cuenta Débito (Debe):</label>
-            <select id="debeAccountSelect" class="pos-search-input" style="padding: 0.65rem 1rem;">
-              <option value="5105">5105 - Gastos de Personal</option>
-              <option value="5195">5195 - Gastos Mermas y Pérdidas</option>
-              <option value="1435">1435 - Inventario Materia Prima</option>
-              <option value="1105">1105 - Caja General</option>
+            <label for="entryDateInput" class="form-field-label">Fecha Contable:</label>
+            <input type="date" id="entryDateInput" class="pos-search-input" required>
+          </div>
+          <div>
+            <label for="entryTypeSelect" class="form-field-label">Tipo de Comprobante:</label>
+            <select id="entryTypeSelect" class="pos-search-input">
+              <option value="Diario">Diario General</option>
+              <option value="Ingreso">Ingreso de Caja / Bancos</option>
+              <option value="Egreso">Egreso / Pago de Gastos</option>
+              <option value="Ajuste">Ajuste de Cierre / Auditoría</option>
             </select>
           </div>
-
-          <div>
-            <label for="debeAmountInput" style="font-weight: 700; font-size: 0.85rem; display: block; margin-bottom: 0.4rem;">Monto Débito ($):</label>
-            <input type="number" id="debeAmountInput" class="pos-search-input" value="150.00" step="0.01" min="0.01">
+          <div style="grid-column: span 2;">
+            <label for="entryConceptInput" class="form-field-label">Concepto General / Glosa del Asiento (P/R):</label>
+            <input type="text" id="entryConceptInput" class="pos-search-input" placeholder="Ej: Pago de Mantenimiento de Hornos Industriales según Factura N° 458" required>
           </div>
         </div>
 
-        <div class="manual-entry-row" style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
-          <div>
-            <label for="haberAccountSelect" style="font-weight: 700; font-size: 0.85rem; display: block; margin-bottom: 0.4rem;">Cuenta Crédito (Haber):</label>
-            <select id="haberAccountSelect" class="pos-search-input" style="padding: 0.65rem 1rem;">
-              <option value="1105">1105 - Caja General</option>
-              <option value="1110">1110 - Bancos Nacionales</option>
-              <option value="2205">2205 - Proveedores Nacionales</option>
-            </select>
+        <!-- TABLA DINÁMICA DE RENGLONES / PARTIDAS CONTABLES -->
+        <div class="voucher-lines-container">
+          <div class="voucher-lines-header-bar">
+            <span style="font-weight: 700; font-size: 0.85rem; color: var(--color-espresso);">Partidas Contables (Renglones del Asiento)</span>
+            <div style="display: flex; gap: 0.5rem;">
+              <button id="btnAddEntryRow" type="button" class="btn-line-action">
+                <i data-lucide="plus" class="icon-xs"></i> <span>+ Agregar Renglón</span>
+              </button>
+              <button id="btnAutoBalanceRow" type="button" class="btn-line-action secondary" title="Calcula la diferencia actual e inserta un renglón para cuadrar">
+                <i data-lucide="scale" class="icon-xs"></i> <span>Auto-Cuadrar Renglón</span>
+              </button>
+            </div>
           </div>
 
-          <div>
-            <label for="haberAmountInput" style="font-weight: 700; font-size: 0.85rem; display: block; margin-bottom: 0.4rem;">Monto Crédito ($):</label>
-            <input type="number" id="haberAmountInput" class="pos-search-input" value="150.00" step="0.01" min="0.01">
+          <div class="table-responsive-container" style="max-height: 280px; overflow-y: auto;">
+            <table class="voucher-editor-table">
+              <thead>
+                <tr>
+                  <th style="width: 40px; text-align: center;">#</th>
+                  <th style="min-width: 250px;">Cuenta Contable (PUC)</th>
+                  <th style="min-width: 180px;">Referencia / Detalle Renglón</th>
+                  <th style="width: 130px; text-align: right;">Débito (Debe $)</th>
+                  <th style="width: 130px; text-align: right;">Crédito (Haber $)</th>
+                  <th style="width: 40px; text-align: center;"></th>
+                </tr>
+              </thead>
+              <tbody id="voucherRowsBody">
+                <!-- Se llena dinámicamente con renglones de entrada -->
+              </tbody>
+            </table>
           </div>
         </div>
 
-        <button type="submit" class="btn-process-payment" style="margin-top: 0.5rem;">
-          <i data-lucide="save" class="icon-sm"></i> <span>Registrar Asiento en Diario</span>
-        </button>
+        <!-- PIE DE CONTROL Y BALANCE DEL COMPROBANTE -->
+        <div class="voucher-editor-footer-bar">
+          <div class="editor-totals-box">
+            <div>TOTAL DEBE: <strong id="editorDebeTotal" class="highlight-debe">$0.00</strong></div>
+            <div>TOTAL HABER: <strong id="editorHaberTotal" class="highlight-haber">$0.00</strong></div>
+            <div>DIFERENCIA: <strong id="editorDiffTotal">$0.00</strong></div>
+          </div>
+          <div id="editorBalanceBadge" class="editor-balance-status status-balanced">
+            <i data-lucide="check-circle-2" class="icon-xs"></i> Comprobante Cuadrado
+          </div>
+        </div>
+
+        <div style="display: flex; justify-content: flex-end; gap: 0.75rem; margin-top: 0.5rem;">
+          <button id="btnCancelModal" type="button" class="btn-acc-action outline" style="min-height: 42px;">
+            Cancelar
+          </button>
+          <button id="btnSubmitManualEntry" type="submit" class="btn-acc-action primary" style="min-height: 42px;">
+            <i data-lucide="save" class="icon-sm"></i> <span>Guardar Comprobante en Diario</span>
+          </button>
+        </div>
       </form>
     </div>
   </div>
 
 
-    <!-- MODAL DE BALANCE DE COMPROBACIÓN IMPRIMIBLE -->
+  <!-- ====================================================================
+       MODAL DE REPORTE FORMAL DE BALANCE DE COMPROBACIÓN IMPRIMIBLE
+       ==================================================================== -->
   <div id="balanceReportModal" class="pin-modal-overlay" role="dialog" aria-modal="true" aria-labelledby="balanceModalTitle" aria-hidden="true" style="display: none;">
-    <div class="pin-modal-card report-modal-card">
+    <div class="pin-modal-card report-modal-card" style="max-width: 960px; width: 100%;">
       
       <!-- BARRA DE ACCIONES SUPERIOR (HERRAMIENTAS NO IMPRIMIBLES) -->
       <div class="report-modal-toolbar no-print">
         <div class="report-modal-toolbar-title">
           <i data-lucide="scale" class="icon-md" style="color: var(--color-gold);"></i>
-          <span id="balanceModalTitle">Balance de Comprobación Contable</span>
+          <span id="balanceModalTitle">Balance de Comprobación Contable Formal</span>
         </div>
         <div class="report-modal-actions">
-          <button id="btnPrintBalanceModal" type="button" class="btn-primary-action gold-variant" style="padding: 0.5rem 1.1rem; font-size: 0.85rem; display: inline-flex; align-items: center; gap: 0.4rem; cursor: pointer; border: none; border-radius: var(--radius-pill); font-weight: 700; color: #FFFFFF; background: linear-gradient(135deg, #D49B54 0%, #C48B44 100%);">
-            <i data-lucide="printer" class="icon-sm"></i> <span>Imprimir / PDF</span>
+          <button id="btnPrintBalanceModal" type="button" class="btn-acc-action primary" style="min-height: 38px; padding: 0.4rem 1rem;">
+            <i data-lucide="printer" class="icon-sm"></i> <span>Imprimir / Guardar PDF</span>
           </button>
-          <button id="btnExportBalanceCsv" type="button" class="btn-acc-action secondary" style="padding: 0.5rem 1rem; font-size: 0.85rem; display: inline-flex; align-items: center; gap: 0.4rem; cursor: pointer; border: 1px solid rgba(44, 29, 17, 0.2); border-radius: var(--radius-pill); background: #FFFFFF; font-weight: 700; color: var(--color-espresso);">
-            <i data-lucide="download" class="icon-sm"></i> <span>Exportar CSV</span>
+          <button id="btnExportBalanceCsv" type="button" class="btn-acc-action outline" style="min-height: 38px; padding: 0.4rem 1rem;">
+            <i data-lucide="download" class="icon-sm"></i> <span>Descargar CSV</span>
           </button>
           <button id="btnCloseBalanceModal" type="button" class="modal-close-btn" style="position: static; font-size: 1.5rem; cursor: pointer;" aria-label="Cerrar modal">&times;</button>
         </div>
