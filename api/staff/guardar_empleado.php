@@ -17,6 +17,9 @@ if (($_SERVER['REQUEST_METHOD'] ?? '') === 'OPTIONS') {
 require_once __DIR__ . '/../config/conexion.php';
 require_once __DIR__ . '/../config/security.php';
 
+// Verificación RBAC: Solo Administradores y Super Administradores pueden gestionar empleados
+require_auth(['ADMIN', 'SUPERADMIN']);
+
 $rawInput = file_get_contents('php://input');
 $data = json_decode($rawInput, true);
 if (!$data) $data = $_POST;
@@ -46,6 +49,11 @@ try {
     $targetRoleCode = 'CASHIER';
 
     if (strpos($roleLower, 'superadmin') !== false) {
+        if (strtoupper($_SESSION['role_code'] ?? '') !== 'SUPERADMIN') {
+            http_response_code(403);
+            echo json_encode(['success' => false, 'message' => 'Solo el Super Administrador puede crear o promover usuarios a Super Administrador.'], JSON_UNESCAPED_UNICODE);
+            exit();
+        }
         $targetRoleCode = 'SUPERADMIN';
     } elseif (strpos($roleLower, 'gerente') !== false || strpos($roleLower, 'admin') !== false) {
         $targetRoleCode = 'ADMIN';

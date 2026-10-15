@@ -5,11 +5,11 @@
    normaliza decimales con coma/punto y valida la lectura con fallback a Tasa Manual.
    ========================================================================== */
 
-header('Content-Type: application/json; charset=utf-8');
-header('Access-Control-Allow-Origin: *');
-header('Cache-Control: no-cache, no-store, must-revalidate');
-
+define('LNP_PUBLIC', true);
 require_once __DIR__ . '/config/conexion.php';
+
+header('Content-Type: application/json; charset=utf-8');
+header('Cache-Control: no-cache, no-store, must-revalidate');
 
 $mode = 'auto';
 $manualRate = 761.21;

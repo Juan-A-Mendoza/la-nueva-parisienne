@@ -4,10 +4,9 @@
    Recibe el carrito de compras del POS en JSON y registra la venta en MySQL
    ========================================================================== */
 
-header("Access-Control-Allow-Origin: *");
 header("Content-Type: application/json; charset=UTF-8");
 header("Access-Control-Allow-Methods: POST, OPTIONS");
-header("Access-Control-Allow-Headers: Content-Type, Authorization, X-Requested-With");
+header("Access-Control-Allow-Headers: Content-Type, Authorization, X-Requested-With, X-CSRF-Token");
 
 if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
     http_response_code(200);
@@ -35,7 +34,8 @@ if (empty($data)) {
 
 // Extraer parámetros del pedido
 $orderNumber = isset($data['orderNumber']) ? trim($data['orderNumber']) : (isset($data['order_number']) ? trim($data['order_number']) : (isset($data['codigo']) ? trim($data['codigo']) : 'FAC-2026-' . rand(1000, 9999)));
-$userId = isset($data['userId']) ? trim($data['userId']) : (isset($data['user_id']) ? trim($data['user_id']) : 'usr_cashier');
+$sessionUserId = $_SESSION['user_id'] ?? null;
+$userId = $sessionUserId ?: (isset($data['userId']) ? trim($data['userId']) : (isset($data['user_id']) ? trim($data['user_id']) : 'usr_cashier'));
 $subtotal = isset($data['subtotal']) ? (float)$data['subtotal'] : 0.0;
 $tax = isset($data['tax']) ? (float)$data['tax'] : (isset($data['iva']) ? (float)$data['iva'] : 0.0);
 $discount = isset($data['discount']) ? (float)$data['discount'] : (isset($data['descuento']) ? (float)$data['descuento'] : 0.0);

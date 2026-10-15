@@ -7,12 +7,29 @@
    - Sanitización de entradas y tokens criptográficos
    ========================================================================== */
 
-// 1. Cabeceras de seguridad HTTP
+// 0. Cargar middleware de autenticación (sesiones PHP seguras)
+require_once __DIR__ . '/auth_middleware.php';
+
+// 1. Cabeceras de seguridad HTTP y CORS restrictivo
 if (!headers_sent()) {
+    // Protección contra ataques comunes
     header("X-Content-Type-Options: nosniff");
     header("X-Frame-Options: SAMEORIGIN");
-    header("X-XSS-Protection: 1; mode=block");
     header("Referrer-Policy: strict-origin-when-cross-origin");
+
+    // Content Security Policy (reemplaza X-XSS-Protection deprecado)
+    header("Content-Security-Policy: default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://unpkg.com https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://unpkg.com https://cdn.jsdelivr.net; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: blob:; connect-src 'self' https://ve.dolarapi.com https://bcv-api.vercel.app;");
+
+    // CORS restrictivo — sobreescribe Access-Control-Allow-Origin: * de endpoints individuales
+    $requestOrigin = $_SERVER['HTTP_ORIGIN'] ?? '';
+    if (preg_match('/^https?:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/', $requestOrigin)) {
+        header("Access-Control-Allow-Origin: {$requestOrigin}");
+        header("Access-Control-Allow-Credentials: true");
+    } else {
+        $selfOrigin = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off' ? 'https' : 'http')
+                    . '://' . ($_SERVER['HTTP_HOST'] ?? 'localhost');
+        header("Access-Control-Allow-Origin: {$selfOrigin}");
+    }
 }
 
 /**
@@ -155,4 +172,30 @@ function security_clear_rate_limit(string $key): void {
     if (file_exists($cacheFile)) {
         @unlink($cacheFile);
     }
+}
+
+/**
+ * Genera un ID criptográficamente seguro y no predecible para registros en BD
+ * @param string $prefix Prefijo descriptivo (ej: 'sale', 'prod', 'usr')
+ * @return string ID único de 32 caracteres hexadecimales con prefijo
+ */
+function security_generate_id(string $prefix = 'id'): string {
+    return $prefix . '_' . bin2hex(random_bytes(12));
+}
+
+/**
+ * Responde al cliente con un error genérico sin exponer detalles internos.
+ * Registra el error completo en el log del servidor para diagnóstico.
+ * @param Exception $e La excepción capturada
+ * @param string $context Contexto de la operación para el log interno
+ * @param int $httpCode Código HTTP de respuesta (default 500)
+ */
+function api_error(Exception $e, string $context = 'Operación', int $httpCode = 500): void {
+    error_log("[LNP ERROR] {$context}: " . $e->getMessage() . " en " . $e->getFile() . ":" . $e->getLine());
+    http_response_code($httpCode);
+    echo json_encode([
+        'success' => false,
+        'message' => 'Error interno del servidor. Contacte al administrador si el problema persiste.'
+    ], JSON_UNESCAPED_UNICODE);
+    exit();
 }

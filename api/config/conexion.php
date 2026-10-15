@@ -8,10 +8,12 @@ date_default_timezone_set('America/Caracas');
 
 require_once __DIR__ . '/security.php';
 
-define('DB_HOST', '127.0.0.1');
-define('DB_NAME', 'la_nueva_parisienne');
-define('DB_USER', 'root');
-define('DB_PASS', '');
+// SEGURIDAD: En producción, mover credenciales a variables de entorno o archivo .env
+// y crear un usuario MySQL dedicado con permisos mínimos (no usar root).
+define('DB_HOST', getenv('LNP_DB_HOST') ?: '127.0.0.1');
+define('DB_NAME', getenv('LNP_DB_NAME') ?: 'la_nueva_parisienne');
+define('DB_USER', getenv('LNP_DB_USER') ?: 'root');
+define('DB_PASS', getenv('LNP_DB_PASS') ?: '');
 define('DB_CHARSET', 'utf8mb4');
 
 /**
@@ -33,15 +35,24 @@ function getDbConnection() {
         try {
             $pdo = new PDO($dsn, DB_USER, DB_PASS, $options);
         } catch (PDOException $e) {
+            error_log('[LNP DB ERROR] Conexión: ' . $e->getMessage());
             http_response_code(500);
             header('Content-Type: application/json; charset=UTF-8');
             echo json_encode([
                 'success' => false,
-                'message' => 'Error de conexión a la base de datos MySQL: ' . $e->getMessage()
+                'message' => 'Error de conexión a la base de datos. Contacte al administrador.'
             ], JSON_UNESCAPED_UNICODE);
             exit();
         }
     }
     
     return $pdo;
+}
+
+// Validación automática de autenticación para TODOS los endpoints.
+// Los endpoints públicos (login, perfiles, tasa BCV) deben definir:
+//   define('LNP_PUBLIC', true);
+// ANTES de incluir este archivo para saltarse la verificación.
+if (!defined('LNP_PUBLIC')) {
+    require_auth();
 }

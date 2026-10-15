@@ -5,18 +5,17 @@
    a un usuario con rol Gerente (ADMIN) o Super Administrador (SUPERADMIN).
    ========================================================================== */
 
-header("Access-Control-Allow-Origin: *");
+require_once __DIR__ . '/../config/conexion.php';
+require_once __DIR__ . '/../config/security.php';
+
 header("Content-Type: application/json; charset=UTF-8");
 header("Access-Control-Allow-Methods: POST, OPTIONS");
-header("Access-Control-Allow-Headers: Content-Type, Authorization, X-Requested-With");
+header("Access-Control-Allow-Headers: Content-Type, Authorization, X-Requested-With, X-CSRF-Token");
 
 if (($_SERVER['REQUEST_METHOD'] ?? '') === 'OPTIONS') {
     http_response_code(200);
     exit();
 }
-
-require_once __DIR__ . '/../config/conexion.php';
-require_once __DIR__ . '/../config/security.php';
 
 $rawInput = file_get_contents('php://input');
 $data = json_decode($rawInput, true);
@@ -66,12 +65,7 @@ try {
             break;
         }
     }
-
-    // Compatibilidad controlada de claves maestras gerenciales
-    if (!$isAuthorized && in_array($password, ['admin123', 'superadmin123', '1234', 'gerente', 'admin', '0000'], true)) {
-        $isAuthorized = true;
-        $authorizedBy = 'Autorización Gerencial Maestra';
-    }
+    // Solo autorizar si el hash coincide con un usuario de rol ADMIN o SUPERADMIN activo en MySQL
 
     if ($isAuthorized) {
         security_clear_rate_limit($rateKey);

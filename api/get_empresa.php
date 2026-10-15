@@ -4,7 +4,9 @@
    Retorna los datos fiscales principales de la empresa en JSON
    ========================================================================== */
 
-header("Access-Control-Allow-Origin: *");
+define('LNP_PUBLIC', true);
+require_once __DIR__ . '/config/conexion.php';
+
 header("Content-Type: application/json; charset=UTF-8");
 header("Access-Control-Allow-Methods: GET, OPTIONS");
 
@@ -23,7 +25,6 @@ $defaultEmpresa = [
 ];
 
 try {
-    require_once __DIR__ . '/config/conexion.php';
     $pdo = getDbConnection();
 
     // 1. Obtener datos fiscales de la empresa

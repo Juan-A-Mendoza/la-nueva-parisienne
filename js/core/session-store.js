@@ -117,7 +117,10 @@ export const SessionStore = {
   async getProfilesAsync() {
     try {
       const apiBase = window.location.pathname.includes('/modules/') ? '../api' : 'api';
-      const res = await fetch(`${apiBase}/auth/get_profiles.php?t=${Date.now()}`, { cache: 'no-store' });
+      const res = await fetch(`${apiBase}/auth/get_profiles.php?t=${Date.now()}`, { 
+        cache: 'no-store',
+        credentials: 'include'
+      });
       if (res.ok) {
         const data = await res.json();
         if (data.success && Array.isArray(data.profiles) && data.profiles.length > 0) {
@@ -218,11 +221,12 @@ export const SessionStore = {
       const apiBase = window.location.pathname.includes('/modules/') ? '../api' : 'api';
       const res = await fetch(`${apiBase}/auth/login.php`, {
         method: 'POST',
+        credentials: 'include',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ userId: username, inputPin: password })
       });
       const data = await res.json();
-      if (data.success && data.user) {
+      if (res.ok && data.success && data.user) {
         const userPayload = {
           id: data.user.id,
           name: data.user.name,
@@ -237,14 +241,14 @@ export const SessionStore = {
         this.setSession({
           user: userPayload,
           token: data.token || `AUTH_${Date.now()}`,
+          csrfToken: data.csrf_token || '',
           loginTimestamp: data.timestamp || new Date().toISOString()
         });
 
         return { success: true, redirectUrl: userPayload.redirectUrl, user: userPayload };
-      } else if (res.status === 401) {
-        return { success: false, message: data.message || 'Contraseña incorrecta.' };
-      } else if (res.status === 404) {
-        return { success: false, message: data.message || 'Usuario no registrado.' };
+      } else if (!res.ok) {
+        // Rechazo explícito del servidor (401 credenciales malas, 429 límite de tasa, etc.)
+        return { success: false, message: data.message || 'Error de autenticación.' };
       }
     } catch (e) {
       console.warn('Validación de credenciales MySQL no disponible, usando respaldo local:', e);
@@ -269,7 +273,7 @@ export const SessionStore = {
         );
 
         if (user) {
-          const validPasswords = [user.password, user.pin, 'admin123', 'superadmin123', '1234'].filter(Boolean);
+          const validPasswords = [user.password, user.pin].filter(Boolean);
           if (validPasswords.includes(cleanPass)) {
             let redirectUrl = user.redirectUrl || 'modules/dashboard.html';
             const roleLower = (user.role || '').toLowerCase();
@@ -316,7 +320,7 @@ export const SessionStore = {
       return { success: false, message: 'Nombre de usuario no encontrado en el sistema.' };
     }
 
-    if (fallbackUser.pin === cleanPass || cleanPass === '1234' || cleanPass === 'admin123' || cleanPass === 'superadmin123') {
+    if (fallbackUser.pin === cleanPass) {
       const userPayload = {
         id: fallbackUser.id,
         name: fallbackUser.name,

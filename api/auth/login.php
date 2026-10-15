@@ -4,18 +4,18 @@
    Procesa la validación de credenciales consultando directamente MySQL
    ========================================================================== */
 
-header("Access-Control-Allow-Origin: *");
+define('LNP_PUBLIC', true);
+require_once __DIR__ . '/../config/conexion.php';
+require_once __DIR__ . '/../config/security.php';
+
 header("Content-Type: application/json; charset=UTF-8");
 header("Access-Control-Allow-Methods: POST, OPTIONS");
-header("Access-Control-Allow-Headers: Content-Type, Authorization, X-Requested-With");
+header("Access-Control-Allow-Headers: Content-Type, Authorization, X-Requested-With, X-CSRF-Token");
 
 if (($_SERVER['REQUEST_METHOD'] ?? '') === 'OPTIONS') {
     http_response_code(200);
     exit();
 }
-
-require_once __DIR__ . '/../config/conexion.php';
-require_once __DIR__ . '/../config/security.php';
 
 // Obtener datos del cuerpo de la petición POST (JSON o Form Data)
 $rawInput = file_get_contents('php://input');
@@ -111,6 +111,15 @@ try {
             $stmtUpd->execute([':newHash' => $newSecureHash, ':uid' => $userRow['id']]);
         }
 
+        // Crear sesión PHP autenticada y obtener token CSRF
+        $csrfToken = auth_create_session([
+            'id' => $userRow['id'],
+            'username' => $userRow['username'] ?: ($userRow['codigo'] ?: $userRow['id']),
+            'name' => $userRow['nombre'],
+            'roleCode' => $userRow['rol_codigo'],
+            'role' => $userRow['rol_nombre']
+        ]);
+
         $token = security_generate_token();
         
         http_response_code(200);
@@ -129,6 +138,7 @@ try {
                 'redirectUrl' => $userRow['redirect_url']
             ],
             'token' => $token,
+            'csrf_token' => $csrfToken,
             'timestamp' => date('c')
         ], JSON_UNESCAPED_UNICODE);
     } else {

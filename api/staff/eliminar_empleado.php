@@ -15,6 +15,10 @@ if (($_SERVER['REQUEST_METHOD'] ?? '') === 'OPTIONS') {
 }
 
 require_once __DIR__ . '/../config/conexion.php';
+require_once __DIR__ . '/../config/security.php';
+
+// Verificación RBAC: Solo Administradores y Super Administradores
+require_auth(['ADMIN', 'SUPERADMIN']);
 
 $rawInput = file_get_contents('php://input');
 $data = json_decode($rawInput, true);
@@ -31,6 +35,12 @@ if (empty($id)) {
 if ($id === 'usr_superadmin') {
     http_response_code(403);
     echo json_encode(['success' => false, 'message' => 'No está permitido eliminar al Super Administrador principal.'], JSON_UNESCAPED_UNICODE);
+    exit();
+}
+
+if ($id === ($_SESSION['user_id'] ?? '')) {
+    http_response_code(400);
+    echo json_encode(['success' => false, 'message' => 'No puede eliminar su propia cuenta activa.'], JSON_UNESCAPED_UNICODE);
     exit();
 }
 

@@ -4,10 +4,9 @@
    Actualiza el PIN de acceso del usuario en MySQL
    ========================================================================== */
 
-header("Access-Control-Allow-Origin: *");
 header("Content-Type: application/json; charset=UTF-8");
 header("Access-Control-Allow-Methods: POST, OPTIONS");
-header("Access-Control-Allow-Headers: Content-Type, Authorization, X-Requested-With");
+header("Access-Control-Allow-Headers: Content-Type, Authorization, X-Requested-With, X-CSRF-Token");
 
 if (($_SERVER['REQUEST_METHOD'] ?? '') === 'OPTIONS') {
     http_response_code(200);
@@ -17,16 +16,31 @@ if (($_SERVER['REQUEST_METHOD'] ?? '') === 'OPTIONS') {
 require_once __DIR__ . '/../config/conexion.php';
 require_once __DIR__ . '/../config/security.php';
 
+// Debe estar autenticado para realizar cambios de PIN
+require_auth();
+
 $rawInput = file_get_contents('php://input');
 $data = json_decode($rawInput, true);
 if (!$data) $data = $_POST;
 
 $empId = trim($data['empId'] ?? $data['id'] ?? $data['userId'] ?? $data['user_id'] ?? $data['empleado_id'] ?? '');
 $newPin = trim($data['newPin'] ?? $data['pin'] ?? $data['nuevo_pin'] ?? '');
+$currentPin = trim($data['currentPin'] ?? $data['oldPin'] ?? $data['pin_actual'] ?? '');
 
 if (empty($empId) || empty($newPin)) {
     http_response_code(400);
     echo json_encode(['success' => false, 'message' => 'Se requiere el ID del empleado y el nuevo PIN.'], JSON_UNESCAPED_UNICODE);
+    exit();
+}
+
+// Control de Autorización: Solo el propio usuario o un ADMIN/SUPERADMIN puede cambiar el PIN
+$currentUserId = $_SESSION['user_id'] ?? '';
+$currentUserRole = strtoupper($_SESSION['role_code'] ?? '');
+$isManager = in_array($currentUserRole, ['ADMIN', 'SUPERADMIN'], true);
+
+if ($empId !== $currentUserId && !$isManager) {
+    http_response_code(403);
+    echo json_encode(['success' => false, 'message' => 'No tiene permisos para modificar la clave de otro empleado.'], JSON_UNESCAPED_UNICODE);
     exit();
 }
 

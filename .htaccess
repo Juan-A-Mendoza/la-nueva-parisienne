@@ -1,0 +1,44 @@
+# ==============================================================================
+# LA NUEVA PARISIENNE - CONFIGURACIÓN DE SEGURIDAD APACHE (.HTACCESS)
+# ==============================================================================
+
+# 1. Deshabilitar listado de directorios (Directory Browsing)
+Options -Indexes
+
+# 2. Bloquear acceso a archivos y directorios sensibles
+<IfModule mod_authz_core.c>
+    # Bloquear directorio y metadatos de Git
+    <DirectoryMatch "/\.git">
+        Require all denied
+    </DirectoryMatch>
+
+    # Bloquear volcados de base de datos SQL, archivos .env y de configuración/caché
+    <FilesMatch "(^\.git|^\.env|.*\.sql$|cache_.*\.json$|\.log$)">
+        Require all denied
+    </FilesMatch>
+
+    # Bloquear carpetas de desarrollo interno e IDE
+    <FilesMatch "^(brain|scratch)">
+        Require all denied
+    </FilesMatch>
+</IfModule>
+
+<IfModule !mod_authz_core.c>
+    <FilesMatch "(^\.git|^\.env|.*\.sql$|cache_.*\.json$|\.log$)">
+        Order allow,deny
+        Deny from all
+    </FilesMatch>
+</IfModule>
+
+# 3. Proteger la carpeta database/ explícitamente
+RedirectMatch 403 ^/database/.*$
+
+# 4. Cabeceras de seguridad HTTP básicas si mod_headers está disponible
+<IfModule mod_headers.c>
+    Header always set X-Content-Type-Options "nosniff"
+    Header always set X-Frame-Options "SAMEORIGIN"
+    Header always set Referrer-Policy "strict-origin-when-cross-origin"
+</IfModule>
+
+# 5. Codificación de caracteres por defecto
+AddDefaultCharset UTF-8

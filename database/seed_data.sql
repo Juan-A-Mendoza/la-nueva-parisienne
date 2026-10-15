@@ -59,17 +59,15 @@ INSERT IGNORE INTO `roles` (`id`, `codigo`, `nombre`, `descripcion`, `redirect_u
 ('rol_cashier', 'CASHIER', 'Personal de Caja / POS', 'Facturación directa, cobro en efectivo/tarjeta y arqueo de caja.', 'modules/pos.html'),
 ('rol_accountant', 'ACCOUNTANT', 'Contador & Administrador', 'Auditoría financiera, balance de comprobación y órdenes de compra.', 'modules/accounting.html');
 
--- ----------------------------------------------------------------------------
--- 5. POBLAR TABLA: usuarios
--- ----------------------------------------------------------------------------
+-- Contraseña por defecto para pruebas: 1234 (Almacenada con hash BCRYPT seguro)
 INSERT IGNORE INTO `usuarios` (`id`, `rol_id`, `codigo`, `username`, `nombre`, `email`, `telefono`, `pin`, `icono`, `turno`, `estado`) VALUES
-('usr_superadmin', 'rol_superadmin', 'EMP-000', 'superadmin', 'Super Administrador', 'superadmin@parisienne.com', '(01) 555-SUPER', '1234', 'shield-check', 'Acceso Total 24/7', 'active'),
-('usr_carlos', 'rol_baker', 'EMP-001', 'panadero', 'Carlos Mendoza', 'carlos.mendoza@parisienne.com', '(01) 555-CARLOS', '1234', 'chef-hat', 'Mañana (05:00 - 13:00)', 'active'),
-('usr_ana', 'rol_cashier', 'EMP-002', 'cajero1', 'Ana Ramírez', 'ana.ramirez@parisienne.com', '(01) 555-ANA', '1234', 'banknote', 'Tarde (13:00 - 21:00)', 'active'),
-('usr_manager', 'rol_admin', 'EMP-003', 'admin', 'Juan Mendoza', 'juan.gerente@parisienne.com', '(01) 555-JUAN', '1234', 'shield-check', 'Turno Completo', 'active'),
-('usr_baker', 'rol_baker', 'EMP-004', 'chef', 'Enrique Chef', 'enrique.chef@parisienne.com', '(01) 555-ENRIQUE', '1234', 'chef-hat', 'Mañana (05:00 - 13:00)', 'active'),
-('usr_cashier', 'rol_cashier', 'EMP-005', 'cajero', 'Henry POS', 'henry.pos@parisienne.com', '(01) 555-HENRY', '1234', 'shield-check', 'Mañana (07:00 - 15:00)', 'active'),
-('usr_accountant', 'rol_accountant', 'EMP-006', 'contador', 'Sebastian Finanzas', 'sebastian.finanzas@parisienne.com', '(01) 555-SEBASTIAN', '1234', 'bar-chart-3', 'Horario Oficina (08:00 - 17:00)', 'active');
+('usr_superadmin', 'rol_superadmin', 'EMP-000', 'superadmin', 'Super Administrador', 'superadmin@parisienne.com', '(01) 555-SUPER', '$2y$10$jwa/slzZEcl7pDrjsKx7SepJ8aGbhmpChMm6tz4LBtJouXE/s5bly', 'shield-check', 'Acceso Total 24/7', 'active'),
+('usr_carlos', 'rol_baker', 'EMP-001', 'panadero', 'Carlos Mendoza', 'carlos.mendoza@parisienne.com', '(01) 555-CARLOS', '$2y$10$jwa/slzZEcl7pDrjsKx7SepJ8aGbhmpChMm6tz4LBtJouXE/s5bly', 'chef-hat', 'Mañana (05:00 - 13:00)', 'active'),
+('usr_ana', 'rol_cashier', 'EMP-002', 'cajero1', 'Ana Ramírez', 'ana.ramirez@parisienne.com', '(01) 555-ANA', '$2y$10$jwa/slzZEcl7pDrjsKx7SepJ8aGbhmpChMm6tz4LBtJouXE/s5bly', 'banknote', 'Tarde (13:00 - 21:00)', 'active'),
+('usr_manager', 'rol_admin', 'EMP-003', 'admin', 'Juan Mendoza', 'juan.gerente@parisienne.com', '(01) 555-JUAN', '$2y$10$jwa/slzZEcl7pDrjsKx7SepJ8aGbhmpChMm6tz4LBtJouXE/s5bly', 'shield-check', 'Turno Completo', 'active'),
+('usr_baker', 'rol_baker', 'EMP-004', 'chef', 'Enrique Chef', 'enrique.chef@parisienne.com', '(01) 555-ENRIQUE', '$2y$10$jwa/slzZEcl7pDrjsKx7SepJ8aGbhmpChMm6tz4LBtJouXE/s5bly', 'chef-hat', 'Mañana (05:00 - 13:00)', 'active'),
+('usr_cashier', 'rol_cashier', 'EMP-005', 'cajero', 'Henry POS', 'henry.pos@parisienne.com', '(01) 555-HENRY', '$2y$10$jwa/slzZEcl7pDrjsKx7SepJ8aGbhmpChMm6tz4LBtJouXE/s5bly', 'shield-check', 'Mañana (07:00 - 15:00)', 'active'),
+('usr_accountant', 'rol_accountant', 'EMP-006', 'contador', 'Sebastian Finanzas', 'sebastian.finanzas@parisienne.com', '(01) 555-SEBASTIAN', '$2y$10$jwa/slzZEcl7pDrjsKx7SepJ8aGbhmpChMm6tz4LBtJouXE/s5bly', 'bar-chart-3', 'Horario Oficina (08:00 - 17:00)', 'active');
 
 -- ----------------------------------------------------------------------------
 -- 6. POBLAR TABLA: categorias_producto
