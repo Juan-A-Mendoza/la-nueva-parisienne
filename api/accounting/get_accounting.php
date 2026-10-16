@@ -29,14 +29,32 @@ try {
         $cuentasMap[$c['code']] = $c['name'];
     }
 
-    // 2. Obtener Asientos Contables
-    $stmtAsientos = $pdo->query("
+    $fechaDesde = trim($_GET['fecha_desde'] ?? $_GET['date_from'] ?? '');
+    $fechaHasta = trim($_GET['fecha_hasta'] ?? $_GET['date_to'] ?? '');
+
+    $whereAsientos = [];
+    $paramsAsientos = [];
+    if (!empty($fechaDesde)) {
+        $whereAsientos[] = "fecha_hora >= :f_desde";
+        $paramsAsientos[':f_desde'] = $fechaDesde . ' 00:00:00';
+    }
+    if (!empty($fechaHasta)) {
+        $whereAsientos[] = "fecha_hora <= :f_hasta";
+        $paramsAsientos[':f_hasta'] = $fechaHasta . ' 23:59:59';
+    }
+    $whereSqlAsientos = !empty($whereAsientos) ? " WHERE " . implode(" AND ", $whereAsientos) : "";
+
+    // 2. Obtener Asientos Contables (con filtro de fecha si aplica)
+    $sqlAsientos = "
         SELECT id, codigo AS code, DATE_FORMAT(fecha_hora, '%Y-%m-%d %H:%i') AS date, 
                concepto AS concept, modulo_origen AS sourceModule, icono AS icon, 
                total_debe AS totalDebe, total_haber AS totalHaber 
         FROM asientos_contables 
+        {$whereSqlAsientos}
         ORDER BY fecha_hora DESC, id DESC
-    ");
+    ";
+    $stmtAsientos = $pdo->prepare($sqlAsientos);
+    $stmtAsientos->execute($paramsAsientos);
     $asientosRows = $stmtAsientos->fetchAll();
 
     // 3. Obtener Detalles de todos los Asientos
@@ -79,16 +97,24 @@ try {
         ];
     }
 
-    // 4. Calcular Balance de Comprobación Dinámico agrupado por cuenta
-    $stmtBalance = $pdo->query("
+    // 4. Calcular Balance de Comprobación Dinámico (filtrado por período si aplica)
+    $whereDetailSql = !empty($whereAsientos) ? " WHERE " . implode(" AND ", array_map(function($w) { return "a." . $w; }, $whereAsientos)) : "";
+    $sqlBalance = "
         SELECT c.codigo AS code, c.nombre AS name, c.tipo AS type, c.naturaleza,
                COALESCE(SUM(d.debe), 0) AS sumDebe,
                COALESCE(SUM(d.haber), 0) AS sumHaber
         FROM plan_cuentas c
-        LEFT JOIN asientos_detalle d ON c.codigo = d.cuenta_codigo
+        LEFT JOIN (
+            SELECT d.cuenta_codigo, d.debe, d.haber
+            FROM asientos_detalle d
+            INNER JOIN asientos_contables a ON a.id = d.asiento_id
+            {$whereDetailSql}
+        ) d ON c.codigo = d.cuenta_codigo
         GROUP BY c.codigo, c.nombre, c.tipo, c.naturaleza
         ORDER BY c.codigo ASC
-    ");
+    ";
+    $stmtBalance = $pdo->prepare($sqlBalance);
+    $stmtBalance->execute($paramsAsientos);
     $balanceRaw = $stmtBalance->fetchAll();
 
     $trialBalance = [];

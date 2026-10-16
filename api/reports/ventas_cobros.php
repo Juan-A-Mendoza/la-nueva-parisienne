@@ -83,7 +83,7 @@ try {
                        COALESCE(rvm.turno, u.turno, 'SIN TURNO') AS turno,
                        COALESCE(rvm.referencia_lote, '') AS referencia_lote,
                        COALESCE(rvm.estatus, 'COMPLETADA') AS estatus,
-                       p.id AS producto_id, p.nombre AS producto, c.id AS categoria_id,
+                       p.id AS producto_id, COALESCE(p.codigo, '') AS producto_codigo, p.nombre AS producto, c.id AS categoria_id,
                        COALESCE(c.nombre, 'Sin categoría') AS categoria,
                        vd.cantidad, vd.precio_unitario, vd.subtotal_linea
                 " . reportDetailBaseSql() . $whereSql .
@@ -111,19 +111,35 @@ try {
         $events = $eventStmt->fetchAll();
 
         $categoryTotals = [];
+        $paymentTotals = [];
         $saleIds = [];
         $totals = ['subtotal' => 0, 'descuentos' => 0, 'impuestos' => 0, 'total' => 0];
         foreach ($rows as $row) {
-            $saleIds[$row['id']] = true;
             $category = $row['categoria'];
             if (!isset($categoryTotals[$category])) $categoryTotals[$category] = ['categoria' => $category, 'cantidad' => 0, 'total' => 0];
             $categoryTotals[$category]['cantidad'] += (float)($row['cantidad'] ?? 0);
             $categoryTotals[$category]['total'] += (float)($row['subtotal_linea'] ?? 0);
-            $totals['subtotal'] += (float)$row['subtotal'];
-            $totals['descuentos'] += (float)$row['descuento'];
-            $totals['impuestos'] += (float)$row['iva'];
-            $totals['total'] += (float)$row['total'];
+
+            // Asegurar que los totales por venta se acumulen una sola vez por venta_id
+            if (!isset($saleIds[$row['id']])) {
+                $saleIds[$row['id']] = true;
+                $totals['subtotal'] += (float)$row['subtotal'];
+                $totals['descuentos'] += (float)$row['descuento'];
+                $totals['impuestos'] += (float)$row['iva'];
+                $totals['total'] += (float)$row['total'];
+
+                $method = reportPaymentLabel($row['metodo_pago']);
+                if (!isset($paymentTotals[$method])) {
+                    $paymentTotals[$method] = ['metodo' => $method, 'transacciones' => 0, 'total' => 0];
+                }
+                $paymentTotals[$method]['transacciones']++;
+                $paymentTotals[$method]['total'] += (float)$row['total'];
+            }
         }
+        $totals['subtotal'] = round($totals['subtotal'], 2);
+        $totals['descuentos'] = round($totals['descuentos'], 2);
+        $totals['impuestos'] = round($totals['impuestos'], 2);
+        $totals['total'] = round($totals['total'], 2);
         $totals['transacciones'] = count($saleIds);
         $totals['eventos'] = count($events);
         $hasData = count($rows) > 0 || count($events) > 0;
@@ -135,6 +151,7 @@ try {
             'rows' => $rows,
             'events' => $events,
             'category_totals' => array_values($categoryTotals),
+            'payment_totals' => array_values($paymentTotals),
             'totals' => $totals,
             'sealed_at' => date('Y-m-d H:i:s')
         ]);

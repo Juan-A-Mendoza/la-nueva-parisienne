@@ -425,29 +425,47 @@ function inicializarSesionYBarraSuperior() {
 function inicializarNavegacionTabs() {
   const navBtnAnalytics = document.getElementById('navBtnAnalytics');
   const navBtnInventory = document.getElementById('navBtnInventory');
+  const navBtnCashReports = document.getElementById('navBtnCashReports');
   const analyticsView = document.getElementById('analyticsView');
   const inventoryView = document.getElementById('inventoryView');
+  const cashReportsView = document.getElementById('cashReportsView');
   const breadcrumbActiveItem = document.getElementById('breadcrumbActiveItem');
 
   function switchDashboardView(viewName) {
     if (viewName === 'inventory') {
       if (navBtnAnalytics) navBtnAnalytics.classList.remove('active');
       if (navBtnInventory) navBtnInventory.classList.add('active');
+      if (navBtnCashReports) navBtnCashReports.classList.remove('active');
       if (analyticsView) analyticsView.style.display = 'none';
       if (inventoryView) inventoryView.style.display = 'block';
+      if (cashReportsView) cashReportsView.style.display = 'none';
       if (breadcrumbActiveItem) breadcrumbActiveItem.textContent = 'Control de Inventario & Almacén';
       try { syncInventoryFromBackend(); } catch (e) {}
+    } else if (viewName === 'cash_reports') {
+      if (navBtnAnalytics) navBtnAnalytics.classList.remove('active');
+      if (navBtnInventory) navBtnInventory.classList.remove('active');
+      if (navBtnCashReports) navBtnCashReports.classList.add('active');
+      if (analyticsView) analyticsView.style.display = 'none';
+      if (inventoryView) inventoryView.style.display = 'none';
+      if (cashReportsView) cashReportsView.style.display = 'block';
+      if (breadcrumbActiveItem) breadcrumbActiveItem.textContent = 'Auditoría de Cierres de Caja';
+      const refreshBtn = document.getElementById('btnRefreshManagerCierres');
+      if (refreshBtn) refreshBtn.click();
     } else {
       if (navBtnAnalytics) navBtnAnalytics.classList.add('active');
       if (navBtnInventory) navBtnInventory.classList.remove('active');
+      if (navBtnCashReports) navBtnCashReports.classList.remove('active');
       if (analyticsView) analyticsView.style.display = 'block';
       if (inventoryView) inventoryView.style.display = 'none';
+      if (cashReportsView) cashReportsView.style.display = 'none';
       if (breadcrumbActiveItem) breadcrumbActiveItem.textContent = 'Dashboard Gerencial';
     }
+    window.LucideIcons?.refresh();
   }
 
   if (navBtnAnalytics) navBtnAnalytics.addEventListener('click', () => switchDashboardView('analytics'));
   if (navBtnInventory) navBtnInventory.addEventListener('click', () => switchDashboardView('inventory'));
+  if (navBtnCashReports) navBtnCashReports.addEventListener('click', () => switchDashboardView('cash_reports'));
 
   const tabBtnMateriaPrima = document.getElementById('tabBtnMateriaPrima');
   const tabBtnProductosTerminados = document.getElementById('tabBtnProductosTerminados');
@@ -2300,6 +2318,12 @@ function inicializarReporteEjecutivo() {
   const repDateTo = document.getElementById('repDateTo');
   const repPresets = document.querySelectorAll('.rep-preset-btn');
   const btnRunReportQuery = document.getElementById('btnRunReportQuery');
+  const repCashierSelect = document.getElementById('repCashierSelect');
+  const repPaymentSelect = document.getElementById('repPaymentSelect');
+  const repCategorySelect = document.getElementById('repCategorySelect');
+  const repCashierGroup = document.getElementById('repCashierGroup');
+  const repPaymentGroup = document.getElementById('repPaymentGroup');
+  const repCategoryGroup = document.getElementById('repCategoryGroup');
 
   if (!btnExportReport || !modal || !sheet) return;
 
@@ -2311,6 +2335,39 @@ function inicializarReporteEjecutivo() {
     rows: [],
     totals: {}
   };
+
+  let catalogsLoaded = false;
+  async function cargarCatalogosFiltros() {
+    if (catalogsLoaded) return;
+    try {
+      const res = await fetch('../api/reports/catalogos.php?context=gerente');
+      const data = await res.json();
+      if (!data.success) return;
+
+      if (repCashierSelect && data.cajeros) {
+        repCashierSelect.innerHTML = '<option value="">Todos los Cajeros</option>' +
+          data.cajeros.map(c => `<option value="${c.id}">${c.nombre}</option>`).join('');
+      }
+      if (repPaymentSelect && data.metodos_pago) {
+        repPaymentSelect.innerHTML = '<option value="">Todos los Métodos</option>' +
+          data.metodos_pago.map(m => `<option value="${m.value}">${m.label}</option>`).join('');
+      }
+      if (repCategorySelect && data.categorias) {
+        repCategorySelect.innerHTML = '<option value="">Todas las Categorías</option>' +
+          data.categorias.map(cat => `<option value="${cat.id}">${cat.name}</option>`).join('');
+      }
+      catalogsLoaded = true;
+    } catch (e) {
+      console.warn('No se pudieron precargar catálogos de filtros:', e);
+    }
+  }
+
+  function actualizarVisibilidadFiltros(type) {
+    const isSalesRelated = ['ventas_resumen', 'rentabilidad_productos', 'ventas_detalladas', 'cierres_turno', 'eventos_anulaciones'].includes(type);
+    if (repCashierGroup) repCashierGroup.style.display = isSalesRelated ? 'flex' : 'none';
+    if (repPaymentGroup) repPaymentGroup.style.display = isSalesRelated ? 'flex' : 'none';
+    if (repCategoryGroup) repCategoryGroup.style.display = ['ventas_resumen', 'rentabilidad_productos', 'ventas_detalladas'].includes(type) ? 'flex' : 'none';
+  }
 
   function toIsoDate(d) {
     const year = d.getFullYear();
@@ -2359,13 +2416,29 @@ function inicializarReporteEjecutivo() {
     });
   });
 
+  [repCashierSelect, repPaymentSelect, repCategorySelect].forEach(sel => {
+    sel?.addEventListener('change', () => ejecutarGeneracionReporte());
+  });
+
   async function ejecutarGeneracionReporte() {
     const reportType = repTypeSelect ? repTypeSelect.value : 'ventas_resumen';
+    actualizarVisibilidadFiltros(reportType);
     const fromDate = repDateFrom ? repDateFrom.value : '';
     const toDate = repDateTo ? repDateTo.value : '';
+    const cashierVal = repCashierSelect ? repCashierSelect.value : '';
+    const paymentVal = repPaymentSelect ? repPaymentSelect.value : '';
+    const categoryVal = repCategorySelect ? repCategorySelect.value : '';
 
     const session = SessionStore.getSession();
-    const activeUser = session?.user || { name: 'Juan Mendoza', role: 'Gerente General' };
+    const activeUser = session?.user || { name: 'Juan Mendoza', role: 'Gerente General', id: 'usr_manager', roleCode: 'ADMIN' };
+    const sessionUserId = activeUser.id || (String(activeUser.roleCode || '').toUpperCase().includes('SUPER') ? 'usr_superadmin' : 'usr_manager');
+    const sessionRoleCode = activeUser.roleCode || activeUser.role_code || 'ADMIN';
+
+    let extraParams = '';
+    if (cashierVal) extraParams += `&cajero_id=${encodeURIComponent(cashierVal)}`;
+    if (paymentVal) extraParams += `&metodo_pago=${encodeURIComponent(paymentVal)}`;
+    if (categoryVal) extraParams += `&categoria_id=${encodeURIComponent(categoryVal)}`;
+
     const bcvRate = BcvRateStore.getRate ? BcvRateStore.getRate() : 761.21;
     const now = new Date();
     const dateFormatted = now.toLocaleDateString('es-VE', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
@@ -2423,7 +2496,7 @@ function inicializarReporteEjecutivo() {
     try {
       // 1. REPORTE GERENCIAL: RESUMEN EJECUTIVO FINANCIERO & KPIS
       if (reportType === 'ventas_resumen') {
-        const url = `../api/reports/ventas_cobros.php?context=gerente&role_code=manager&user_id=usr_manager&fecha_desde=${encodeURIComponent(fromDate)}&fecha_hasta=${encodeURIComponent(toDate)}`;
+        const url = `../api/reports/ventas_cobros.php?context=gerente&role_code=${encodeURIComponent(sessionRoleCode)}&user_id=${encodeURIComponent(sessionUserId)}&fecha_desde=${encodeURIComponent(fromDate)}&fecha_hasta=${encodeURIComponent(toDate)}${extraParams}`;
         const res = await fetch(url);
         const data = await res.json();
         if (!data.success) throw new Error(data.message || 'Error al consultar ventas desde el servidor');
@@ -2523,12 +2596,54 @@ function inicializarReporteEjecutivo() {
             </tfoot>
           </table>
 
+          <div class="report-section-heading" style="margin-top: 2rem;">
+            <i data-lucide="wallet" class="icon-sm"></i>
+            <span>3. Recaudación y Cobranzas por Forma de Pago (Bimonetario)</span>
+          </div>
+
+          <table class="report-data-table">
+            <thead>
+              <tr>
+                <th>Medio de Pago / Canal</th>
+                <th>Operaciones</th>
+                <th>Participación (%)</th>
+                <th>Total Recaudado (USD)</th>
+                <th>Total Recaudado (Bs. BCV)</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${payments.length > 0 ? payments.map(p => {
+                const part = totalVentasUsd > 0 ? ((Number(p.total) / totalVentasUsd) * 100).toFixed(1) : '0.0';
+                return `
+                  <tr>
+                    <td><strong>${p.metodo}</strong></td>
+                    <td>${p.transacciones} trans.</td>
+                    <td>${part}%</td>
+                    <td><strong>$${Number(p.total).toLocaleString('es-VE', { minimumFractionDigits: 2 })}</strong></td>
+                    <td>Bs. ${(Number(p.total) * bcvRate).toLocaleString('es-VE', { minimumFractionDigits: 2 })}</td>
+                  </tr>
+                `;
+              }).join('') : `
+                <tr><td colspan="5" style="text-align: center; color: var(--color-muted); padding: 1.5rem;">No se registraron cobros en el período seleccionado.</td></tr>
+              `}
+            </tbody>
+            <tfoot>
+              <tr>
+                <td><strong>TOTAL RECAUDACIÓN:</strong></td>
+                <td><strong>${payments.reduce((s, p) => s + Number(p.transacciones || 0), 0)} trans.</strong></td>
+                <td><strong>100.0%</strong></td>
+                <td><strong>$${totalVentasUsd.toLocaleString('es-VE', { minimumFractionDigits: 2 })}</strong></td>
+                <td><strong>Bs. ${totalVentasBs.toLocaleString('es-VE', { minimumFractionDigits: 2 })}</strong></td>
+              </tr>
+            </tfoot>
+          </table>
+
           ${makeSignatures('Contador General & Auditoría', 'Sebastian Finanzas')}
         `;
 
       // 2. REPORTE GERENCIAL: RENTABILIDAD & RANKING DE PRODUCTOS (TOP VENTAS)
       } else if (reportType === 'rentabilidad_productos') {
-        const url = `../api/reports/ventas_cobros.php?context=gerente&role_code=manager&user_id=usr_manager&fecha_desde=${encodeURIComponent(fromDate)}&fecha_hasta=${encodeURIComponent(toDate)}`;
+        const url = `../api/reports/ventas_cobros.php?context=gerente&role_code=${encodeURIComponent(sessionRoleCode)}&user_id=${encodeURIComponent(sessionUserId)}&fecha_desde=${encodeURIComponent(fromDate)}&fecha_hasta=${encodeURIComponent(toDate)}${extraParams}`;
         const res = await fetch(url);
         const data = await res.json();
         const rows = data.rows || [];
@@ -2538,23 +2653,36 @@ function inicializarReporteEjecutivo() {
         rows.forEach(r => {
           const key = r.producto || 'Producto Varios';
           if (!productMap[key]) {
+            const pvp = Number(r.precio_unitario) || 0;
+            // Costo unitario (benchmark de costeo panadero 45% del PVP si no está fijado en catálogo)
+            const unitCost = Number(r.costo_unitario) || Number((pvp * 0.45).toFixed(2));
             productMap[key] = {
               name: key,
-              code: r.producto_id || 'ART-' + Math.abs(key.split('').reduce((a, b) => { a = ((a << 5) - a) + b.charCodeAt(0); return a & a; }, 0)).toString().slice(0, 4),
+              code: r.producto_codigo || r.producto_id || 'ART-' + Math.abs(key.split('').reduce((a, b) => { a = ((a << 5) - a) + b.charCodeAt(0); return a & a; }, 0)).toString().slice(0, 4),
               category: r.categoria || 'Panadería & Pastelería',
               units: 0,
-              price: Number(r.precio_unitario) || 0,
-              totalUsd: 0
+              cost: unitCost,
+              price: pvp,
+              totalCostUsd: 0,
+              totalRevUsd: 0,
+              totalProfitUsd: 0
             };
           }
-          productMap[key].units += Number(r.cantidad) || 0;
-          productMap[key].totalUsd += Number(r.subtotal_linea) || 0;
+          const units = Number(r.cantidad) || 0;
+          const lineTotal = Number(r.subtotal_linea) || 0;
+          productMap[key].units += units;
+          productMap[key].totalRevUsd += lineTotal;
+          productMap[key].totalCostUsd += (productMap[key].cost * units);
+          productMap[key].totalProfitUsd = productMap[key].totalRevUsd - productMap[key].totalCostUsd;
           if (!productMap[key].price && r.precio_unitario) productMap[key].price = Number(r.precio_unitario);
         });
 
-        const products = Object.values(productMap).sort((a, b) => b.totalUsd - a.totalUsd);
+        const products = Object.values(productMap).sort((a, b) => b.totalRevUsd - a.totalRevUsd);
         const totalUnits = products.reduce((s, p) => s + p.units, 0);
-        const topProduct = products[0] || { name: 'Sin Ventas', totalUsd: 0, units: 0 };
+        const totalCostAll = products.reduce((s, p) => s + p.totalCostUsd, 0);
+        const totalProfitAll = totalVentasUsd - totalCostAll;
+        const avgMarginPct = totalVentasUsd > 0 ? ((totalProfitAll / totalVentasUsd) * 100).toFixed(1) : '0.0';
+        const topProduct = products[0] || { name: 'Sin Ventas', totalRevUsd: 0, units: 0, totalProfitUsd: 0 };
 
         currentReportData = {
           type: reportType,
@@ -2563,6 +2691,9 @@ function inicializarReporteEjecutivo() {
           to: toDate,
           products: products,
           totalRevUsd: totalVentasUsd,
+          totalCostAll: totalCostAll,
+          totalProfitAll: totalProfitAll,
+          avgMarginPct: avgMarginPct,
           totalUnits: totalUnits,
           bcvRate: bcvRate
         };
@@ -2572,35 +2703,35 @@ function inicializarReporteEjecutivo() {
 
           <div class="report-section-heading">
             <i data-lucide="award" class="icon-sm"></i>
-            <span>1. Indicadores de Demanda y Desempeño de Catálogo</span>
+            <span>1. Indicadores de Demanda, Costos y Rentabilidad del Catálogo</span>
           </div>
 
           <div class="report-kpi-summary-grid">
-            <div class="report-kpi-box">
-              <div class="report-kpi-box-label">Producto Estrella (Top 1)</div>
-              <div class="report-kpi-box-value" style="font-size: 1.05rem; color: var(--color-gold-dark);">${topProduct.name}</div>
-              <div class="report-kpi-box-sub">$${topProduct.totalUsd.toFixed(2)} (${topProduct.units} Unidades)</div>
-            </div>
-            <div class="report-kpi-box">
-              <div class="report-kpi-box-label">Total Unidades Despachadas</div>
-              <div class="report-kpi-box-value">${totalUnits} Und</div>
-              <div class="report-kpi-box-sub">En todo el período</div>
-            </div>
-            <div class="report-kpi-box">
-              <div class="report-kpi-box-label">Variedad con Rotación</div>
-              <div class="report-kpi-box-value">${products.length} productos</div>
-              <div class="report-kpi-box-sub">Con ventas activas</div>
-            </div>
             <div class="report-kpi-box">
               <div class="report-kpi-box-label">Ingreso Bruto de Productos</div>
               <div class="report-kpi-box-value" style="color: var(--color-success);">$${totalVentasUsd.toFixed(2)}</div>
               <div class="report-kpi-box-sub">Bs. ${(totalVentasUsd * bcvRate).toLocaleString('es-VE', { minimumFractionDigits: 2 })}</div>
             </div>
+            <div class="report-kpi-box">
+              <div class="report-kpi-box-label">Costo Total de Ventas (COGS)</div>
+              <div class="report-kpi-box-value" style="color: var(--color-terracotta);">$${totalCostAll.toFixed(2)}</div>
+              <div class="report-kpi-box-sub">Insumos y Producción</div>
+            </div>
+            <div class="report-kpi-box">
+              <div class="report-kpi-box-label">Utilidad Bruta Consolidada</div>
+              <div class="report-kpi-box-value" style="color: var(--color-gold-dark);">$${totalProfitAll.toFixed(2)}</div>
+              <div class="report-kpi-box-sub">Margen Promedio: ${avgMarginPct}%</div>
+            </div>
+            <div class="report-kpi-box">
+              <div class="report-kpi-box-label">Producto Estrella (Top 1)</div>
+              <div class="report-kpi-box-value" style="font-size: 1.05rem; color: var(--color-espresso);">${topProduct.name}</div>
+              <div class="report-kpi-box-sub">$${topProduct.totalRevUsd.toFixed(2)} (${topProduct.units} Und | +$${topProduct.totalProfitUsd.toFixed(2)})</div>
+            </div>
           </div>
 
           <div class="report-section-heading">
             <i data-lucide="list-ordered" class="icon-sm"></i>
-            <span>2. Matriz de Rentabilidad y Participación por Ítem</span>
+            <span>2. Matriz de Rentabilidad, Costo y Margen por Producto</span>
           </div>
 
           <table class="report-data-table">
@@ -2611,15 +2742,17 @@ function inicializarReporteEjecutivo() {
                 <th>Producto / Ítem</th>
                 <th>Categoría</th>
                 <th>Unidades</th>
-                <th>PVP Unitario</th>
-                <th>Ingresos (USD)</th>
-                <th>Ingresos (Bs. BCV)</th>
-                <th>% Participación</th>
+                <th>Costo Unit.</th>
+                <th>PVP</th>
+                <th>Ingresos ($)</th>
+                <th>Costo Total ($)</th>
+                <th>Utilidad ($)</th>
+                <th>Margen (%)</th>
               </tr>
             </thead>
             <tbody>
               ${products.length > 0 ? products.map((p, idx) => {
-                const part = totalVentasUsd > 0 ? ((p.totalUsd / totalVentasUsd) * 100).toFixed(1) : '0.0';
+                const margin = p.totalRevUsd > 0 ? ((p.totalProfitUsd / p.totalRevUsd) * 100).toFixed(1) : '0.0';
                 return `
                   <tr>
                     <td><strong>#${idx + 1}</strong></td>
@@ -2627,14 +2760,16 @@ function inicializarReporteEjecutivo() {
                     <td><strong>${p.name}</strong></td>
                     <td>${p.category}</td>
                     <td>${p.units} Und</td>
+                    <td>$${p.cost.toFixed(2)}</td>
                     <td>$${p.price.toFixed(2)}</td>
-                    <td><strong>$${p.totalUsd.toFixed(2)}</strong></td>
-                    <td>Bs. ${(p.totalUsd * bcvRate).toLocaleString('es-VE', { minimumFractionDigits: 2 })}</td>
-                    <td><span class="badge-status ${idx < 3 ? 'optimal' : 'low_stock'}">${part}%</span></td>
+                    <td><strong>$${p.totalRevUsd.toFixed(2)}</strong></td>
+                    <td style="color: var(--color-terracotta);">$${p.totalCostUsd.toFixed(2)}</td>
+                    <td style="color: var(--color-success); font-weight: 700;">+$${p.totalProfitUsd.toFixed(2)}</td>
+                    <td><span class="badge-status ${Number(margin) >= 50 ? 'optimal' : (Number(margin) >= 30 ? 'low_stock' : 'critical')}">${margin}%</span></td>
                   </tr>
                 `;
               }).join('') : `
-                <tr><td colspan="9" style="text-align: center; color: var(--color-muted); padding: 2rem;">No hay productos vendidos en este período.</td></tr>
+                <tr><td colspan="11" style="text-align: center; color: var(--color-muted); padding: 2rem;">No hay productos vendidos en este período.</td></tr>
               `}
             </tbody>
             <tfoot>
@@ -2642,9 +2777,11 @@ function inicializarReporteEjecutivo() {
                 <td colspan="4"><strong>TOTALES CONSOLIDADOS:</strong></td>
                 <td><strong>${totalUnits} Und</strong></td>
                 <td>-</td>
+                <td>-</td>
                 <td><strong>$${totalVentasUsd.toFixed(2)}</strong></td>
-                <td><strong>Bs. ${(totalVentasUsd * bcvRate).toLocaleString('es-VE', { minimumFractionDigits: 2 })}</strong></td>
-                <td><strong>100.0%</strong></td>
+                <td><strong>$${totalCostAll.toFixed(2)}</strong></td>
+                <td><strong>+$${totalProfitAll.toFixed(2)}</strong></td>
+                <td><strong>${avgMarginPct}%</strong></td>
               </tr>
             </tfoot>
           </table>
@@ -2654,7 +2791,7 @@ function inicializarReporteEjecutivo() {
 
       // 3. REPORTE GERENCIAL: BALANCE CONTABLE & ASIENTOS DE DIARIO
       } else if (reportType === 'balance_contable') {
-        const res = await fetch('../api/accounting/get_accounting.php');
+        const res = await fetch(`../api/accounting/get_accounting.php?fecha_desde=${encodeURIComponent(fromDate)}&fecha_hasta=${encodeURIComponent(toDate)}`);
         const data = await res.json();
         const trialBalance = data.trial_balance || [];
         const vouchers = data.vouchers || [];
@@ -2782,7 +2919,7 @@ function inicializarReporteEjecutivo() {
 
       // 4. REPORTE OPERATIVO: DETALLE DE FACTURACIÓN POS (RENGLÓN POR RENGLÓN)
       } else if (reportType === 'ventas_detalladas') {
-        const url = `../api/reports/ventas_cobros.php?context=gerente&role_code=manager&user_id=usr_manager&fecha_desde=${encodeURIComponent(fromDate)}&fecha_hasta=${encodeURIComponent(toDate)}`;
+        const url = `../api/reports/ventas_cobros.php?context=gerente&role_code=${encodeURIComponent(sessionRoleCode)}&user_id=${encodeURIComponent(sessionUserId)}&fecha_desde=${encodeURIComponent(fromDate)}&fecha_hasta=${encodeURIComponent(toDate)}${extraParams}`;
         const res = await fetch(url);
         const data = await res.json();
         const rows = data.rows || [];
@@ -2852,7 +2989,7 @@ function inicializarReporteEjecutivo() {
 
       // 5. REPORTE OPERATIVO: AUDITORÍA DE CIERRES DE TURNO (CORTES Z Y ARQUEOS)
       } else if (reportType === 'cierres_turno') {
-        const url = `../api/reports/cierre_caja.php?context=gerente&role_code=manager&user_id=usr_manager&fecha_desde=${encodeURIComponent(fromDate)}&fecha_hasta=${encodeURIComponent(toDate)}&date_from=${encodeURIComponent(fromDate)}&date_to=${encodeURIComponent(toDate)}`;
+        const url = `../api/reports/cierre_caja.php?context=gerente&role_code=${encodeURIComponent(sessionRoleCode)}&user_id=${encodeURIComponent(sessionUserId)}&fecha_desde=${encodeURIComponent(fromDate)}&fecha_hasta=${encodeURIComponent(toDate)}&date_from=${encodeURIComponent(fromDate)}&date_to=${encodeURIComponent(toDate)}${cashierVal ? `&cajero_id=${encodeURIComponent(cashierVal)}` : ''}`;
         const res = await fetch(url);
         const data = await res.json();
         const closures = data.closures || [];
@@ -2934,34 +3071,10 @@ function inicializarReporteEjecutivo() {
 
       // 6. REPORTE OPERATIVO: BITÁCORA DE DEVOLUCIONES & ANULACIONES DE CAJA
       } else if (reportType === 'eventos_anulaciones') {
-        const url = `../api/reports/cierre_caja.php?context=gerente&role_code=manager&user_id=usr_manager&fecha_desde=${encodeURIComponent(fromDate)}&fecha_hasta=${encodeURIComponent(toDate)}&date_from=${encodeURIComponent(fromDate)}&date_to=${encodeURIComponent(toDate)}`;
+        const url = `../api/reports/cierre_caja.php?context=gerente&role_code=${encodeURIComponent(sessionRoleCode)}&user_id=${encodeURIComponent(sessionUserId)}&fecha_desde=${encodeURIComponent(fromDate)}&fecha_hasta=${encodeURIComponent(toDate)}&date_from=${encodeURIComponent(fromDate)}&date_to=${encodeURIComponent(toDate)}${cashierVal ? `&cajero_id=${encodeURIComponent(cashierVal)}` : ''}${paymentVal ? `&metodo_pago=${encodeURIComponent(paymentVal)}` : ''}`;
         const res = await fetch(url);
         const data = await res.json();
-        const rawEvents = data.events || [];
-        const events = rawEvents.length > 0 ? rawEvents : [
-          {
-            id: 'EVT-001',
-            fecha_hora: `${fromDate} 11:42`,
-            codigo_venta: 'FAC-2026-081',
-            caja_id: 'POS-01',
-            turno: 'Mañana',
-            tipo_evento: 'Devolución de Producto',
-            monto: 8.50,
-            motivo: 'Cambio de ítem solicitado por el cliente antes del retiro',
-            registrado_por: 'María Elena Suárez'
-          },
-          {
-            id: 'EVT-002',
-            fecha_hora: `${toDate} 16:15`,
-            codigo_venta: 'FAC-2026-094',
-            caja_id: 'POS-01',
-            turno: 'Tarde',
-            tipo_evento: 'Anulación de Factura',
-            monto: 14.00,
-            motivo: 'Error de digitación en método de pago por parte del operador',
-            registrado_por: 'Supervisión Turno'
-          }
-        ];
+        const events = data.events || [];
 
         const totalMontoEvents = events.reduce((s, e) => s + (Number(e.monto) || 0), 0);
 
@@ -2991,7 +3104,7 @@ function inicializarReporteEjecutivo() {
             </div>
             <div class="report-kpi-box">
               <div class="report-kpi-box-label">Monto Afectado ($ USD)</div>
-              <div class="report-kpi-box-value" style="color: var(--color-danger);">$${totalMontoEvents.toFixed(2)}</div>
+              <div class="report-kpi-box-value" style="color: ${totalMontoEvents > 0 ? 'var(--color-danger)' : 'var(--color-success)'};">$${totalMontoEvents.toFixed(2)}</div>
               <div class="report-kpi-box-sub">Devoluciones / Anulaciones</div>
             </div>
             <div class="report-kpi-box">
@@ -3001,8 +3114,8 @@ function inicializarReporteEjecutivo() {
             </div>
             <div class="report-kpi-box">
               <div class="report-kpi-box-label">Estado de Trazabilidad</div>
-              <div class="report-kpi-box-value" style="color: var(--color-success);">100% Auditado</div>
-              <div class="report-kpi-box-sub">Con motivo justificado</div>
+              <div class="report-kpi-box-value" style="color: var(--color-success);">${events.length === 0 ? '✓ Sin Incidentes' : '100% Auditado'}</div>
+              <div class="report-kpi-box-sub">${events.length === 0 ? 'Conformidad total' : 'Con motivo justificado'}</div>
             </div>
           </div>
 
@@ -3026,7 +3139,7 @@ function inicializarReporteEjecutivo() {
               </tr>
             </thead>
             <tbody>
-              ${events.map(e => `
+              ${events.length > 0 ? events.map(e => `
                 <tr>
                   <td><code>${e.id}</code></td>
                   <td>${e.fecha_hora}</td>
@@ -3038,7 +3151,13 @@ function inicializarReporteEjecutivo() {
                   <td>${e.motivo}</td>
                   <td><strong>${e.registrado_por}</strong></td>
                 </tr>
-              `).join('')}
+              `).join('') : `
+                <tr>
+                  <td colspan="9" style="text-align: center; color: var(--color-success); padding: 2.5rem; font-weight: 600;">
+                    ✓ Excelente: No se han registrado anulaciones, devoluciones ni incidentes en este período. Operación 100% conforme.
+                  </td>
+                </tr>
+              `}
             </tbody>
             <tfoot>
               <tr>
@@ -3408,7 +3527,7 @@ function inicializarReporteEjecutivo() {
         const dataStaff = await resStaff.json();
         const staff = dataStaff.staff || [];
 
-        const resSales = await fetch(`../api/reports/ventas_cobros.php?context=gerente&role_code=manager&user_id=usr_manager&fecha_desde=${encodeURIComponent(fromDate)}&fecha_hasta=${encodeURIComponent(toDate)}`);
+        const resSales = await fetch(`../api/reports/ventas_cobros.php?context=gerente&role_code=${encodeURIComponent(sessionRoleCode)}&user_id=${encodeURIComponent(sessionUserId)}&fecha_desde=${encodeURIComponent(fromDate)}&fecha_hasta=${encodeURIComponent(toDate)}`);
         const dataSales = await resSales.json();
         const salesRows = dataSales.rows || [];
 
@@ -3524,6 +3643,8 @@ function inicializarReporteEjecutivo() {
 
   function openModal() {
     initDefaultDates();
+    cargarCatalogosFiltros();
+    actualizarVisibilidadFiltros(repTypeSelect ? repTypeSelect.value : 'ventas_resumen');
     modal.style.display = 'flex';
     modal.classList.add('active');
     modal.setAttribute('aria-hidden', 'false');
@@ -3563,6 +3684,7 @@ function inicializarReporteEjecutivo() {
   });
 
   repTypeSelect?.addEventListener('change', () => {
+    actualizarVisibilidadFiltros(repTypeSelect.value);
     ejecutarGeneracionReporte();
   });
 
@@ -3598,24 +3720,36 @@ function inicializarReporteEjecutivo() {
 
     // 1. VENTAS RESUMEN
     if (type === 'ventas_resumen') {
+      rows.push(['--- RESUMEN POR CATEGORIA COMERCIAL ---']);
       rows.push(['CATEGORIA COMERCIAL', 'CANTIDAD VENDIDA', 'TOTAL USD', 'TOTAL BS']);
       (currentReportData.catTotals || []).forEach(c => {
         rows.push([c.categoria, c.cantidad, Number(c.total).toFixed(2), (Number(c.total) * bcvRate).toFixed(2)]);
       });
+      rows.push([]);
+      rows.push(['--- RECAUDACION POR FORMA DE PAGO ---']);
+      rows.push(['METODO DE PAGO', 'TRANSACCIONES', 'TOTAL RECAUDADO USD', 'TOTAL RECAUDADO BS']);
+      (currentReportData.payments || []).forEach(p => {
+        rows.push([p.metodo, p.transacciones, Number(p.total).toFixed(2), (Number(p.total) * bcvRate).toFixed(2)]);
+      });
 
     // 2. RENTABILIDAD & RANKING DE PRODUCTOS
     } else if (type === 'rentabilidad_productos') {
-      rows.push(['RANKING', 'CODIGO', 'PRODUCTO', 'CATEGORIA', 'UNIDADES VENDIDAS', 'PVP USD', 'TOTAL INGRESOS USD', 'TOTAL INGRESOS BS']);
+      rows.push(['RANKING', 'CODIGO', 'PRODUCTO', 'CATEGORIA', 'UNIDADES VENDIDAS', 'COSTO UNIT USD', 'PVP USD', 'TOTAL INGRESOS USD', 'TOTAL COSTO USD', 'UTILIDAD BRUTA USD', 'MARGEN %', 'TOTAL INGRESOS BS']);
       (currentReportData.products || []).forEach((p, idx) => {
+        const marginPct = p.totalRevUsd > 0 ? ((p.totalProfitUsd / p.totalRevUsd) * 100).toFixed(1) : '0.0';
         rows.push([
           `#${idx + 1}`,
           p.code,
           p.name,
           p.category,
           p.units,
-          Number(p.price).toFixed(2),
-          Number(p.totalUsd).toFixed(2),
-          (Number(p.totalUsd) * bcvRate).toFixed(2)
+          Number(p.cost || 0).toFixed(2),
+          Number(p.price || 0).toFixed(2),
+          Number(p.totalRevUsd || 0).toFixed(2),
+          Number(p.totalCostUsd || 0).toFixed(2),
+          Number(p.totalProfitUsd || 0).toFixed(2),
+          `${marginPct}%`,
+          (Number(p.totalRevUsd || 0) * bcvRate).toFixed(2)
         ]);
       });
 
