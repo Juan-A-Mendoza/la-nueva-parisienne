@@ -38,7 +38,7 @@ try {
 
 // 2. Lógica de Selección de Tasa (Manual vs Caché Local vs cURL Rápido)
 $cacheFile = __DIR__ . '/cache_bcv.json';
-$cacheTtlSeconds = 900; // 15 minutos de caché para evitar consultas lentas a internet
+$cacheTtlSeconds = 1800; // 30 minutos de caché óptimo para evitar llamadas externas lentas
 
 if ($mode === 'manual') {
     $currentRate = $manualRate;
@@ -57,7 +57,7 @@ if ($mode === 'manual') {
         $currentRate = floatval($cachedData['rate']);
         $source = "BCV Oficial";
     } else {
-        // MODO AUTOMÁTICO: CONSULTA cURL RÁPIDA (TIMEOUT ESTRICTO DE 2 SEGUNDOS)
+        // MODO AUTOMÁTICO: CONSULTA cURL ULTRA RÁPIDA (TIMEOUT ESTRICTO DE 1 SEGUNDO)
         $apiRate = fetchLiveBcvRateViaCurl();
         
         if ($apiRate !== null && $apiRate > 0) {
@@ -70,7 +70,7 @@ if ($mode === 'manual') {
                 'timestamp' => time()
             ]));
         } elseif ($cachedData && isset($cachedData['rate']) && floatval($cachedData['rate']) > 0) {
-            // Si la API externa falló pero tenemos caché previo (aunque sea viejo), lo usamos
+            // Si la API externa falló o tardó más de 1s pero tenemos caché previo, lo usamos al instante
             $currentRate = floatval($cachedData['rate']);
             $source = "BCV Oficial";
         } else {
@@ -83,7 +83,7 @@ if ($mode === 'manual') {
 }
 
 /**
- * Consulta cURL robusta a la API oficial con timeout ultrarrápido (máx 2s)
+ * Consulta cURL robusta a la API oficial con timeout ultrarrápido (máx 1s)
  */
 function fetchLiveBcvRateViaCurl() {
     $urls = [
@@ -106,8 +106,8 @@ function executeCurlRequest($url) {
         $ch = curl_init();
         curl_setopt($ch, CURLOPT_URL, $url);
         curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-        curl_setopt($ch, CURLOPT_TIMEOUT, 2);
-        curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, 2);
+        curl_setopt($ch, CURLOPT_TIMEOUT, 1);
+        curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, 1);
         curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
         curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, false);
         curl_setopt($ch, CURLOPT_USERAGENT, 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) LaNuevaParisienne/1.0');

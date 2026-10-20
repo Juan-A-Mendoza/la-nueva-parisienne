@@ -6,9 +6,13 @@
   <title>Dashboard Gerencial - La Nueva Parisienne</title>
   <meta name="description" content="Panel de Control e Inteligencia de Negocios para La Nueva Parisienne. KPIs financieros, tendencias de ventas y movimientos recientes (CU-02).">
   
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400&family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap" media="print" onload="this.media='all'">
+  
   <!-- Hojas de Estilos Separadas (CSS3 Estricto) -->
   <link rel="stylesheet" href="../css/main.css">
-  <link rel="stylesheet" href="../css/modules/dashboard.css?v=20261005-chart-filters">
+  <link rel="stylesheet" href="../css/modules/dashboard.css?v=20261016-modern-reports-v6">
   <link rel="stylesheet" href="../css/modules/caja-reportes.css?v=20260930">
 </head>
 <body>
@@ -44,10 +48,6 @@
             <i data-lucide="settings" class="icon-sm"></i> <span>Configuración</span>
           </a>
 
-          <button id="btnExportReport" type="button" class="btn-export-report" onclick="window.abrirGeneradorReportes &amp;&amp; window.abrirGeneradorReportes()" title="Generador y Exportador de Reportes Gerenciales">
-            <i data-lucide="file-spreadsheet" class="icon-sm"></i> <span>Reportes</span>
-          </button>
-
           <button id="logoutBtn" class="btn-pos-logout" title="Cerrar sesión activa y volver al login" onclick="if(window.SessionStore){window.SessionStore.logout();}else{try{localStorage.removeItem('usuario_activo');sessionStorage.clear();}catch(e){}window.location.href='../index.html';}">
             <i data-lucide="log-out" class="icon-sm"></i> <span>Salir</span>
           </button>
@@ -56,14 +56,17 @@
     </header>
 
 
-    <!-- BARRA DE NAVEGACIÓN PRINCIPAL DEL GERENTE (VISTAS DASHBOARD VS INVENTARIO) -->
+    <!-- BARRA DE NAVEGACIÓN PRINCIPAL DEL GERENTE (VISTAS DEDICADAS) -->
     <nav class="dashboard-view-nav" aria-label="Navegación de Secciones">
       <div class="view-nav-container">
         <button id="navBtnAnalytics" type="button" class="dashboard-nav-tab active">
-          <i data-lucide="bar-chart-3" class="icon-sm"></i> <span>Métricas & Inteligencia de Negocios</span>
+          <i data-lucide="bar-chart-3" class="icon-sm"></i> <span>Métricas &amp; Inteligencia de Negocios</span>
+        </button>
+        <button id="navBtnExecutiveReports" type="button" class="dashboard-nav-tab">
+          <i data-lucide="file-spreadsheet" class="icon-sm"></i> <span>Centro de Reportes</span>
         </button>
         <button id="navBtnInventory" type="button" class="dashboard-nav-tab">
-          <i data-lucide="package" class="icon-sm"></i> <span>Control de Inventario & Almacén</span>
+          <i data-lucide="package" class="icon-sm"></i> <span>Control de Inventario &amp; Almacén</span>
         </button>
         <button id="navBtnCashReports" type="button" class="dashboard-nav-tab">
           <i data-lucide="folder" class="icon-sm"></i> <span>Reportes de Caja</span>
@@ -448,6 +451,142 @@
         <section id="managerCashReportsSection" class="cash-reports-section" data-report-context="gerente">
           <div id="managerCashReportsApp"></div>
         </section>
+      </div>
+
+      <!-- VISTA 4: CENTRO DEDICADO DE REPORTES GERENCIALES (NO EMERGENTE) -->
+      <div id="executiveReportsView" class="dashboard-view-section" style="display: none;" aria-label="Centro de Reportes Gerenciales">
+        <div class="executive-reports-container">
+          
+          <!-- ENCABEZADO EJECUTIVO ARMONIOSO (ESTILO PARISIENNE) -->
+          <div class="reports-dedicated-header">
+            <div class="reports-dedicated-title-wrap">
+              <div class="reports-dedicated-icon">
+                <i data-lucide="file-spreadsheet" class="icon-md"></i>
+              </div>
+              <div class="reports-title-info">
+                <div class="reports-dedicated-eyebrow">
+                  <span class="eyebrow-dot"></span> LA PARISIENNE &bull; INTELIGENCIA DE NEGOCIOS
+                </div>
+                <h2 class="reports-dedicated-title">Centro de Reportes y Auditoría</h2>
+                <p class="reports-dedicated-sub">Balances consolidados, métricas de horneado, ventas POS y control gerencial en tiempo real</p>
+              </div>
+            </div>
+
+            <div class="reports-dedicated-actions no-print">
+              <button id="btnPrintExecutiveReport" type="button" class="btn-rep-action btn-rep-print" title="Imprimir reporte en hoja membretada o guardar en PDF">
+                <i data-lucide="printer" class="icon-sm"></i> <span>Imprimir / PDF</span>
+              </button>
+              <button id="btnExportExecutiveCsv" type="button" class="btn-rep-action btn-rep-export" title="Descargar datos en formato compatible con Excel">
+                <i data-lucide="download" class="icon-sm"></i> <span>Exportar Excel / CSV</span>
+              </button>
+            </div>
+          </div>
+
+          <!-- BARRA INTERACTIVA DE PARÁMETROS: 2 NIVELES LIMPIOS Y ESPACIOSOS -->
+          <div class="report-generator-filter-bar dedicated-bar no-print">
+            <!-- Fila Superior: Selección de Reporte, Período Rápido y Estilo Visual -->
+            <div class="rep-filter-row primary-row">
+              <div class="rep-form-group rep-col-type">
+                <label for="repTypeSelect" class="rep-form-label"><i data-lucide="layers" class="icon-xs"></i> Tipo de Reporte</label>
+                <div class="rep-select-wrapper">
+                  <select id="repTypeSelect" class="rep-form-select">
+                    <optgroup label="👑 REPORTES GERENCIALES">
+                      <option value="ventas_resumen" selected>1. Resumen Ejecutivo Financiero &amp; KPIs</option>
+                      <option value="rentabilidad_productos">2. Rentabilidad &amp; Ranking de Productos (Top Ventas)</option>
+                      <option value="balance_contable">3. Balance de Comprobación &amp; Asientos Contables</option>
+                    </optgroup>
+                    <optgroup label="⚙️ REPORTES OPERATIVOS">
+                      <option value="ventas_detalladas">4. Detalle de Facturación POS (Renglón por Renglón)</option>
+                      <option value="cierres_turno">5. Auditoría de Cierres de Turno (Cortes Z y Arqueos)</option>
+                      <option value="eventos_anulaciones">6. Bitácora de Devoluciones &amp; Anulaciones de Caja</option>
+                      <option value="produccion_hornos">7. Control de Producción, Hornos &amp; Lotes Panaderos</option>
+                    </optgroup>
+                    <optgroup label="📋 REPORTES GENERALES &amp; AUDITORÍA">
+                      <option value="inventario_mermas">8. Valorización de Inventario &amp; Stock Mínimo</option>
+                      <option value="compras_proveedores">9. Compras, Proveedores &amp; Cuentas por Pagar</option>
+                      <option value="personal_rendimiento">10. Nómina, Turnos &amp; Rendimiento de Personal</option>
+                    </optgroup>
+                  </select>
+                </div>
+              </div>
+
+              <div class="rep-form-group rep-col-presets">
+                <label class="rep-form-label"><i data-lucide="clock" class="icon-xs"></i> Período Rápido</label>
+                <div class="rep-presets-group">
+                  <button type="button" class="rep-preset-btn" data-preset="today">Hoy</button>
+                  <button type="button" class="rep-preset-btn" data-preset="week">7 Días</button>
+                  <button type="button" class="rep-preset-btn active" data-preset="month">Este Mes</button>
+                  <button type="button" class="rep-preset-btn" data-preset="prev_month">Mes Anterior</button>
+                </div>
+              </div>
+
+              <div class="rep-form-group rep-col-style" id="repChartStyleGroup">
+                <label for="repChartStyleSelect" class="rep-form-label"><i data-lucide="line-chart" class="icon-xs"></i> Estilo de Gráfica</label>
+                <div class="rep-select-wrapper">
+                  <select id="repChartStyleSelect" class="rep-form-select rep-style-select">
+                    <option value="metricas" selected>📈 Tendencia &amp; Gradiente (Estilo Métricas)</option>
+                    <option value="barras">📊 Barras Ejecutivas</option>
+                    <option value="clasicas">⚡ Gráficas Clásicas Nativas (0 ms)</option>
+                    <option value="ninguna">📋 Ocultar Gráficas (Solo Tablas)</option>
+                  </select>
+                </div>
+              </div>
+            </div>
+
+            <!-- Fila Inferior: Rango de Fechas Preciso, Filtros Contextuales y Acción -->
+            <div class="rep-filter-row secondary-row">
+              <div class="rep-date-range-group">
+                <div class="rep-form-group">
+                  <label for="repDateFrom" class="rep-form-label"><i data-lucide="calendar" class="icon-xs"></i> Desde</label>
+                  <input type="date" id="repDateFrom" class="rep-form-input" />
+                </div>
+                <div class="rep-form-group">
+                  <label for="repDateTo" class="rep-form-label"><i data-lucide="calendar" class="icon-xs"></i> Hasta</label>
+                  <input type="date" id="repDateTo" class="rep-form-input" />
+                </div>
+              </div>
+
+              <!-- Filtros Contextuales Dinámicos -->
+              <div class="rep-context-filters">
+                <div class="rep-form-group" id="repCashierGroup" style="display: none;">
+                  <label for="repCashierSelect" class="rep-form-label"><i data-lucide="user" class="icon-xs"></i> Cajero</label>
+                  <select id="repCashierSelect" class="rep-form-select">
+                    <option value="">Todos los Cajeros</option>
+                  </select>
+                </div>
+
+                <div class="rep-form-group" id="repPaymentGroup" style="display: none;">
+                  <label for="repPaymentSelect" class="rep-form-label"><i data-lucide="credit-card" class="icon-xs"></i> Forma de Pago</label>
+                  <select id="repPaymentSelect" class="rep-form-select">
+                    <option value="">Todos los Métodos</option>
+                  </select>
+                </div>
+
+                <div class="rep-form-group" id="repCategoryGroup" style="display: none;">
+                  <label for="repCategorySelect" class="rep-form-label"><i data-lucide="tag" class="icon-xs"></i> Categoría</label>
+                  <select id="repCategorySelect" class="rep-form-select">
+                    <option value="">Todas las Categorías</option>
+                  </select>
+                </div>
+              </div>
+
+              <!-- Botón Primario de Generación -->
+              <div class="rep-submit-group">
+                <button id="btnRunReportQuery" type="button" class="btn-generate-report-submit">
+                  <i data-lucide="play" class="icon-xs"></i> <span>Consultar Reporte</span>
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <!-- LIENZO DEDICADO DE REPORTE EJECUTIVO (ESPACIOSO Y FLUIDO) -->
+          <div class="dedicated-report-sheet-wrapper">
+            <div id="executiveReportSheet" class="printable-report-sheet dedicated-sheet">
+              <!-- Renderizado dinámico desde dashboard.js -->
+            </div>
+          </div>
+
+        </div>
       </div>
 
     </main>
@@ -929,115 +1068,13 @@
     </div>
   </div>
 
-    <!-- MODAL DE REPORTE EJECUTIVO GERENCIAL IMPRIMIBLE -->
-  <div id="executiveReportModal" class="modal-overlay report-modal-overlay pin-modal-overlay" role="dialog" aria-modal="true" aria-labelledby="execReportModalTitle" aria-hidden="true" style="display: none;">
-    <div class="pin-modal-card report-modal-card modal-card-container" style="max-width: 1040px; width: 96%; max-height: 94vh; display: flex; flex-direction: column;">
-      
-      <!-- BARRA DE ACCIONES SUPERIOR (HERRAMIENTAS NO IMPRIMIBLES) -->
-      <div class="report-modal-toolbar no-print">
-        <div class="report-modal-toolbar-title">
-          <i data-lucide="file-spreadsheet" class="icon-md" style="color: var(--color-gold);"></i>
-          <span id="execReportModalTitle">Generador de Reportes a Medida</span>
-        </div>
-        <div class="report-modal-actions">
-          <button id="btnPrintExecutiveReport" type="button" class="btn-primary-action gold-variant" style="padding: 0.5rem 1.1rem; font-size: 0.85rem; display: inline-flex; align-items: center; gap: 0.4rem; cursor: pointer; border: none; border-radius: var(--radius-pill); font-weight: 700; color: #FFFFFF; background: linear-gradient(135deg, #D49B54 0%, #C48B44 100%);">
-            <i data-lucide="printer" class="icon-sm"></i> <span>Imprimir / PDF</span>
-          </button>
-          <button id="btnExportExecutiveCsv" type="button" class="btn-acc-action secondary" style="padding: 0.5rem 1rem; font-size: 0.85rem; display: inline-flex; align-items: center; gap: 0.4rem; cursor: pointer; border: 1px solid rgba(44, 29, 17, 0.2); border-radius: var(--radius-pill); background: #FFFFFF; font-weight: 700; color: var(--color-espresso);">
-            <i data-lucide="download" class="icon-sm"></i> <span>Descargar Excel / CSV</span>
-          </button>
-          <button id="btnCloseExecutiveReport" type="button" class="modal-close-btn" style="position: static; font-size: 1.5rem; cursor: pointer;" aria-label="Cerrar modal">&times;</button>
-        </div>
-      </div>
-
-      <!-- BARRA INTERACTIVA DE PARÁMETROS DEL REPORTE (NO IMPRIMIBLE) -->
-      <div class="report-generator-filter-bar no-print">
-        <div class="rep-form-group" style="min-width: 220px;">
-          <label for="repTypeSelect" class="rep-form-label"><i data-lucide="layers" class="icon-xs"></i> Tipo de Reporte</label>
-          <select id="repTypeSelect" class="rep-form-select">
-            <optgroup label="👑 REPORTES GERENCIALES">
-              <option value="ventas_resumen" selected>1. Resumen Ejecutivo Financiero &amp; KPIs</option>
-              <option value="rentabilidad_productos">2. Rentabilidad &amp; Ranking de Productos (Top Ventas)</option>
-              <option value="balance_contable">3. Balance de Comprobación &amp; Asientos Contables</option>
-            </optgroup>
-            <optgroup label="⚙️ REPORTES OPERATIVOS">
-              <option value="ventas_detalladas">4. Detalle de Facturación POS (Renglón por Renglón)</option>
-              <option value="cierres_turno">5. Auditoría de Cierres de Turno (Cortes Z y Arqueos)</option>
-              <option value="eventos_anulaciones">6. Bitácora de Devoluciones &amp; Anulaciones de Caja</option>
-              <option value="produccion_hornos">7. Control de Producción, Hornos &amp; Lotes Panaderos</option>
-            </optgroup>
-            <optgroup label="📋 REPORTES GENERALES &amp; AUDITORÍA">
-              <option value="inventario_mermas">8. Valorización de Inventario &amp; Stock Mínimo</option>
-              <option value="compras_proveedores">9. Compras, Proveedores &amp; Cuentas por Pagar</option>
-              <option value="personal_rendimiento">10. Nómina, Turnos &amp; Rendimiento de Personal</option>
-            </optgroup>
-          </select>
-        </div>
-
-        <div class="rep-form-group">
-          <label for="repDateFrom" class="rep-form-label"><i data-lucide="calendar" class="icon-xs"></i> Desde</label>
-          <input type="date" id="repDateFrom" class="rep-form-input" />
-        </div>
-
-        <div class="rep-form-group">
-          <label for="repDateTo" class="rep-form-label"><i data-lucide="calendar" class="icon-xs"></i> Hasta</label>
-          <input type="date" id="repDateTo" class="rep-form-input" />
-        </div>
-
-        <div class="rep-form-group">
-          <label class="rep-form-label"><i data-lucide="clock" class="icon-xs"></i> Período Rápido</label>
-          <div class="rep-presets-group">
-            <button type="button" class="rep-preset-btn" data-preset="today">Hoy</button>
-            <button type="button" class="rep-preset-btn" data-preset="week">7 Días</button>
-            <button type="button" class="rep-preset-btn active" data-preset="month">Este Mes</button>
-            <button type="button" class="rep-preset-btn" data-preset="prev_month">Mes Anterior</button>
-          </div>
-        </div>
-
-        <!-- Filtros Dinámicos Conectados a Catálogos -->
-        <div class="rep-form-group" id="repCashierGroup">
-          <label for="repCashierSelect" class="rep-form-label"><i data-lucide="user" class="icon-xs"></i> Cajero</label>
-          <select id="repCashierSelect" class="rep-form-select">
-            <option value="">Todos los Cajeros</option>
-          </select>
-        </div>
-
-        <div class="rep-form-group" id="repPaymentGroup">
-          <label for="repPaymentSelect" class="rep-form-label"><i data-lucide="credit-card" class="icon-xs"></i> Forma de Pago</label>
-          <select id="repPaymentSelect" class="rep-form-select">
-            <option value="">Todos los Métodos</option>
-          </select>
-        </div>
-
-        <div class="rep-form-group" id="repCategoryGroup">
-          <label for="repCategorySelect" class="rep-form-label"><i data-lucide="tag" class="icon-xs"></i> Categoría</label>
-          <select id="repCategorySelect" class="rep-form-select">
-            <option value="">Todas las Categorías</option>
-          </select>
-        </div>
-
-        <div class="rep-form-group" style="margin-left: auto;">
-          <button id="btnRunReportQuery" type="button" class="btn-generate-report-submit">
-            <i data-lucide="play" class="icon-xs"></i> <span>Generar</span>
-          </button>
-        </div>
-      </div>
-
-      <!-- HOJA IMPRIMIBLE FORMAL DE REPORTE EJECUTIVO -->
-      <div id="executiveReportSheet" class="printable-report-sheet">
-        <!-- Renderizado dinámico desde dashboard.js -->
-      </div>
-
-    </div>
-  </div>
-
   <!-- LIBRERÍA CHART.JS LOCAL Y SCRIPT MODULAR -->
   <script src="../js/vendor/lucide.min.js"></script>
   <script src="../js/core/icons.js"></script>
   <script src="../js/vendor/chart.umd.js"></script>
   <script type="module" src="../js/core/modules-nav.js"></script>
-  <script type="module" src="../js/modules/dashboard.js?v=20261005-chart-filters-v2"></script>
-  <script type="module" src="../js/modules/caja-reportes.js?v=20260930-6"></script>
+  <script type="module" src="../js/modules/dashboard.js?v=20261016-modern-reports-v6"></script>
+  <script type="module" src="../js/modules/caja-reportes.js?v=20261016-modern-reports-v6"></script>
 
 </body>
 </html>

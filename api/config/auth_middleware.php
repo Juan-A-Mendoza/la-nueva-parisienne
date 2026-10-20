@@ -65,6 +65,15 @@ function require_auth(array $allowedRoles = []): void {
             exit();
         }
     }
+
+    // OPTIMIZACIÓN DE RENDIMIENTO (SESSION LOCK RELEASE):
+    // Liberamos el candado de escritura del archivo de sesión en disco.
+    // $_SESSION sigue disponible en memoria durante todo el script.
+    // Esto permite que múltiples peticiones AJAX concurrentes de la misma pestaña
+    // se ejecuten en paralelo inmediato en Apache en vez de encolarse secuencialmente.
+    if (session_status() === PHP_SESSION_ACTIVE && !defined('LNP_KEEP_SESSION_OPEN')) {
+        session_write_close();
+    }
 }
 
 /**
@@ -94,6 +103,9 @@ function auth_create_session(array $userData): string {
  * Destruye la sesión actual de forma segura (logout completo)
  */
 function auth_destroy_session(): void {
+    if (session_status() === PHP_SESSION_NONE && !headers_sent()) {
+        @session_start();
+    }
     $_SESSION = [];
     if (ini_get('session.use_cookies')) {
         $params = session_get_cookie_params();

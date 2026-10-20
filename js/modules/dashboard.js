@@ -426,9 +426,11 @@ function inicializarNavegacionTabs() {
   const navBtnAnalytics = document.getElementById('navBtnAnalytics');
   const navBtnInventory = document.getElementById('navBtnInventory');
   const navBtnCashReports = document.getElementById('navBtnCashReports');
+  const navBtnExecutiveReports = document.getElementById('navBtnExecutiveReports');
   const analyticsView = document.getElementById('analyticsView');
   const inventoryView = document.getElementById('inventoryView');
   const cashReportsView = document.getElementById('cashReportsView');
+  const executiveReportsView = document.getElementById('executiveReportsView');
   const breadcrumbActiveItem = document.getElementById('breadcrumbActiveItem');
 
   function switchDashboardView(viewName) {
@@ -436,36 +438,69 @@ function inicializarNavegacionTabs() {
       if (navBtnAnalytics) navBtnAnalytics.classList.remove('active');
       if (navBtnInventory) navBtnInventory.classList.add('active');
       if (navBtnCashReports) navBtnCashReports.classList.remove('active');
+      if (navBtnExecutiveReports) navBtnExecutiveReports.classList.remove('active');
       if (analyticsView) analyticsView.style.display = 'none';
       if (inventoryView) inventoryView.style.display = 'block';
       if (cashReportsView) cashReportsView.style.display = 'none';
+      if (executiveReportsView) executiveReportsView.style.display = 'none';
       if (breadcrumbActiveItem) breadcrumbActiveItem.textContent = 'Control de Inventario & Almacén';
       try { syncInventoryFromBackend(); } catch (e) {}
     } else if (viewName === 'cash_reports') {
       if (navBtnAnalytics) navBtnAnalytics.classList.remove('active');
       if (navBtnInventory) navBtnInventory.classList.remove('active');
       if (navBtnCashReports) navBtnCashReports.classList.add('active');
+      if (navBtnExecutiveReports) navBtnExecutiveReports.classList.remove('active');
       if (analyticsView) analyticsView.style.display = 'none';
       if (inventoryView) inventoryView.style.display = 'none';
       if (cashReportsView) cashReportsView.style.display = 'block';
+      if (executiveReportsView) executiveReportsView.style.display = 'none';
       if (breadcrumbActiveItem) breadcrumbActiveItem.textContent = 'Auditoría de Cierres de Caja';
       const refreshBtn = document.getElementById('btnRefreshManagerCierres');
       if (refreshBtn) refreshBtn.click();
+    } else if (viewName === 'reports') {
+      if (navBtnAnalytics) navBtnAnalytics.classList.remove('active');
+      if (navBtnInventory) navBtnInventory.classList.remove('active');
+      if (navBtnCashReports) navBtnCashReports.classList.remove('active');
+      if (navBtnExecutiveReports) navBtnExecutiveReports.classList.add('active');
+      if (analyticsView) analyticsView.style.display = 'none';
+      if (inventoryView) inventoryView.style.display = 'none';
+      if (cashReportsView) cashReportsView.style.display = 'none';
+      if (executiveReportsView) executiveReportsView.style.display = 'block';
+      if (breadcrumbActiveItem) breadcrumbActiveItem.textContent = 'Centro de Reportes Gerenciales & Financieros';
+      if (typeof window.abrirGeneradorReportes === 'function') {
+        window.abrirGeneradorReportes(false);
+      }
     } else {
       if (navBtnAnalytics) navBtnAnalytics.classList.add('active');
       if (navBtnInventory) navBtnInventory.classList.remove('active');
       if (navBtnCashReports) navBtnCashReports.classList.remove('active');
+      if (navBtnExecutiveReports) navBtnExecutiveReports.classList.remove('active');
       if (analyticsView) analyticsView.style.display = 'block';
       if (inventoryView) inventoryView.style.display = 'none';
       if (cashReportsView) cashReportsView.style.display = 'none';
+      if (executiveReportsView) executiveReportsView.style.display = 'none';
       if (breadcrumbActiveItem) breadcrumbActiveItem.textContent = 'Dashboard Gerencial';
     }
     window.LucideIcons?.refresh();
   }
 
-  if (navBtnAnalytics) navBtnAnalytics.addEventListener('click', () => switchDashboardView('analytics'));
-  if (navBtnInventory) navBtnInventory.addEventListener('click', () => switchDashboardView('inventory'));
-  if (navBtnCashReports) navBtnCashReports.addEventListener('click', () => switchDashboardView('cash_reports'));
+  window.switchDashboardView = switchDashboardView;
+
+  if (navBtnAnalytics) navBtnAnalytics.addEventListener('click', (e) => { e.preventDefault(); switchDashboardView('analytics'); });
+  if (navBtnInventory) navBtnInventory.addEventListener('click', (e) => { e.preventDefault(); switchDashboardView('inventory'); });
+  if (navBtnCashReports) navBtnCashReports.addEventListener('click', (e) => { e.preventDefault(); switchDashboardView('cash_reports'); });
+  if (navBtnExecutiveReports) navBtnExecutiveReports.addEventListener('click', (e) => { e.preventDefault(); switchDashboardView('reports'); });
+
+  document.addEventListener('click', (e) => {
+    const tabBtn = e.target.closest('#navBtnAnalytics, #navBtnInventory, #navBtnCashReports, #navBtnExecutiveReports');
+    if (tabBtn) {
+      e.preventDefault();
+      if (tabBtn.id === 'navBtnAnalytics') switchDashboardView('analytics');
+      else if (tabBtn.id === 'navBtnInventory') switchDashboardView('inventory');
+      else if (tabBtn.id === 'navBtnCashReports') switchDashboardView('cash_reports');
+      else if (tabBtn.id === 'navBtnExecutiveReports') switchDashboardView('reports');
+    }
+  });
 
   const tabBtnMateriaPrima = document.getElementById('tabBtnMateriaPrima');
   const tabBtnProductosTerminados = document.getElementById('tabBtnProductosTerminados');
@@ -2307,11 +2342,10 @@ function inicializarTicketsProduccionGerencia() {
 // ==========================================================================
 function inicializarReporteEjecutivo() {
   const btnExportReport = document.getElementById('btnExportReport');
-  const modal = document.getElementById('executiveReportModal');
+  const reportsView = document.getElementById('executiveReportsView');
   const sheet = document.getElementById('executiveReportSheet');
   const btnPrint = document.getElementById('btnPrintExecutiveReport');
   const btnExportCsv = document.getElementById('btnExportExecutiveCsv');
-  const btnClose = document.getElementById('btnCloseExecutiveReport');
 
   const repTypeSelect = document.getElementById('repTypeSelect');
   const repDateFrom = document.getElementById('repDateFrom');
@@ -2321,11 +2355,12 @@ function inicializarReporteEjecutivo() {
   const repCashierSelect = document.getElementById('repCashierSelect');
   const repPaymentSelect = document.getElementById('repPaymentSelect');
   const repCategorySelect = document.getElementById('repCategorySelect');
+  const repChartStyleSelect = document.getElementById('repChartStyleSelect');
   const repCashierGroup = document.getElementById('repCashierGroup');
   const repPaymentGroup = document.getElementById('repPaymentGroup');
   const repCategoryGroup = document.getElementById('repCategoryGroup');
 
-  if (!btnExportReport || !modal || !sheet) return;
+  if (!reportsView || !sheet) return;
 
   let currentReportData = {
     type: 'ventas_resumen',
@@ -2420,7 +2455,677 @@ function inicializarReporteEjecutivo() {
     sel?.addEventListener('change', () => ejecutarGeneracionReporte());
   });
 
+  repChartStyleSelect?.addEventListener('change', () => {
+    renderChartsForReport(currentReportData.type, currentReportData);
+  });
+
+  /* ==========================================================================
+     SISTEMA MULTI-ESTILO DE GRÁFICAS:
+     1. MÉTRICAS: Curvas y Gradientes Translúcidos (Estilo Métricas con Chart.js Optimizado a 150ms)
+     2. BARRAS: Barras Ejecutivas con esquinas suaves
+     3. CLÁSICAS: HTML5 + CSS + Conic Rings nativo ultra-rápido (0 ms)
+     ========================================================================== */
+
+  const REPORT_CHART_PALETTE = [
+    '#D49B54', // Parisian Gold
+    '#C65D3B', // Terracotta Panadera
+    '#10B981', // Verde Esmeralda
+    '#3B82F6', // Azul Real
+    '#8B5CF6', // Púrpura Elegante
+    '#F59E0B', // Ámbar / Miel
+    '#EC4899', // Rosa Francés
+    '#6366F1', // Índigo
+    '#14B8A6', // Turquesa
+    '#84CC16'  // Lima
+  ];
+
+  const activeReportChartInstances = {};
+
+  function destroyActiveReportCharts() {
+    Object.keys(activeReportChartInstances).forEach(id => {
+      try { activeReportChartInstances[id].destroy(); } catch (e) {}
+      delete activeReportChartInstances[id];
+    });
+  }
+
+  function getReportChartContainer(id) {
+    const el = document.getElementById(id);
+    if (!el) return null;
+    if (el.tagName && el.tagName.toLowerCase() === 'canvas') {
+      const parent = el.parentElement;
+      const div = document.createElement('div');
+      div.id = id;
+      div.className = 'report-chart-classic-wrap';
+      parent.replaceChild(div, el);
+      return div;
+    }
+    return el;
+  }
+
+  function prepareCanvasForChart(id) {
+    let el = document.getElementById(id);
+    if (!el) return null;
+    if (el.tagName && el.tagName.toLowerCase() !== 'canvas') {
+      const parent = el.parentElement;
+      const canvas = document.createElement('canvas');
+      canvas.id = id;
+      parent.replaceChild(canvas, el);
+      el = canvas;
+    }
+    return el;
+  }
+
+  // RENDERIZADOR 1: ESTILO MÉTRICAS (Curvas con Gradientes Translúcidos de Alta Gama)
+  function renderMetricasStyleLineChart(canvasId, labels, datasetsData, options = {}) {
+    if (typeof Chart === 'undefined') return;
+    const canvas = prepareCanvasForChart(canvasId);
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+
+    const goldGrad = ctx.createLinearGradient(0, 0, 0, 260);
+    goldGrad.addColorStop(0, 'rgba(212, 155, 84, 0.28)');
+    goldGrad.addColorStop(1, 'rgba(212, 155, 84, 0.00)');
+
+    const terraGrad = ctx.createLinearGradient(0, 0, 0, 260);
+    terraGrad.addColorStop(0, 'rgba(200, 90, 50, 0.22)');
+    terraGrad.addColorStop(1, 'rgba(200, 90, 50, 0.00)');
+
+    const emeraldGrad = ctx.createLinearGradient(0, 0, 0, 260);
+    emeraldGrad.addColorStop(0, 'rgba(16, 185, 129, 0.24)');
+    emeraldGrad.addColorStop(1, 'rgba(16, 185, 129, 0.00)');
+
+    const rate = options.rate || 761.21;
+    const isBars = options.isBars || false;
+
+    const chartDatasets = datasetsData.map((ds, idx) => {
+      let grad = goldGrad;
+      let border = '#D49B54';
+      let ptBg = '#FFFFFF';
+      if (idx === 1) {
+        grad = terraGrad;
+        border = '#C85A32';
+        ptBg = '#FFFFFF';
+      } else if (idx === 2) {
+        grad = emeraldGrad;
+        border = '#10B981';
+        ptBg = '#FFFFFF';
+      }
+
+      if (isBars) {
+        return {
+          label: ds.label || 'Valor',
+          data: ds.data || [],
+          backgroundColor: ds.color || border,
+          borderRadius: 8,
+          borderWidth: 0,
+          maxBarThickness: 42
+        };
+      }
+
+      return {
+        label: ds.label || 'Valor',
+        data: ds.data || [],
+        borderColor: ds.color || border,
+        backgroundColor: ds.bgColor || grad,
+        borderWidth: 2.2,
+        fill: true,
+        tension: 0.38,
+        pointBackgroundColor: ptBg,
+        pointBorderColor: ds.color || border,
+        pointBorderWidth: 2,
+        pointRadius: 3.5,
+        pointHoverRadius: 6.5
+      };
+    });
+
+    if (activeReportChartInstances[canvasId]) {
+      try { activeReportChartInstances[canvasId].destroy(); } catch (e) {}
+      delete activeReportChartInstances[canvasId];
+    }
+
+    try {
+      const chart = new Chart(ctx, {
+        type: isBars ? 'bar' : 'line',
+        data: {
+          labels: labels,
+          datasets: chartDatasets
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          animation: {
+            duration: 250, // Carga ultra fluida y moderna
+            easing: 'easeOutCubic'
+          },
+          interaction: {
+            mode: 'index',
+            intersect: false
+          },
+          plugins: {
+            legend: {
+              position: 'top',
+              labels: {
+                font: { family: "'Outfit', sans-serif", size: 11, weight: '700' },
+                color: '#2C1D11',
+                usePointStyle: true,
+                boxWidth: 8,
+                padding: 14
+              }
+            },
+            tooltip: {
+              backgroundColor: 'rgba(44, 29, 17, 0.94)',
+              titleColor: '#FFFFFF',
+              bodyColor: '#F5EFEB',
+              borderColor: 'rgba(212, 155, 84, 0.35)',
+              borderWidth: 1,
+              titleFont: { family: "'Outfit', sans-serif", size: 12, weight: 'bold' },
+              bodyFont: { family: "'Outfit', sans-serif", size: 11, weight: '500' },
+              padding: 10,
+              cornerRadius: 10,
+              boxPadding: 4,
+              callbacks: {
+                label: function(ctx) {
+                  const val = ctx.raw ?? 0;
+                  if (options.customUnit) {
+                    return ` ${ctx.dataset.label}: ${val.toLocaleString('es-VE')} ${options.customUnit}`;
+                  }
+                  const bs = (val * rate).toLocaleString('es-VE', { minimumFractionDigits: 2 });
+                  return ` ${ctx.dataset.label}: $${val.toLocaleString('es-VE', { minimumFractionDigits: 2 })} (Bs. ${bs})`;
+                }
+              }
+            }
+          },
+          scales: {
+            y: {
+              beginAtZero: true,
+              ticks: {
+                font: { family: "'Outfit', sans-serif", size: 10.5, weight: '500' },
+                color: '#7E6E60',
+                callback: v => options.customUnit ? `${v} ${options.customUnit}` : `$${Number(v).toLocaleString('es-VE')}`
+              },
+              grid: { color: 'rgba(44, 29, 17, 0.04)' }
+            },
+            x: {
+              ticks: { font: { family: "'Outfit', sans-serif", size: 10.5, weight: '500' }, color: '#7E6E60' },
+              grid: { display: false }
+            }
+          }
+        }
+      });
+
+      activeReportChartInstances[canvasId] = chart;
+    } catch (err) {
+      console.error(`Error renderizando gráfica en ${canvasId}:`, err);
+    }
+  }
+
+  // RENDERIZADOR 2: BARRAS HORIZONTALES CLÁSICAS NATIVAS (0 ms)
+  function renderClassicBars(containerId, items = [], options = {}) {
+    const container = getReportChartContainer(containerId);
+    if (!container) return;
+    if (!items || items.length === 0) {
+      container.innerHTML = '<div class="report-chart-empty-state"><span>Sin datos registrados para graficar</span></div>';
+      return;
+    }
+
+    const rate = options.rate || 761.21;
+    const maxVal = Math.max(...items.map(i => Number(i.value) || 0), 1);
+    const sumVal = items.reduce((s, i) => s + (Number(i.value) || 0), 0) || 1;
+
+    let html = '<div class="classic-bars-list">';
+    items.forEach((item, idx) => {
+      const val = Number(item.value) || 0;
+      const pct = item.percentage != null ? Number(item.percentage) : Math.round((val / sumVal) * 1000) / 10;
+      const color = item.color || REPORT_CHART_PALETTE[idx % REPORT_CHART_PALETTE.length];
+      const barWidth = Math.max(3, Math.min(100, Math.round((val / maxVal) * 100)));
+
+      let figuresHtml = '';
+      if (options.customUnit) {
+        figuresHtml = `<span>${val.toLocaleString('es-VE')} ${options.customUnit}</span>`;
+      } else {
+        const bsVal = (val * rate).toLocaleString('es-VE', { minimumFractionDigits: 2 });
+        figuresHtml = `<span>$${val.toLocaleString('es-VE', { minimumFractionDigits: 2 })}</span><span class="sub-bs">(Bs. ${bsVal})</span>`;
+      }
+
+      html += `
+        <div class="classic-bar-row">
+          <div class="classic-bar-meta">
+            <span class="classic-bar-title">
+              <span class="classic-bar-dot" style="background: ${color};"></span>
+              <span>${item.label}</span>
+            </span>
+            <div class="classic-bar-figures">
+              ${figuresHtml}
+              <span class="classic-bar-badge">${pct}%</span>
+            </div>
+          </div>
+          <div class="classic-bar-track">
+            <div class="classic-bar-fill" style="width: ${barWidth}%; background: ${color};"></div>
+          </div>
+        </div>
+      `;
+    });
+    html += '</div>';
+    container.innerHTML = html;
+  }
+
+  // RENDERIZADOR 3: ANILLO CONIC PROPORCIONAL CLÁSICO
+  function renderClassicRing(containerId, items = [], options = {}) {
+    const container = getReportChartContainer(containerId);
+    if (!container) return;
+    if (!items || items.length === 0) {
+      container.innerHTML = '<div class="report-chart-empty-state"><span>Sin datos registrados para graficar</span></div>';
+      return;
+    }
+
+    const rate = options.rate || 761.21;
+    const sumVal = items.reduce((s, i) => s + (Number(i.value) || 0), 0) || 1;
+    let accumulated = 0;
+    const gradientStops = [];
+
+    const processed = items.map((item, idx) => {
+      const val = Number(item.value) || 0;
+      const pct = Math.round((val / sumVal) * 1000) / 10;
+      const color = item.color || REPORT_CHART_PALETTE[idx % REPORT_CHART_PALETTE.length];
+      const start = accumulated;
+      accumulated += (val / sumVal) * 100;
+      const end = Math.min(100, accumulated);
+      gradientStops.push(`${color} ${start.toFixed(1)}% ${end.toFixed(1)}%`);
+      return { ...item, val, pct, color };
+    });
+
+    const conicCss = gradientStops.length > 0 ? `conic-gradient(${gradientStops.join(', ')})` : '#D49B54';
+    const centerTitle = options.centerTitle || 'TOTAL';
+    let centerVal = '';
+    if (options.customUnit) {
+      centerVal = `${sumVal.toLocaleString('es-VE')} ${options.customUnit}`;
+    } else {
+      centerVal = `$${sumVal.toLocaleString('es-VE', { minimumFractionDigits: 0 })}`;
+    }
+
+    let html = `
+      <div class="classic-ring-chart-layout">
+        <div class="classic-ring-preview" style="background: ${conicCss};">
+          <div class="classic-ring-inner">
+            <span class="classic-ring-inner-label">${centerTitle}</span>
+            <span class="classic-ring-inner-val">${centerVal}</span>
+          </div>
+        </div>
+        <div class="classic-ring-legend">
+    `;
+
+    processed.forEach(item => {
+      let valText = '';
+      if (options.customUnit) {
+        valText = `${item.val.toLocaleString('es-VE')} ${options.customUnit}`;
+      } else {
+        valText = `$${item.val.toLocaleString('es-VE', { minimumFractionDigits: 2 })}`;
+      }
+
+      html += `
+        <div class="classic-ring-legend-item">
+          <span class="classic-ring-legend-label">
+            <span class="classic-bar-dot" style="background: ${item.color};"></span>
+            <span>${item.label}</span>
+          </span>
+          <div style="display: flex; align-items: center; gap: 0.45rem;">
+            <span class="classic-ring-legend-val">${valText}</span>
+            <span class="classic-bar-badge">${item.pct}%</span>
+          </div>
+        </div>
+      `;
+    });
+
+    html += `
+        </div>
+      </div>
+    `;
+    container.innerHTML = html;
+  }
+
+  // RENDERIZADOR 4: BARRAS COMPARATIVAS CARA A CARA
+  function renderClassicCompare(containerId, items = [], options = {}) {
+    const container = getReportChartContainer(containerId);
+    if (!container) return;
+    if (!items || items.length === 0) {
+      container.innerHTML = '<div class="report-chart-empty-state"><span>Sin datos registrados para graficar</span></div>';
+      return;
+    }
+
+    let allVals = [];
+    items.forEach(i => {
+      allVals.push(Number(i.val1) || 0);
+      allVals.push(Number(i.val2) || 0);
+    });
+    const maxVal = Math.max(...allVals, 1);
+
+    let html = '<div class="classic-bars-list">';
+    items.forEach(item => {
+      const v1 = Number(item.val1) || 0;
+      const v2 = Number(item.val2) || 0;
+      const w1 = Math.max(2, Math.min(100, Math.round((v1 / maxVal) * 100)));
+      const w2 = Math.max(2, Math.min(100, Math.round((v2 / maxVal) * 100)));
+      const c1 = item.color1 || '#D49B54';
+      const c2 = item.color2 || '#C65D3B';
+
+      const unit = options.customUnit || '$';
+      const isCurr = !options.customUnit;
+      const f1 = isCurr ? `$${v1.toLocaleString('es-VE', { minimumFractionDigits: 2 })}` : `${v1.toLocaleString('es-VE')} ${unit}`;
+      const f2 = isCurr ? `$${v2.toLocaleString('es-VE', { minimumFractionDigits: 2 })}` : `${v2.toLocaleString('es-VE')} ${unit}`;
+
+      html += `
+        <div class="classic-compare-row">
+          <div class="classic-compare-header">
+            <span>${item.label}</span>
+            ${item.note ? `<span class="classic-bar-badge">${item.note}</span>` : ''}
+          </div>
+          <div class="classic-compare-bars">
+            <div class="classic-compare-subbar">
+              <span class="label-tag">${item.label1 || 'A'}:</span>
+              <div class="track"><div class="track-fill" style="width: ${w1}%; background: ${c1};"></div></div>
+              <span class="val">${f1}</span>
+            </div>
+            <div class="classic-compare-subbar">
+              <span class="label-tag">${item.label2 || 'B'}:</span>
+              <div class="track"><div class="track-fill" style="width: ${w2}%; background: ${c2};"></div></div>
+              <span class="val">${f2}</span>
+            </div>
+          </div>
+        </div>
+      `;
+    });
+    html += '</div>';
+    container.innerHTML = html;
+  }
+
+  // RENDERIZADOR PRINCIPAL: DESPACHO DINÁMICO SEGÚN LA ELECCIÓN DEL USUARIO
+  function renderChartsForReport(type, data) {
+    if (!data) return;
+    const rate = Number(data.bcvRate) || (BcvRateStore.getRate ? BcvRateStore.getRate() : 761.21);
+    const chartStyle = repChartStyleSelect ? repChartStyleSelect.value : 'metricas';
+
+    // Ocultar si el usuario eligió "Solo Tablas"
+    const chartsGrids = sheet ? sheet.querySelectorAll('.report-charts-grid') : [];
+    if (chartStyle === 'ninguna') {
+      chartsGrids.forEach(g => g.style.display = 'none');
+      destroyActiveReportCharts();
+      return;
+    } else {
+      chartsGrids.forEach(g => g.style.display = 'grid');
+    }
+
+    const isBars = chartStyle === 'barras';
+    const isClassic = chartStyle === 'clasicas';
+
+    if (type === 'ventas_resumen') {
+      const catTotals = data.catTotals || [];
+      const payments = data.payments || [];
+
+      if (isClassic) {
+        renderClassicBars('repChartCategory', catTotals.map(c => ({ label: c.categoria, value: Number(c.total) })), { rate });
+        renderClassicBars('repChartPayment', payments.map(p => ({ label: p.metodo, value: Number(p.total) })), { rate });
+      } else {
+        renderMetricasStyleLineChart('repChartCategory', catTotals.map(c => c.categoria), [
+          { label: 'Ventas por Categoría ($ USD)', data: catTotals.map(c => Number(c.total)) }
+        ], { rate, isBars });
+
+        renderMetricasStyleLineChart('repChartPayment', payments.map(p => p.metodo), [
+          { label: 'Recaudación por Método ($ USD)', data: payments.map(p => Number(p.total)) }
+        ], { rate, isBars });
+      }
+
+    } else if (type === 'rentabilidad_productos') {
+      const products = data.products || [];
+      const top7 = products.slice(0, 7);
+
+      if (isClassic) {
+        renderClassicCompare('repChartTopRevCost', top7.map(p => ({
+          label: p.name,
+          label1: 'Ingresos',
+          val1: Number(p.totalRevUsd),
+          color1: '#D49B54',
+          label2: 'Costo Insumos',
+          val2: Number(p.totalCostUsd),
+          color2: '#C65D3B',
+          note: `Margen ${(Number(p.marginPct) || 0).toFixed(0)}%`
+        })));
+
+        renderClassicRing('repChartMarginShare', top7.map(p => ({
+          label: p.name,
+          value: Math.max(0, Number(p.totalProfitUsd))
+        })), { rate, centerTitle: 'MARGEN' });
+      } else {
+        renderMetricasStyleLineChart('repChartTopRevCost', top7.map(p => p.name.length > 15 ? p.name.slice(0, 15) + '...' : p.name), [
+          { label: 'Ingresos Totales ($)', data: top7.map(p => Number(p.totalRevUsd)) },
+          { label: 'Costo Insumos ($)', data: top7.map(p => Number(p.totalCostUsd)) }
+        ], { rate, isBars });
+
+        renderMetricasStyleLineChart('repChartMarginShare', top7.map(p => p.name.length > 15 ? p.name.slice(0, 15) + '...' : p.name), [
+          { label: 'Ganancia Neta ($)', data: top7.map(p => Math.max(0, Number(p.totalProfitUsd))) }
+        ], { rate, isBars });
+      }
+
+    } else if (type === 'balance_contable') {
+      const trialBalance = data.trialBalance || [];
+      const activePUC = trialBalance.filter(t => Number(t.sumDebe) > 0 || Number(t.sumHaber) > 0).slice(0, 7);
+      const totalDeudor = trialBalance.reduce((s, t) => s + Number(t.saldoDeudor || 0), 0);
+      const totalAcreedor = trialBalance.reduce((s, t) => s + Number(t.saldoAcreedor || 0), 0);
+
+      if (isClassic) {
+        renderClassicCompare('repChartTrialBalance', activePUC.map(a => ({
+          label: a.name,
+          label1: 'Cargos Debe',
+          val1: Number(a.sumDebe),
+          color1: '#3B82F6',
+          label2: 'Abonos Haber',
+          val2: Number(a.sumHaber),
+          color2: '#10B981'
+        })));
+
+        renderClassicRing('repChartSaldos', [
+          { label: 'Saldos Deudores', value: totalDeudor, color: '#3B82F6' },
+          { label: 'Saldos Acreedores', value: totalAcreedor, color: '#10B981' }
+        ], { rate, centerTitle: 'BALANCE' });
+      } else {
+        renderMetricasStyleLineChart('repChartTrialBalance', activePUC.map(a => a.name.length > 14 ? a.name.slice(0, 14) + '...' : a.name), [
+          { label: 'Cargos Debe ($)', data: activePUC.map(a => Number(a.sumDebe)) },
+          { label: 'Abonos Haber ($)', data: activePUC.map(a => Number(a.sumHaber)) }
+        ], { rate, isBars });
+
+        renderMetricasStyleLineChart('repChartSaldos', ['Saldos Deudores', 'Saldos Acreedores'], [
+          { label: 'Saldos Contables ($)', data: [totalDeudor, totalAcreedor] }
+        ], { rate, isBars });
+      }
+
+    } else if (type === 'ventas_detalladas') {
+      const rows = data.rows || [];
+      const cashierTotals = {};
+      const paymentTotals = {};
+      rows.forEach(r => {
+        const c = r.cajero || 'Cajero';
+        const m = r.metodo_pago || 'Otros';
+        const amount = Number(r.subtotal_linea || 0);
+        cashierTotals[c] = (cashierTotals[c] || 0) + amount;
+        paymentTotals[m] = (paymentTotals[m] || 0) + amount;
+      });
+
+      if (isClassic) {
+        renderClassicBars('repChartDetailedCashiers', Object.entries(cashierTotals).map(([k, v]) => ({ label: k, value: v })), { rate });
+        renderClassicRing('repChartDetailedPayments', Object.entries(paymentTotals).map(([k, v]) => ({ label: k, value: v })), { rate, centerTitle: 'PAGOS' });
+      } else {
+        renderMetricasStyleLineChart('repChartDetailedCashiers', Object.keys(cashierTotals), [
+          { label: 'Facturación ($ USD)', data: Object.values(cashierTotals) }
+        ], { rate, isBars });
+
+        renderMetricasStyleLineChart('repChartDetailedPayments', Object.keys(paymentTotals), [
+          { label: 'Volumen por Método ($)', data: Object.values(paymentTotals) }
+        ], { rate, isBars });
+      }
+
+    } else if (type === 'cierres_turno') {
+      const closures = (data.closures || []).slice(0, 8);
+      const payments = data.payments || [];
+
+      if (isClassic) {
+        renderClassicHistogram('repChartClosuresNet', closures.map(c => ({ label: c.turno || c.codigo_reporte, value: Number(c.ventas_netas || 0) })), { rate });
+        renderClassicBars('repChartClosuresPayments', payments.map(p => ({ label: p.metodo_pago, value: Number(p.monto || 0) })), { rate });
+      } else {
+        renderMetricasStyleLineChart('repChartClosuresNet', closures.map(c => c.turno || c.codigo_reporte), [
+          { label: 'Ventas Netas por Turno ($ USD)', data: closures.map(c => Number(c.ventas_netas || 0)) }
+        ], { rate, isBars });
+
+        renderMetricasStyleLineChart('repChartClosuresPayments', payments.map(p => p.metodo_pago), [
+          { label: 'Fondos Recaudados ($ USD)', data: payments.map(p => Number(p.monto || 0)) }
+        ], { rate, isBars });
+      }
+
+    } else if (type === 'eventos_anulaciones') {
+      const events = data.events || [];
+      if (events.length === 0) {
+        const wrap1 = getReportChartContainer('repChartEventsType');
+        const wrap2 = getReportChartContainer('repChartEventsCashier');
+        if (wrap1) wrap1.innerHTML = '<div class="report-chart-empty-state"><span style="color: #10B981; font-weight: 700;">✓ Sin incidencias ni pérdidas financieras registradas</span></div>';
+        if (wrap2) wrap2.innerHTML = '<div class="report-chart-empty-state"><span style="color: #10B981; font-weight: 700;">✓ Operación 100% conforme sin anulaciones de caja</span></div>';
+      } else {
+        const typeMap = {};
+        const cashierMap = {};
+        events.forEach(e => {
+          const t = e.tipo_evento || 'Otro';
+          const c = e.caja_id || e.registrado_por || 'Caja';
+          const m = Number(e.monto || 0);
+          typeMap[t] = (typeMap[t] || 0) + m;
+          cashierMap[c] = (cashierMap[c] || 0) + m;
+        });
+
+        if (isClassic) {
+          renderClassicBars('repChartEventsType', Object.entries(typeMap).map(([k, v]) => ({ label: k, value: v, color: '#C65D3B' })), { rate });
+          renderClassicRing('repChartEventsCashier', Object.entries(cashierMap).map(([k, v]) => ({ label: k, value: v })), { rate, centerTitle: 'INCIDENCIAS' });
+        } else {
+          renderMetricasStyleLineChart('repChartEventsType', Object.keys(typeMap), [
+            { label: 'Monto Incidencias ($ USD)', data: Object.values(typeMap) }
+          ], { rate, isBars });
+
+          renderMetricasStyleLineChart('repChartEventsCashier', Object.keys(cashierMap), [
+            { label: 'Incidencias por Caja ($)', data: Object.values(cashierMap) }
+          ], { rate, isBars });
+        }
+      }
+
+    } else if (type === 'produccion_hornos') {
+      const hornos = data.hornos || [];
+      const lotes = data.lotes || [];
+
+      if (isClassic) {
+        renderClassicCompare('repChartOvenTemp', hornos.map(h => ({
+          label: h.nombre,
+          label1: 'Temp. Actual',
+          val1: Number(h.temperatura_actual),
+          color1: '#E05638',
+          label2: 'Temp. Objetivo',
+          val2: Number(h.temperatura_objetivo),
+          color2: '#D49B54'
+        })), { customUnit: '°C' });
+
+        renderClassicBars('repChartBatches', lotes.map(l => ({ label: l.producto, value: Number(l.cantidad || 0) })), { customUnit: 'Und' });
+      } else {
+        renderMetricasStyleLineChart('repChartOvenTemp', hornos.map(h => h.nombre), [
+          { label: 'Temp. Actual (°C)', data: hornos.map(h => Number(h.temperatura_actual)) },
+          { label: 'Temp. Objetivo (°C)', data: hornos.map(h => Number(h.temperatura_objetivo)) }
+        ], { customUnit: '°C', isBars });
+
+        renderMetricasStyleLineChart('repChartBatches', lotes.map(l => l.producto), [
+          { label: 'Unidades Producidas', data: lotes.map(l => Number(l.cantidad || 0)) }
+        ], { customUnit: 'Und', isBars });
+      }
+
+    } else if (type === 'inventario_mermas') {
+      const items = data.items || [];
+      const rawVal = items.filter(i => i.category === 'raw_material').reduce((s, i) => s + (i.currentStock * i.unitPrice), 0);
+      const finishedVal = items.filter(i => i.category === 'finished_product').reduce((s, i) => s + (i.currentStock * i.unitPrice), 0);
+      const sortedStock = [...items].sort((a, b) => (a.currentStock / (a.minStock || 1)) - (b.currentStock / (b.minStock || 1))).slice(0, 6);
+
+      if (isClassic) {
+        renderClassicRing('repChartInventoryValuation', [
+          { label: 'Materias Primas / Insumos', value: Math.round(rawVal * 100) / 100, color: '#8C6239' },
+          { label: 'Productos Terminados POS', value: Math.round(finishedVal * 100) / 100, color: '#10B981' }
+        ], { rate, centerTitle: 'INVENTARIO' });
+
+        renderClassicCompare('repChartInventoryStock', sortedStock.map(i => ({
+          label: i.name,
+          label1: 'Stock Actual',
+          val1: Number(i.currentStock),
+          color1: '#C65D3B',
+          label2: 'Stock Mínimo',
+          val2: Number(i.minStock),
+          color2: '#D49B54'
+        })), { customUnit: 'Und' });
+      } else {
+        renderMetricasStyleLineChart('repChartInventoryValuation', ['Materias Primas', 'Productos Terminados'], [
+          { label: 'Stock Valorizado ($ USD)', data: [rawVal, finishedVal] }
+        ], { rate, isBars });
+
+        renderMetricasStyleLineChart('repChartInventoryStock', sortedStock.map(i => i.name.slice(0, 15)), [
+          { label: 'Stock Actual', data: sortedStock.map(i => i.currentStock) },
+          { label: 'Stock Mínimo Requerido', data: sortedStock.map(i => i.minStock) }
+        ], { customUnit: 'Und', isBars });
+      }
+
+    } else if (type === 'compras_proveedores') {
+      const orders = data.orders || [];
+      const spendBySup = {};
+      const statusCount = { 'Recibidas': 0, 'En Tránsito': 0, 'Pendientes': 0 };
+      orders.forEach(o => {
+        const sup = o.supplierName || 'Proveedor';
+        spendBySup[sup] = (spendBySup[sup] || 0) + Number(o.totalAmount || 0);
+        if (o.status === 'received') statusCount['Recibidas']++;
+        else if (o.status === 'in_transit') statusCount['En Tránsito']++;
+        else statusCount['Pendientes']++;
+      });
+
+      if (isClassic) {
+        renderClassicBars('repChartSuppliersSpend', Object.entries(spendBySup).map(([k, v]) => ({ label: k, value: v })), { rate });
+        renderClassicRing('repChartOrdersStatus', Object.entries(statusCount).map(([k, v]) => ({ label: k, value: v })), { customUnit: 'Órdenes', centerTitle: 'ESTADO' });
+      } else {
+        renderMetricasStyleLineChart('repChartSuppliersSpend', Object.keys(spendBySup), [
+          { label: 'Compras a Proveedores ($ USD)', data: Object.values(spendBySup) }
+        ], { rate, isBars });
+
+        renderMetricasStyleLineChart('repChartOrdersStatus', Object.keys(statusCount), [
+          { label: 'Órdenes de Compra', data: Object.values(statusCount) }
+        ], { customUnit: 'Órdenes', isBars });
+      }
+
+    } else if (type === 'personal_rendimiento') {
+      const staff = data.staff || [];
+      const salesByCashier = data.salesByCashier || {};
+      const cashierSalesArr = Object.entries(salesByCashier).map(([k, v]) => ({
+        name: k.charAt(0).toUpperCase() + k.slice(1),
+        amount: v.amount
+      }));
+      const deptCounts = {};
+      staff.forEach(s => {
+        const d = s.department || 'Operaciones';
+        deptCounts[d] = (deptCounts[d] || 0) + 1;
+      });
+
+      if (isClassic) {
+        renderClassicBars('repChartStaffSales', cashierSalesArr.map(c => ({ label: c.name, value: c.amount })), { rate });
+        renderClassicRing('repChartStaffDept', Object.entries(deptCounts).map(([k, v]) => ({ label: k, value: v })), { customUnit: 'Personas', centerTitle: 'NÓMINA' });
+      } else {
+        renderMetricasStyleLineChart('repChartStaffSales', cashierSalesArr.map(c => c.name), [
+          { label: 'Ventas Generadas ($ USD)', data: cashierSalesArr.map(c => c.amount) }
+        ], { rate, isBars });
+
+        renderMetricasStyleLineChart('repChartStaffDept', Object.keys(deptCounts), [
+          { label: 'Colaboradores Activos', data: Object.values(deptCounts) }
+        ], { customUnit: 'Personas', isBars });
+      }
+    }
+  }
+
   async function ejecutarGeneracionReporte() {
+    destroyActiveReportCharts();
     const reportType = repTypeSelect ? repTypeSelect.value : 'ventas_resumen';
     actualizarVisibilidadFiltros(reportType);
     const fromDate = repDateFrom ? repDateFrom.value : '';
@@ -2555,8 +3260,34 @@ function inicializarReporteEjecutivo() {
           </div>
 
           <div class="report-section-heading">
+            <i data-lucide="line-chart" class="icon-sm"></i>
+            <span>2. Análisis Gráfico Dinámico de Ventas y Recaudación</span>
+          </div>
+
+          <div class="report-charts-grid">
+            <div class="report-chart-card">
+              <div class="report-chart-header">
+                <h4 class="report-chart-title"><i data-lucide="pie-chart" class="icon-xs"></i> Ventas por Categoría</h4>
+                <span class="report-chart-badge">Mix de Facturación</span>
+              </div>
+              <div class="report-chart-canvas-wrap">
+                <canvas id="repChartCategory"></canvas>
+              </div>
+            </div>
+            <div class="report-chart-card">
+              <div class="report-chart-header">
+                <h4 class="report-chart-title"><i data-lucide="wallet" class="icon-xs"></i> Recaudación por Método de Pago</h4>
+                <span class="report-chart-badge emerald">Bimonetario</span>
+              </div>
+              <div class="report-chart-canvas-wrap">
+                <canvas id="repChartPayment"></canvas>
+              </div>
+            </div>
+          </div>
+
+          <div class="report-section-heading">
             <i data-lucide="pie-chart" class="icon-sm"></i>
-            <span>2. Desglose de Ventas por Categoría de Producto</span>
+            <span>3. Desglose de Ventas por Categoría de Producto</span>
           </div>
 
           <table class="report-data-table">
@@ -2598,7 +3329,7 @@ function inicializarReporteEjecutivo() {
 
           <div class="report-section-heading" style="margin-top: 2rem;">
             <i data-lucide="wallet" class="icon-sm"></i>
-            <span>3. Recaudación y Cobranzas por Forma de Pago (Bimonetario)</span>
+            <span>4. Recaudación y Cobranzas por Forma de Pago (Bimonetario)</span>
           </div>
 
           <table class="report-data-table">
@@ -2730,8 +3461,34 @@ function inicializarReporteEjecutivo() {
           </div>
 
           <div class="report-section-heading">
+            <i data-lucide="line-chart" class="icon-sm"></i>
+            <span>2. Análisis Gráfico de Demanda y Rentabilidad</span>
+          </div>
+
+          <div class="report-charts-grid">
+            <div class="report-chart-card">
+              <div class="report-chart-header">
+                <h4 class="report-chart-title"><i data-lucide="bar-chart-2" class="icon-xs"></i> Top 7 Productos: Ingresos vs. Costos</h4>
+                <span class="report-chart-badge gold">Rentabilidad ($)</span>
+              </div>
+              <div class="report-chart-canvas-wrap">
+                <canvas id="repChartTopRevCost"></canvas>
+              </div>
+            </div>
+            <div class="report-chart-card">
+              <div class="report-chart-header">
+                <h4 class="report-chart-title"><i data-lucide="pie-chart" class="icon-xs"></i> Margen de Utilidad Bruta ($)</h4>
+                <span class="report-chart-badge emerald">Utilidad por Ítem</span>
+              </div>
+              <div class="report-chart-canvas-wrap">
+                <canvas id="repChartMarginShare"></canvas>
+              </div>
+            </div>
+          </div>
+
+          <div class="report-section-heading">
             <i data-lucide="list-ordered" class="icon-sm"></i>
-            <span>2. Matriz de Rentabilidad, Costo y Margen por Producto</span>
+            <span>3. Matriz de Rentabilidad, Costo y Margen por Producto</span>
           </div>
 
           <table class="report-data-table">
@@ -2844,8 +3601,34 @@ function inicializarReporteEjecutivo() {
           </div>
 
           <div class="report-section-heading">
+            <i data-lucide="line-chart" class="icon-sm"></i>
+            <span>2. Análisis Gráfico de Sumas y Saldos PUC</span>
+          </div>
+
+          <div class="report-charts-grid">
+            <div class="report-chart-card">
+              <div class="report-chart-header">
+                <h4 class="report-chart-title"><i data-lucide="scale" class="icon-xs"></i> Comparativa Debe vs. Haber por Cuenta</h4>
+                <span class="report-chart-badge blue">Partida Doble</span>
+              </div>
+              <div class="report-chart-canvas-wrap">
+                <canvas id="repChartTrialBalance"></canvas>
+              </div>
+            </div>
+            <div class="report-chart-card">
+              <div class="report-chart-header">
+                <h4 class="report-chart-title"><i data-lucide="pie-chart" class="icon-xs"></i> Distribución de Saldos Deudor vs. Acreedor</h4>
+                <span class="report-chart-badge emerald">Saldos Netos</span>
+              </div>
+              <div class="report-chart-canvas-wrap">
+                <canvas id="repChartSaldos"></canvas>
+              </div>
+            </div>
+          </div>
+
+          <div class="report-section-heading">
             <i data-lucide="table" class="icon-sm"></i>
-            <span>2. Balance de Comprobación (Plan Único de Cuentas)</span>
+            <span>3. Balance de Comprobación (Plan Único de Cuentas)</span>
           </div>
 
           <table class="report-data-table">
@@ -2886,7 +3669,7 @@ function inicializarReporteEjecutivo() {
 
           <div class="report-section-heading" style="margin-top: 2rem;">
             <i data-lucide="book-open" class="icon-sm"></i>
-            <span>3. Últimos Asientos Registrados en el Libro Diario</span>
+            <span>4. Últimos Asientos Registrados en el Libro Diario</span>
           </div>
 
           <table class="report-data-table">
@@ -2940,8 +3723,34 @@ function inicializarReporteEjecutivo() {
           ${makeBanner('Módulo 3: Punto de Venta (POS)', 'DETALLE TRANSACCIONAL RENGLÓN POR RENGLÓN', 'receipt')}
 
           <div class="report-section-heading">
+            <i data-lucide="line-chart" class="icon-sm"></i>
+            <span>1. Análisis de Facturación por Cajero y Forma de Pago</span>
+          </div>
+
+          <div class="report-charts-grid">
+            <div class="report-chart-card">
+              <div class="report-chart-header">
+                <h4 class="report-chart-title"><i data-lucide="user" class="icon-xs"></i> Ventas por Cajero / Turno</h4>
+                <span class="report-chart-badge gold">Total ($)</span>
+              </div>
+              <div class="report-chart-canvas-wrap">
+                <canvas id="repChartDetailedCashiers"></canvas>
+              </div>
+            </div>
+            <div class="report-chart-card">
+              <div class="report-chart-header">
+                <h4 class="report-chart-title"><i data-lucide="credit-card" class="icon-xs"></i> Recaudación por Instrumento</h4>
+                <span class="report-chart-badge emerald">Participación</span>
+              </div>
+              <div class="report-chart-canvas-wrap">
+                <canvas id="repChartDetailedPayments"></canvas>
+              </div>
+            </div>
+          </div>
+
+          <div class="report-section-heading">
             <i data-lucide="file-text" class="icon-sm"></i>
-            <span>1. Relación Individual de Facturas y Renglones Vendidos</span>
+            <span>2. Relación Individual de Facturas y Renglones Vendidos</span>
           </div>
 
           <table class="report-data-table">
@@ -3031,8 +3840,34 @@ function inicializarReporteEjecutivo() {
           </div>
 
           <div class="report-section-heading">
+            <i data-lucide="line-chart" class="icon-sm"></i>
+            <span>2. Análisis Gráfico de Cierres Z y Arqueos</span>
+          </div>
+
+          <div class="report-charts-grid">
+            <div class="report-chart-card">
+              <div class="report-chart-header">
+                <h4 class="report-chart-title"><i data-lucide="folder-check" class="icon-xs"></i> Ventas Netas por Cierre Auditado</h4>
+                <span class="report-chart-badge gold">Cortes Sellados</span>
+              </div>
+              <div class="report-chart-canvas-wrap">
+                <canvas id="repChartClosuresNet"></canvas>
+              </div>
+            </div>
+            <div class="report-chart-card">
+              <div class="report-chart-header">
+                <h4 class="report-chart-title"><i data-lucide="wallet" class="icon-xs"></i> Desglose de Recaudación en Cierres</h4>
+                <span class="report-chart-badge emerald">Instrumentos de Cobro</span>
+              </div>
+              <div class="report-chart-canvas-wrap">
+                <canvas id="repChartClosuresPayments"></canvas>
+              </div>
+            </div>
+          </div>
+
+          <div class="report-section-heading">
             <i data-lucide="folder-check" class="icon-sm"></i>
-            <span>2. Histórico de Reportes de Cierre de Caja (Cierres Z Oficiales)</span>
+            <span>3. Histórico de Reportes de Cierre de Caja (Cierres Z Oficiales)</span>
           </div>
 
           <table class="report-data-table">
@@ -3120,8 +3955,34 @@ function inicializarReporteEjecutivo() {
           </div>
 
           <div class="report-section-heading">
+            <i data-lucide="line-chart" class="icon-sm"></i>
+            <span>2. Análisis Gráfico de Auditoría e Incidencias</span>
+          </div>
+
+          <div class="report-charts-grid">
+            <div class="report-chart-card">
+              <div class="report-chart-header">
+                <h4 class="report-chart-title"><i data-lucide="alert-triangle" class="icon-xs"></i> Monto por Tipo de Incidencia ($)</h4>
+                <span class="report-chart-badge terracotta">Mermas de Caja</span>
+              </div>
+              <div class="report-chart-canvas-wrap">
+                <canvas id="repChartEventsType"></canvas>
+              </div>
+            </div>
+            <div class="report-chart-card">
+              <div class="report-chart-header">
+                <h4 class="report-chart-title"><i data-lucide="shield" class="icon-xs"></i> Incidentes Registrados por Turno / Caja</h4>
+                <span class="report-chart-badge">Trazabilidad</span>
+              </div>
+              <div class="report-chart-canvas-wrap">
+                <canvas id="repChartEventsCashier"></canvas>
+              </div>
+            </div>
+          </div>
+
+          <div class="report-section-heading">
             <i data-lucide="clipboard-list" class="icon-sm"></i>
-            <span>2. Registro Pormenorizado de Incidentes</span>
+            <span>3. Registro Pormenorizado de Incidentes</span>
           </div>
 
           <table class="report-data-table">
@@ -3221,8 +4082,34 @@ function inicializarReporteEjecutivo() {
           </div>
 
           <div class="report-section-heading">
+            <i data-lucide="line-chart" class="icon-sm"></i>
+            <span>2. Monitoreo Térmico y Capacidad de Producción</span>
+          </div>
+
+          <div class="report-charts-grid">
+            <div class="report-chart-card">
+              <div class="report-chart-header">
+                <h4 class="report-chart-title"><i data-lucide="flame" class="icon-xs"></i> Temperatura Actual vs. Objetivo (°C)</h4>
+                <span class="report-chart-badge terracotta">Calibración Hornos</span>
+              </div>
+              <div class="report-chart-canvas-wrap">
+                <canvas id="repChartOvenTemp"></canvas>
+              </div>
+            </div>
+            <div class="report-chart-card">
+              <div class="report-chart-header">
+                <h4 class="report-chart-title"><i data-lucide="croissant" class="icon-xs"></i> Piezas en Producción por Lote</h4>
+                <span class="report-chart-badge gold">Capacidad de Masa</span>
+              </div>
+              <div class="report-chart-canvas-wrap">
+                <canvas id="repChartBatches"></canvas>
+              </div>
+            </div>
+          </div>
+
+          <div class="report-section-heading">
             <i data-lucide="activity" class="icon-sm"></i>
-            <span>2. Monitoreo Térmico de Hornos Industriales</span>
+            <span>3. Monitoreo Térmico de Hornos Industriales</span>
           </div>
 
           <table class="report-data-table">
@@ -3259,7 +4146,7 @@ function inicializarReporteEjecutivo() {
 
           <div class="report-section-heading" style="margin-top: 2rem;">
             <i data-lucide="layers" class="icon-sm"></i>
-            <span>3. Lotes de Masa, Recetas y Planificación de Horneado</span>
+            <span>4. Lotes de Masa, Recetas y Planificación de Horneado</span>
           </div>
 
           <table class="report-data-table">
@@ -3342,8 +4229,34 @@ function inicializarReporteEjecutivo() {
           </div>
 
           <div class="report-section-heading">
+            <i data-lucide="line-chart" class="icon-sm"></i>
+            <span>2. Composición de Capital y Control de Stock</span>
+          </div>
+
+          <div class="report-charts-grid">
+            <div class="report-chart-card">
+              <div class="report-chart-header">
+                <h4 class="report-chart-title"><i data-lucide="pie-chart" class="icon-xs"></i> Valorización: Insumos vs. Vitrina POS</h4>
+                <span class="report-chart-badge gold">Capital Invertido</span>
+              </div>
+              <div class="report-chart-canvas-wrap">
+                <canvas id="repChartInventoryValuation"></canvas>
+              </div>
+            </div>
+            <div class="report-chart-card">
+              <div class="report-chart-header">
+                <h4 class="report-chart-title"><i data-lucide="alert-octagon" class="icon-xs"></i> Stock Actual vs. Stock Mínimo</h4>
+                <span class="report-chart-badge terracotta">Riesgo de Quiebre</span>
+              </div>
+              <div class="report-chart-canvas-wrap">
+                <canvas id="repChartInventoryStock"></canvas>
+              </div>
+            </div>
+          </div>
+
+          <div class="report-section-heading">
             <i data-lucide="list" class="icon-sm"></i>
-            <span>2. Catálogo Valorizado de Existencias</span>
+            <span>3. Catálogo Valorizado de Existencias</span>
           </div>
 
           <table class="report-data-table">
@@ -3442,8 +4355,34 @@ function inicializarReporteEjecutivo() {
           </div>
 
           <div class="report-section-heading">
+            <i data-lucide="line-chart" class="icon-sm"></i>
+            <span>2. Análisis Gráfico de Compras y Proveedores</span>
+          </div>
+
+          <div class="report-charts-grid">
+            <div class="report-chart-card">
+              <div class="report-chart-header">
+                <h4 class="report-chart-title"><i data-lucide="truck" class="icon-xs"></i> Gasto en Compras por Proveedor ($)</h4>
+                <span class="report-chart-badge gold">Cartera Comercial</span>
+              </div>
+              <div class="report-chart-canvas-wrap">
+                <canvas id="repChartSuppliersSpend"></canvas>
+              </div>
+            </div>
+            <div class="report-chart-card">
+              <div class="report-chart-header">
+                <h4 class="report-chart-title"><i data-lucide="check-circle" class="icon-xs"></i> Estatus de Órdenes de Compra</h4>
+                <span class="report-chart-badge emerald">Recepción Almacén</span>
+              </div>
+              <div class="report-chart-canvas-wrap">
+                <canvas id="repChartOrdersStatus"></canvas>
+              </div>
+            </div>
+          </div>
+
+          <div class="report-section-heading">
             <i data-lucide="file-check" class="icon-sm"></i>
-            <span>2. Histórico de Órdenes de Compra y Recepción</span>
+            <span>3. Histórico de Órdenes de Compra y Recepción</span>
           </div>
 
           <table class="report-data-table">
@@ -3488,7 +4427,7 @@ function inicializarReporteEjecutivo() {
 
           <div class="report-section-heading" style="margin-top: 2rem;">
             <i data-lucide="users" class="icon-sm"></i>
-            <span>3. Directorio de Proveedores &amp; Condiciones Comerciales</span>
+            <span>4. Directorio de Proveedores &amp; Condiciones Comerciales</span>
           </div>
 
           <table class="report-data-table">
@@ -3547,6 +4486,7 @@ function inicializarReporteEjecutivo() {
           title: 'Nómina, Turnos y Rendimiento del Personal',
           staff: staff,
           activeCount: activeCount,
+          salesByCashier: salesByCashier,
           bcvRate: bcvRate
         };
 
@@ -3582,8 +4522,34 @@ function inicializarReporteEjecutivo() {
           </div>
 
           <div class="report-section-heading">
+            <i data-lucide="line-chart" class="icon-sm"></i>
+            <span>2. Productividad de Ventas y Distribución de Personal</span>
+          </div>
+
+          <div class="report-charts-grid">
+            <div class="report-chart-card">
+              <div class="report-chart-header">
+                <h4 class="report-chart-title"><i data-lucide="trophy" class="icon-xs"></i> Ventas Generadas por Cajero ($ USD)</h4>
+                <span class="report-chart-badge gold">Rendimiento POS</span>
+              </div>
+              <div class="report-chart-canvas-wrap">
+                <canvas id="repChartStaffSales"></canvas>
+              </div>
+            </div>
+            <div class="report-chart-card">
+              <div class="report-chart-header">
+                <h4 class="report-chart-title"><i data-lucide="users" class="icon-xs"></i> Nómina Activa por Departamento</h4>
+                <span class="report-chart-badge blue">Organización</span>
+              </div>
+              <div class="report-chart-canvas-wrap">
+                <canvas id="repChartStaffDept"></canvas>
+              </div>
+            </div>
+          </div>
+
+          <div class="report-section-heading">
             <i data-lucide="id-card" class="icon-sm"></i>
-            <span>2. Directorio de Nómina y Productividad Operativa</span>
+            <span>3. Directorio de Nómina y Productividad Operativa</span>
           </div>
 
           <table class="report-data-table">
@@ -3638,35 +4604,41 @@ function inicializarReporteEjecutivo() {
       `;
     }
 
-    window.LucideIcons?.refresh();
+    setTimeout(() => {
+      renderChartsForReport(reportType, currentReportData);
+      window.LucideIcons?.refresh();
+    }, 50);
   }
 
-  function openModal() {
+  function activarVistaReportes(shouldSwitchView = true) {
     initDefaultDates();
     cargarCatalogosFiltros();
     actualizarVisibilidadFiltros(repTypeSelect ? repTypeSelect.value : 'ventas_resumen');
-    modal.style.display = 'flex';
-    modal.classList.add('active');
-    modal.setAttribute('aria-hidden', 'false');
-    document.body.classList.add('auth-modal-open');
+    if (shouldSwitchView && typeof window.switchDashboardView === 'function') {
+      window.switchDashboardView('reports');
+    } else if (reportsView) {
+      reportsView.style.display = 'block';
+    }
     window.LucideIcons?.refresh();
     ejecutarGeneracionReporte();
   }
 
-  function closeModal() {
-    modal.style.display = 'none';
-    modal.classList.remove('active');
-    modal.setAttribute('aria-hidden', 'true');
-    document.body.classList.remove('auth-modal-open');
+  function desactivarVistaReportes() {
+    destroyActiveReportCharts();
+    if (typeof window.switchDashboardView === 'function') {
+      window.switchDashboardView('analytics');
+    } else if (reportsView) {
+      reportsView.style.display = 'none';
+    }
   }
 
   // Exportación global para soporte de llamadas directas y onclick inline
-  window.abrirGeneradorReportes = openModal;
-  window.cerrarGeneradorReportes = closeModal;
+  window.abrirGeneradorReportes = activarVistaReportes;
+  window.cerrarGeneradorReportes = desactivarVistaReportes;
 
   btnExportReport?.addEventListener('click', (e) => {
     e.preventDefault();
-    openModal();
+    activarVistaReportes(true);
   });
 
   // Delegación de eventos a nivel global para máxima resiliencia ante cambios en el DOM
@@ -3674,7 +4646,7 @@ function inicializarReporteEjecutivo() {
     const trigger = e.target.closest('#btnExportReport, .btn-export-report');
     if (trigger && !trigger.getAttribute('href')) {
       e.preventDefault();
-      openModal();
+      activarVistaReportes(true);
     }
   });
 
@@ -3686,14 +4658,6 @@ function inicializarReporteEjecutivo() {
   repTypeSelect?.addEventListener('change', () => {
     actualizarVisibilidadFiltros(repTypeSelect.value);
     ejecutarGeneracionReporte();
-  });
-
-  btnClose?.addEventListener('click', closeModal);
-  modal.addEventListener('click', (e) => {
-    if (e.target === modal) closeModal();
-  });
-  document.addEventListener('keydown', (e) => {
-    if (e.key === 'Escape' && modal.classList.contains('active')) closeModal();
   });
 
   btnPrint?.addEventListener('click', () => {

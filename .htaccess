@@ -7,11 +7,6 @@ Options -Indexes
 
 # 2. Bloquear acceso a archivos y directorios sensibles
 <IfModule mod_authz_core.c>
-    # Bloquear directorio y metadatos de Git
-    <DirectoryMatch "/\.git">
-        Require all denied
-    </DirectoryMatch>
-
     # Bloquear volcados de base de datos SQL, archivos .env y de configuración/caché
     <FilesMatch "(^\.git|^\.env|.*\.sql$|cache_.*\.json$|\.log$)">
         Require all denied
@@ -42,3 +37,64 @@ RedirectMatch 403 ^/database/.*$
 
 # 5. Codificación de caracteres por defecto
 AddDefaultCharset UTF-8
+
+# ==============================================================================
+# 6. OPTIMIZACIÓN DE RENDIMIENTO: COMPRESIÓN GZIP (MOD_DEFLATE)
+# Reduce el tamaño de transferencia de JS, CSS y HTML entre un 70% y 80%
+# ==============================================================================
+<IfModule mod_deflate.c>
+    # Comprimir tipos MIME clave
+    AddOutputFilterByType DEFLATE text/plain
+    AddOutputFilterByType DEFLATE text/html
+    AddOutputFilterByType DEFLATE text/xml
+    AddOutputFilterByType DEFLATE text/css
+    AddOutputFilterByType DEFLATE text/javascript
+    AddOutputFilterByType DEFLATE application/xml
+    AddOutputFilterByType DEFLATE application/xhtml+xml
+    AddOutputFilterByType DEFLATE application/rss+xml
+    AddOutputFilterByType DEFLATE application/javascript
+    AddOutputFilterByType DEFLATE application/x-javascript
+    AddOutputFilterByType DEFLATE application/json
+    AddOutputFilterByType DEFLATE image/svg+xml
+    AddOutputFilterByType DEFLATE font/opentype
+    AddOutputFilterByType DEFLATE font/truetype
+    AddOutputFilterByType DEFLATE font/ttf
+    AddOutputFilterByType DEFLATE font/woff
+    AddOutputFilterByType DEFLATE font/woff2
+
+    # Asegurar que proxies no almacenen versiones incorrectas
+    <IfModule mod_headers.c>
+        Header append Vary Accept-Encoding
+    </IfModule>
+</IfModule>
+
+# ==============================================================================
+# 7. OPTIMIZACIÓN DE CACHÉ DE NAVEGADOR (MOD_EXPIRES & CACHE-CONTROL)
+# Carga instantánea (0 ms) de recursos estáticos en visitas subsiguientes
+# ==============================================================================
+<IfModule mod_expires.c>
+    ExpiresActive On
+    ExpiresDefault "access plus 1 day"
+
+    # Fuentes web (1 año)
+    ExpiresByType font/woff2 "access plus 1 year"
+    ExpiresByType font/woff "access plus 1 year"
+    ExpiresByType font/ttf "access plus 1 year"
+    ExpiresByType font/opentype "access plus 1 year"
+
+    # Imágenes y assets multimedia (1 mes)
+    ExpiresByType image/jpeg "access plus 1 month"
+    ExpiresByType image/png "access plus 1 month"
+    ExpiresByType image/webp "access plus 1 month"
+    ExpiresByType image/svg+xml "access plus 1 month"
+    ExpiresByType image/x-icon "access plus 1 year"
+
+    # Estilos CSS y JavaScript de módulos (7 días)
+    ExpiresByType text/css "access plus 7 days"
+    ExpiresByType application/javascript "access plus 7 days"
+    ExpiresByType text/javascript "access plus 7 days"
+
+    # HTML y JSON de APIs (no almacenar en caché persistente)
+    ExpiresByType text/html "access plus 0 seconds"
+    ExpiresByType application/json "access plus 0 seconds"
+</IfModule>

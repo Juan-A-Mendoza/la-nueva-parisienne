@@ -3,9 +3,7 @@
    Sistema de Diseño: Parisian Chic & Modern Management Information System
    Identidad Visual: Tonalidades Cálidas Artesanales (Anti-Fatiga Visual)
    ========================================================================== */
-
-@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400&family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap');
-
+/* Tipografía con soporte de fuentes locales y de sistema de carga inmediata */
 :root {
   /* PALETA DE COLORES DE LA PANADERÍA (IDENTIDAD VISUAL Y ANTI-FATIGA) */
   --bg-main: #FAF7F2;            /* Crema Vainilla Suave / Pergamino */

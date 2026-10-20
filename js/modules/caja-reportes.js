@@ -897,31 +897,13 @@ function initManagerReports(section) {
 }
 
 function bindManagerNavigation() {
-  const reportView = document.getElementById('cashReportsView');
   const reportButton = document.getElementById('navBtnCashReports');
-  if (!reportView || !reportButton) return;
-  const show = (active) => {
-    const analytics = document.getElementById('analyticsView');
-    const inventory = document.getElementById('inventoryView');
-    const navBtnAnalytics = document.getElementById('navBtnAnalytics');
-    const navBtnInventory = document.getElementById('navBtnInventory');
-    if (active) {
-      analytics?.classList.remove('active');
-      navBtnAnalytics?.classList.remove('active');
-      if (analytics) analytics.style.display = 'none';
-      inventory?.classList.remove('active');
-      navBtnInventory?.classList.remove('active');
-      if (inventory) inventory.style.display = 'none';
-      reportView.style.display = 'block';
-    } else {
-      reportView.style.display = 'none';
+  if (!reportButton) return;
+  reportButton.addEventListener('click', (e) => {
+    if (typeof window.switchDashboardView === 'function') {
+      window.switchDashboardView('cash_reports');
     }
-    reportButton.classList.toggle('active', active);
-    window.LucideIcons?.refresh();
-  };
-  reportButton.addEventListener('click', () => show(true));
-  document.getElementById('navBtnAnalytics')?.addEventListener('click', () => show(false));
-  document.getElementById('navBtnInventory')?.addEventListener('click', () => show(false));
+  });
 }
 
 // INICIALIZACIÓN AUTOMÁTICA

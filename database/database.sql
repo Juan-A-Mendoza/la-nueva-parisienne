@@ -186,7 +186,10 @@ CREATE TABLE IF NOT EXISTS `ventas` (
   `cambio` DECIMAL(10,2) NOT NULL DEFAULT 0.00,
   `tipo_pedido` VARCHAR(50) DEFAULT 'Para Llevar',
   PRIMARY KEY (`id`),
-  CONSTRAINT `fk_ventas_usuarios` FOREIGN KEY (`usuario_id`) REFERENCES `usuarios` (`id`) ON DELETE RESTRICT ON UPDATE CASCADE
+  CONSTRAINT `fk_ventas_usuarios` FOREIGN KEY (`usuario_id`) REFERENCES `usuarios` (`id`) ON DELETE RESTRICT ON UPDATE CASCADE,
+  INDEX `idx_ventas_fecha` (`fecha_hora`),
+  INDEX `idx_ventas_metodo` (`metodo_pago`),
+  INDEX `idx_ventas_fecha_total` (`fecha_hora`, `total`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- ----------------------------------------------------------------------------
@@ -201,7 +204,9 @@ CREATE TABLE IF NOT EXISTS `ventas_detalle` (
   `subtotal_linea` DECIMAL(10,2) NOT NULL DEFAULT 0.00,
   PRIMARY KEY (`id`),
   CONSTRAINT `fk_ventas_detalle_venta` FOREIGN KEY (`venta_id`) REFERENCES `ventas` (`id`) ON DELETE CASCADE ON UPDATE CASCADE,
-  CONSTRAINT `fk_ventas_detalle_producto` FOREIGN KEY (`producto_id`) REFERENCES `productos` (`id`) ON DELETE RESTRICT ON UPDATE CASCADE
+  CONSTRAINT `fk_ventas_detalle_producto` FOREIGN KEY (`producto_id`) REFERENCES `productos` (`id`) ON DELETE RESTRICT ON UPDATE CASCADE,
+  INDEX `idx_ventas_detalle_venta` (`venta_id`),
+  INDEX `idx_ventas_detalle_producto` (`producto_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- ----------------------------------------------------------------------------
@@ -326,7 +331,9 @@ CREATE TABLE IF NOT EXISTS `asientos_contables` (
   `icono` VARCHAR(20) DEFAULT 'receipt',
   `total_debe` DECIMAL(10,2) NOT NULL DEFAULT 0.00,
   `total_haber` DECIMAL(10,2) NOT NULL DEFAULT 0.00,
-  PRIMARY KEY (`id`)
+  PRIMARY KEY (`id`),
+  INDEX `idx_asientos_fecha` (`fecha_hora`),
+  INDEX `idx_asientos_modulo` (`modulo_origen`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- ----------------------------------------------------------------------------
@@ -340,7 +347,9 @@ CREATE TABLE IF NOT EXISTS `asientos_detalle` (
   `haber` DECIMAL(10,2) NOT NULL DEFAULT 0.00,
   PRIMARY KEY (`id`),
   CONSTRAINT `fk_asientos_detalle_encabezado` FOREIGN KEY (`asiento_id`) REFERENCES `asientos_contables` (`id`) ON DELETE CASCADE ON UPDATE CASCADE,
-  CONSTRAINT `fk_asientos_detalle_cuentas` FOREIGN KEY (`cuenta_codigo`) REFERENCES `plan_cuentas` (`codigo`) ON DELETE RESTRICT ON UPDATE CASCADE
+  CONSTRAINT `fk_asientos_detalle_cuentas` FOREIGN KEY (`cuenta_codigo`) REFERENCES `plan_cuentas` (`codigo`) ON DELETE RESTRICT ON UPDATE CASCADE,
+  INDEX `idx_asientos_detalle_asiento` (`asiento_id`),
+  INDEX `idx_asientos_detalle_cuenta` (`cuenta_codigo`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- ----------------------------------------------------------------------------
@@ -357,7 +366,9 @@ CREATE TABLE IF NOT EXISTS `lotes_produccion` (
   `temperatura_recomendada` INT DEFAULT 190,
   `tiempo_recomendado_min` INT DEFAULT 15,
   `creado_en` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-  PRIMARY KEY (`id`)
+  PRIMARY KEY (`id`),
+  INDEX `idx_lotes_estado` (`estado_leudado`),
+  INDEX `idx_lotes_producto` (`codigo_producto`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- ----------------------------------------------------------------------------
@@ -377,7 +388,8 @@ CREATE TABLE IF NOT EXISTS `estado_hornos` (
   `fin_estimado` DATETIME NULL,
   `actualizado_en` TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   PRIMARY KEY (`id`),
-  CONSTRAINT `fk_hornos_lotes` FOREIGN KEY (`lote_id`) REFERENCES `lotes_produccion` (`id`) ON DELETE SET NULL ON UPDATE CASCADE
+  CONSTRAINT `fk_hornos_lotes` FOREIGN KEY (`lote_id`) REFERENCES `lotes_produccion` (`id`) ON DELETE SET NULL ON UPDATE CASCADE,
+  INDEX `idx_hornos_estado` (`estado`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- ----------------------------------------------------------------------------
@@ -389,7 +401,9 @@ CREATE TABLE IF NOT EXISTS `comandas_cocina` (
   `detalles_pedido` TEXT NOT NULL,
   `estado_preparacion` VARCHAR(50) NOT NULL DEFAULT 'pending',
   `fecha_hora` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  PRIMARY KEY (`id`)
+  PRIMARY KEY (`id`),
+  INDEX `idx_comandas_estado` (`estado_preparacion`),
+  INDEX `idx_comandas_fecha` (`fecha_hora`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 
