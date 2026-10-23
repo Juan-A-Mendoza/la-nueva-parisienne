@@ -244,6 +244,62 @@ let salesChartInstance = null;
 let pendingDeleteTarget = null;
 const VALID_MANAGER_PASSWORDS = ['admin123', '1234', 'gerente', 'admin', '0000'];
 
+// ESTADO DE MÉTRICAS EN TIEMPO REAL DESDE MARIADB
+let liveDashboardKpis = null;
+let liveSalesTrendPeriods = null;
+let liveRecentMovements = null;
+let liveBreakdowns = {};
+
+async function loadRealDashboardMetrics() {
+  try {
+    const apis = [
+      '../api/reports/dashboard_metrics.php',
+      'api/reports/dashboard_metrics.php',
+      '../api/dashboard/get_metrics.php',
+      'api/dashboard/get_metrics.php'
+    ];
+
+    let res = null;
+    for (const url of apis) {
+      try {
+        const resp = await fetch(`${url}?t=${Date.now()}`, { cache: 'no-store' });
+        if (resp.ok) {
+          res = resp;
+          break;
+        }
+      } catch (err) {}
+    }
+
+    if (!res) return;
+    const data = await res.json();
+    if (data && data.success) {
+      if (data.kpis) liveDashboardKpis = data.kpis;
+      if (data.periods) liveSalesTrendPeriods = data.periods;
+      if (Array.isArray(data.movements)) liveRecentMovements = data.movements;
+      if (data.breakdowns) liveBreakdowns = data.breakdowns;
+
+      // Actualizar contadores de las pestañas con datos reales de la BD
+      if (data.inventorySummary) {
+        const bMp = document.getElementById('badgeMateriaPrimaCount');
+        const bPt = document.getElementById('badgeProductosTerminadosCount');
+        const bPr = document.getElementById('badgeProveedoresCount');
+        const bTk = document.getElementById('badgeTicketsProduccionCount');
+
+        if (bMp && data.inventorySummary.rawMaterialsCount !== undefined) bMp.textContent = data.inventorySummary.rawMaterialsCount;
+        if (bPt && data.inventorySummary.finishedGoodsCount !== undefined) bPt.textContent = data.inventorySummary.finishedGoodsCount;
+        if (bPr && data.inventorySummary.suppliersCount !== undefined) bPr.textContent = data.inventorySummary.suppliersCount;
+        if (bTk && data.inventorySummary.productionTicketsCount !== undefined) bTk.textContent = data.inventorySummary.productionTicketsCount;
+      }
+
+      // Re-renderizar gráficos y tabla de movimientos con datos 100% reales
+      renderizarGraficos();
+      renderMovementsTable();
+    }
+  } catch (e) {
+    console.warn('Error cargando métricas reales de BD:', e);
+  }
+}
+
 const BREAKDOWN_MAP = {
   'FAC-2026-1003': [
     { name: 'Baguette Tradición (x2)', price: '$3.60 USD' },
@@ -668,15 +724,59 @@ function formatChartCurrency(amount, isVes) {
 }
 
 function renderizarGraficos() {
+  const kpis = liveDashboardKpis || DASHBOARD_KPIS;
+  const isAllTime = Boolean(kpis.isAllTime);
+
   const revenueVal = document.getElementById('kpiRevenueVal');
   const ordersVal = document.getElementById('kpiOrdersVal');
   const ticketVal = document.getElementById('kpiTicketVal');
   const marginVal = document.getElementById('kpiMarginVal');
 
-  if (revenueVal) revenueVal.textContent = `$${DASHBOARD_KPIS.totalRevenue.toLocaleString('en-US', { minimumFractionDigits: 2 })}`;
-  if (ordersVal) ordersVal.textContent = `${DASHBOARD_KPIS.totalOrders} órdenes`;
-  if (ticketVal) ticketVal.textContent = `$${DASHBOARD_KPIS.averageTicket.toFixed(2)}`;
-  if (marginVal) marginVal.textContent = `${DASHBOARD_KPIS.profitMargin}%`;
+  const revenueGrowthEl = document.getElementById('kpiRevenueGrowth');
+  const revenueSubEl = document.getElementById('kpiRevenueSub');
+  const ordersGrowthEl = document.getElementById('kpiOrdersGrowth');
+  const ordersSubEl = document.getElementById('kpiOrdersSub');
+  const ticketGrowthEl = document.getElementById('kpiTicketGrowth');
+  const ticketSubEl = document.getElementById('kpiTicketSub');
+  const marginBadgeEl = document.getElementById('kpiMarginBadge');
+  const marginSubEl = document.getElementById('kpiMarginSub');
+
+  if (revenueVal) revenueVal.textContent = `$${Number(kpis.totalRevenue || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+  if (ordersVal) ordersVal.textContent = `${kpis.totalOrders || 0} órdenes`;
+  if (ticketVal) ticketVal.textContent = `$${Number(kpis.averageTicket || 0).toFixed(2)}`;
+  if (marginVal) marginVal.textContent = `${kpis.profitMargin || 0}%`;
+
+  if (revenueGrowthEl) {
+    const revG = Number(kpis.revenueGrowth || 0);
+    revenueGrowthEl.textContent = `${revG >= 0 ? '▲ +' : '▼ '}${Math.abs(revG).toFixed(1)}%`;
+    revenueGrowthEl.className = revG >= 0 ? 'growth-badge positive' : 'growth-badge danger';
+  }
+  if (revenueSubEl) {
+    revenueSubEl.textContent = isAllTime ? 'acumulado registrado' : 'vs. mes anterior';
+  }
+
+  if (ordersGrowthEl) {
+    const ordG = Number(kpis.ordersGrowth || 0);
+    ordersGrowthEl.textContent = `${ordG >= 0 ? '▲ +' : '▼ '}${Math.abs(ordG).toFixed(1)}%`;
+    ordersGrowthEl.className = ordG >= 0 ? 'growth-badge positive' : 'growth-badge danger';
+  }
+  if (ordersSubEl) {
+    ordersSubEl.textContent = isAllTime ? 'transacciones reales' : 'volumen mensual';
+  }
+
+  if (ticketGrowthEl) {
+    ticketGrowthEl.textContent = (kpis.totalOrders > 0) ? 'Activo' : 'Sin ventas';
+  }
+  if (ticketSubEl) {
+    ticketSubEl.textContent = 'promedio por ticket';
+  }
+
+  if (marginBadgeEl) {
+    marginBadgeEl.textContent = kpis.marginStatus || 'Saludable';
+  }
+  if (marginSubEl) {
+    marginSubEl.textContent = 'costos operativos reales';
+  }
 
   const canvas = document.getElementById('salesTrendChart');
   if (!canvas) return;
@@ -688,9 +788,11 @@ function renderizarGraficos() {
   const multiplier = isVes ? bcvRate : 1.0;
   const currSymbol = isVes ? 'Bs.' : '$';
 
-  const periodData = (typeof SALES_TREND_PERIODS !== 'undefined' && SALES_TREND_PERIODS[chartPeriodFilter]) 
-    ? SALES_TREND_PERIODS[chartPeriodFilter] 
-    : (SALES_TREND_DATA || { labels: [], sales: [], costs: [], orders: [] });
+  const periodData = (liveSalesTrendPeriods && liveSalesTrendPeriods[chartPeriodFilter]) 
+    ? liveSalesTrendPeriods[chartPeriodFilter] 
+    : ((typeof SALES_TREND_PERIODS !== 'undefined' && SALES_TREND_PERIODS[chartPeriodFilter]) 
+        ? SALES_TREND_PERIODS[chartPeriodFilter] 
+        : (SALES_TREND_DATA || { labels: [], sales: [], costs: [], orders: [] }));
 
   const labels = periodData.labels || [];
   const rawSales = periodData.sales || [];
@@ -929,7 +1031,9 @@ function renderMovementsTable() {
   if (!tbody) return;
   tbody.innerHTML = '';
 
-  const allMovs = getMovementsFromStorage();
+  const allMovs = (liveRecentMovements && liveRecentMovements.length > 0)
+    ? liveRecentMovements
+    : getMovementsFromStorage();
 
   const filtered = allMovs.filter(mov => {
     if (currentCategoryFilter === 'todos') return true;
@@ -1054,7 +1158,7 @@ function openMovementDetailModal(mov) {
     listContainer.innerHTML = '';
     const items = (mov.breakdown && Array.isArray(mov.breakdown) && mov.breakdown.length > 0)
       ? mov.breakdown
-      : (BREAKDOWN_MAP[mov.code] || [
+      : (liveBreakdowns[mov.code] || BREAKDOWN_MAP[mov.code] || [
           { name: `Concepto General: ${mov.type}`, price: `$${Math.abs(mov.amount).toFixed(2)} USD` }
         ]);
 
@@ -4858,6 +4962,16 @@ function initDashboard() {
   try { cargarInventario(); } catch (e) { console.error('Error Inventario:', e); }
   try { inicializarTicketsProduccionGerencia(); } catch (e) { console.error('Error Tickets Producción:', e); }
   try { inicializarBotonesGenerales(); } catch (e) { console.error('Error Botones:', e); }
+  try { loadRealDashboardMetrics(); } catch (e) { console.error('Error Métricas Reales:', e); }
+
+  // Reactividad en tiempo real cuando se registren ventas o cambien inventarios
+  window.addEventListener('catalogoPosChanged', () => loadRealDashboardMetrics());
+  window.addEventListener('movimientosChanged', () => loadRealDashboardMetrics());
+  window.addEventListener('storage', (e) => {
+    if (e.key === 'movimientos_inventario' || e.key === 'catalogo_pos') {
+      loadRealDashboardMetrics();
+    }
+  });
 }
 
 if (document.readyState === 'loading') {

@@ -12,13 +12,13 @@ import { BcvRateStore } from '../core/bcv-rate-store.js';
 // ==========================================================================
 
 const INITIAL_USERS = [
-  { id: 'usr_superadmin', name: 'Super Administrador', username: 'superadmin', role: 'Super Administrador', roleCode: 'SUPERADMIN', icon: 'shield-check', description: 'Acceso total e irrestricto a todos los módulos y funciones del sistema.', redirectUrl: 'modules/dashboard.html' },
-  { id: 'usr_manager', name: 'Juan Mendoza', username: 'admin', role: 'Gerente General', roleCode: 'ADMIN', icon: 'shield-check', description: 'Gestión y auditoría del panel gerencial, ventas e inventario.', redirectUrl: 'modules/dashboard.html' },
-  { id: 'usr_carlos', name: 'Carlos Mendoza', username: 'panadero', role: 'Maestro Panadero / Chef de Cuisine', roleCode: 'BAKER', icon: 'chef-hat', description: 'Gestión de hornos industriales, comandas KDS e insumos de masa.', redirectUrl: 'modules/kitchen.html' },
-  { id: 'usr_ana', name: 'Ana Ramírez', username: 'cajero1', role: 'Personal de Caja / POS', roleCode: 'POS', icon: 'banknote', description: 'Facturación directa a clientes, cobros rápidos y arqueo de caja.', redirectUrl: 'modules/pos.html' },
-  { id: 'usr_baker', name: 'Enrique Chef', username: 'chef', role: 'Maestro Panadero / Chef de Cuisine', roleCode: 'BAKER', icon: 'chef-hat', description: 'Gestión de hornos industriales, comandas KDS e insumos de masa.', redirectUrl: 'modules/kitchen.html' },
-  { id: 'usr_cashier', name: 'Henry POS', username: 'cajero', role: 'Personal de Caja / POS', roleCode: 'POS', icon: 'shield-check', description: 'Facturación directa a clientes, cobros rápidos y arqueo de caja.', redirectUrl: 'modules/pos.html' },
-  { id: 'usr_accountant', name: 'Sebastian Finanzas', username: 'contador', role: 'Contador General', roleCode: 'ACCOUNTANT', icon: 'bar-chart-3', description: 'Auditoría financiera, balance de comprobación y libros contables.', redirectUrl: 'modules/accounting.html' }
+  { id: 'usr_superadmin', name: 'Super Administrador', username: 'superadmin', role: 'Super Administrador', roleCode: 'SUPERADMIN', icon: 'shield-check', pin: '1234', password: '1234', description: 'Acceso total e irrestricto a todos los módulos y funciones del sistema.', redirectUrl: 'modules/dashboard.html' },
+  { id: 'usr_manager', name: 'Juan Mendoza', username: 'admin', role: 'Gerente General', roleCode: 'ADMIN', icon: 'shield-check', pin: '1234', password: '1234', description: 'Gestión y auditoría del panel gerencial, ventas e inventario.', redirectUrl: 'modules/dashboard.html' },
+  { id: 'usr_carlos', name: 'Carlos Mendoza', username: 'panadero', role: 'Maestro Panadero / Chef de Cuisine', roleCode: 'BAKER', icon: 'chef-hat', pin: '1234', password: '1234', description: 'Gestión de hornos industriales, comandas KDS e insumos de masa.', redirectUrl: 'modules/kitchen.html' },
+  { id: 'usr_ana', name: 'Ana Ramírez', username: 'cajero1', role: 'Personal de Caja / POS', roleCode: 'POS', icon: 'banknote', pin: '1234', password: '1234', description: 'Facturación directa a clientes, cobros rápidos y arqueo de caja.', redirectUrl: 'modules/pos.html' },
+  { id: 'usr_baker', name: 'Enrique Chef', username: 'chef', role: 'Maestro Panadero / Chef de Cuisine', roleCode: 'BAKER', icon: 'chef-hat', pin: '1234', password: '1234', description: 'Gestión de hornos industriales, comandas KDS e insumos de masa.', redirectUrl: 'modules/kitchen.html' },
+  { id: 'usr_cashier', name: 'Henry POS', username: 'cajero', role: 'Personal de Caja / POS', roleCode: 'POS', icon: 'shield-check', pin: '1234', password: '1234', description: 'Facturación directa a clientes, cobros rápidos y arqueo de caja.', redirectUrl: 'modules/pos.html' },
+  { id: 'usr_accountant', name: 'Sebastian Finanzas', username: 'contador', role: 'Contador General', roleCode: 'ACCOUNTANT', icon: 'bar-chart-3', pin: '1234', password: '1234', description: 'Auditoría financiera, balance de comprobación y libros contables.', redirectUrl: 'modules/accounting.html' }
 ];
 
 const VALID_MANAGER_PASSWORDS = ['admin123', '1234', 'gerente', 'admin', '0000', 'superadmin'];

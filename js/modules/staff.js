@@ -97,6 +97,18 @@ document.addEventListener('DOMContentLoaded', () => {
   // 4. Renderizado de KPIs
   function renderKPIs() {
     if (kpiTotalStaff) kpiTotalStaff.textContent = `${staff.length} Empleados`;
+
+    const rolesSet = new Set(staff.map(s => s.role || s.roleCode).filter(Boolean));
+    const activeStaff = staff.filter(s => s.statusText === 'Activo' || s.status === 'active');
+    const onShift = staff.filter(s => s.shift && !s.shift.toLowerCase().includes('inactivo') && !s.shift.toLowerCase().includes('franco'));
+
+    const kpiRolesEl = document.getElementById('kpiTotalRoles');
+    const kpiShiftEl = document.getElementById('kpiStaffOnShift');
+    const kpiSecEl = document.getElementById('kpiSecurityStatus');
+
+    if (kpiRolesEl) kpiRolesEl.textContent = `${rolesSet.size} Roles`;
+    if (kpiShiftEl) kpiShiftEl.textContent = `${onShift.length} en Turno`;
+    if (kpiSecEl) kpiSecEl.innerHTML = `<i data-lucide="check" class="icon-xs"></i> ${activeStaff.length} Activos`;
   }
 
   // 5. Renderizado de la Tabla de Empleados

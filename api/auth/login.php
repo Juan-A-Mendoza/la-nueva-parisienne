@@ -104,13 +104,6 @@ try {
         // Limpiar registro de intentos fallidos
         security_clear_rate_limit($rateKey);
 
-        // Si la clave estaba en texto plano o necesita actualización de coste, rehashear a BCRYPT
-        if (security_needs_rehash($userRow['pin']) || !preg_match('/^\$2[ayb]\$/', $userRow['pin'])) {
-            $newSecureHash = security_hash_password($inputPin);
-            $stmtUpd = $pdo->prepare("UPDATE usuarios SET pin = :newHash WHERE id = :uid");
-            $stmtUpd->execute([':newHash' => $newSecureHash, ':uid' => $userRow['id']]);
-        }
-
         // Crear sesión PHP autenticada y obtener token CSRF
         $csrfToken = auth_create_session([
             'id' => $userRow['id'],

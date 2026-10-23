@@ -113,11 +113,15 @@ document.addEventListener('DOMContentLoaded', () => {
   // 4. Renderizado de KPIs
   function renderKPIs() {
     const inTransitCount = purchaseOrders.filter(o => o.status === 'in_transit').length;
+    const receivedCount = purchaseOrders.filter(o => o.status === 'received').length;
     const totalPurchases = purchaseOrders.reduce((sum, o) => sum + o.totalAmount, 0);
+    const deliveryRate = purchaseOrders.length > 0 ? ((receivedCount / purchaseOrders.length) * 100).toFixed(1) : '100.0';
 
     if (kpiActiveSuppliers) kpiActiveSuppliers.textContent = `${suppliers.length} Homologados`;
     if (kpiInTransit) kpiInTransit.textContent = `${inTransitCount} Activas`;
     if (kpiMonthlyPurchases) kpiMonthlyPurchases.textContent = `$${totalPurchases.toLocaleString('en-US', { minimumFractionDigits: 2 })}`;
+    const deliveryRateEl = document.getElementById('kpiDeliveryRate');
+    if (deliveryRateEl) deliveryRateEl.textContent = `${deliveryRate}%`;
   }
 
   // 5. Renderizado del Directorio de Proveedores (Grid Cards)

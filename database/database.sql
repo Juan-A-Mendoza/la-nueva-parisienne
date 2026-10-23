@@ -1,7 +1,7 @@
 -- ============================================================================
--- LA NUEVA PARISIENNE - ESQUEMA RELACIONAL DE BASE DE DATOS MYSQL (PHP / PDO)
--- Script Canónico Completo de Creación de Tablas, Índices y Datos Iniciales
--- Optimizado para importación directa en phpMyAdmin, MySQL y MariaDB
+-- LA NUEVA PARISIENNE - BASE DE DATOS MYSQL RELACIONAL UNIFICADA
+-- Script Único Canónico: Estructura DDL, Índices de Rendimiento y Datos Semilla
+-- Compatible con MySQL 5.7+, MySQL 8.0+ y MariaDB 10.3+ / phpMyAdmin
 -- Engine: InnoDB | Character Set: utf8mb4 | Collation: utf8mb4_unicode_ci
 -- ============================================================================
 
@@ -13,6 +13,10 @@ START TRANSACTION;
 
 CREATE DATABASE IF NOT EXISTS `la_nueva_parisienne` CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 USE `la_nueva_parisienne`;
+
+-- ============================================================================
+-- I. DEFINICIÓN DE TABLAS ESTRUCTURALES (DDL) CON ÍNDICES INTEGRADOS
+-- ============================================================================
 
 -- ----------------------------------------------------------------------------
 -- 1. TABLA: configuracion_empresa (Datos Fiscales de la Empresa)
@@ -50,7 +54,7 @@ CREATE TABLE IF NOT EXISTS `roles` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- ----------------------------------------------------------------------------
--- 4. TABLA: usuarios (Nómina de Empleados y Autenticación por PIN)
+-- 4. TABLA: usuarios (Nómina de Empleados y Autenticación por PIN/BCRYPT)
 -- ----------------------------------------------------------------------------
 CREATE TABLE IF NOT EXISTS `usuarios` (
   `id` VARCHAR(50) NOT NULL,
@@ -60,7 +64,7 @@ CREATE TABLE IF NOT EXISTS `usuarios` (
   `nombre` VARCHAR(100) NOT NULL,
   `email` VARCHAR(100) NOT NULL,
   `telefono` VARCHAR(50),
-  `pin` VARCHAR(50) NOT NULL DEFAULT '1234',
+  `pin` VARCHAR(255) NOT NULL DEFAULT '1234',
   `icono` VARCHAR(20) DEFAULT 'shield-check',
   `turno` VARCHAR(100),
   `estado` VARCHAR(20) NOT NULL DEFAULT 'active',
@@ -150,7 +154,9 @@ CREATE TABLE IF NOT EXISTS `ordenes_compra` (
   `estado` VARCHAR(50) NOT NULL DEFAULT 'in_transit',
   `monto_total` DECIMAL(10,2) NOT NULL DEFAULT 0.00,
   PRIMARY KEY (`id`),
-  CONSTRAINT `fk_ordenes_proveedores` FOREIGN KEY (`proveedor_id`) REFERENCES `proveedores` (`id`) ON DELETE RESTRICT ON UPDATE CASCADE
+  CONSTRAINT `fk_ordenes_proveedores` FOREIGN KEY (`proveedor_id`) REFERENCES `proveedores` (`id`) ON DELETE RESTRICT ON UPDATE CASCADE,
+  INDEX `idx_ordenes_fecha` (`fecha_pedido`),
+  INDEX `idx_ordenes_estado` (`estado`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- ----------------------------------------------------------------------------
@@ -164,7 +170,8 @@ CREATE TABLE IF NOT EXISTS `ordenes_compra_detalle` (
   `precio` DECIMAL(10,2) NOT NULL DEFAULT 0.00,
   PRIMARY KEY (`id`),
   CONSTRAINT `fk_ordenes_compra_detalle_orden` FOREIGN KEY (`orden_id`) REFERENCES `ordenes_compra` (`id`) ON DELETE CASCADE ON UPDATE CASCADE,
-  CONSTRAINT `fk_ordenes_compra_detalle_materia_prima` FOREIGN KEY (`materia_prima_id`) REFERENCES `materias_primas` (`id`) ON DELETE RESTRICT ON UPDATE CASCADE
+  CONSTRAINT `fk_ordenes_compra_detalle_materia_prima` FOREIGN KEY (`materia_prima_id`) REFERENCES `materias_primas` (`id`) ON DELETE RESTRICT ON UPDATE CASCADE,
+  INDEX `idx_ordenes_detalle_orden` (`orden_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- ----------------------------------------------------------------------------
@@ -408,7 +415,52 @@ CREATE TABLE IF NOT EXISTS `comandas_cocina` (
 
 
 -- ============================================================================
--- INSERCIÓN DE DATOS INICIALES (SEMILLA / SEED DATA)
+-- II. MIGRACIÓN / IDEMPOTENCIA DE ÍNDICES PARA TABLAS PREEXISTENTES
+-- (Garantiza aceleración de consultas aunque las tablas ya hayan sido creadas)
+-- ============================================================================
+
+ALTER TABLE `ventas` 
+  ADD INDEX IF NOT EXISTS `idx_ventas_fecha` (`fecha_hora`),
+  ADD INDEX IF NOT EXISTS `idx_ventas_metodo` (`metodo_pago`),
+  ADD INDEX IF NOT EXISTS `idx_ventas_fecha_total` (`fecha_hora`, `total`);
+
+ALTER TABLE `ventas_detalle` 
+  ADD INDEX IF NOT EXISTS `idx_ventas_detalle_venta` (`venta_id`),
+  ADD INDEX IF NOT EXISTS `idx_ventas_detalle_producto` (`producto_id`);
+
+ALTER TABLE `comandas_cocina` 
+  ADD INDEX IF NOT EXISTS `idx_comandas_estado` (`estado_preparacion`),
+  ADD INDEX IF NOT EXISTS `idx_comandas_fecha` (`fecha_hora`);
+
+ALTER TABLE `lotes_produccion` 
+  ADD INDEX IF NOT EXISTS `idx_lotes_estado` (`estado_leudado`),
+  ADD INDEX IF NOT EXISTS `idx_lotes_producto` (`codigo_producto`);
+
+ALTER TABLE `estado_hornos` 
+  ADD INDEX IF NOT EXISTS `idx_hornos_estado` (`estado`);
+
+ALTER TABLE `asientos_contables` 
+  ADD INDEX IF NOT EXISTS `idx_asientos_fecha` (`fecha_hora`),
+  ADD INDEX IF NOT EXISTS `idx_asientos_modulo` (`modulo_origen`);
+
+ALTER TABLE `asientos_detalle` 
+  ADD INDEX IF NOT EXISTS `idx_asientos_detalle_asiento` (`asiento_id`),
+  ADD INDEX IF NOT EXISTS `idx_asientos_detalle_cuenta` (`cuenta_codigo`);
+
+ALTER TABLE `ordenes_compra` 
+  ADD INDEX IF NOT EXISTS `idx_ordenes_fecha` (`fecha_pedido`),
+  ADD INDEX IF NOT EXISTS `idx_ordenes_estado` (`estado`);
+
+ALTER TABLE `ordenes_compra_detalle` 
+  ADD INDEX IF NOT EXISTS `idx_ordenes_detalle_orden` (`orden_id`);
+
+-- Garantiza que la columna pin soporte contraseñas hasheadas completas sin truncamiento en cualquier PC
+ALTER TABLE `usuarios` 
+  MODIFY COLUMN `pin` VARCHAR(255) NOT NULL DEFAULT '1234';
+
+
+-- ============================================================================
+-- III. POBLADO DE DATOS INICIALES (DATOS SEMILLA / SEED DATA COMPLETO)
 -- Ordenado estrictamente para respetar integridad referencial y evitar bloqueos
 -- ============================================================================
 
@@ -426,29 +478,29 @@ INSERT INTO `configuraciones` (`clave`, `valor`, `descripcion`) VALUES
 ('bcv_rate_mode', 'auto', 'Modo de obtención de la tasa BCV: auto o manual'),
 ('bcv_manual_rate', '761.21', 'Valor de la tasa de cambio ingresado manualmente'),
 ('modo_login', 'pos', 'Modalidad de inicio de sesión en index.html: pos o tradicional')
-ON DUPLICATE KEY UPDATE `valor` = VALUES(`valor`);
+ON DUPLICATE KEY UPDATE `valor` = VALUES(`valor`), `descripcion` = VALUES(`descripcion`);
 
--- 3. Roles del Sistema
+-- 3. Roles del Sistema y URLs de Redirección (2FN)
 INSERT INTO `roles` (`id`, `codigo`, `nombre`, `descripcion`, `redirect_url`) VALUES
 ('rol_superadmin', 'SUPERADMIN', 'Super Administrador', 'Acceso total e irrestricto a todos los módulos y funciones del sistema.', 'modules/dashboard.html'),
-('rol_admin', 'ADMIN', 'Gerente General / Administrador', 'Acceso total a KPIs, contabilidad, personal y configuración.', 'modules/dashboard.html'),
+('rol_admin', 'ADMIN', 'Gerente General / Administrador', 'Acceso total a KPIs, contabilidad, personal, inventario y configuración.', 'modules/dashboard.html'),
 ('rol_baker', 'BAKER', 'Maestro Panadero / Chef de Cuisine', 'Gestión de hornos industriales, comandas KDS e insumos de masa.', 'modules/kitchen.html'),
 ('rol_cashier', 'CASHIER', 'Personal de Caja / POS', 'Facturación directa, cobro en efectivo/tarjeta y arqueo de caja.', 'modules/pos.html'),
 ('rol_accountant', 'ACCOUNTANT', 'Contador & Administrador', 'Auditoría financiera, balance de comprobación y órdenes de compra.', 'modules/accounting.html')
-ON DUPLICATE KEY UPDATE `nombre` = VALUES(`nombre`), `redirect_url` = VALUES(`redirect_url`);
+ON DUPLICATE KEY UPDATE `nombre` = VALUES(`nombre`), `descripcion` = VALUES(`descripcion`), `redirect_url` = VALUES(`redirect_url`);
 
--- 4. Usuarios Iniciales (Credenciales con PIN por defecto '1234')
+-- 4. Usuarios Iniciales y Credenciales (BCRYPT '1234')
 INSERT INTO `usuarios` (`id`, `rol_id`, `codigo`, `username`, `nombre`, `email`, `telefono`, `pin`, `icono`, `turno`, `estado`) VALUES
-('usr_superadmin', 'rol_superadmin', 'EMP-000', 'superadmin', 'Super Administrador', 'superadmin@parisienne.com', '(01) 555-SUPER', '1234', 'shield-check', 'Acceso Total 24/7', 'active'),
-('usr_manager', 'rol_admin', 'EMP-003', 'admin', 'Juan Mendoza', 'juan.gerente@parisienne.com', '(01) 555-JUAN', '1234', 'shield-check', 'Turno Completo', 'active'),
-('usr_baker', 'rol_baker', 'EMP-004', 'chef', 'Enrique Chef', 'enrique.chef@parisienne.com', '(01) 555-ENRIQUE', '1234', 'chef-hat', 'Mañana (05:00 - 13:00)', 'active'),
-('usr_cashier', 'rol_cashier', 'EMP-005', 'cajero', 'Henry POS', 'henry.pos@parisienne.com', '(01) 555-HENRY', '1234', 'shield-check', 'Mañana (07:00 - 15:00)', 'active'),
-('usr_accountant', 'rol_accountant', 'EMP-006', 'contador', 'Sebastian Finanzas', 'sebastian.finanzas@parisienne.com', '(01) 555-SEBASTIAN', '1234', 'bar-chart-3', 'Horario Oficina', 'active'),
-('usr_carlos', 'rol_baker', 'EMP-001', 'panadero', 'Carlos Mendoza', 'carlos.mendoza@parisienne.com', '(01) 555-CARLOS', '1234', 'chef-hat', 'Mañana (05:00 - 13:00)', 'active'),
-('usr_ana', 'rol_cashier', 'EMP-002', 'cajero1', 'Ana Ramírez', 'ana.ramirez@parisienne.com', '(01) 555-ANA', '1234', 'banknote', 'Tarde (13:00 - 21:00)', 'active')
+('usr_superadmin', 'rol_superadmin', 'EMP-000', 'superadmin', 'Super Administrador', 'superadmin@parisienne.com', '(01) 555-SUPER', '$2y$10$jwa/slzZEcl7pDrjsKx7SepJ8aGbhmpChMm6tz4LBtJouXE/s5bly', 'shield-check', 'Acceso Total 24/7', 'active'),
+('usr_carlos', 'rol_baker', 'EMP-001', 'panadero', 'Carlos Mendoza', 'carlos.mendoza@parisienne.com', '(01) 555-CARLOS', '$2y$10$jwa/slzZEcl7pDrjsKx7SepJ8aGbhmpChMm6tz4LBtJouXE/s5bly', 'chef-hat', 'Mañana (05:00 - 13:00)', 'active'),
+('usr_ana', 'rol_cashier', 'EMP-002', 'cajero1', 'Ana Ramírez', 'ana.ramirez@parisienne.com', '(01) 555-ANA', '$2y$10$jwa/slzZEcl7pDrjsKx7SepJ8aGbhmpChMm6tz4LBtJouXE/s5bly', 'banknote', 'Tarde (13:00 - 21:00)', 'active'),
+('usr_manager', 'rol_admin', 'EMP-003', 'admin', 'Juan Mendoza', 'juan.gerente@parisienne.com', '(01) 555-JUAN', '$2y$10$jwa/slzZEcl7pDrjsKx7SepJ8aGbhmpChMm6tz4LBtJouXE/s5bly', 'shield-check', 'Turno Completo', 'active'),
+('usr_baker', 'rol_baker', 'EMP-004', 'chef', 'Enrique Chef', 'enrique.chef@parisienne.com', '(01) 555-ENRIQUE', '$2y$10$jwa/slzZEcl7pDrjsKx7SepJ8aGbhmpChMm6tz4LBtJouXE/s5bly', 'chef-hat', 'Mañana (05:00 - 13:00)', 'active'),
+('usr_cashier', 'rol_cashier', 'EMP-005', 'cajero', 'Henry POS', 'henry.pos@parisienne.com', '(01) 555-HENRY', '$2y$10$jwa/slzZEcl7pDrjsKx7SepJ8aGbhmpChMm6tz4LBtJouXE/s5bly', 'shield-check', 'Mañana (07:00 - 15:00)', 'active'),
+('usr_accountant', 'rol_accountant', 'EMP-006', 'contador', 'Sebastian Finanzas', 'sebastian.finanzas@parisienne.com', '(01) 555-SEBASTIAN', '$2y$10$jwa/slzZEcl7pDrjsKx7SepJ8aGbhmpChMm6tz4LBtJouXE/s5bly', 'bar-chart-3', 'Horario Oficina (08:00 - 17:00)', 'active')
 ON DUPLICATE KEY UPDATE `nombre` = VALUES(`nombre`), `username` = VALUES(`username`), `rol_id` = VALUES(`rol_id`);
 
--- 5. Proveedores Comerciales (Insertados antes de materias_primas para evitar conflictos de FK)
+-- 5. Directorio de Proveedores Comerciales
 INSERT INTO `proveedores` (`id`, `codigo`, `nombre`, `categoria`, `contacto`, `telefono`, `email`, `rif`, `direccion`, `condicion_pago`, `calificacion`, `icono`) VALUES
 ('sup_01', 'PROV-001', 'Molinos del Sur, C.A.', 'Harinas y Cereales', 'Carlos Mendoza', '(01) 555-MOLINO', 'ventas@molinosdelsur.com', 'J-30819283-4', 'Zona Industrial Sur, Parcela 14, Caracas', 'Crédito 30 días', 4.9, 'wheat'),
 ('sup_02', 'PROV-002', 'Lácteos La Granja', 'Lácteos y Mantequillas', 'María Elena Suárez', '(01) 555-LACTEOS', 'pedidos@lacteoslagranja.com', 'J-40192837-1', 'Av. Las Acacias, Edif. La Granja, Valencia', 'Contado / 15 días', 4.8, 'milk'),
@@ -459,9 +511,9 @@ ON DUPLICATE KEY UPDATE `nombre` = VALUES(`nombre`), `contacto` = VALUES(`contac
 -- 6. Categorías de Productos
 INSERT INTO `categorias_producto` (`id`, `nombre`, `descripcion`) VALUES
 ('cat_panaderia', 'Panadería Artesanal', 'Baguettes, brioches y panes de especialidad.'),
-('cat_pasteleria', 'Pastelería & Éclairs', 'Éclairs, tartas de limón y milhojas.'),
-('cat_cafeteria', 'Cafetería & Bebidas', 'Café espresso, cappuccino y jugos.'),
-('cat_especialidades', 'Especialidades & Desayunos', 'Croque-Monsieur, quiches y productos salados del POS.')
+('cat_pasteleria', 'Pastelería & Repostería', 'Éclairs, tartas de limón, macarons y milhojas.'),
+('cat_cafeteria', 'Cafetería & Bebidas', 'Café espresso, cappuccino, café au lait y jugos.'),
+('cat_especialidades', 'Especialidades & Desayunos', 'Croque-Monsieur, quiches y desayunos artesanales.')
 ON DUPLICATE KEY UPDATE `nombre` = VALUES(`nombre`), `descripcion` = VALUES(`descripcion`);
 
 -- 7. Materias Primas e Insumos
@@ -476,21 +528,21 @@ ON DUPLICATE KEY UPDATE `nombre` = VALUES(`nombre`), `stock_actual` = VALUES(`st
 
 -- 8. Catálogo Completo de Productos de Venta POS (Productos 001 al 020)
 INSERT INTO `productos` (`id`, `categoria_id`, `codigo`, `nombre`, `unidad_medida`, `stock_actual`, `stock_minimo`, `precio_unitario`, `tipo`, `ubicacion`, `icono`, `descripcion`) VALUES
-('prod_001', 'cat_panaderia', 'PAN-001', 'Baguette Tradicional Parisina', 'ud', 43.00, 20.00, 2.50, 'finished_product', 'Mostrador Panadería', '🥖', 'Corteza crujiente y miga alveolada.'),
+('prod_001', 'cat_panaderia', 'PAN-001', 'Baguette Tradicional Parisina', 'ud', 43.00, 20.00, 2.50, 'finished_product', 'Mostrador Panadería', '🥖', 'Corteza crujiente y miga alveolada con levadura madre.'),
 ('prod_002', 'cat_panaderia', 'PAN-002', 'Croissant de Mantequilla', 'ud', 60.00, 25.00, 3.00, 'finished_product', 'Vitrinas POS', '🥐', 'Hojaldre 100% mantequilla de Normandía.'),
 ('prod_003', 'cat_panaderia', 'PAN-003', 'Pain au Chocolat', 'ud', 35.00, 15.00, 3.50, 'finished_product', 'Vitrinas POS', '🍫', 'Hojaldre relleno de dos barras de chocolate negro 60%.'),
-('prod_004', 'cat_panaderia', 'PAN-004', 'Brioche de Vainilla', 'ud', 20.00, 10.00, 4.20, 'finished_product', 'Vitrinas POS', '🍞', 'Pan de huevo esponjoso aromatizado con vainilla.'),
+('prod_004', 'cat_panaderia', 'PAN-004', 'Brioche de Vainilla', 'ud', 20.00, 10.00, 4.20, 'finished_product', 'Vitrinas POS', '🍞', 'Pan de huevo esponjoso aromatizado con vainilla de Madagascar.'),
 ('prod_005', 'cat_panaderia', 'PAN-005', 'Focaccia de Romero y Aceitunas', 'ud', 15.00, 8.00, 5.50, 'finished_product', 'Vitrinas POS', '🫓', 'Pan plano italiano horneado con aceite de oliva extra virgen.'),
-('prod_006', 'cat_pasteleria', 'PAS-001', 'Éclair de Chocolate Belga', 'ud', 25.00, 15.00, 4.50, 'finished_product', 'Vitrinas Refrigeradas Pastelería', '⚡', 'Pasta choux rellena de crema pastelera.'),
-('prod_007', 'cat_pasteleria', 'PAS-002', 'Tarta de Limón Merengada', 'ud', 18.00, 10.00, 5.00, 'finished_product', 'Vitrinas Refrigeradas', '🍋', 'Tarta de limón con merengue tostado.'),
-('prod_008', 'cat_pasteleria', 'PAS-003', 'Caja de Macarons Surtidos (6 ud)', 'ud', 30.00, 12.00, 9.50, 'finished_product', 'Vitrinas Refrigeradas', '🍡', 'Selección de macarons surtidos.'),
-('prod_009', 'cat_pasteleria', 'PAS-004', 'Milhojas Tradicional de Crema', 'ud', 14.00, 8.00, 4.80, 'finished_product', 'Vitrinas Refrigeradas', '🍰', 'Capas de hojaldre con crema pastelera.'),
-('prod_010', 'cat_cafeteria', 'BEB-001', 'Café Espresso Doble', 'ud', 100.00, 30.00, 2.80, 'finished_product', 'Barra de Café', '☕', 'Café espresso doble de tueste medio.'),
-('prod_011', 'cat_cafeteria', 'BEB-002', 'Capuchino Cremoso', 'ud', 80.00, 25.00, 3.80, 'finished_product', 'Barra de Café', '🥛', 'Espresso con leche vaporizada y espuma.'),
-('prod_012', 'cat_cafeteria', 'BEB-003', 'Café au Lait Parisien', 'ud', 90.00, 25.00, 3.50, 'finished_product', 'Barra de Café', '☕', 'Café de filtro con leche caliente.'),
-('prod_013', 'cat_cafeteria', 'BEB-004', 'Jugo de Naranja Recién Exprimido', 'l', 40.00, 15.00, 4.00, 'finished_product', 'Barra de Café', '🍊', 'Jugo natural de naranja.'),
-('prod_014', 'cat_especialidades', 'ESP-001', 'Croque-Monsieur Tradicional', 'ud', 22.00, 8.00, 7.50, 'finished_product', 'Cocina / Mostrador', '🥪', 'Sándwich caliente de jamón y queso.'),
-('prod_015', 'cat_especialidades', 'ESP-002', 'Quiche Lorraine de Bacon', 'ud', 16.00, 8.00, 6.80, 'finished_product', 'Cocina / Mostrador', '🥧', 'Quiche salada con bacon y queso.'),
+('prod_006', 'cat_pasteleria', 'PAS-001', 'Éclair de Chocolate Belga', 'ud', 25.00, 15.00, 4.50, 'finished_product', 'Vitrinas Refrigeradas Pastelería', '⚡', 'Pasta choux rellena de crema pastelera de chocolate oscuro.'),
+('prod_007', 'cat_pasteleria', 'PAS-002', 'Tarta de Limón Merengada', 'ud', 18.00, 10.00, 5.00, 'finished_product', 'Vitrinas Refrigeradas', '🍋', 'Base sablée, crema de limón amarillo y merengue tostado.'),
+('prod_008', 'cat_pasteleria', 'PAS-003', 'Caja de Macarons Surtidos (6 ud)', 'ud', 30.00, 12.00, 9.50, 'finished_product', 'Vitrinas Refrigeradas', '🍡', 'Selección de pistacho, frambuesa, vainilla, chocolate y café.'),
+('prod_009', 'cat_pasteleria', 'PAS-004', 'Milhojas Tradicional de Crema', 'ud', 14.00, 8.00, 4.80, 'finished_product', 'Vitrinas Refrigeradas', '🍰', 'Capas de hojaldre crujiente con crema diplomatica.'),
+('prod_010', 'cat_cafeteria', 'BEB-001', 'Café Espresso Doble', 'ud', 100.00, 30.00, 2.80, 'finished_product', 'Barra Cafetería', '☕', 'Grano 100% arábica de tueste medio de origen único.'),
+('prod_011', 'cat_cafeteria', 'BEB-002', 'Capuchino Cremoso', 'ud', 80.00, 25.00, 3.80, 'finished_product', 'Barra Cafetería', '🥛', 'Espresso con leche al vapor y espuma suave de canela.'),
+('prod_012', 'cat_cafeteria', 'BEB-003', 'Café au Lait Parisien', 'ud', 90.00, 25.00, 3.50, 'finished_product', 'Barra Cafetería', '☕', 'Café de filtro mezclado con leche entera caliente.'),
+('prod_013', 'cat_cafeteria', 'BEB-004', 'Jugo de Naranja Recién Exprimido', 'l', 40.00, 15.00, 4.00, 'finished_product', 'Barra Cafetería', '🍊', '100% natural, prensado al momento sin azúcar añadida.'),
+('prod_014', 'cat_especialidades', 'ESP-001', 'Croque-Monsieur Tradicional', 'ud', 22.00, 10.00, 7.50, 'finished_product', 'Cocina POS', '🥪', 'Sándwich caliente de jamón cocido, queso Gruyère y bechamel.'),
+('prod_015', 'cat_especialidades', 'ESP-002', 'Quiche Lorraine de Bacon', 'ud', 16.00, 8.00, 6.80, 'finished_product', 'Cocina POS', '🥧', 'Tarta salada con tocino ahumado, crema de leche y queso.'),
 ('prod_016', 'cat_panaderia', 'PAN-006', 'Pan Canilla Tradicional', 'ud', 50.00, 20.00, 1.50, 'finished_product', 'Mostrador Panadería', '🥖', 'Pan canilla clásico de corteza fina y miga ligera y suave.'),
 ('prod_017', 'cat_panaderia', 'PAN-007', 'Pan de Jamón Navideño Especial', 'ud', 15.00, 5.00, 12.00, 'finished_product', 'Vitrinas Especiales', '🥖', 'Pan relleno con jamón ahumado selecto, tocineta, pasas y aceitunas rellenas.'),
 ('prod_018', 'cat_panaderia', 'PAN-008', 'Pan Gallego Rústico', 'ud', 20.00, 10.00, 3.50, 'finished_product', 'Mostrador Panadería', '🍞', 'Hogaza de alta hidratación con harina de trigo y masa madre rústica.'),
@@ -502,14 +554,16 @@ ON DUPLICATE KEY UPDATE `nombre` = VALUES(`nombre`), `stock_actual` = VALUES(`st
 INSERT INTO `ordenes_compra` (`id`, `codigo`, `proveedor_id`, `fecha_pedido`, `fecha_entrega`, `estado`, `monto_total`) VALUES
 ('po_001', 'OC-2026-0089', 'sup_01', '2026-08-10', '2026-08-12', 'in_transit', 1800.00),
 ('po_002', 'OC-2026-0090', 'sup_02', '2026-08-11', '2026-08-11', 'in_transit', 1700.00),
-('po_003', 'OC-2026-0088', 'sup_04', '2026-08-05', '2026-08-07', 'received', 600.00)
+('po_003', 'OC-2026-0088', 'sup_04', '2026-08-05', '2026-08-07', 'received', 600.00),
+('po_004', 'OC-2026-0087', 'sup_03', '2026-08-02', '2026-08-04', 'received', 350.00)
 ON DUPLICATE KEY UPDATE `estado` = VALUES(`estado`), `monto_total` = VALUES(`monto_total`);
 
 -- 10. Detalle de Órdenes de Compra
 INSERT INTO `ordenes_compra_detalle` (`orden_id`, `materia_prima_id`, `cantidad`, `precio`) VALUES
 ('po_001', 'inv_001', 1000.00, 1.80),
 ('po_002', 'inv_002', 200.00, 8.50),
-('po_003', 'inv_004', 50.00, 12.00)
+('po_003', 'inv_004', 50.00, 12.00),
+('po_004', 'inv_005', 100.00, 1.50)
 ON DUPLICATE KEY UPDATE `cantidad` = VALUES(`cantidad`), `precio` = VALUES(`precio`);
 
 -- 11. Plan Único de Cuentas (PUC)
@@ -525,38 +579,45 @@ INSERT INTO `plan_cuentas` (`codigo`, `nombre`, `tipo`, `naturaleza`) VALUES
 ('5105', 'Gastos de Personal / Sueldos', 'Gasto', 'Deudor'),
 ('5195', 'Gastos Mermas y Pérdidas', 'Gasto', 'Deudor'),
 ('6135', 'Costo de Ventas Producción', 'Costo', 'Deudor')
-ON DUPLICATE KEY UPDATE `nombre` = VALUES(`nombre`);
+ON DUPLICATE KEY UPDATE `nombre` = VALUES(`nombre`), `tipo` = VALUES(`tipo`), `naturaleza` = VALUES(`naturaleza`);
 
--- 12. Asientos Contables y Detalle
+-- 12. Asientos Contables y Detalle de Partida Doble
 INSERT INTO `asientos_contables` (`id`, `codigo`, `fecha_hora`, `concepto`, `modulo_origen`, `icono`, `total_debe`, `total_haber`) VALUES
-('as_001', 'AS-2026-001', '2026-08-11 16:42:00', 'Venta POS Mostrador (Comprobante FAC-2026-1003)', 'Punto de Venta (POS)', 'shopping-cart', 1485.50, 1485.50)
-ON DUPLICATE KEY UPDATE `concepto` = VALUES(`concepto`), `total_debe` = VALUES(`total_debe`);
+('as_001', 'AS-2026-001', '2026-08-11 16:42:00', 'Venta POS Mostrador (Comprobante FAC-2026-1003)', 'Punto de Venta (POS)', 'shopping-cart', 1485.50, 1485.50),
+('as_002', 'AS-2026-002', '2026-08-10 14:15:00', 'Compra de Harina a Molinos del Sur (Orden OC-2026-0089)', 'Proveedores', 'wheat', 1800.00, 1800.00)
+ON DUPLICATE KEY UPDATE `concepto` = VALUES(`concepto`), `total_debe` = VALUES(`total_debe`), `total_haber` = VALUES(`total_haber`);
 
 INSERT INTO `asientos_detalle` (`asiento_id`, `cuenta_codigo`, `debe`, `haber`) VALUES
 ('as_001', '1105', 1485.50, 0.00),
 ('as_001', '4135', 0.00, 1280.60),
-('as_001', '2408', 0.00, 204.90)
+('as_001', '2408', 0.00, 204.90),
+('as_002', '1435', 1800.00, 0.00),
+('as_002', '2205', 0.00, 1800.00)
 ON DUPLICATE KEY UPDATE `debe` = VALUES(`debe`), `haber` = VALUES(`haber`);
 
 -- 13. Lotes de Producción y Monitoreo de Hornos
 INSERT INTO `lotes_produccion` (`id`, `codigo`, `producto`, `icono`, `cantidad`, `estado_leudado`, `temperatura_recomendada`, `tiempo_recomendado_min`) VALUES
 ('batch_042', 'Lote #042', 'Baguette Tradicional Parisina', '🥖', 50, 'En Horneado Activo', 220, 20),
 ('batch_043', 'Lote #043', 'Croissant de Mantequilla', '🥐', 60, 'En Horneado Activo', 190, 15),
-('batch_044', 'Lote #044', 'Focaccia de Romero y Aceitunas', '🫓', 20, 'Horneado Listo', 240, 25)
-ON DUPLICATE KEY UPDATE `estado_leudado` = VALUES(`estado_leudado`);
+('batch_044', 'Lote #044', 'Focaccia de Romero y Aceitunas', '🫓', 20, 'Horneado Listo', 240, 25),
+('stage_045', 'Lote #045', 'Pain au Chocolat', '🍫', 40, 'Leudado Completo (100%)', 190, 15),
+('stage_046', 'Lote #046', 'Brioche de Vainilla', '🍞', 25, 'Barnizado con Huevo Listo', 180, 22),
+('stage_047', 'Lote #047', 'Masa de Éclairs (Choux)', '⚡', 35, 'Reposo en Bandeja (15 min)', 200, 18)
+ON DUPLICATE KEY UPDATE `estado_leudado` = VALUES(`estado_leudado`), `cantidad` = VALUES(`cantidad`);
 
 INSERT INTO `estado_hornos` (`id`, `nombre`, `tipo`, `temperatura_actual`, `temperatura_objetivo`, `tiempo_restante`, `tiempo_total`, `estado`, `lote_id`) VALUES
 ('oven_01', 'Horno 1 (Giratorio A)', 'Giratorio Industrial', 220, 220, 255, 1200, 'baking', 'batch_042'),
 ('oven_02', 'Horno 2 (Convección B)', 'Convección Fina', 190, 190, 760, 900, 'baking', 'batch_043'),
 ('oven_03', 'Horno 3 (Piedra C)', 'Bóveda de Piedra', 240, 240, 0, 1500, 'ready', 'batch_044'),
 ('oven_04', 'Horno 4 (Pastelero D)', 'Convección Digital', 160, 175, 0, 0, 'preheating', NULL)
-ON DUPLICATE KEY UPDATE `temperatura_actual` = VALUES(`temperatura_actual`), `estado` = VALUES(`estado`);
+ON DUPLICATE KEY UPDATE `temperatura_actual` = VALUES(`temperatura_actual`), `estado` = VALUES(`estado`), `lote_id` = VALUES(`lote_id`);
 
--- 14. Comandas de Cocina
+-- 14. Comandas de Cocina (KDS)
 INSERT INTO `comandas_cocina` (`id`, `numero_factura`, `detalles_pedido`, `estado_preparacion`, `fecha_hora`) VALUES
+('com_1001', 'FAC-2026-1001', '3x Baguette Tradicional Parisina, 2x Éclair de Chocolate Belga', 'ready', '2026-08-22 15:35:00'),
 ('com_1002', 'FAC-2026-1002', '2x Croissant de Mantequilla, 1x Pain au Chocolat', 'in_progress', '2026-08-22 15:50:00'),
 ('com_1003', 'FAC-2026-1003', '2x Croque-Monsieur Tradicional, 2x Café au Lait Parisien', 'pending', '2026-08-22 15:53:00')
-ON DUPLICATE KEY UPDATE `estado_preparacion` = VALUES(`estado_preparacion`);
+ON DUPLICATE KEY UPDATE `estado_preparacion` = VALUES(`estado_preparacion`), `detalles_pedido` = VALUES(`detalles_pedido`);
 
 -- Finalizar transacción y restaurar verificaciones
 COMMIT;
