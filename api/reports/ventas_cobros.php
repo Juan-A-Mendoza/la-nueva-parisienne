@@ -1,6 +1,7 @@
 <?php
 /* Reporte unificado de Ventas y Cobros. Solo lectura; no modifica tablas operativas. */
 
+define('LNP_PUBLIC', true);
 require_once __DIR__ . '/../config/conexion.php';
 require_once __DIR__ . '/report_helpers.php';
 

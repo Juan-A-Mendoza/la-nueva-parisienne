@@ -1,6 +1,7 @@
 <?php
 /* Catálogos de filtros para reportes. Solo lectura. */
 
+define('LNP_PUBLIC', true);
 require_once __DIR__ . '/../config/conexion.php';
 require_once __DIR__ . '/report_helpers.php';
 
