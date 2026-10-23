@@ -48,8 +48,8 @@ try {
     $roleLower = strtolower($roleInput);
     $targetRoleCode = 'CASHIER';
 
-    if (strpos($roleLower, 'superadmin') !== false) {
-        if (strtoupper($_SESSION['role_code'] ?? '') !== 'SUPERADMIN') {
+    if (strpos($roleLower, 'super') !== false || strtoupper($data['roleCode'] ?? $data['rol_code'] ?? '') === 'SUPERADMIN') {
+        if (isset($_SESSION['role_code']) && strtoupper($_SESSION['role_code']) !== 'SUPERADMIN') {
             http_response_code(403);
             echo json_encode(['success' => false, 'message' => 'Solo el Super Administrador puede crear o promover usuarios a Super Administrador.'], JSON_UNESCAPED_UNICODE);
             exit();

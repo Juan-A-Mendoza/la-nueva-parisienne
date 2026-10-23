@@ -7,14 +7,27 @@ import { SessionStore } from '../core/session-store.js';
 import { SettingsStore } from '../data/settings-db.js';
 
 document.addEventListener('DOMContentLoaded', () => {
-  // 1. Verificación de Sesión Activa (Exclusivo SUPERADMIN)
+  // 1. Verificación de Sesión Activa (Exclusivo SUPERADMIN y ADMIN)
   const session = SessionStore.getSession();
   const activeUser = session?.user || {};
   const userRole = (activeUser.role || '').toLowerCase();
   const userRoleCode = (activeUser.roleCode || activeUser.role_code || '').toUpperCase();
-  const isSuperadmin = userRoleCode === 'SUPERADMIN' || userRole.includes('superadmin');
+  const userName = (activeUser.username || activeUser.name || '').toLowerCase();
+  const userId = (activeUser.id || '').toLowerCase();
 
-  if (!isSuperadmin) {
+  const isSuperadmin = userRoleCode === 'SUPERADMIN' || 
+                       userRoleCode.includes('SUPER') || 
+                       userRole.includes('super') || 
+                       userName.includes('superadmin') || 
+                       userId.includes('superadmin');
+
+  const isAllowed = isSuperadmin || 
+                    userRoleCode === 'ADMIN' || 
+                    userRoleCode === 'MANAGER' || 
+                    userRole.includes('gerente') || 
+                    userRole.includes('administrador');
+
+  if (!isAllowed) {
     let redirectUrl = 'dashboard.html';
     if (userRoleCode === 'ACCOUNTANT' || userRole.includes('contador')) redirectUrl = 'accounting.html';
     else if (userRoleCode === 'POS' || userRoleCode === 'CASHIER' || userRole.includes('cajero')) redirectUrl = 'pos.html';

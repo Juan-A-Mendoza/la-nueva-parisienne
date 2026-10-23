@@ -71,8 +71,8 @@ export const PAGE_PERMISSIONS = {
   'inventory.html': ['SUPERADMIN', 'ADMIN', 'BAKER', 'KITCHEN'],
   'suppliers.html': ['SUPERADMIN', 'ADMIN'],
   'staff.html': ['SUPERADMIN'],
-  'configuraciones.html': ['SUPERADMIN'],
-  'settings.html': ['SUPERADMIN']
+  'configuraciones.html': ['SUPERADMIN', 'ADMIN'],
+  'settings.html': ['SUPERADMIN', 'ADMIN']
 };
 
 /**
@@ -81,7 +81,13 @@ export const PAGE_PERMISSIONS = {
 function enforceAccessControl(activeUser, currentPath) {
   const roleCode = String(activeUser.roleCode || activeUser.role_code || '').toUpperCase();
   const roleName = String(activeUser.role || '').toLowerCase();
-  const isSuperadmin = roleCode === 'SUPERADMIN' || roleName === 'super administrador' || roleName === 'superadmin' || roleName.includes('superadmin');
+  const userName = String(activeUser.username || activeUser.name || '').toLowerCase();
+  const userId = String(activeUser.id || '').toLowerCase();
+  const isSuperadmin = roleCode === 'SUPERADMIN' || 
+                       roleCode.includes('SUPER') || 
+                       roleName.includes('super') || 
+                       userName.includes('superadmin') || 
+                       userId.includes('superadmin');
 
   // El Superadmin tiene acceso irrestricto y control total de todo
   if (isSuperadmin) return true;
@@ -125,7 +131,13 @@ export function initModulesNav() {
 
   const roleCode = String(activeUser.roleCode || activeUser.role_code || '').toUpperCase();
   const roleName = String(activeUser.role || '').toLowerCase();
-  const isSuperadmin = roleCode === 'SUPERADMIN' || roleName === 'super administrador' || roleName === 'superadmin' || roleName.includes('superadmin');
+  const userName = String(activeUser.username || activeUser.name || '').toLowerCase();
+  const userId = String(activeUser.id || '').toLowerCase();
+  const isSuperadmin = roleCode === 'SUPERADMIN' || 
+                       roleCode.includes('SUPER') || 
+                       roleName.includes('super') || 
+                       userName.includes('superadmin') || 
+                       userId.includes('superadmin');
 
   // El selector de los 4 módulos es de uso exclusivo del SUPERADMIN (el único con control total)
   if (!isSuperadmin) {
@@ -234,35 +246,43 @@ export function initModulesNav() {
   window.abrirLauncherModulos = openModulesModal;
 
   // 2. Inyectar Botón Launcher en la Barra de Navegación del Módulo
-  const container = document.querySelector('.dashboard-controls') || 
-                    document.querySelector('.navbar-controls') || 
-                    document.querySelector('.pos-user-bar') ||
-                    document.querySelector('.dashboard-navbar .navbar-container') ||
-                    document.querySelector('header .navbar-container');
+  function injectLauncherButton() {
+    if (document.getElementById('btnGlobalModulesLauncher')) return;
 
-  if (container && !document.getElementById('btnGlobalModulesLauncher')) {
-    const launcherBtn = document.createElement('button');
-    launcherBtn.id = 'btnGlobalModulesLauncher';
-    launcherBtn.type = 'button';
-    launcherBtn.className = 'btn-modules-launcher is-superadmin';
-    launcherBtn.title = 'Entrar a los 4 Módulos: Gerente, Cajero, Panadero y Contador';
-    launcherBtn.innerHTML = `
-      <i data-lucide="shield-alert" class="icon-sm"></i>
-      <span>4 Módulos (Superadmin)</span>
-    `;
+    const container = document.querySelector('.dashboard-controls') || 
+                      document.querySelector('.navbar-controls') || 
+                      document.querySelector('.pos-user-bar') ||
+                      document.querySelector('.dashboard-navbar .navbar-container') ||
+                      document.querySelector('header .navbar-container');
 
-    launcherBtn.addEventListener('click', openModulesModal);
+    if (container) {
+      const launcherBtn = document.createElement('button');
+      launcherBtn.id = 'btnGlobalModulesLauncher';
+      launcherBtn.type = 'button';
+      launcherBtn.className = 'btn-modules-launcher is-superadmin';
+      launcherBtn.title = 'Entrar a los 4 Módulos: Gerente, Cajero, Panadero y Contador';
+      launcherBtn.innerHTML = `
+        <i data-lucide="shield-alert" class="icon-sm"></i>
+        <span>4 Módulos (Superadmin)</span>
+      `;
 
-    // Insertar antes del botón de Salir o al final
-    const logoutBtn = container.querySelector('#logoutBtn');
-    if (logoutBtn) {
-      container.insertBefore(launcherBtn, logoutBtn);
+      launcherBtn.addEventListener('click', openModulesModal);
+
+      // Insertar antes del botón de Salir o al final
+      const logoutBtn = container.querySelector('#logoutBtn');
+      if (logoutBtn) {
+        container.insertBefore(launcherBtn, logoutBtn);
+      } else {
+        container.appendChild(launcherBtn);
+      }
+
+      window.LucideIcons?.refresh();
     } else {
-      container.appendChild(launcherBtn);
+      setTimeout(injectLauncherButton, 100);
     }
-
-    window.LucideIcons?.refresh();
   }
+
+  injectLauncherButton();
 }
 
 // Inicializar automáticamente si el documento ya está listo
@@ -271,3 +291,10 @@ if (document.readyState === 'loading') {
 } else {
   initModulesNav();
 }
+
+// Re-sincronizar ante cambios de usuario en localStorage
+window.addEventListener('storage', (e) => {
+  if (e.key === 'usuario_activo' || e.key === null) {
+    initModulesNav();
+  }
+});

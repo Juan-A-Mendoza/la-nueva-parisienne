@@ -8,7 +8,6 @@ const STORAGE_KEY = 'LN_PARISIENNE_SESSION';
 // Arreglo de usuarios por defecto (Semilla Inicial con Superadmin)
 const INITIAL_USERS = [
   { id: 'usr_superadmin', name: 'Super Administrador', username: 'superadmin', role: 'Super Administrador', roleCode: 'SUPERADMIN', icon: 'shield-check', description: 'Acceso total e irrestricto a todos los módulos y funciones del sistema.', redirectUrl: 'modules/dashboard.html', allowedModules: ['all'] },
-  { id: 'usr_superadmin2', name: 'Super Administrador 2', username: 'superadmin2', role: 'Super Administrador', roleCode: 'SUPERADMIN', icon: 'shield-check', description: 'Acceso total e irrestricto a todos los módulos y funciones del sistema.', redirectUrl: 'modules/dashboard.html', allowedModules: ['all'] },
   { id: 'usr_001', name: 'Juan Mendoza', username: 'admin', role: 'Gerente General', roleCode: 'ADMIN', icon: 'shield-check', description: 'Gestión y auditoría del panel gerencial, ventas e inventario.', redirectUrl: 'modules/dashboard.html', allowedModules: ['dashboard', 'inventory', 'suppliers'] },
   { id: 'usr_002', name: 'María Elena Suárez', username: 'cajero1', role: 'Cajero', roleCode: 'POS', icon: 'banknote', description: 'Facturación directa a clientes, cobros rápidos y apertura de caja.', redirectUrl: 'modules/pos.html', allowedModules: ['pos'] },
   { id: 'usr_003', name: 'Carlos Eduardo Rivas', username: 'panadero1', role: 'Panadero', roleCode: 'KITCHEN', icon: 'chef-hat', description: 'Gestión de hornos, recetas, orden del día y preparación de masa.', redirectUrl: 'modules/kitchen.html', allowedModules: ['kitchen', 'inventory'] },
@@ -25,18 +24,6 @@ const USERS_DATABASE = [
     roleCode: 'SUPERADMIN',
     icon: 'shield-check',
     pin: '1234',
-    description: 'Acceso total e irrestricto a todos los módulos y funciones del sistema.',
-    redirectUrl: 'modules/dashboard.html',
-    allowedModules: ['all']
-  },
-  {
-    id: 'usr_superadmin2',
-    name: 'Super Administrador 2',
-    username: 'superadmin2',
-    role: 'Super Administrador',
-    roleCode: 'SUPERADMIN',
-    icon: 'shield-check',
-    pin: 'SuperAdmin2026*',
     description: 'Acceso total e irrestricto a todos los módulos y funciones del sistema.',
     redirectUrl: 'modules/dashboard.html',
     allowedModules: ['all']
@@ -391,7 +378,20 @@ export const SessionStore = {
       const activeRaw = localStorage.getItem('usuario_activo');
       if (activeRaw !== null) {
         const activeUser = JSON.parse(activeRaw);
-        if (activeUser && activeUser.name) {
+        if (activeUser && (activeUser.name || activeUser.username)) {
+          const uName = String(activeUser.username || '').toLowerCase();
+          const uId = String(activeUser.id || '').toLowerCase();
+          const uRole = String(activeUser.role || '').toLowerCase();
+          const uCode = String(activeUser.roleCode || activeUser.role_code || '').toUpperCase();
+
+          if (uCode === 'SUPERADMIN' || uCode.includes('SUPER') || uName.includes('superadmin') || uId.includes('superadmin') || uRole.includes('super')) {
+            activeUser.roleCode = 'SUPERADMIN';
+            activeUser.role = activeUser.role || 'Super Administrador';
+            try {
+              localStorage.setItem('usuario_activo', JSON.stringify(activeUser));
+            } catch (err) {}
+          }
+
           return {
             user: activeUser,
             token: 'AUTH_ACTIVE_SESSION'

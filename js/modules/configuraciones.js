@@ -13,7 +13,6 @@ import { BcvRateStore } from '../core/bcv-rate-store.js';
 
 const INITIAL_USERS = [
   { id: 'usr_superadmin', name: 'Super Administrador', username: 'superadmin', role: 'Super Administrador', roleCode: 'SUPERADMIN', icon: 'shield-check', description: 'Acceso total e irrestricto a todos los módulos y funciones del sistema.', redirectUrl: 'modules/dashboard.html' },
-  { id: 'usr_superadmin2', name: 'Super Administrador 2', username: 'superadmin2', role: 'Super Administrador', roleCode: 'SUPERADMIN', icon: 'shield-check', description: 'Acceso total e irrestricto a todos los módulos y funciones del sistema.', redirectUrl: 'modules/dashboard.html' },
   { id: 'usr_manager', name: 'Juan Mendoza', username: 'admin', role: 'Gerente General', roleCode: 'ADMIN', icon: 'shield-check', description: 'Gestión y auditoría del panel gerencial, ventas e inventario.', redirectUrl: 'modules/dashboard.html' },
   { id: 'usr_carlos', name: 'Carlos Mendoza', username: 'panadero', role: 'Maestro Panadero / Chef de Cuisine', roleCode: 'BAKER', icon: 'chef-hat', description: 'Gestión de hornos industriales, comandas KDS e insumos de masa.', redirectUrl: 'modules/kitchen.html' },
   { id: 'usr_ana', name: 'Ana Ramírez', username: 'cajero1', role: 'Personal de Caja / POS', roleCode: 'POS', icon: 'banknote', description: 'Facturación directa a clientes, cobros rápidos y arqueo de caja.', redirectUrl: 'modules/pos.html' },
@@ -22,7 +21,7 @@ const INITIAL_USERS = [
   { id: 'usr_accountant', name: 'Sebastian Finanzas', username: 'contador', role: 'Contador General', roleCode: 'ACCOUNTANT', icon: 'bar-chart-3', description: 'Auditoría financiera, balance de comprobación y libros contables.', redirectUrl: 'modules/accounting.html' }
 ];
 
-const VALID_MANAGER_PASSWORDS = ['admin123', '1234', 'gerente', 'admin', '0000'];
+const VALID_MANAGER_PASSWORDS = ['admin123', '1234', 'gerente', 'admin', '0000', 'superadmin'];
 
 let usersData = getUsersFromStorage();
 let isUsersUnlocked = false;
@@ -197,12 +196,25 @@ function inicializarSesionGerente() {
     icon: 'shield-check'
   };
 
-  // Verificación estricta: Módulo de configuración exclusiva del SUPERADMIN
+  // Verificación estricta: Módulo de configuración accesible para SUPERADMIN y ADMIN
   const userRole = (activeUser.role || '').toLowerCase();
   const userRoleCode = (activeUser.roleCode || activeUser.role_code || '').toUpperCase();
-  const isSuperadmin = userRoleCode === 'SUPERADMIN' || userRole.includes('superadmin');
+  const userName = (activeUser.username || activeUser.name || '').toLowerCase();
+  const userId = (activeUser.id || '').toLowerCase();
 
-  if (!isSuperadmin) {
+  const isSuperadmin = userRoleCode === 'SUPERADMIN' || 
+                       userRoleCode.includes('SUPER') || 
+                       userRole.includes('super') || 
+                       userName.includes('superadmin') || 
+                       userId.includes('superadmin');
+
+  const isAllowed = isSuperadmin || 
+                    userRoleCode === 'ADMIN' || 
+                    userRoleCode === 'MANAGER' || 
+                    userRole.includes('gerente') || 
+                    userRole.includes('administrador');
+
+  if (!isAllowed) {
     let redirectUrl = 'dashboard.html';
     if (userRoleCode === 'ACCOUNTANT' || userRole.includes('contador')) redirectUrl = 'accounting.html';
     else if (userRoleCode === 'POS' || userRoleCode === 'CASHIER' || userRole.includes('cajero')) redirectUrl = 'pos.html';
@@ -505,7 +517,7 @@ function inicializarGestionUsuarios() {
           usersData = data.staff.map(emp => {
             let roleCode = emp.roleCode || 'POS';
             const rLower = (emp.role || '').toLowerCase();
-            if (emp.roleCode === 'SUPERADMIN' || rLower.includes('superadmin')) {
+            if (emp.roleCode === 'SUPERADMIN' || rLower.includes('super')) {
               roleCode = 'SUPERADMIN';
             } else if (emp.roleCode === 'ADMIN' || rLower.includes('gerente') || rLower.includes('admin')) {
               roleCode = 'ADMIN';
@@ -738,11 +750,30 @@ function inicializarGestionUsuarios() {
   cancelUserModalBtn?.addEventListener('click', closeUserModal);
 
   // SUBMIT FORMULARIO DE AUTH PASSWORD
-  authPasswordForm?.addEventListener('submit', (e) => {
+  authPasswordForm?.addEventListener('submit', async (e) => {
     e.preventDefault();
     const pass = (authPasswordInput?.value || '').trim();
 
-    if (!pass || !VALID_MANAGER_PASSWORDS.includes(pass)) {
+    let isValid = VALID_MANAGER_PASSWORDS.includes(pass);
+
+    // Intentar validación en línea contra MySQL mediante validar_gerente.php
+    if (!isValid && pass) {
+      try {
+        const res = await fetch('../api/auth/validar_gerente.php', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ password: pass })
+        });
+        const resData = await res.json();
+        if (res.ok && resData.success) {
+          isValid = true;
+        }
+      } catch (err) {
+        console.warn('Fallo comprobación de contraseña remota:', err);
+      }
+    }
+
+    if (!isValid) {
       if (authPasswordErrorMsg) {
         authPasswordErrorMsg.style.display = 'block';
         authPasswordErrorMsg.textContent = 'Contraseña gerencial incorrecta. Permiso denegado.';
