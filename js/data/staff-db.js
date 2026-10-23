@@ -20,6 +20,21 @@ export const STAFF_DATABASE = [
     avatar: 'shield-check'
   },
   {
+    id: 'emp_00_2',
+    code: 'EMP-SUPER2',
+    name: 'Super Administrador 2',
+    role: 'Super Administrador',
+    roleCode: 'SUPERADMIN',
+    department: 'Control Total & Todos los Módulos',
+    shift: 'Acceso Total 24/7',
+    phone: '(01) 555-SUPER2',
+    email: 'superadmin2@parisienne.com',
+    status: 'active',
+    statusText: 'Activo',
+    pin: 'SuperAdmin2026*',
+    avatar: 'shield-check'
+  },
+  {
     id: 'emp_01',
     code: 'EMP-001',
     name: 'Carlos Mendoza',

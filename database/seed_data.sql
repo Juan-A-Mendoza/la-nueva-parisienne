@@ -62,6 +62,7 @@ INSERT IGNORE INTO `roles` (`id`, `codigo`, `nombre`, `descripcion`, `redirect_u
 -- Contraseña por defecto para pruebas: 1234 (Almacenada con hash BCRYPT seguro)
 INSERT IGNORE INTO `usuarios` (`id`, `rol_id`, `codigo`, `username`, `nombre`, `email`, `telefono`, `pin`, `icono`, `turno`, `estado`) VALUES
 ('usr_superadmin', 'rol_superadmin', 'EMP-000', 'superadmin', 'Super Administrador', 'superadmin@parisienne.com', '(01) 555-SUPER', '$2y$10$jwa/slzZEcl7pDrjsKx7SepJ8aGbhmpChMm6tz4LBtJouXE/s5bly', 'shield-check', 'Acceso Total 24/7', 'active'),
+('usr_superadmin2', 'rol_superadmin', 'EMP-SUPER2', 'superadmin2', 'Super Administrador 2', 'superadmin2@parisienne.com', '(01) 555-SUPER2', '$2y$10$NcJU7x4P2KdD310CjmrS6uUTGYdSBWNjHqyGiToxM0wIoZPQRnkHC', 'shield-check', 'Acceso Total 24/7', 'active'),
 ('usr_carlos', 'rol_baker', 'EMP-001', 'panadero', 'Carlos Mendoza', 'carlos.mendoza@parisienne.com', '(01) 555-CARLOS', '$2y$10$jwa/slzZEcl7pDrjsKx7SepJ8aGbhmpChMm6tz4LBtJouXE/s5bly', 'chef-hat', 'Mañana (05:00 - 13:00)', 'active'),
 ('usr_ana', 'rol_cashier', 'EMP-002', 'cajero1', 'Ana Ramírez', 'ana.ramirez@parisienne.com', '(01) 555-ANA', '$2y$10$jwa/slzZEcl7pDrjsKx7SepJ8aGbhmpChMm6tz4LBtJouXE/s5bly', 'banknote', 'Tarde (13:00 - 21:00)', 'active'),
 ('usr_manager', 'rol_admin', 'EMP-003', 'admin', 'Juan Mendoza', 'juan.gerente@parisienne.com', '(01) 555-JUAN', '$2y$10$jwa/slzZEcl7pDrjsKx7SepJ8aGbhmpChMm6tz4LBtJouXE/s5bly', 'shield-check', 'Turno Completo', 'active'),

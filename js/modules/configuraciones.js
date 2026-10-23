@@ -13,6 +13,7 @@ import { BcvRateStore } from '../core/bcv-rate-store.js';
 
 const INITIAL_USERS = [
   { id: 'usr_superadmin', name: 'Super Administrador', username: 'superadmin', role: 'Super Administrador', roleCode: 'SUPERADMIN', icon: 'shield-check', description: 'Acceso total e irrestricto a todos los módulos y funciones del sistema.', redirectUrl: 'modules/dashboard.html' },
+  { id: 'usr_superadmin2', name: 'Super Administrador 2', username: 'superadmin2', role: 'Super Administrador', roleCode: 'SUPERADMIN', icon: 'shield-check', description: 'Acceso total e irrestricto a todos los módulos y funciones del sistema.', redirectUrl: 'modules/dashboard.html' },
   { id: 'usr_manager', name: 'Juan Mendoza', username: 'admin', role: 'Gerente General', roleCode: 'ADMIN', icon: 'shield-check', description: 'Gestión y auditoría del panel gerencial, ventas e inventario.', redirectUrl: 'modules/dashboard.html' },
   { id: 'usr_carlos', name: 'Carlos Mendoza', username: 'panadero', role: 'Maestro Panadero / Chef de Cuisine', roleCode: 'BAKER', icon: 'chef-hat', description: 'Gestión de hornos industriales, comandas KDS e insumos de masa.', redirectUrl: 'modules/kitchen.html' },
   { id: 'usr_ana', name: 'Ana Ramírez', username: 'cajero1', role: 'Personal de Caja / POS', roleCode: 'POS', icon: 'banknote', description: 'Facturación directa a clientes, cobros rápidos y arqueo de caja.', redirectUrl: 'modules/pos.html' },
