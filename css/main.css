@@ -924,11 +924,17 @@ button .lucide,
 }
 
 .report-signatures-grid {
-  display: grid;
+  display: none;
   grid-template-columns: 1fr 1fr;
   gap: 3rem;
   margin-top: 3rem;
   padding-top: 1rem;
+}
+
+@media print {
+  .report-signatures-grid {
+    display: grid !important;
+  }
 }
 
 .report-signature-block {

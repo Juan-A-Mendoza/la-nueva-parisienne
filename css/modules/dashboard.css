@@ -1460,18 +1460,25 @@ select.form-control-custom {
   gap: 1.5rem;
 }
 
-/* ENCABEZADO GERENCIAL ARMONIOSO Y LUMINOSO */
-.reports-dedicated-header {
+/* CENTRO DE REPORTES - PANEL MAESTRO INTEGRADO */
+.report-generator-filter-bar.dedicated-bar {
   background: #FFFFFF;
-  border-radius: 16px;
+  border-radius: 18px;
   border: 1px solid rgba(212, 155, 84, 0.22);
-  padding: 1.25rem 2rem;
-  box-shadow: 0 4px 20px rgba(44, 29, 17, 0.04);
+  padding: 1.6rem 2.2rem;
+  box-shadow: 0 6px 24px rgba(44, 29, 17, 0.04);
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+
+.reports-dedicated-header-integrated {
   display: flex;
   align-items: center;
   justify-content: space-between;
   flex-wrap: wrap;
   gap: 1.25rem;
+  width: 100%;
 }
 
 .reports-dedicated-title-wrap {
@@ -1481,8 +1488,8 @@ select.form-control-custom {
 }
 
 .reports-dedicated-icon {
-  width: 48px;
-  height: 48px;
+  width: 50px;
+  height: 50px;
   border-radius: 50%;
   background: linear-gradient(135deg, #D49B54 0%, #B57F3A 100%);
   color: #FFFFFF;
@@ -1533,60 +1540,95 @@ select.form-control-custom {
   margin: 0.15rem 0 0 0;
 }
 
-.reports-dedicated-actions {
+/* BOTONERA DE ACCIÓN EJECUTIVA INTEGRADA */
+.rep-actions-group {
   display: flex;
   align-items: center;
-  gap: 0.75rem;
+  gap: 0.65rem;
+  flex-wrap: wrap;
+}
+
+.btn-generate-report-submit {
+  height: 42px;
+  padding: 0 1.4rem;
+  background: linear-gradient(135deg, #2C1D11 0%, #442E1E 100%);
+  color: #FFFFFF;
+  font-weight: 700;
+  font-size: 0.86rem;
+  border: none;
+  border-radius: var(--radius-pill, 9999px);
+  display: inline-flex;
+  align-items: center;
+  gap: 0.48rem;
+  cursor: pointer;
+  box-shadow: 0 3px 10px rgba(44, 29, 17, 0.15);
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  white-space: nowrap;
+}
+
+.btn-generate-report-submit:hover {
+  background: linear-gradient(135deg, #D49B54 0%, #C48B44 100%);
+  transform: translateY(-1px);
+  box-shadow: 0 6px 18px rgba(212, 155, 84, 0.35);
 }
 
 .btn-rep-action {
-  height: 38px;
-  padding: 0 1.2rem;
-  font-size: 0.84rem;
+  height: 42px;
+  padding: 0 1.25rem;
+  font-size: 0.86rem;
   font-weight: 700;
   border-radius: var(--radius-pill, 9999px);
   display: inline-flex;
   align-items: center;
-  gap: 0.45rem;
+  gap: 0.48rem;
   cursor: pointer;
   transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  white-space: nowrap;
+  box-sizing: border-box;
 }
 
 .btn-rep-print {
-  background: var(--color-espresso, #2C1D11);
-  color: #FFFFFF;
-  border: none;
-  box-shadow: 0 2px 8px rgba(44, 29, 17, 0.12);
+  background: #FFFFFF;
+  color: var(--color-espresso, #2C1D11);
+  border: 1.5px solid rgba(44, 29, 17, 0.2);
+  box-shadow: 0 2px 6px rgba(44, 29, 17, 0.04);
 }
 
 .btn-rep-print:hover {
-  background: linear-gradient(135deg, #D49B54 0%, #C48B44 100%);
+  background: #FAF8F5;
+  border-color: var(--color-espresso, #2C1D11);
   transform: translateY(-1px);
-  box-shadow: 0 4px 14px rgba(212, 155, 84, 0.35);
+  box-shadow: 0 4px 12px rgba(44, 29, 17, 0.12);
 }
 
 .btn-rep-export {
-  background: #FFFFFF;
-  color: var(--color-espresso, #2C1D11);
-  border: 1px solid rgba(212, 155, 84, 0.35);
+  background: #E8F5E9;
+  color: #1B5E20;
+  border: 1.5px solid rgba(46, 125, 50, 0.38);
+  box-shadow: 0 2px 6px rgba(46, 125, 50, 0.06);
 }
 
 .btn-rep-export:hover {
-  background: rgba(212, 155, 84, 0.08);
-  border-color: var(--color-gold, #D49B54);
+  background: #2E7D32;
+  color: #FFFFFF;
+  border-color: #2E7D32;
   transform: translateY(-1px);
+  box-shadow: 0 4px 16px rgba(46, 125, 50, 0.3);
 }
 
-/* BARRA DE PARÁMETROS EN 2 NIVELES LIMPIOS */
-.report-generator-filter-bar.dedicated-bar {
-  background: #FFFFFF;
-  border-radius: 16px;
-  border: 1px solid rgba(44, 29, 17, 0.08);
-  padding: 1.35rem 2rem;
-  box-shadow: 0 4px 18px rgba(44, 29, 17, 0.03);
+.rep-card-divider {
+  height: 1px;
+  background: rgba(44, 29, 17, 0.08);
+  width: 100%;
+  margin: 0.15rem 0 0.35rem 0;
+}
+
+/* CONTENIDO DE FILTROS EN 2 NIVELES */
+.rep-filters-container {
   display: flex;
   flex-direction: column;
   gap: 1.15rem;
+  width: 100%;
 }
 
 .rep-filter-row {
@@ -1603,15 +1645,15 @@ select.form-control-custom {
 }
 
 .rep-col-type {
-  flex: 1 1 320px;
+  flex: 1 1 450px;
+}
+
+.rep-col-style {
+  flex: 0 1 320px;
 }
 
 .rep-col-presets {
   flex: 0 0 auto;
-}
-
-.rep-col-style {
-  flex: 1 1 260px;
 }
 
 .rep-date-range-group {
@@ -1628,8 +1670,13 @@ select.form-control-custom {
   flex-wrap: wrap;
 }
 
-.rep-submit-group {
+.rep-submit-group,
+.rep-actions-group {
   margin-left: auto;
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+  flex-wrap: wrap;
 }
 
 .rep-form-group {
@@ -2208,6 +2255,24 @@ select.form-control-custom {
     max-width: 100% !important;
     width: 100% !important;
   }
+
+  /* Firmas visibles al imprimir o generar PDF */
+  .report-signatures-grid,
+  .print-only.report-signatures-grid {
+    display: grid !important;
+    grid-template-columns: 1fr 1fr !important;
+    gap: 3rem !important;
+    margin-top: 2.5rem !important;
+    padding-top: 1rem !important;
+    page-break-inside: avoid !important;
+    break-inside: avoid !important;
+  }
+}
+
+/* Firmas de Reportes: Ocultas en pantalla interactiva del sistema */
+.report-signatures-grid,
+.print-only.report-signatures-grid {
+  display: none !important;
 }
 
 

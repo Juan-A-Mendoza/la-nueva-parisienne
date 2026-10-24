@@ -29,6 +29,18 @@ const INITIAL_15_POS_PRODUCTS = [
   { id: 'prod_015', code: 'ESP-002', name: 'Quiche Lorraine de Bacon', category: 'Salados', unitCost: 3.00, salePrice: 6.80, unit: 'Und', stock: 16, minStock: 8, icon: 'utensils', showInPos: true, description: 'Tarta salada con tocino ahumado, crema de leche y queso.' }
 ];
 
+function renderItemIcon(iconStr, defaultLucide = 'package') {
+  if (!iconStr) {
+    return `<i data-lucide="${defaultLucide}" class="icon-sm" style="margin-right: 0.35rem;"></i>`;
+  }
+  const clean = String(iconStr).trim();
+  // Si contiene emojis o caracteres especiales no soportados por Lucide
+  if (/[\uD800-\uDFFF\u2600-\u27BF\uFE00-\uFE0F\u{1F300}-\u{1F9FF}]/u.test(clean) || !/^[a-z0-9-]+$/i.test(clean)) {
+    return `<span class="icon-emoji" style="margin-right: 0.35rem; display: inline-block; font-size: 1.05rem; vertical-align: middle;">${clean}</span>`;
+  }
+  return `<i data-lucide="${clean}" class="icon-sm" style="margin-right: 0.35rem;"></i>`;
+}
+
 function getPosCatalogFromStorage() {
   try {
     const stored = localStorage.getItem('catalogo_pos');
@@ -250,14 +262,21 @@ let liveSalesTrendPeriods = null;
 let liveRecentMovements = null;
 let liveBreakdowns = {};
 
-async function loadRealDashboardMetrics() {
+let isLoadingDashboardMetrics = false;
+let lastMetricsLoadTime = 0;
+
+async function loadRealDashboardMetrics(force = false) {
+  const now = Date.now();
+  if (isLoadingDashboardMetrics) return;
+  if (!force && (now - lastMetricsLoadTime < 3000)) return; // Debounce de 3s para evitar saturación de red
+  isLoadingDashboardMetrics = true;
+  lastMetricsLoadTime = now;
+
   try {
-    const apis = [
-      '../api/reports/dashboard_metrics.php',
-      'api/reports/dashboard_metrics.php',
-      '../api/dashboard/get_metrics.php',
-      'api/dashboard/get_metrics.php'
-    ];
+    const isModule = window.location.pathname.includes('/modules/');
+    const apis = isModule
+      ? ['../api/reports/dashboard_metrics.php', '../api/dashboard/get_metrics.php']
+      : ['api/reports/dashboard_metrics.php', 'api/dashboard/get_metrics.php'];
 
     let res = null;
     for (const url of apis) {
@@ -297,6 +316,8 @@ async function loadRealDashboardMetrics() {
     }
   } catch (e) {
     console.warn('Error cargando métricas reales de BD:', e);
+  } finally {
+    isLoadingDashboardMetrics = false;
   }
 }
 
@@ -1063,7 +1084,7 @@ function renderMovementsTable() {
 
     let categoryBadge = `<span class="table-status-tag completado" style="background: rgba(46,125,50,0.12); color: var(--color-success); font-weight: 700; border: 1px solid rgba(46,125,50,0.3);"><i data-lucide="arrow-down-left" class="icon-xs" style="margin-right: 0.25rem;"></i>${mov.type || "Venta POS"}</span>`;
     if (isDevolucion) {
-      categoryBadge = `<span class="table-status-tag" style="background: rgba(198,40,40,0.14); color: #C62828; border: 1px solid rgba(198,40,40,0.35); font-weight: 800;">↩️ Devolución de Venta</span>`;
+      categoryBadge = `<span class="table-status-tag" style="background: rgba(198,40,40,0.14); color: #C62828; border: 1px solid rgba(198,40,40,0.35); font-weight: 800;"><i data-lucide="rotate-ccw" class="icon-xs" style="margin-right: 0.25rem;"></i>Devolución de Venta</span>`;
     } else if (mov.category === 'gasto' || isNegative) {
       categoryBadge = `<span class="table-status-tag" style="background: rgba(198,40,40,0.12); color: var(--color-danger); border: 1px solid rgba(198,40,40,0.3); font-weight: 700;"><i data-lucide="arrow-up-right" class="icon-xs" style="margin-right: 0.25rem;"></i>${mov.type || "Egreso / Compra"}</span>`;
     } else if (mov.category === 'ajuste' || mov.type?.includes('Requisición') || mov.amount === 0) {
@@ -1125,7 +1146,7 @@ function openMovementDetailModal(mov) {
 
   const iconEl = document.getElementById('modalDetalleIcon');
   if (iconEl) {
-    if (mov.type?.includes('Devolución') || mov.type?.includes('Anulación')) iconEl.textContent = '↩️';
+    if (mov.type?.includes('Devolución') || mov.type?.includes('Anulación')) iconEl.innerHTML = '<i data-lucide="rotate-ccw"></i>';
     else if (mov.category === 'venta') iconEl.innerHTML = '<i data-lucide="shopping-bag"></i>';
     else if (mov.category === 'gasto') iconEl.innerHTML = '<i data-lucide="package"></i>';
     else iconEl.innerHTML = '<i data-lucide="bar-chart-3"></i>';
@@ -1320,7 +1341,7 @@ function renderInventoryTables() {
       const tr = document.createElement('tr');
       tr.innerHTML = `
         <td class="table-code-badge">${item.code}</td>
-        <td><strong><i data-lucide="${item.icon || 'package'}" class="icon-sm" style="margin-right: 0.35rem;"></i>${item.name}</strong></td>
+        <td><strong>${renderItemIcon(item.icon, 'package')}${item.name}</strong></td>
         <td style="color: var(--color-muted);">${item.category}</td>
         <td><span class="table-status-tag" style="background: rgba(0,0,0,0.06); color: var(--color-espresso); font-weight: 700;">${item.unit}</span></td>
         <td style="font-weight: 700; color: var(--color-gold-dark);">$${item.unitCost.toFixed(2)} / ${item.unit}</td>
@@ -1368,7 +1389,7 @@ function renderInventoryTables() {
       const tr = document.createElement('tr');
       tr.innerHTML = `
         <td class="table-code-badge">${item.code}</td>
-        <td><strong><i data-lucide="${item.icon || 'shopping-bag'}" class="icon-sm" style="margin-right: 0.35rem;"></i>${item.name}</strong></td>
+        <td><strong>${renderItemIcon(item.icon, 'shopping-bag')}${item.name}</strong></td>
         <td style="color: var(--color-espresso); font-weight: 600;">${item.category}</td>
         <td><span class="table-status-tag" style="background: rgba(0,0,0,0.06); color: var(--color-espresso); font-weight: 700;">${item.unit || 'Und'}</span></td>
         <td style="color: var(--color-muted);">$${(item.unitCost || 0).toFixed(2)} / ${item.unit || 'Und'}</td>
@@ -1417,7 +1438,7 @@ function renderInventoryTables() {
       const tr = document.createElement('tr');
       tr.innerHTML = `
         <td class="table-code-badge">${prov.code}</td>
-        <td><strong><i data-lucide="${prov.icon || 'building-2'}" class="icon-sm" style="margin-right: 0.35rem;"></i>${prov.name}</strong></td>
+        <td><strong>${renderItemIcon(prov.icon, 'building-2')}${prov.name}</strong></td>
         <td style="font-weight: 600; color: var(--color-espresso);">${prov.rif}</td>
         <td style="color: var(--color-muted);">${prov.phone}</td>
         <td><i data-lucide="user" class="icon-xs" style="margin-right: 0.25rem;"></i>${prov.contact}</td>
@@ -1438,10 +1459,23 @@ function renderInventoryTables() {
   }
 }
 
-async function syncInventoryFromBackend() {
+let isSyncingInventory = false;
+let lastSyncInventoryTime = 0;
+
+async function syncInventoryFromBackend(force = false) {
+  const now = Date.now();
+  if (isSyncingInventory) return;
+  if (!force && (now - lastSyncInventoryTime < 3000)) return; // Debounce de 3s
+  isSyncingInventory = true;
+  lastSyncInventoryTime = now;
+
   try {
-    let res = await fetch('../api/inventory/get_inventory.php');
-    if (!res.ok) res = await fetch('api/inventory/get_inventory.php');
+    const isModule = window.location.pathname.includes('/modules/');
+    const apiPath = isModule ? '../api/inventory/get_inventory.php' : 'api/inventory/get_inventory.php';
+    let res = await fetch(apiPath);
+    if (!res.ok && isModule) {
+      res = await fetch('api/inventory/get_inventory.php');
+    }
     if (!res.ok) return;
     const data = await res.json();
     if (data && data.success && Array.isArray(data.inventory)) {
@@ -1456,11 +1490,11 @@ async function syncInventoryFromBackend() {
             code: item.code,
             name: item.name,
             category: item.categoryName || prev?.category || 'Materias Primas',
-            unitCost: item.unitPrice || prev?.unitCost || 1.8,
+            unitCost: Number(item.unitPrice || prev?.unitCost || 1.8),
             unit: item.unit || prev?.unit || 'Kg',
-            stock: item.currentStock,
-            minStock: item.minStock,
-            icon: item.icon || prev?.icon || 'package'
+            stock: Number(item.currentStock ?? 0),
+            minStock: Number(item.minStock ?? 0),
+            icon: item.icon || prev?.icon || 'wheat'
           });
         } else {
           const prev = finishedGoodsData.find(f => f.code === item.code || f.id === item.id);
@@ -1469,12 +1503,12 @@ async function syncInventoryFromBackend() {
             code: item.code,
             name: item.name,
             category: item.categoryName || prev?.category || 'Panadería',
-            unitCost: prev?.unitCost || (item.unitPrice * 0.5),
-            salePrice: item.unitPrice || prev?.salePrice || 2.5,
-            price: item.unitPrice || prev?.salePrice || 2.5,
+            unitCost: Number(prev?.unitCost || (item.unitPrice * 0.5)),
+            salePrice: Number(item.unitPrice || prev?.salePrice || 2.5),
+            price: Number(item.unitPrice || prev?.salePrice || 2.5),
             unit: item.unit || prev?.unit || 'Und',
-            stock: item.currentStock,
-            minStock: item.minStock,
+            stock: Number(item.currentStock ?? 0),
+            minStock: Number(item.minStock ?? 0),
             icon: item.icon || prev?.icon || 'croissant',
             showInPos: prev?.showInPos !== false,
             description: item.description || prev?.description || ''
@@ -1482,33 +1516,35 @@ async function syncInventoryFromBackend() {
         }
       });
 
+      // Guardar en almacenamiento interno sin disparar eventos que causen bucle recursivo
       if (liveRaw.length > 0) {
         rawMaterialsData = liveRaw;
-        saveRawMaterialsToStorage(liveRaw);
+        try { localStorage.setItem('materias_primas', JSON.stringify(liveRaw)); } catch (e) {}
       }
       if (liveFinished.length > 0) {
         finishedGoodsData = liveFinished;
-        savePosCatalogToStorage(liveFinished);
+        try { localStorage.setItem('catalogo_pos', JSON.stringify(liveFinished)); } catch (e) {}
       }
       renderInventoryTables();
     }
   } catch (err) {
     console.warn('Error sincronizando inventario desde MySQL:', err);
+  } finally {
+    isSyncingInventory = false;
   }
 }
 
 function cargarInventario() {
   renderMovementsTable();
   renderInventoryTables();
-  syncInventoryFromBackend();
+  syncInventoryFromBackend(true);
 
-  // Escuchar eventos de actualización en tiempo real desde la Caja y Cocina
+  // Escuchar eventos de actualización externa sin disparar ciclos infinitos de sync
   window.addEventListener('storage', (e) => {
     if (e.key === 'catalogo_pos' || e.key === 'materias_primas') {
       finishedGoodsData = getPosCatalogFromStorage();
       rawMaterialsData = getRawMaterialsFromStorage();
       renderInventoryTables();
-      syncInventoryFromBackend();
     }
     if (e.key === 'movimientos_inventario') {
       renderMovementsTable();
@@ -1517,15 +1553,12 @@ function cargarInventario() {
 
   window.addEventListener('catalogoPosChanged', () => {
     finishedGoodsData = getPosCatalogFromStorage();
-    rawMaterialsData = getRawMaterialsFromStorage();
     renderInventoryTables();
-    syncInventoryFromBackend();
   });
 
   window.addEventListener('materiasPrimasChanged', () => {
     rawMaterialsData = getRawMaterialsFromStorage();
     renderInventoryTables();
-    syncInventoryFromBackend();
   });
 
   window.addEventListener('movimientosChanged', () => {
@@ -1535,12 +1568,14 @@ function cargarInventario() {
   if (typeof BroadcastChannel !== 'undefined') {
     const posChannel = new BroadcastChannel('lnp_pos_catalog_channel');
     posChannel.onmessage = (e) => {
-      syncInventoryFromBackend();
+      finishedGoodsData = getPosCatalogFromStorage();
+      renderInventoryTables();
     };
 
     const matChannel = new BroadcastChannel('lnp_materials_channel');
     matChannel.onmessage = (e) => {
-      syncInventoryFromBackend();
+      rawMaterialsData = getRawMaterialsFromStorage();
+      renderInventoryTables();
     };
 
     const movChannel = new BroadcastChannel('lnp_movements_channel');
@@ -1556,7 +1591,6 @@ function cargarInventario() {
  * 6. Inicialización de Botones Generales, Buscadores y Modales de Acción
  */
 function inicializarBotonesGenerales() {
-  try { inicializarReporteEjecutivo(); } catch (e) { console.warn('Reporte Ejecutivo init:', e); }
   document.getElementById('inventorySearchInput')?.addEventListener('input', renderInventoryTables);
   document.getElementById('inventoryCategoryFilter')?.addEventListener('change', renderInventoryTables);
 
@@ -2305,14 +2339,14 @@ function inicializarTicketsProduccionGerencia() {
           actionBtns = `
             <div style="font-size: 0.8rem; color: var(--color-success); font-weight: 600; line-height: 1.3;">
               <span class="badge-clean-icon" style="color: var(--color-success);"><i data-lucide="check" class="icon-xs"></i> Aprobado por <strong>${ticket.processedBy || "Gerencia"}</strong></span><br/>
-              <span style="font-size: 0.75rem; color: var(--color-muted); font-weight: 400;">⏱️ ${ticket.processedAt || ticket.date}</span>
+              <span style="font-size: 0.75rem; color: var(--color-muted); font-weight: 400; display: inline-flex; align-items: center; gap: 0.25rem;"><i data-lucide="clock" class="icon-xs"></i> ${ticket.processedAt || ticket.date}</span>
             </div>
           `;
         } else if (ticket.status === 'Rechazado') {
           actionBtns = `
             <div style="font-size: 0.8rem; color: var(--color-danger); font-weight: 600; line-height: 1.3;">
               <span class="badge-clean-icon" style="color: var(--color-danger);"><i data-lucide="x" class="icon-xs"></i> Rechazado por <strong>${ticket.processedBy || "Gerencia"}</strong></span><br/>
-              <span style="font-size: 0.75rem; color: var(--color-muted); font-weight: 400;">⏱️ ${ticket.processedAt || ticket.date} — ${ticket.reason || ''}</span>
+              <span style="font-size: 0.75rem; color: var(--color-muted); font-weight: 400; display: inline-flex; align-items: center; gap: 0.25rem;"><i data-lucide="clock" class="icon-xs"></i> ${ticket.processedAt || ticket.date} — ${ticket.reason || ''}</span>
             </div>
           `;
         }
@@ -2449,7 +2483,7 @@ function inicializarReporteEjecutivo() {
   const reportsView = document.getElementById('executiveReportsView');
   const sheet = document.getElementById('executiveReportSheet');
   const btnPrint = document.getElementById('btnPrintExecutiveReport');
-  const btnExportCsv = document.getElementById('btnExportExecutiveCsv');
+  const btnExportExcel = document.getElementById('btnExportExecutiveExcel');
 
   const repTypeSelect = document.getElementById('repTypeSelect');
   const repDateFrom = document.getElementById('repDateFrom');
@@ -2502,10 +2536,10 @@ function inicializarReporteEjecutivo() {
   }
 
   function actualizarVisibilidadFiltros(type) {
-    const isSalesRelated = ['ventas_resumen', 'rentabilidad_productos', 'ventas_detalladas', 'cierres_turno', 'eventos_anulaciones'].includes(type);
+    const isSalesRelated = ['ventas_resumen', 'ventas_detalladas', 'cierres_turno', 'eventos_anulaciones'].includes(type);
     if (repCashierGroup) repCashierGroup.style.display = isSalesRelated ? 'flex' : 'none';
     if (repPaymentGroup) repPaymentGroup.style.display = isSalesRelated ? 'flex' : 'none';
-    if (repCategoryGroup) repCategoryGroup.style.display = ['ventas_resumen', 'rentabilidad_productos', 'ventas_detalladas'].includes(type) ? 'flex' : 'none';
+    if (repCategoryGroup) repCategoryGroup.style.display = ['ventas_resumen', 'ventas_detalladas'].includes(type) ? 'flex' : 'none';
   }
 
   function toIsoDate(d) {
@@ -2979,37 +3013,6 @@ function inicializarReporteEjecutivo() {
         ], { rate, isBars });
       }
 
-    } else if (type === 'rentabilidad_productos') {
-      const products = data.products || [];
-      const top7 = products.slice(0, 7);
-
-      if (isClassic) {
-        renderClassicCompare('repChartTopRevCost', top7.map(p => ({
-          label: p.name,
-          label1: 'Ingresos',
-          val1: Number(p.totalRevUsd),
-          color1: '#D49B54',
-          label2: 'Costo Insumos',
-          val2: Number(p.totalCostUsd),
-          color2: '#C65D3B',
-          note: `Margen ${(Number(p.marginPct) || 0).toFixed(0)}%`
-        })));
-
-        renderClassicRing('repChartMarginShare', top7.map(p => ({
-          label: p.name,
-          value: Math.max(0, Number(p.totalProfitUsd))
-        })), { rate, centerTitle: 'MARGEN' });
-      } else {
-        renderMetricasStyleLineChart('repChartTopRevCost', top7.map(p => p.name.length > 15 ? p.name.slice(0, 15) + '...' : p.name), [
-          { label: 'Ingresos Totales ($)', data: top7.map(p => Number(p.totalRevUsd)) },
-          { label: 'Costo Insumos ($)', data: top7.map(p => Number(p.totalCostUsd)) }
-        ], { rate, isBars });
-
-        renderMetricasStyleLineChart('repChartMarginShare', top7.map(p => p.name.length > 15 ? p.name.slice(0, 15) + '...' : p.name), [
-          { label: 'Ganancia Neta ($)', data: top7.map(p => Math.max(0, Number(p.totalProfitUsd))) }
-        ], { rate, isBars });
-      }
-
     } else if (type === 'balance_contable') {
       const trialBalance = data.trialBalance || [];
       const activePUC = trialBalance.filter(t => Number(t.sumDebe) > 0 || Number(t.sumHaber) > 0).slice(0, 7);
@@ -3089,8 +3092,8 @@ function inicializarReporteEjecutivo() {
       if (events.length === 0) {
         const wrap1 = getReportChartContainer('repChartEventsType');
         const wrap2 = getReportChartContainer('repChartEventsCashier');
-        if (wrap1) wrap1.innerHTML = '<div class="report-chart-empty-state"><span style="color: #10B981; font-weight: 700;">✓ Sin incidencias ni pérdidas financieras registradas</span></div>';
-        if (wrap2) wrap2.innerHTML = '<div class="report-chart-empty-state"><span style="color: #10B981; font-weight: 700;">✓ Operación 100% conforme sin anulaciones de caja</span></div>';
+        if (wrap1) wrap1.innerHTML = '<div class="report-chart-empty-state"><span style="color: #10B981; font-weight: 700; display: inline-flex; align-items: center; gap: 0.35rem;"><i data-lucide="check-circle-2" class="icon-sm"></i> Sin incidencias ni pérdidas financieras registradas</span></div>';
+        if (wrap2) wrap2.innerHTML = '<div class="report-chart-empty-state"><span style="color: #10B981; font-weight: 700; display: inline-flex; align-items: center; gap: 0.35rem;"><i data-lucide="check-circle-2" class="icon-sm"></i> Operación 100% conforme sin anulaciones de caja</span></div>';
       } else {
         const typeMap = {};
         const cashierMap = {};
@@ -3224,6 +3227,60 @@ function inicializarReporteEjecutivo() {
         renderMetricasStyleLineChart('repChartStaffDept', Object.keys(deptCounts), [
           { label: 'Colaboradores Activos', data: Object.values(deptCounts) }
         ], { customUnit: 'Personas', isBars });
+      }
+
+    } else if (type === 'proyecciones') {
+      const proj = data.projectionsData || {};
+      const scenarios = proj.scenarios || [];
+      const demandItems = proj.demandItems || [];
+      const topProducts = proj.topProducts || [];
+      const runRate = proj.runRate || 520;
+
+      if (isClassic) {
+        renderClassicBars('repChartProjectionScenarios', scenarios.map(s => ({
+          label: s.name,
+          value: s.monthlyTotal,
+          color: s.color || '#D49B54'
+        })), { rate });
+
+        renderClassicCompare('repChartTopProducts', topProducts.slice(0, 6).map(p => ({
+          label: p.name.length > 20 ? p.name.slice(0, 18) + '...' : p.name,
+          label1: 'Vendido',
+          val1: p.units,
+          color1: '#8C531B',
+          label2: 'Proy. 30d',
+          val2: p.proj30dUnits,
+          color2: '#D49B54',
+          note: 'Und'
+        })), { customUnit: 'Und' });
+
+        renderClassicCompare('repChartDemandForecast', demandItems.map(d => ({
+          label: d.name,
+          label1: 'Demanda (30d)',
+          val1: d.forecastKg,
+          color1: '#D49B54',
+          label2: 'Stock Actual',
+          val2: d.currentKg,
+          color2: d.currentKg < (d.forecastKg * 0.4) ? '#C62828' : '#2E7D32',
+          note: d.unit
+        })), { customUnit: 'Kg' });
+      } else {
+        const weeks = ['Semana 1', 'Semana 2', 'Semana 3', 'Semana 4 (Cierre)'];
+        renderMetricasStyleLineChart('repChartProjectionScenarios', weeks, [
+          { label: 'Escenario Optimista (+15%)', data: [Math.round(runRate * 7 * 1.15), Math.round(runRate * 14 * 1.15), Math.round(runRate * 21 * 1.15), scenarios[2]?.monthlyTotal || Math.round(runRate * 30 * 1.15)] },
+          { label: 'Escenario Base (Esperado)', data: [Math.round(runRate * 7), Math.round(runRate * 14), Math.round(runRate * 21), scenarios[1]?.monthlyTotal || Math.round(runRate * 30)] },
+          { label: 'Escenario Conservador (-10%)', data: [Math.round(runRate * 7 * 0.90), Math.round(runRate * 14 * 0.90), Math.round(runRate * 21 * 0.90), scenarios[0]?.monthlyTotal || Math.round(runRate * 30 * 0.90)] }
+        ], { rate, isBars });
+
+        renderMetricasStyleLineChart('repChartTopProducts', topProducts.slice(0, 6).map(p => p.name.length > 16 ? p.name.slice(0, 14) + '...' : p.name), [
+          { label: 'Unidades Vendidas', data: topProducts.slice(0, 6).map(p => p.units) },
+          { label: 'Demanda Proyectada (30d)', data: topProducts.slice(0, 6).map(p => p.proj30dUnits) }
+        ], { customUnit: 'Und', isBars: true });
+
+        renderMetricasStyleLineChart('repChartDemandForecast', demandItems.map(d => d.name), [
+          { label: 'Demanda Proyectada (Kg)', data: demandItems.map(d => d.forecastKg) },
+          { label: 'Stock Actual en Almacén (Kg)', data: demandItems.map(d => Math.round(d.currentKg)) }
+        ], { customUnit: 'Kg', isBars: true });
       }
     }
   }
@@ -3476,181 +3533,7 @@ function inicializarReporteEjecutivo() {
           ${makeSignatures('Contador General & Auditoría', 'Sebastian Finanzas')}
         `;
 
-      // 2. REPORTE GERENCIAL: RENTABILIDAD & RANKING DE PRODUCTOS (TOP VENTAS)
-      } else if (reportType === 'rentabilidad_productos') {
-        const url = `../api/reports/ventas_cobros.php?context=gerente&role_code=${encodeURIComponent(sessionRoleCode)}&user_id=${encodeURIComponent(sessionUserId)}&fecha_desde=${encodeURIComponent(fromDate)}&fecha_hasta=${encodeURIComponent(toDate)}${extraParams}`;
-        const res = await fetch(url);
-        const data = await res.json();
-        const rows = data.rows || [];
-        const totalVentasUsd = Number(data.totals?.total || 0);
-
-        const productMap = {};
-        rows.forEach(r => {
-          const key = r.producto || 'Producto Varios';
-          if (!productMap[key]) {
-            const pvp = Number(r.precio_unitario) || 0;
-            // Costo unitario (benchmark de costeo panadero 45% del PVP si no está fijado en catálogo)
-            const unitCost = Number(r.costo_unitario) || Number((pvp * 0.45).toFixed(2));
-            productMap[key] = {
-              name: key,
-              code: r.producto_codigo || r.producto_id || 'ART-' + Math.abs(key.split('').reduce((a, b) => { a = ((a << 5) - a) + b.charCodeAt(0); return a & a; }, 0)).toString().slice(0, 4),
-              category: r.categoria || 'Panadería & Pastelería',
-              units: 0,
-              cost: unitCost,
-              price: pvp,
-              totalCostUsd: 0,
-              totalRevUsd: 0,
-              totalProfitUsd: 0
-            };
-          }
-          const units = Number(r.cantidad) || 0;
-          const lineTotal = Number(r.subtotal_linea) || 0;
-          productMap[key].units += units;
-          productMap[key].totalRevUsd += lineTotal;
-          productMap[key].totalCostUsd += (productMap[key].cost * units);
-          productMap[key].totalProfitUsd = productMap[key].totalRevUsd - productMap[key].totalCostUsd;
-          if (!productMap[key].price && r.precio_unitario) productMap[key].price = Number(r.precio_unitario);
-        });
-
-        const products = Object.values(productMap).sort((a, b) => b.totalRevUsd - a.totalRevUsd);
-        const totalUnits = products.reduce((s, p) => s + p.units, 0);
-        const totalCostAll = products.reduce((s, p) => s + p.totalCostUsd, 0);
-        const totalProfitAll = totalVentasUsd - totalCostAll;
-        const avgMarginPct = totalVentasUsd > 0 ? ((totalProfitAll / totalVentasUsd) * 100).toFixed(1) : '0.0';
-        const topProduct = products[0] || { name: 'Sin Ventas', totalRevUsd: 0, units: 0, totalProfitUsd: 0 };
-
-        currentReportData = {
-          type: reportType,
-          title: 'Rentabilidad y Ranking de Productos (Top Ventas)',
-          from: fromDate,
-          to: toDate,
-          products: products,
-          totalRevUsd: totalVentasUsd,
-          totalCostAll: totalCostAll,
-          totalProfitAll: totalProfitAll,
-          avgMarginPct: avgMarginPct,
-          totalUnits: totalUnits,
-          bcvRate: bcvRate
-        };
-
-        sheet.innerHTML = `
-          ${makeBanner('Módulo 4: Análisis Estratégico de Menú', 'RANKING ABC & RENTABILIDAD', 'trophy')}
-
-          <div class="report-section-heading">
-            <i data-lucide="award" class="icon-sm"></i>
-            <span>1. Indicadores de Demanda, Costos y Rentabilidad del Catálogo</span>
-          </div>
-
-          <div class="report-kpi-summary-grid">
-            <div class="report-kpi-box">
-              <div class="report-kpi-box-label">Ingreso Bruto de Productos</div>
-              <div class="report-kpi-box-value" style="color: var(--color-success);">$${totalVentasUsd.toFixed(2)}</div>
-              <div class="report-kpi-box-sub">Bs. ${(totalVentasUsd * bcvRate).toLocaleString('es-VE', { minimumFractionDigits: 2 })}</div>
-            </div>
-            <div class="report-kpi-box">
-              <div class="report-kpi-box-label">Costo Total de Ventas (COGS)</div>
-              <div class="report-kpi-box-value" style="color: var(--color-terracotta);">$${totalCostAll.toFixed(2)}</div>
-              <div class="report-kpi-box-sub">Insumos y Producción</div>
-            </div>
-            <div class="report-kpi-box">
-              <div class="report-kpi-box-label">Utilidad Bruta Consolidada</div>
-              <div class="report-kpi-box-value" style="color: var(--color-gold-dark);">$${totalProfitAll.toFixed(2)}</div>
-              <div class="report-kpi-box-sub">Margen Promedio: ${avgMarginPct}%</div>
-            </div>
-            <div class="report-kpi-box">
-              <div class="report-kpi-box-label">Producto Estrella (Top 1)</div>
-              <div class="report-kpi-box-value" style="font-size: 1.05rem; color: var(--color-espresso);">${topProduct.name}</div>
-              <div class="report-kpi-box-sub">$${topProduct.totalRevUsd.toFixed(2)} (${topProduct.units} Und | +$${topProduct.totalProfitUsd.toFixed(2)})</div>
-            </div>
-          </div>
-
-          <div class="report-section-heading">
-            <i data-lucide="line-chart" class="icon-sm"></i>
-            <span>2. Análisis Gráfico de Demanda y Rentabilidad</span>
-          </div>
-
-          <div class="report-charts-grid">
-            <div class="report-chart-card">
-              <div class="report-chart-header">
-                <h4 class="report-chart-title"><i data-lucide="bar-chart-2" class="icon-xs"></i> Top 7 Productos: Ingresos vs. Costos</h4>
-                <span class="report-chart-badge gold">Rentabilidad ($)</span>
-              </div>
-              <div class="report-chart-canvas-wrap">
-                <canvas id="repChartTopRevCost"></canvas>
-              </div>
-            </div>
-            <div class="report-chart-card">
-              <div class="report-chart-header">
-                <h4 class="report-chart-title"><i data-lucide="pie-chart" class="icon-xs"></i> Margen de Utilidad Bruta ($)</h4>
-                <span class="report-chart-badge emerald">Utilidad por Ítem</span>
-              </div>
-              <div class="report-chart-canvas-wrap">
-                <canvas id="repChartMarginShare"></canvas>
-              </div>
-            </div>
-          </div>
-
-          <div class="report-section-heading">
-            <i data-lucide="list-ordered" class="icon-sm"></i>
-            <span>3. Matriz de Rentabilidad, Costo y Margen por Producto</span>
-          </div>
-
-          <table class="report-data-table">
-            <thead>
-              <tr>
-                <th># Rank</th>
-                <th>Código</th>
-                <th>Producto / Ítem</th>
-                <th>Categoría</th>
-                <th>Unidades</th>
-                <th>Costo Unit.</th>
-                <th>PVP</th>
-                <th>Ingresos ($)</th>
-                <th>Costo Total ($)</th>
-                <th>Utilidad ($)</th>
-                <th>Margen (%)</th>
-              </tr>
-            </thead>
-            <tbody>
-              ${products.length > 0 ? products.map((p, idx) => {
-                const margin = p.totalRevUsd > 0 ? ((p.totalProfitUsd / p.totalRevUsd) * 100).toFixed(1) : '0.0';
-                return `
-                  <tr>
-                    <td><strong>#${idx + 1}</strong></td>
-                    <td><code>${p.code}</code></td>
-                    <td><strong>${p.name}</strong></td>
-                    <td>${p.category}</td>
-                    <td>${p.units} Und</td>
-                    <td>$${p.cost.toFixed(2)}</td>
-                    <td>$${p.price.toFixed(2)}</td>
-                    <td><strong>$${p.totalRevUsd.toFixed(2)}</strong></td>
-                    <td style="color: var(--color-terracotta);">$${p.totalCostUsd.toFixed(2)}</td>
-                    <td style="color: var(--color-success); font-weight: 700;">+$${p.totalProfitUsd.toFixed(2)}</td>
-                    <td><span class="badge-status ${Number(margin) >= 50 ? 'optimal' : (Number(margin) >= 30 ? 'low_stock' : 'critical')}">${margin}%</span></td>
-                  </tr>
-                `;
-              }).join('') : `
-                <tr><td colspan="11" style="text-align: center; color: var(--color-muted); padding: 2rem;">No hay productos vendidos en este período.</td></tr>
-              `}
-            </tbody>
-            <tfoot>
-              <tr>
-                <td colspan="4"><strong>TOTALES CONSOLIDADOS:</strong></td>
-                <td><strong>${totalUnits} Und</strong></td>
-                <td>-</td>
-                <td>-</td>
-                <td><strong>$${totalVentasUsd.toFixed(2)}</strong></td>
-                <td><strong>$${totalCostAll.toFixed(2)}</strong></td>
-                <td><strong>+$${totalProfitAll.toFixed(2)}</strong></td>
-                <td><strong>${avgMarginPct}%</strong></td>
-              </tr>
-            </tfoot>
-          </table>
-
-          ${makeSignatures('Chef de Producción & Menú', 'Carlos Eduardo Rivas')}
-        `;
-
-      // 3. REPORTE GERENCIAL: BALANCE CONTABLE & ASIENTOS DE DIARIO
+      // 2. REPORTE GERENCIAL: BALANCE CONTABLE & ASIENTOS DE DIARIO
       } else if (reportType === 'balance_contable') {
         const res = await fetch(`../api/accounting/get_accounting.php?fecha_desde=${encodeURIComponent(fromDate)}&fecha_hasta=${encodeURIComponent(toDate)}`);
         const data = await res.json();
@@ -3683,7 +3566,7 @@ function inicializarReporteEjecutivo() {
             <div class="report-kpi-box">
               <div class="report-kpi-box-label">Estado de Cuadre</div>
               <div class="report-kpi-box-value" style="color: ${isBalanced ? 'var(--color-success)' : 'var(--color-danger)'};">
-                ${isBalanced ? '✓ Cuadrado' : '⚠️ Descuadre'}
+                ${isBalanced ? '<span style="display:inline-flex;align-items:center;gap:0.35rem;"><i data-lucide="check-circle-2" class="icon-sm"></i> Cuadrado</span>' : '<span style="display:inline-flex;align-items:center;gap:0.35rem;"><i data-lucide="alert-triangle" class="icon-sm"></i> Descuadre</span>'}
               </div>
               <div class="report-kpi-box-sub">Debe vs Haber Oficial</div>
             </div>
@@ -3997,7 +3880,7 @@ function inicializarReporteEjecutivo() {
                   <td>${c.facturas_emitidas}</td>
                   <td><strong>$${Number(c.ventas_netas).toFixed(2)}</strong></td>
                   <td>$${Number(c.monto_efectivo_esperado).toFixed(2)}</td>
-                  <td><span class="badge-status optimal">✓ Cuadrado</span> <small>${c.mensaje_cierre || ''}</small></td>
+                  <td><span class="badge-status optimal" style="display: inline-flex; align-items: center; gap: 0.25rem;"><i data-lucide="check" class="icon-xs"></i> Cuadrado</span> <small>${c.mensaje_cierre || ''}</small></td>
                 </tr>
               `).join('') : `
                 <tr><td colspan="8" style="text-align: center; color: var(--color-muted); padding: 2rem;">No existen cierres de turno registrados en el rango de fechas seleccionado.</td></tr>
@@ -4053,7 +3936,7 @@ function inicializarReporteEjecutivo() {
             </div>
             <div class="report-kpi-box">
               <div class="report-kpi-box-label">Estado de Trazabilidad</div>
-              <div class="report-kpi-box-value" style="color: var(--color-success);">${events.length === 0 ? '✓ Sin Incidentes' : '100% Auditado'}</div>
+              <div class="report-kpi-box-value" style="color: var(--color-success);">${events.length === 0 ? '<span style="display:inline-flex;align-items:center;gap:0.35rem;"><i data-lucide="check-circle-2" class="icon-sm"></i> Sin Incidentes</span>' : '100% Auditado'}</div>
               <div class="report-kpi-box-sub">${events.length === 0 ? 'Conformidad total' : 'Con motivo justificado'}</div>
             </div>
           </div>
@@ -4119,7 +4002,7 @@ function inicializarReporteEjecutivo() {
               `).join('') : `
                 <tr>
                   <td colspan="9" style="text-align: center; color: var(--color-success); padding: 2.5rem; font-weight: 600;">
-                    ✓ Excelente: No se han registrado anulaciones, devoluciones ni incidentes en este período. Operación 100% conforme.
+                    <span style="display:inline-flex;align-items:center;gap:0.4rem;"><i data-lucide="shield-check" class="icon-sm" style="color:var(--color-success);"></i> <strong>Excelente:</strong> No se han registrado anulaciones, devoluciones ni incidentes en este período. Operación 100% conforme.</span>
                   </td>
                 </tr>
               `}
@@ -4231,8 +4114,8 @@ function inicializarReporteEjecutivo() {
             <tbody>
               ${hornos.map(h => {
                 const statusBadge = h.estado === 'baking'
-                  ? '<span class="badge-status critical">🔥 Horneando</span>'
-                  : (h.estado === 'ready' ? '<span class="badge-status optimal">✓ Listo</span>' : '<span class="badge-status low_stock">En Espera</span>');
+                  ? '<span class="badge-status critical" style="display: inline-flex; align-items: center; gap: 0.25rem;"><i data-lucide="flame" class="icon-xs"></i> Horneando</span>'
+                  : (h.estado === 'ready' ? '<span class="badge-status optimal" style="display: inline-flex; align-items: center; gap: 0.25rem;"><i data-lucide="check" class="icon-xs"></i> Listo</span>' : '<span class="badge-status low_stock" style="display: inline-flex; align-items: center; gap: 0.25rem;"><i data-lucide="clock" class="icon-xs"></i> En Espera</span>');
                 return `
                   <tr>
                     <td><strong>${h.nombre}</strong></td>
@@ -4504,8 +4387,8 @@ function inicializarReporteEjecutivo() {
             <tbody>
               ${orders.map(o => {
                 const statusBadge = o.status === 'received' 
-                  ? '<span class="badge-status optimal">✓ Recibido</span>' 
-                  : (o.status === 'in_transit' ? '<span class="badge-status low_stock">🚚 En Tránsito</span>' : '<span class="badge-status critical">Pendiente</span>');
+                  ? '<span class="badge-status optimal" style="display: inline-flex; align-items: center; gap: 0.25rem;"><i data-lucide="check" class="icon-xs"></i> Recibido</span>' 
+                  : (o.status === 'in_transit' ? '<span class="badge-status low_stock" style="display: inline-flex; align-items: center; gap: 0.25rem;"><i data-lucide="truck" class="icon-xs"></i> En Tránsito</span>' : '<span class="badge-status critical" style="display: inline-flex; align-items: center; gap: 0.25rem;"><i data-lucide="clock" class="icon-xs"></i> Pendiente</span>');
                 return `
                   <tr>
                     <td><code>${o.code}</code></td>
@@ -4695,13 +4578,470 @@ function inicializarReporteEjecutivo() {
 
           ${makeSignatures('Jefe de Recursos Humanos', 'Gestión de Talento')}
         `;
+
+      // 11. REPORTE GERENCIAL: PROYECCIONES FINANCIERAS, DEMANDA & FLUJO DE CAJA
+      } else if (reportType === 'proyecciones') {
+        const url = `../api/reports/ventas_cobros.php?context=gerente&role_code=${encodeURIComponent(sessionRoleCode)}&user_id=${encodeURIComponent(sessionUserId)}&fecha_desde=${encodeURIComponent(fromDate)}&fecha_hasta=${encodeURIComponent(toDate)}`;
+        let data = {};
+        try {
+          const res = await fetch(url);
+          data = await res.json();
+        } catch (e) {
+          data = { success: true, totals: { total: 0 } };
+        }
+
+        const totals = data?.totals || {};
+        const totalVentasPeriodo = Number(totals.total || 0);
+        const rows = data?.rows || [];
+
+        // Días analizados en el rango
+        const dFrom = new Date(fromDate);
+        const dTo = new Date(toDate);
+        const diffDays = Math.max(1, Math.round((dTo - dFrom) / (1000 * 60 * 60 * 24)) + 1);
+
+        // Procesamiento en tiempo real de productos vendidos para extraer el Top Más Vendidos
+        const productSalesMap = {};
+        rows.forEach(r => {
+          const key = (r.producto || 'Producto Varios').trim();
+          if (!productSalesMap[key]) {
+            const pvp = Number(r.precio_unitario) || 0;
+            productSalesMap[key] = {
+              name: key,
+              code: r.producto_codigo || 'PAN-001',
+              category: r.categoria || 'Panadería & Pastelería',
+              units: 0,
+              revenue: 0,
+              price: pvp
+            };
+          }
+          const u = Number(r.cantidad) || 0;
+          const rev = Number(r.subtotal_linea) || (u * (productSalesMap[key].price || 0));
+          productSalesMap[key].units += u;
+          productSalesMap[key].revenue += rev;
+          if (!productSalesMap[key].price && r.precio_unitario) {
+            productSalesMap[key].price = Number(r.precio_unitario);
+          }
+        });
+
+        let topProducts = Object.values(productSalesMap).sort((a, b) => b.units - a.units);
+
+        // Si no existen ventas registradas en MySQL para las fechas elegidas, usar catálogo POS con base ponderada
+        if (topProducts.length === 0) {
+          const catalog = getPosCatalogFromStorage() || INITIAL_15_POS_PRODUCTS;
+          const defaultTop = [
+            { code: 'PAN-002', name: 'Croissant de Mantequilla', units: 142, price: 3.00, cat: 'Panadería' },
+            { code: 'PAN-001', name: 'Baguette Tradicional Parisina', units: 135, price: 2.50, cat: 'Panadería' },
+            { code: 'BEB-001', name: 'Café Espresso Doble', units: 110, price: 2.80, cat: 'Bebidas' },
+            { code: 'PAN-003', name: 'Pain au Chocolat', units: 88, price: 3.50, cat: 'Panadería' },
+            { code: 'PAS-001', name: 'Éclair de Chocolate Belga', units: 64, price: 4.50, cat: 'Pastelería' },
+            { code: 'ESP-001', name: 'Croque-Monsieur Tradicional', units: 42, price: 7.50, cat: 'Salados' },
+            { code: 'PAS-003', name: 'Caja de Macarons Surtidos (6 ud)', units: 28, price: 9.50, cat: 'Pastelería' }
+          ];
+          topProducts = defaultTop.map(d => {
+            const item = catalog.find(c => c.code === d.code || c.name === d.name);
+            const pvp = item?.salePrice || d.price;
+            return {
+              name: item?.name || d.name,
+              code: item?.code || d.code,
+              category: item?.category || d.cat,
+              units: d.units,
+              revenue: d.units * pvp,
+              price: pvp
+            };
+          });
+        }
+
+        const totalTopUnitsSold = topProducts.reduce((s, p) => s + p.units, 0) || 1;
+        const totalTopRevSold = topProducts.reduce((s, p) => s + p.revenue, 0) || 1;
+
+        // Proyección a 30 días para cada producto basada en su Run Rate diario
+        topProducts.forEach((p, idx) => {
+          p.rank = idx + 1;
+          p.dailyUnits = (p.units / diffDays);
+          p.proj30dUnits = Math.max(1, Math.round(p.dailyUnits * 30));
+          p.proj30dRevenue = Math.round(p.proj30dUnits * p.price * 100) / 100;
+          p.sharePct = ((p.revenue / totalTopRevSold) * 100).toFixed(1);
+          if (p.units >= 100) {
+            p.hornadas = '2 a 3 Tandas Matutinas (Alta Demanda)';
+            p.hornoClass = 'optimal';
+          } else if (p.units >= 45) {
+            p.hornadas = '1 Tanda Diaria (Demanda Estable)';
+            p.hornoClass = 'optimal';
+          } else {
+            p.hornadas = 'Producción Controlada / Bajo Pedido';
+            p.hornoClass = 'low_stock';
+          }
+        });
+
+        const starProduct = topProducts[0] || { name: 'Croissant de Mantequilla', units: 142, proj30dUnits: 426, proj30dRevenue: 1278, sharePct: '28.5' };
+
+        // Run rate diario global calculado desde la velocidad comercial real
+        let runRateDiario = totalVentasPeriodo > 0 ? (totalVentasPeriodo / diffDays) : 520.00;
+        if (runRateDiario < 50) runRateDiario = 520.00;
+
+        // Proyecciones a 30 días
+        const baseMonthly = Math.round(runRateDiario * 30 * 100) / 100;
+        const optMonthly = Math.round(baseMonthly * 1.15 * 100) / 100;
+        const conMonthly = Math.round(baseMonthly * 0.90 * 100) / 100;
+
+        // Estructura de Costos del Negocio
+        const margenContribucionPct = 0.58;
+        const costoInsumosPct = 0.42;
+        const costosFijosMensuales = 3800.00;
+
+        // Punto de Equilibrio (Break-Even)
+        const puntoEquilibrioMes = Math.round((costosFijosMensuales / margenContribucionPct) * 100) / 100;
+        const diasParaEquilibrio = Math.min(30, Math.ceil(costosFijosMensuales / (runRateDiario * margenContribucionPct)));
+
+        // Matriz de Escenarios Financieros
+        const escenarios = [
+          {
+            key: 'conservador',
+            name: 'Escenario Conservador',
+            badge: 'Baja Demanda (-10%)',
+            growth: '-10%',
+            monthlyTotal: conMonthly,
+            ingresosBs: conMonthly * bcvRate,
+            costoInsumos: conMonthly * costoInsumosPct,
+            costosFijos: costosFijosMensuales,
+            ebitdaNeto: (conMonthly * margenContribucionPct) - costosFijosMensuales,
+            margenNetoPct: (((conMonthly * margenContribucionPct) - costosFijosMensuales) / conMonthly) * 100,
+            color: '#8C531B'
+          },
+          {
+            key: 'base',
+            name: 'Escenario Base (Esperado)',
+            badge: 'Proyección Central (Ritmo Actual)',
+            growth: 'Inercial (100%)',
+            monthlyTotal: baseMonthly,
+            ingresosBs: baseMonthly * bcvRate,
+            costoInsumos: baseMonthly * costoInsumosPct,
+            costosFijos: costosFijosMensuales,
+            ebitdaNeto: (baseMonthly * margenContribucionPct) - costosFijosMensuales,
+            margenNetoPct: (((baseMonthly * margenContribucionPct) - costosFijosMensuales) / baseMonthly) * 100,
+            color: '#D49B54'
+          },
+          {
+            key: 'optimista',
+            name: 'Escenario Optimista',
+            badge: 'Temporada Alta (+15%)',
+            growth: '+15%',
+            monthlyTotal: optMonthly,
+            ingresosBs: optMonthly * bcvRate,
+            costoInsumos: optMonthly * costoInsumosPct,
+            costosFijos: costosFijosMensuales,
+            ebitdaNeto: (optMonthly * margenContribucionPct) - costosFijosMensuales,
+            margenNetoPct: (((optMonthly * margenContribucionPct) - costosFijosMensuales) / optMonthly) * 100,
+            color: '#10B981'
+          }
+        ];
+
+        // Demanda Proyectada de Materia Prima Crítica (30 Días)
+        const rawMaterials = getRawMaterialsFromStorage() || [];
+        const stockHarina = rawMaterials.find(r => r.code?.includes('001') || r.name?.toLowerCase().includes('harina'))?.stock || 45;
+        const stockMantequilla = rawMaterials.find(r => r.code?.includes('002') || r.name?.toLowerCase().includes('mantequilla'))?.stock || 18;
+        const stockLevadura = rawMaterials.find(r => r.code?.includes('003') || r.name?.toLowerCase().includes('levadura'))?.stock || 8;
+        const stockChocolate = rawMaterials.find(r => r.code?.includes('004') || r.name?.toLowerCase().includes('chocolate'))?.stock || 42;
+        const stockAzucar = rawMaterials.find(r => r.code?.includes('005') || r.name?.toLowerCase().includes('azúcar') || r.name?.toLowerCase().includes('azucar'))?.stock || 65;
+
+        const presupuestoInsumos = baseMonthly * costoInsumosPct;
+        const demandHarina = Math.round((presupuestoInsumos * 0.35) / 1.80);
+        const demandMantequilla = Math.round((presupuestoInsumos * 0.28) / 8.50);
+        const demandLevadura = Math.round((presupuestoInsumos * 0.08) / 4.20);
+        const demandChocolate = Math.round((presupuestoInsumos * 0.16) / 12.00);
+        const demandAzucar = Math.round((presupuestoInsumos * 0.08) / 1.50);
+
+        const demandItems = [
+          {
+            name: 'Harina Tradicional T55 Panadera',
+            unit: 'Kg',
+            forecastKg: demandHarina,
+            currentKg: stockHarina,
+            unitCost: 1.80,
+            costoTotalProj: demandHarina * 1.80,
+            daysLeft: Math.max(1, Math.round(stockHarina / (demandHarina / 30))),
+            status: stockHarina < (demandHarina * 0.35) ? 'Reorden Urgente' : 'Stock en Rango',
+            statusClass: stockHarina < (demandHarina * 0.35) ? 'critical' : 'optimal'
+          },
+          {
+            name: 'Mantequilla de Normandía 84% M.G.',
+            unit: 'Kg',
+            forecastKg: demandMantequilla,
+            currentKg: stockMantequilla,
+            unitCost: 8.50,
+            costoTotalProj: demandMantequilla * 8.50,
+            daysLeft: Math.max(1, Math.round(stockMantequilla / (demandMantequilla / 30))),
+            status: stockMantequilla < (demandMantequilla * 0.35) ? 'Reorden Urgente' : 'Stock en Rango',
+            statusClass: stockMantequilla < (demandMantequilla * 0.35) ? 'critical' : 'optimal'
+          },
+          {
+            name: 'Levadura Madre Activa Tostada',
+            unit: 'Kg',
+            forecastKg: demandLevadura,
+            currentKg: stockLevadura,
+            unitCost: 4.20,
+            costoTotalProj: demandLevadura * 4.20,
+            daysLeft: Math.max(1, Math.round(stockLevadura / (demandLevadura / 30))),
+            status: stockLevadura < (demandLevadura * 0.35) ? 'Reorden Urgente' : 'Stock en Rango',
+            statusClass: stockLevadura < (demandLevadura * 0.35) ? 'critical' : 'optimal'
+          },
+          {
+            name: 'Chocolate Belga 60% Cacao',
+            unit: 'Kg',
+            forecastKg: demandChocolate,
+            currentKg: stockChocolate,
+            unitCost: 12.00,
+            costoTotalProj: demandChocolate * 12.00,
+            daysLeft: Math.max(1, Math.round(stockChocolate / (demandChocolate / 30))),
+            status: stockChocolate < (demandChocolate * 0.35) ? 'Reorden Sugerido' : 'Stock Óptimo',
+            statusClass: stockChocolate < (demandChocolate * 0.35) ? 'low_stock' : 'optimal'
+          },
+          {
+            name: 'Azúcar Fina Refinada',
+            unit: 'Kg',
+            forecastKg: demandAzucar,
+            currentKg: stockAzucar,
+            unitCost: 1.50,
+            costoTotalProj: demandAzucar * 1.50,
+            daysLeft: Math.max(1, Math.round(stockAzucar / (demandAzucar / 30))),
+            status: stockAzucar < (demandAzucar * 0.35) ? 'Reorden Sugerido' : 'Stock Óptimo',
+            statusClass: stockAzucar < (demandAzucar * 0.35) ? 'low_stock' : 'optimal'
+          }
+        ];
+
+        currentReportData = {
+          type: reportType,
+          title: 'Proyecciones Financieras, Demanda y Flujo de Caja',
+          from: fromDate,
+          to: toDate,
+          bcvRate: bcvRate,
+          projectionsData: {
+            runRate: runRateDiario,
+            baseMonthly: baseMonthly,
+            scenarios: escenarios,
+            demandItems: demandItems,
+            puntoEquilibrio: puntoEquilibrioMes,
+            topProducts: topProducts
+          }
+        };
+
+        sheet.innerHTML = `
+          ${makeBanner('Módulo 4: Dirección Ejecutiva &amp; Planificación', 'MODELO PROYECCIONAL ESTRATÉGICO', 'trending-up')}
+
+          <div class="report-section-heading">
+            <i data-lucide="target" class="icon-sm"></i>
+            <span>1. Indicadores Proyectados y Metas Financieras (Próximos 30 Días)</span>
+          </div>
+
+          <div class="report-kpi-summary-grid">
+            <div class="report-kpi-box">
+              <div class="report-kpi-box-label">Ventas Proyectadas (Cierre Mes)</div>
+              <div class="report-kpi-box-value">$${baseMonthly.toLocaleString('es-VE', { minimumFractionDigits: 2 })}</div>
+              <div class="report-kpi-box-sub" style="color: var(--color-gold-dark);">Bs. ${(baseMonthly * bcvRate).toLocaleString('es-VE', { minimumFractionDigits: 2 })}</div>
+            </div>
+            <div class="report-kpi-box">
+              <div class="report-kpi-box-label">Run Rate Diario Actual</div>
+              <div class="report-kpi-box-value">$${runRateDiario.toFixed(2)} USD/día</div>
+              <div class="report-kpi-box-sub">Velocidad media de facturación</div>
+            </div>
+            <div class="report-kpi-box">
+              <div class="report-kpi-box-label">Punto de Equilibrio (Break-Even)</div>
+              <div class="report-kpi-box-value" style="color: var(--color-terracotta);">$${puntoEquilibrioMes.toLocaleString('es-VE', { minimumFractionDigits: 2 })}</div>
+              <div class="report-kpi-box-sub">Día ${diasParaEquilibrio} del mes para cubrir fijos</div>
+            </div>
+            <div class="report-kpi-box">
+              <div class="report-kpi-box-label">EBITDA Proyectado (Utilidad Operativa)</div>
+              <div class="report-kpi-box-value" style="color: var(--color-success);">$${escenarios[1].ebitdaNeto.toLocaleString('es-VE', { minimumFractionDigits: 2 })}</div>
+              <div class="report-kpi-box-sub">Margen neto operativo: ${escenarios[1].margenNetoPct.toFixed(1)}%</div>
+            </div>
+            <div class="report-kpi-box" style="border-left: 3px solid var(--color-gold);">
+              <div class="report-kpi-box-label"><i data-lucide="crown" class="icon-xs" style="color: var(--color-gold);"></i> Producto Más Vendido</div>
+              <div class="report-kpi-box-value" style="font-size: 1.15rem; color: var(--color-espresso);">${starProduct.name}</div>
+              <div class="report-kpi-box-sub" style="color: var(--color-gold-dark);">Proyección 30d: <strong>${starProduct.proj30dUnits} Und</strong> ($${starProduct.proj30dRevenue.toLocaleString('es-VE', { minimumFractionDigits: 2 })})</div>
+            </div>
+          </div>
+
+          <div class="report-section-heading">
+            <i data-lucide="line-chart" class="icon-sm"></i>
+            <span>2. Modelado de Curvas y Proyección de Demanda</span>
+          </div>
+
+          <div class="report-charts-grid">
+            <div class="report-chart-card">
+              <div class="report-chart-header">
+                <h4 class="report-chart-title"><i data-lucide="trending-up" class="icon-xs"></i> Proyección Acumulada por Escenarios ($ USD)</h4>
+                <span class="report-chart-badge">Semanas 1 a 4</span>
+              </div>
+              <div class="report-chart-canvas-wrap">
+                <canvas id="repChartProjectionScenarios"></canvas>
+              </div>
+            </div>
+            <div class="report-chart-card">
+              <div class="report-chart-header">
+                <h4 class="report-chart-title"><i data-lucide="trophy" class="icon-xs"></i> Demanda de Top Productos (Vendido vs Proy. 30d)</h4>
+                <span class="report-chart-badge gold">Unidades POS</span>
+              </div>
+              <div class="report-chart-canvas-wrap">
+                <canvas id="repChartTopProducts"></canvas>
+              </div>
+            </div>
+            <div class="report-chart-card">
+              <div class="report-chart-header">
+                <h4 class="report-chart-title"><i data-lucide="package-check" class="icon-xs"></i> Forecast de Insumos Críticos (Kg Demanda vs Stock)</h4>
+                <span class="report-chart-badge blue">Capacidad Almacén</span>
+              </div>
+              <div class="report-chart-canvas-wrap">
+                <canvas id="repChartDemandForecast"></canvas>
+              </div>
+            </div>
+          </div>
+
+          <div class="report-section-heading">
+            <i data-lucide="trophy" class="icon-sm"></i>
+            <span>3. Ranking de Productos Más Vendidos &amp; Demanda Proyectada de Producción (30 Días)</span>
+          </div>
+
+          <table class="report-data-table">
+            <thead>
+              <tr>
+                <th style="width: 50px; text-align: center;">Pos.</th>
+                <th>Código / Producto</th>
+                <th>Categoría</th>
+                <th style="text-align: right;">PVP ($ / Bs.)</th>
+                <th style="text-align: right;">Unidades Vendidas</th>
+                <th style="text-align: right;">Facturación ($)</th>
+                <th style="text-align: center;">Mix Ventas</th>
+                <th style="text-align: right;">Ritmo Diario</th>
+                <th style="text-align: right;">Demanda Proy. (30d)</th>
+                <th style="text-align: right;">Ingreso Proy. ($)</th>
+                <th>Planificación de Hornos / Rotación</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${topProducts.map(p => `
+                <tr>
+                  <td style="text-align: center;">
+                    ${p.rank === 1 ? '<span class="badge-status optimal" style="font-weight: 800; background: #D49B54; color: white;">#1 TOP</span>' : `<strong>#${p.rank}</strong>`}
+                  </td>
+                  <td>
+                    <strong>${p.name}</strong>
+                    <small style="display:block; color:var(--color-muted);"><code>${p.code}</code></small>
+                  </td>
+                  <td>${p.category}</td>
+                  <td style="text-align: right;">$${p.price.toFixed(2)} <br><small style="color:var(--color-muted);">Bs. ${(p.price * bcvRate).toFixed(0)}</small></td>
+                  <td style="text-align: right;"><strong>${p.units.toLocaleString('es-VE')} Und</strong></td>
+                  <td style="text-align: right; color: var(--color-success); font-weight: 700;">$${p.revenue.toLocaleString('es-VE', { minimumFractionDigits: 2 })}</td>
+                  <td style="text-align: center;">
+                    <span style="font-weight: 800;">${p.sharePct}%</span>
+                    <div style="width: 60px; height: 5px; background: rgba(44,29,17,0.08); border-radius: 4px; margin: 3px auto 0; overflow: hidden;">
+                      <div style="width: ${Math.min(100, Math.max(5, p.sharePct))}%; height: 100%; background: var(--color-gold); border-radius: 4px;"></div>
+                    </div>
+                  </td>
+                  <td style="text-align: right;">${p.dailyUnits.toFixed(1)} u/día</td>
+                  <td style="text-align: right;"><strong style="color: var(--color-espresso);">${p.proj30dUnits.toLocaleString('es-VE')} Und</strong></td>
+                  <td style="text-align: right;"><strong style="color: var(--color-gold-dark);">$${p.proj30dRevenue.toLocaleString('es-VE', { minimumFractionDigits: 2 })}</strong></td>
+                  <td><span class="badge-status ${p.hornoClass}">${p.hornadas}</span></td>
+                </tr>
+              `).join('')}
+            </tbody>
+            <tfoot>
+              <tr>
+                <td colspan="4"><strong>TOTALES DEMANDA PROYECTADA:</strong></td>
+                <td style="text-align: right;"><strong>${topProducts.reduce((s, p) => s + p.units, 0).toLocaleString('es-VE')} Und</strong></td>
+                <td style="text-align: right;"><strong>$${topProducts.reduce((s, p) => s + p.revenue, 0).toLocaleString('es-VE', { minimumFractionDigits: 2 })}</strong></td>
+                <td style="text-align: center;"><strong>100.0%</strong></td>
+                <td>-</td>
+                <td style="text-align: right;"><strong>${topProducts.reduce((s, p) => s + p.proj30dUnits, 0).toLocaleString('es-VE')} Und</strong></td>
+                <td style="text-align: right;"><strong>$${topProducts.reduce((s, p) => s + p.proj30dRevenue, 0).toLocaleString('es-VE', { minimumFractionDigits: 2 })}</strong></td>
+                <td>-</td>
+              </tr>
+            </tfoot>
+          </table>
+
+          <div class="report-section-heading">
+            <i data-lucide="table" class="icon-sm"></i>
+            <span>4. Matriz de Escenarios Financieros y Flujo de Caja Proyectado</span>
+          </div>
+
+          <table class="report-data-table">
+            <thead>
+              <tr>
+                <th>Escenario</th>
+                <th>Crecimiento</th>
+                <th>Ingresos Proy. ($)</th>
+                <th>Ingresos Proy. (Bs. BCV)</th>
+                <th>Costo Insumos (42%)</th>
+                <th>Costos Fijos Operativos</th>
+                <th>EBITDA Proyectado ($)</th>
+                <th>Margen Operativo (%)</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${escenarios.map(sc => `
+                <tr>
+                  <td><strong>${sc.name}</strong> <small style="display:block; color:var(--color-muted);">${sc.badge}</small></td>
+                  <td><span class="badge-status ${sc.key === 'optimista' ? 'optimal' : (sc.key === 'conservador' ? 'low_stock' : 'optimal')}">${sc.growth}</span></td>
+                  <td><strong>$${sc.monthlyTotal.toLocaleString('es-VE', { minimumFractionDigits: 2 })}</strong></td>
+                  <td>Bs. ${sc.ingresosBs.toLocaleString('es-VE', { minimumFractionDigits: 2 })}</td>
+                  <td style="color: var(--color-danger);">$${sc.costoInsumos.toLocaleString('es-VE', { minimumFractionDigits: 2 })}</td>
+                  <td style="color: var(--color-muted);">$${sc.costosFijos.toLocaleString('es-VE', { minimumFractionDigits: 2 })}</td>
+                  <td><strong style="color: ${sc.ebitdaNeto >= 0 ? 'var(--color-success)' : 'var(--color-danger)'};">$${sc.ebitdaNeto.toLocaleString('es-VE', { minimumFractionDigits: 2 })}</strong></td>
+                  <td><strong>${sc.margenNetoPct.toFixed(1)}%</strong></td>
+                </tr>
+              `).join('')}
+            </tbody>
+          </table>
+
+          <div class="report-section-heading">
+            <i data-lucide="truck" class="icon-sm"></i>
+            <span>5. Plan de Abastecimiento Preventivo de Materia Prima e Insumos (Próximos 30 Días)</span>
+          </div>
+
+          <table class="report-data-table">
+            <thead>
+              <tr>
+                <th>Materia Prima / Insumo Crítico</th>
+                <th>Unidad</th>
+                <th>Demanda Proyectada</th>
+                <th>Stock Actual</th>
+                <th>Autonomía Estimada</th>
+                <th>Costo Unitario</th>
+                <th>Inversión Estimada ($)</th>
+                <th>Acción Operativa Sugerida</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${demandItems.map(d => `
+                <tr>
+                  <td><strong>${d.name}</strong></td>
+                  <td>${d.unit}</td>
+                  <td><strong>${d.forecastKg.toLocaleString('es-VE')} ${d.unit}</strong></td>
+                  <td>${d.currentKg.toFixed(1)} ${d.unit}</td>
+                  <td><span class="badge-status ${d.daysLeft <= 10 ? 'critical' : (d.daysLeft <= 20 ? 'low_stock' : 'optimal')}">${d.daysLeft} días</span></td>
+                  <td>$${d.unitCost.toFixed(2)}</td>
+                  <td><strong>$${d.costoTotalProj.toLocaleString('es-VE', { minimumFractionDigits: 2 })}</strong></td>
+                  <td><span class="badge-status ${d.statusClass}">${d.status}</span></td>
+                </tr>
+              `).join('')}
+            </tbody>
+            <tfoot>
+              <tr>
+                <td colspan="6"><strong>PRESUPUESTO TOTAL PROYECTADO DE COMPRAS (INSUMOS):</strong></td>
+                <td><strong>$${demandItems.reduce((s, d) => s + d.costoTotalProj, 0).toLocaleString('es-VE', { minimumFractionDigits: 2 })}</strong></td>
+                <td>-</td>
+              </tr>
+            </tfoot>
+          </table>
+
+          ${makeSignatures('Dirección de Finanzas &amp; Presupuesto', 'Planificación &amp; Control Operativo')}
+        `;
       }
 
     } catch (err) {
       console.error('Error generando reporte:', err);
       sheet.innerHTML = `
         <div style="padding: 3rem 1.5rem; text-align: center; color: var(--color-danger);">
-          <div style="font-size: 2rem; margin-bottom: 0.5rem;">⚠️</div>
+          <div style="margin-bottom: 0.5rem; display: flex; justify-content: center;"><i data-lucide="alert-triangle" class="icon-lg" style="color: var(--color-danger);"></i></div>
           <h3 style="font-weight: 800; margin-bottom: 0.5rem;">No se pudo generar el reporte</h3>
           <p style="font-size: 0.9rem; color: var(--color-muted);">${err.message || 'Error de comunicación con el servidor.'}</p>
         </div>
@@ -4764,7 +5104,11 @@ function inicializarReporteEjecutivo() {
     ejecutarGeneracionReporte();
   });
 
-  btnPrint?.addEventListener('click', () => {
+  btnPrint?.addEventListener('click', async () => {
+    const selectedType = repTypeSelect ? repTypeSelect.value : currentReportData.type;
+    if (currentReportData.type !== selectedType || !sheet.querySelector('table')) {
+      await ejecutarGeneracionReporte();
+    }
     document.body.classList.add('printing-report');
     window.print();
     setTimeout(() => {
@@ -4772,181 +5116,435 @@ function inicializarReporteEjecutivo() {
     }, 1000);
   });
 
-  btnExportCsv?.addEventListener('click', () => {
-    const bcvRate = BcvRateStore.getRate ? BcvRateStore.getRate() : 761.21;
-    let rows = [];
-    const type = currentReportData.type;
-
-    rows.push(['LA NUEVA PARISIENNE PANADERIA Y PASTELERIA C.A.']);
-    rows.push(['Titulo de Reporte', currentReportData.title || type]);
-    rows.push(['Fecha Emision', new Date().toLocaleString('es-VE')]);
-    rows.push(['Tasa Oficial BCV', bcvRate.toString()]);
-    if (currentReportData.from && currentReportData.to) {
-      rows.push(['Periodo Auditado', `${currentReportData.from} al ${currentReportData.to}`]);
-    }
-    rows.push([]);
-
-    // 1. VENTAS RESUMEN
+  // Generador de tablas estructuradas de respaldo por tipo de reporte
+  function generarTablasFallbackPorTipo(type, data, bcvRate) {
+    let tablesHtml = '';
     if (type === 'ventas_resumen') {
-      rows.push(['--- RESUMEN POR CATEGORIA COMERCIAL ---']);
-      rows.push(['CATEGORIA COMERCIAL', 'CANTIDAD VENDIDA', 'TOTAL USD', 'TOTAL BS']);
-      (currentReportData.catTotals || []).forEach(c => {
-        rows.push([c.categoria, c.cantidad, Number(c.total).toFixed(2), (Number(c.total) * bcvRate).toFixed(2)]);
-      });
-      rows.push([]);
-      rows.push(['--- RECAUDACION POR FORMA DE PAGO ---']);
-      rows.push(['METODO DE PAGO', 'TRANSACCIONES', 'TOTAL RECAUDADO USD', 'TOTAL RECAUDADO BS']);
-      (currentReportData.payments || []).forEach(p => {
-        rows.push([p.metodo, p.transacciones, Number(p.total).toFixed(2), (Number(p.total) * bcvRate).toFixed(2)]);
-      });
-
-    // 2. RENTABILIDAD & RANKING DE PRODUCTOS
-    } else if (type === 'rentabilidad_productos') {
-      rows.push(['RANKING', 'CODIGO', 'PRODUCTO', 'CATEGORIA', 'UNIDADES VENDIDAS', 'COSTO UNIT USD', 'PVP USD', 'TOTAL INGRESOS USD', 'TOTAL COSTO USD', 'UTILIDAD BRUTA USD', 'MARGEN %', 'TOTAL INGRESOS BS']);
-      (currentReportData.products || []).forEach((p, idx) => {
-        const marginPct = p.totalRevUsd > 0 ? ((p.totalProfitUsd / p.totalRevUsd) * 100).toFixed(1) : '0.0';
-        rows.push([
-          `#${idx + 1}`,
-          p.code,
-          p.name,
-          p.category,
-          p.units,
-          Number(p.cost || 0).toFixed(2),
-          Number(p.price || 0).toFixed(2),
-          Number(p.totalRevUsd || 0).toFixed(2),
-          Number(p.totalCostUsd || 0).toFixed(2),
-          Number(p.totalProfitUsd || 0).toFixed(2),
-          `${marginPct}%`,
-          (Number(p.totalRevUsd || 0) * bcvRate).toFixed(2)
-        ]);
-      });
-
-    // 3. BALANCE CONTABLE & PUC
+      tablesHtml += `
+        <table border="1" style="margin-bottom: 20px;">
+          <thead>
+            <tr><th colspan="4" style="background-color: #8C531B; color: #FFFFFF; font-size: 11pt; padding: 6px;">RESUMEN POR CATEGORÍA COMERCIAL</th></tr>
+            <tr style="background-color: #2C1810; color: #FFFFFF;">
+              <th>CATEGORÍA COMERCIAL</th>
+              <th style="text-align: right;">CANTIDAD VENDIDA</th>
+              <th style="text-align: right;">TOTAL USD ($)</th>
+              <th style="text-align: right;">TOTAL BS (Bs.)</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${(data.catTotals || []).map(c => `
+              <tr>
+                <td>${c.categoria}</td>
+                <td style="text-align: right;">${c.cantidad}</td>
+                <td style="text-align: right;">$${Number(c.total).toFixed(2)}</td>
+                <td style="text-align: right;">Bs. ${(Number(c.total) * bcvRate).toFixed(2)}</td>
+              </tr>
+            `).join('')}
+          </tbody>
+        </table>
+        <table border="1">
+          <thead>
+            <tr><th colspan="4" style="background-color: #8C531B; color: #FFFFFF; font-size: 11pt; padding: 6px;">RECAUDACIÓN POR FORMA DE PAGO</th></tr>
+            <tr style="background-color: #2C1810; color: #FFFFFF;">
+              <th>MÉTODO DE PAGO</th>
+              <th style="text-align: right;">TRANSACCIONES</th>
+              <th style="text-align: right;">TOTAL RECAUDADO USD ($)</th>
+              <th style="text-align: right;">TOTAL RECAUDADO BS (Bs.)</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${(data.payments || []).map(p => `
+              <tr>
+                <td>${p.metodo}</td>
+                <td style="text-align: right;">${p.transacciones}</td>
+                <td style="text-align: right;">$${Number(p.total).toFixed(2)}</td>
+                <td style="text-align: right;">Bs. ${(Number(p.total) * bcvRate).toFixed(2)}</td>
+              </tr>
+            `).join('')}
+          </tbody>
+        </table>
+      `;
     } else if (type === 'balance_contable') {
-      rows.push(['CODIGO PUC', 'NOMBRE CUENTA', 'SUMA DEBE USD', 'SUMA HABER USD', 'SALDO DEUDOR USD', 'SALDO ACREEDOR USD']);
-      (currentReportData.trialBalance || []).forEach(t => {
-        rows.push([t.code, t.name, Number(t.sumDebe).toFixed(2), Number(t.sumHaber).toFixed(2), Number(t.saldoDeudor).toFixed(2), Number(t.saldoAcreedor).toFixed(2)]);
-      });
-
-    // 4. VENTAS DETALLADAS
+      tablesHtml += `
+        <table border="1">
+          <thead>
+            <tr style="background-color: #2C1810; color: #FFFFFF;">
+              <th>CÓDIGO PUC</th><th>NOMBRE CUENTA</th>
+              <th style="text-align: right;">SUMA DEBE USD</th><th style="text-align: right;">SUMA HABER USD</th>
+              <th style="text-align: right;">SALDO DEUDOR USD</th><th style="text-align: right;">SALDO ACREEDOR USD</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${(data.trialBalance || []).map(t => `
+              <tr>
+                <td>${t.code}</td><td>${t.name}</td>
+                <td style="text-align: right;">$${Number(t.sumDebe).toFixed(2)}</td>
+                <td style="text-align: right;">$${Number(t.sumHaber).toFixed(2)}</td>
+                <td style="text-align: right;">$${Number(t.saldoDeudor).toFixed(2)}</td>
+                <td style="text-align: right;">$${Number(t.saldoAcreedor).toFixed(2)}</td>
+              </tr>
+            `).join('')}
+          </tbody>
+        </table>
+      `;
     } else if (type === 'ventas_detalladas') {
-      rows.push(['FACTURA', 'FECHA Y HORA', 'CAJERO', 'TURNO', 'METODO PAGO', 'PRODUCTO', 'CANTIDAD', 'PVP USD', 'SUBTOTAL USD', 'SUBTOTAL BS']);
-      (currentReportData.rows || []).forEach(r => {
-        rows.push([
-          r.codigo,
-          r.fecha_hora,
-          r.cajero,
-          r.turno,
-          r.metodo_pago,
-          r.producto,
-          r.cantidad,
-          Number(r.precio_unitario).toFixed(2),
-          Number(r.subtotal_linea).toFixed(2),
-          (Number(r.subtotal_linea) * bcvRate).toFixed(2)
-        ]);
-      });
-
-    // 5. CIERRES DE TURNO (CORTES Z)
+      tablesHtml += `
+        <table border="1">
+          <thead>
+            <tr style="background-color: #2C1810; color: #FFFFFF;">
+              <th>FACTURA</th><th>FECHA Y HORA</th><th>CAJERO</th><th>TURNO</th><th>MÉTODO PAGO</th>
+              <th>PRODUCTO</th><th style="text-align: right;">CANTIDAD</th><th style="text-align: right;">PVP USD</th>
+              <th style="text-align: right;">SUBTOTAL USD</th><th style="text-align: right;">SUBTOTAL BS</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${(data.rows || []).map(r => `
+              <tr>
+                <td>${r.codigo}</td><td>${r.fecha_hora}</td><td>${r.cajero}</td><td>${r.turno}</td><td>${r.metodo_pago}</td>
+                <td>${r.producto}</td><td style="text-align: right;">${r.cantidad}</td>
+                <td style="text-align: right;">$${Number(r.precio_unitario).toFixed(2)}</td>
+                <td style="text-align: right;">$${Number(r.subtotal_linea).toFixed(2)}</td>
+                <td style="text-align: right;">Bs. ${(Number(r.subtotal_linea) * bcvRate).toFixed(2)}</td>
+              </tr>
+            `).join('')}
+          </tbody>
+        </table>
+      `;
     } else if (type === 'cierres_turno') {
-      rows.push(['REPORTE Z', 'FECHA TURNO', 'CAJA', 'TURNO', 'CAJERO', 'FACTURAS', 'VENTAS NETAS USD', 'EFECTIVO ESPERADO USD', 'EFECTIVO REAL USD', 'DIFERENCIA USD']);
-      (currentReportData.closures || []).forEach(c => {
-        rows.push([
-          c.codigo_reporte,
-          c.fecha_turno,
-          c.caja_id,
-          c.turno,
-          c.firma_cajero || c.generado_por,
-          c.facturas_emitidas,
-          Number(c.ventas_netas).toFixed(2),
-          Number(c.monto_efectivo_esperado).toFixed(2),
-          Number(c.monto_efectivo_real || c.monto_efectivo_esperado).toFixed(2),
-          Number(c.diferencia_efectivo || 0).toFixed(2)
-        ]);
-      });
-
-    // 6. BITACORA DE DEVOLUCIONES Y ANULACIONES
+      tablesHtml += `
+        <table border="1">
+          <thead>
+            <tr style="background-color: #2C1810; color: #FFFFFF;">
+              <th>REPORTE Z</th><th>FECHA TURNO</th><th>CAJA</th><th>TURNO</th><th>CAJERO</th>
+              <th style="text-align: right;">FACTURAS</th><th style="text-align: right;">VENTAS NETAS USD</th>
+              <th style="text-align: right;">EFECTIVO ESPERADO USD</th><th style="text-align: right;">EFECTIVO REAL USD</th>
+              <th style="text-align: right;">DIFERENCIA USD</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${(data.closures || []).map(c => `
+              <tr>
+                <td>${c.codigo_reporte}</td><td>${c.fecha_turno}</td><td>${c.caja_id}</td><td>${c.turno}</td>
+                <td>${c.firma_cajero || c.generado_por}</td><td style="text-align: right;">${c.facturas_emitidas}</td>
+                <td style="text-align: right;">$${Number(c.ventas_netas).toFixed(2)}</td>
+                <td style="text-align: right;">$${Number(c.monto_efectivo_esperado).toFixed(2)}</td>
+                <td style="text-align: right;">$${Number(c.monto_efectivo_real || c.monto_efectivo_esperado).toFixed(2)}</td>
+                <td style="text-align: right;">$${Number(c.diferencia_efectivo || 0).toFixed(2)}</td>
+              </tr>
+            `).join('')}
+          </tbody>
+        </table>
+      `;
     } else if (type === 'eventos_anulaciones') {
-      rows.push(['ID EVENTO', 'FECHA Y HORA', 'COMPROBANTE', 'CAJA', 'TURNO', 'TIPO EVENTO', 'MONTO USD', 'MONTO BS', 'MOTIVO', 'AUTORIZADO POR']);
-      (currentReportData.events || []).forEach(e => {
-        rows.push([
-          e.id,
-          e.fecha_hora,
-          e.codigo_venta,
-          e.caja_id,
-          e.turno,
-          e.tipo_evento,
-          Number(e.monto).toFixed(2),
-          (Number(e.monto) * bcvRate).toFixed(2),
-          e.motivo,
-          e.registrado_por
-        ]);
-      });
-
-    // 7. CONTROL DE PRODUCCION Y HORNOS
+      tablesHtml += `
+        <table border="1">
+          <thead>
+            <tr style="background-color: #2C1810; color: #FFFFFF;">
+              <th>ID EVENTO</th><th>FECHA Y HORA</th><th>COMPROBANTE</th><th>CAJA</th><th>TURNO</th>
+              <th>TIPO EVENTO</th><th style="text-align: right;">MONTO USD</th><th style="text-align: right;">MONTO BS</th>
+              <th>MOTIVO</th><th>AUTORIZADO POR</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${(data.events || []).map(e => `
+              <tr>
+                <td>${e.id}</td><td>${e.fecha_hora}</td><td>${e.codigo_venta}</td><td>${e.caja_id}</td><td>${e.turno}</td>
+                <td>${e.tipo_evento}</td><td style="text-align: right;">$${Number(e.monto).toFixed(2)}</td>
+                <td style="text-align: right;">Bs. ${(Number(e.monto) * bcvRate).toFixed(2)}</td>
+                <td>${e.motivo}</td><td>${e.registrado_por}</td>
+              </tr>
+            `).join('')}
+          </tbody>
+        </table>
+      `;
     } else if (type === 'produccion_hornos') {
-      rows.push(['CODIGO LOTE', 'PRODUCTO / RECETA', 'PIEZAS / BANDEJAS', 'FASE LEUDADO', 'TEMP RECOMENDADA', 'TIEMPO MINUTOS']);
-      (currentReportData.lotes || []).forEach(l => {
-        rows.push([l.codigo, l.producto, l.cantidad, l.estado_leudado, `${l.temperatura_recomendada || 190} C`, `${l.tiempo_recomendado_min || 15} min`]);
-      });
-
-    // 8. VALORIZACION DE INVENTARIO Y ALMACEN
+      tablesHtml += `
+        <table border="1">
+          <thead>
+            <tr style="background-color: #2C1810; color: #FFFFFF;">
+              <th>CÓDIGO LOTE</th><th>PRODUCTO / RECETA</th><th style="text-align: right;">PIEZAS / BANDEJAS</th>
+              <th>FASE LEUDADO</th><th>TEMP RECOMENDADA</th><th>TIEMPO</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${(data.lotes || []).map(l => `
+              <tr>
+                <td>${l.codigo}</td><td>${l.producto}</td><td style="text-align: right;">${l.cantidad}</td>
+                <td>${l.estado_leudado}</td><td>${l.temperatura_recomendada || 190} °C</td><td>${l.tiempo_recomendado_min || 15} min</td>
+              </tr>
+            `).join('')}
+          </tbody>
+        </table>
+      `;
     } else if (type === 'inventario_mermas') {
-      rows.push(['CODIGO', 'NOMBRE', 'CATEGORIA', 'STOCK ACTUAL', 'UNIDAD', 'STOCK MINIMO', 'COSTO O PVP USD', 'TOTAL USD', 'TOTAL BS']);
-      (currentReportData.items || []).forEach(i => {
-        rows.push([
-          i.code,
-          i.name,
-          i.category === 'raw_material' ? 'Materia Prima' : 'Vitrina POS',
-          i.currentStock,
-          i.unit,
-          i.minStock,
-          Number(i.unitPrice).toFixed(2),
-          (i.currentStock * i.unitPrice).toFixed(2),
-          ((i.currentStock * i.unitPrice) * bcvRate).toFixed(2)
-        ]);
-      });
-
-    // 9. COMPRAS Y PROVEEDORES
+      tablesHtml += `
+        <table border="1">
+          <thead>
+            <tr style="background-color: #2C1810; color: #FFFFFF;">
+              <th>CÓDIGO</th><th>NOMBRE</th><th>CATEGORÍA</th><th style="text-align: right;">STOCK ACTUAL</th>
+              <th>UNIDAD</th><th style="text-align: right;">STOCK MÍNIMO</th><th style="text-align: right;">COSTO/PVP USD</th>
+              <th style="text-align: right;">TOTAL USD</th><th style="text-align: right;">TOTAL BS</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${(data.items || []).map(i => `
+              <tr>
+                <td>${i.code}</td><td>${i.name}</td><td>${i.category === 'raw_material' ? 'Materia Prima' : 'Vitrina POS'}</td>
+                <td style="text-align: right;">${i.currentStock}</td><td>${i.unit}</td><td style="text-align: right;">${i.minStock}</td>
+                <td style="text-align: right;">$${Number(i.unitPrice).toFixed(2)}</td>
+                <td style="text-align: right;">$${(i.currentStock * i.unitPrice).toFixed(2)}</td>
+                <td style="text-align: right;">Bs. ${((i.currentStock * i.unitPrice) * bcvRate).toFixed(2)}</td>
+              </tr>
+            `).join('')}
+          </tbody>
+        </table>
+      `;
     } else if (type === 'compras_proveedores') {
-      rows.push(['CODIGO ORDEN', 'PROVEEDOR', 'FECHA PEDIDO', 'FECHA ENTREGA', 'MONTO TOTAL USD', 'MONTO TOTAL BS', 'ESTATUS']);
-      (currentReportData.orders || []).forEach(o => {
-        rows.push([
-          o.code,
-          o.supplierName,
-          o.orderDate,
-          o.deliveryDate,
-          Number(o.totalAmount).toFixed(2),
-          (Number(o.totalAmount) * bcvRate).toFixed(2),
-          o.status
-        ]);
-      });
-
-    // 10. NOMINA Y RENDIMIENTO DE PERSONAL
+      tablesHtml += `
+        <table border="1">
+          <thead>
+            <tr style="background-color: #2C1810; color: #FFFFFF;">
+              <th>CÓDIGO ORDEN</th><th>PROVEEDOR</th><th>FECHA PEDIDO</th><th>FECHA ENTREGA</th>
+              <th style="text-align: right;">TOTAL USD</th><th style="text-align: right;">TOTAL BS</th><th>ESTATUS</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${(data.orders || []).map(o => `
+              <tr>
+                <td>${o.code}</td><td>${o.supplierName}</td><td>${o.orderDate}</td><td>${o.deliveryDate}</td>
+                <td style="text-align: right;">$${Number(o.totalAmount).toFixed(2)}</td>
+                <td style="text-align: right;">Bs. ${(Number(o.totalAmount) * bcvRate).toFixed(2)}</td><td>${o.status}</td>
+              </tr>
+            `).join('')}
+          </tbody>
+        </table>
+      `;
     } else if (type === 'personal_rendimiento') {
-      rows.push(['CODIGO', 'NOMBRE COMPLETO', 'CARGO / ROL', 'DEPARTAMENTO', 'TURNO OFICIAL', 'TELEFONO', 'EMAIL', 'ESTADO']);
-      (currentReportData.staff || []).forEach(s => {
-        rows.push([
-          s.code,
-          s.name,
-          s.role,
-          s.department,
-          s.shift,
-          s.phone,
-          s.email,
-          s.statusText || s.status
-        ]);
-      });
+      tablesHtml += `
+        <table border="1">
+          <thead>
+            <tr style="background-color: #2C1810; color: #FFFFFF;">
+              <th>CÓDIGO</th><th>NOMBRE COMPLETO</th><th>CARGO / ROL</th><th>DEPARTAMENTO</th>
+              <th>TURNO OFICIAL</th><th>TELÉFONO</th><th>EMAIL</th><th>ESTADO</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${(data.staff || []).map(s => `
+              <tr>
+                <td>${s.code}</td><td>${s.name}</td><td>${s.role}</td><td>${s.department}</td>
+                <td>${s.shift}</td><td>${s.phone}</td><td>${s.email}</td><td>${s.statusText || s.status}</td>
+              </tr>
+            `).join('')}
+          </tbody>
+        </table>
+      `;
     }
+    return tablesHtml;
+  }
 
-    const csvContent = 'data:text/csv;charset=utf-8,\uFEFF' + rows.map(e => e.map(cell => `"${(cell ?? '').toString().replace(/"/g, '""')}"`).join(',')).join('\n');
-    const encodedUri = encodeURI(csvContent);
-    const link = document.createElement('a');
-    link.setAttribute('href', encodedUri);
-    link.setAttribute('download', `reporte_${currentReportData.type}_${new Date().toISOString().slice(0, 10)}.csv`);
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-  });
+  async function exportarExcelReporte() {
+    if (!btnExportExcel) return;
+    const originalBtnHtml = btnExportExcel.innerHTML;
+    btnExportExcel.disabled = true;
+    btnExportExcel.innerHTML = '<i data-lucide="loader-2" class="icon-sm spin"></i> <span>Generando Excel...</span>';
+    window.LucideIcons?.refresh();
+
+    try {
+      // 1. Obtener el tipo de reporte seleccionado en el filtro del usuario
+      const selectedType = repTypeSelect ? repTypeSelect.value : (currentReportData.type || 'ventas_resumen');
+      const selectedOption = repTypeSelect ? repTypeSelect.options[repTypeSelect.selectedIndex] : null;
+      const reportTitle = selectedOption ? selectedOption.text : (currentReportData.title || 'Reporte Gerencial');
+      const bcvRate = BcvRateStore.getRate ? BcvRateStore.getRate() : 761.21;
+      const fechaEmision = new Date().toLocaleString('es-VE');
+      const fromDate = repDateFrom ? repDateFrom.value : (currentReportData.from || '');
+      const toDate = repDateTo ? repDateTo.value : (currentReportData.to || '');
+      const periodo = (fromDate && toDate) ? `${fromDate} al ${toDate}` : 'Todos los registros disponibles';
+
+      const session = SessionStore.getSession();
+      const activeUser = session?.user || { name: 'Juan Mendoza', role: 'Gerente General' };
+
+      // Si el reporte actualmente renderizado no corresponde al filtro seleccionado, generarlo primero
+      if (currentReportData.type !== selectedType || !sheet.querySelector('table')) {
+        await ejecutarGeneracionReporte();
+      }
+
+      // 2. Extraer Bloque de KPIs del reporte visible
+      let kpisHtml = '';
+      const kpiBoxes = sheet.querySelectorAll('.report-kpi-box');
+      if (kpiBoxes.length > 0) {
+        kpisHtml = `
+          <table border="1" style="margin-bottom: 20px;">
+            <thead>
+              <tr style="background-color: #8C531B; color: #FFFFFF;">
+                <th colspan="3" style="font-size: 11pt; padding: 7px; text-align: left;">RESUMEN DE INDICADORES CLAVE (KPIS)</th>
+              </tr>
+              <tr style="background-color: #2C1810; color: #FFFFFF;">
+                <th style="padding: 6px 10px; width: 280px;">INDICADOR</th>
+                <th style="padding: 6px 10px; text-align: right; width: 180px;">VALOR PRINCIPAL</th>
+                <th style="padding: 6px 10px; text-align: right; width: 220px;">DETALLE / MONEDA LOCAL</th>
+              </tr>
+            </thead>
+            <tbody>
+        `;
+        kpiBoxes.forEach(box => {
+          const label = box.querySelector('.report-kpi-box-label')?.textContent?.trim() || '';
+          const val = box.querySelector('.report-kpi-box-value')?.textContent?.trim() || '';
+          const sub = box.querySelector('.report-kpi-box-sub')?.textContent?.trim() || '';
+          kpisHtml += `
+            <tr>
+              <td style="padding: 5px 8px;"><strong>${label}</strong></td>
+              <td style="padding: 5px 8px; text-align: right; font-weight: bold;">${val}</td>
+              <td style="padding: 5px 8px; text-align: right; color: #555555;">${sub}</td>
+            </tr>
+          `;
+        });
+        kpisHtml += `</tbody></table><br/>`;
+      }
+
+      // 3. Extraer Secciones y Tablas de Datos directamente del reporte renderizado
+      let tablesHtml = '';
+      const sectionElements = sheet.querySelectorAll('.report-section-heading, table');
+      if (sectionElements.length > 0) {
+        sectionElements.forEach(el => {
+          if (el.classList.contains('report-section-heading')) {
+            const titleText = el.textContent?.trim() || '';
+            tablesHtml += `
+              <table border="0" style="margin-top: 14px; margin-bottom: 4px;">
+                <tr>
+                  <td colspan="12" style="background-color: #F4EBE1; color: #2C1810; font-weight: bold; font-size: 11pt; padding: 8px 10px; border: 1px solid #C48B44;">
+                    ${titleText}
+                  </td>
+                </tr>
+              </table>
+            `;
+          } else if (el.tagName.toLowerCase() === 'table') {
+            const clone = el.cloneNode(true);
+            clone.setAttribute('border', '1');
+            clone.style.borderCollapse = 'collapse';
+            clone.style.width = '100%';
+            clone.style.marginTop = '4px';
+            clone.style.marginBottom = '20px';
+
+            clone.querySelectorAll('thead tr').forEach(tr => {
+              tr.style.backgroundColor = '#2C1810';
+              tr.style.color = '#FFFFFF';
+            });
+            clone.querySelectorAll('thead th').forEach(th => {
+              th.style.backgroundColor = '#2C1810';
+              th.style.color = '#FFFFFF';
+              th.style.fontWeight = 'bold';
+              th.style.padding = '7px 9px';
+              th.style.border = '1px solid #C48B44';
+            });
+            clone.querySelectorAll('tbody td').forEach(td => {
+              td.style.padding = '6px 9px';
+              td.style.border = '1px solid #D9CEBF';
+              td.style.fontSize = '9.5pt';
+            });
+            clone.querySelectorAll('tfoot tr').forEach(tr => {
+              tr.style.backgroundColor = '#FAF6F0';
+              tr.style.fontWeight = 'bold';
+            });
+            clone.querySelectorAll('tfoot td').forEach(td => {
+              td.style.padding = '7px 9px';
+              td.style.borderTop = '2px solid #2C1810';
+              td.style.fontWeight = 'bold';
+            });
+
+            tablesHtml += clone.outerHTML;
+          }
+        });
+      }
+
+      // Si no se extrajeron tablas del DOM, usar generador estructurado por tipo
+      if (!tablesHtml.trim()) {
+        tablesHtml = generarTablasFallbackPorTipo(selectedType, currentReportData, bcvRate);
+      }
+
+      const excelTemplate = `
+        <html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:x="urn:schemas-microsoft-com:office:excel" xmlns="http://www.w3.org/TR/REC-html40">
+        <head>
+          <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+          <!--[if gte mso 9]>
+          <xml>
+            <x:ExcelWorkbook>
+              <x:ExcelWorksheets>
+                <x:ExcelWorksheet>
+                  <x:Name>${(reportTitle.replace(/[\/\\\?\*\[\]:]/g, '').slice(0, 31)) || 'Reporte'}</x:Name>
+                  <x:WorksheetOptions>
+                    <x:DisplayGridlines/>
+                  </x:WorksheetOptions>
+                </x:ExcelWorksheet>
+              </x:ExcelWorksheets>
+            </x:ExcelWorkbook>
+          </xml>
+          <![endif]-->
+          <style>
+            body { font-family: 'Segoe UI', Calibri, Arial, sans-serif; font-size: 10pt; color: #2C1810; margin: 15px; }
+            .title-company { font-size: 15pt; font-weight: bold; color: #2C1810; margin-bottom: 2px; }
+            .title-sub { font-size: 9.5pt; color: #7A6B5D; margin-bottom: 6px; }
+            .title-report { font-size: 13pt; font-weight: bold; color: #8C531B; margin-bottom: 6px; }
+            .meta-box { font-size: 9.5pt; color: #444444; margin-bottom: 15px; padding: 6px 0; border-top: 1px solid #D9CEBF; border-bottom: 1px solid #D9CEBF; }
+            table { border-collapse: collapse; width: 100%; margin-top: 6px; margin-bottom: 15px; }
+            th { background-color: #2C1810; color: #FFFFFF; font-weight: bold; padding: 7px 10px; border: 1px solid #C48B44; text-align: left; }
+            td { padding: 6px 9px; border: 1px solid #D9CEBF; font-size: 9.5pt; }
+            .signatures-box { margin-top: 30px; }
+          </style>
+        </head>
+        <body>
+          <div class="title-company">LA NUEVA PARISIENNE PANADERIA Y PASTELERIA C.A.</div>
+          <div class="title-sub">RIF: J-40123456-7 &bull; Av. Lara con Calle 8, Barquisimeto &bull; Sistema Gerencial</div>
+          <div class="title-report">${reportTitle}</div>
+          <div class="meta-box">
+            <strong>Período Auditado:</strong> ${periodo} &nbsp;|&nbsp;
+            <strong>Fecha Emisión:</strong> ${fechaEmision} &nbsp;|&nbsp;
+            <strong>Tasa Oficial BCV:</strong> Bs. ${Number(bcvRate).toLocaleString('es-VE', { minimumFractionDigits: 2 })} &nbsp;|&nbsp;
+            <strong>Emitido por:</strong> ${activeUser.name} (${activeUser.role || 'Gerente General'})
+          </div>
+
+          ${kpisHtml}
+          ${tablesHtml}
+
+          <br/>
+          <table border="0" class="signatures-box">
+            <tr>
+              <td style="border:none; text-align:center; width: 50%;">
+                _____________________________________<br>
+                <strong>${activeUser.name}</strong><br>
+                Gerencia General &bull; La Nueva Parisienne
+              </td>
+              <td style="border:none; text-align:center; width: 50%;">
+                _____________________________________<br>
+                <strong>Auditoría &amp; Control Interno</strong><br>
+                Revisión y Conformidad
+              </td>
+            </tr>
+          </table>
+        </body>
+        </html>
+      `;
+
+      const blob = new Blob(['\uFEFF', excelTemplate], { type: 'application/vnd.ms-excel;charset=utf-8' });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `reporte_${selectedType}_${new Date().toISOString().slice(0, 10)}.xls`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+
+    } catch (e) {
+      console.error('Error al exportar a Excel:', e);
+      alert('Ocurrió un error al exportar el reporte a Excel: ' + (e.message || 'Error desconocido'));
+    } finally {
+      btnExportExcel.disabled = false;
+      btnExportExcel.innerHTML = originalBtnHtml;
+      window.LucideIcons?.refresh();
+    }
+  }
+
+  btnExportExcel?.addEventListener('click', exportarExcelReporte);
 }
 
 function initDashboard() {

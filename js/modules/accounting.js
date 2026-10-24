@@ -136,12 +136,12 @@ function initAccounting() {
   // Modal Reporte Balance Imprimible
   const btnPrintBalance = document.getElementById('btnPrintBalance');
   const btnPrintBalanceQuick = document.getElementById('btnPrintBalanceQuick');
-  const btnExportBalanceCsvTop = document.getElementById('btnExportBalanceCsvTop');
-  const btnExportBalanceCsvQuick = document.getElementById('btnExportBalanceCsvQuick');
+  const btnExportBalanceExcelTop = document.getElementById('btnExportBalanceExcelTop');
+  const btnExportBalanceExcelQuick = document.getElementById('btnExportBalanceExcelQuick');
   const balanceModal = document.getElementById('balanceReportModal');
   const balanceSheet = document.getElementById('balanceReportSheet');
   const btnPrintBalanceModal = document.getElementById('btnPrintBalanceModal');
-  const btnExportBalanceCsv = document.getElementById('btnExportBalanceCsv');
+  const btnExportBalanceExcel = document.getElementById('btnExportBalanceExcel');
   const btnCloseBalanceModal = document.getElementById('btnCloseBalanceModal');
 
   // Inicializar fecha
@@ -1233,7 +1233,7 @@ function initAccounting() {
 
   balanceFilterSelect?.addEventListener('change', () => renderTrialBalance());
 
-  // 12. Impresión Formal y Exportación CSV
+  // 12. Impresión Formal y Reporte PDF
   function renderBalanceReportContent() {
     if (!balanceSheet) return;
     const now = new Date();
@@ -1468,49 +1468,115 @@ function initAccounting() {
     window.print();
   });
 
-  function exportCsv() {
-    const rows = [
-      ['LA NUEVA PARISIENNE - BALANCE DE COMPROBACION'],
-      ['Fecha Emision', new Date().toISOString()],
-      ['Empresa', 'La Nueva Parisienne Panaderia & Pasteleria C.A.'],
-      ['RIF', 'J-40123456-7'],
-      [],
-      ['CODIGO PUC', 'DENOMINACION CUENTA', 'GRUPO', 'SUMAS DEBE ($)', 'SUMAS HABER ($)', 'SALDO DEUDOR ($)', 'SALDO ACREEDOR ($)']
-    ];
+  // Exportación Formal a Hoja de Cálculo Excel (.xls)
+  function exportarBalanceExcel() {
+    const now = new Date();
+    const fechaEmision = now.toLocaleString('es-VE');
 
     let tDebe = 0, tHaber = 0, tDeudor = 0, tAcreedor = 0;
-    (trialBalance || []).forEach(acc => {
-      tDebe += Number(acc.sumDebe || 0);
-      tHaber += Number(acc.sumHaber || 0);
-      tDeudor += Number(acc.saldoDeudor || 0);
-      tAcreedor += Number(acc.saldoAcreedor || 0);
-      rows.push([
-        acc.code,
-        acc.name,
-        acc.type || 'Cuenta',
-        Number(acc.sumDebe || 0).toFixed(2),
-        Number(acc.sumHaber || 0).toFixed(2),
-        Number(acc.saldoDeudor || 0).toFixed(2),
-        Number(acc.saldoAcreedor || 0).toFixed(2)
-      ]);
-    });
+    const rowsHtml = (trialBalance || []).map(acc => {
+      const sDebe = Number(acc.sumDebe || 0);
+      const sHaber = Number(acc.sumHaber || 0);
+      const sDeudor = Number(acc.saldoDeudor || 0);
+      const sAcreedor = Number(acc.saldoAcreedor || 0);
 
-    rows.push([]);
-    rows.push(['TOTALES', 'TOTALES GENERALES', '', tDebe.toFixed(2), tHaber.toFixed(2), tDeudor.toFixed(2), tAcreedor.toFixed(2)]);
+      tDebe += sDebe;
+      tHaber += sHaber;
+      tDeudor += sDeudor;
+      tAcreedor += sAcreedor;
 
-    const csvContent = 'data:text/csv;charset=utf-8,\uFEFF' + rows.map(e => e.map(cell => `"${cell}"`).join(',')).join('\n');
-    const encodedUri = encodeURI(csvContent);
+      return `
+        <tr>
+          <td style="font-family: monospace; font-weight: bold;">${acc.code}</td>
+          <td>${acc.name}</td>
+          <td>${acc.type || 'Cuenta'}</td>
+          <td style="text-align: right;">$${sDebe.toFixed(2)}</td>
+          <td style="text-align: right;">$${sHaber.toFixed(2)}</td>
+          <td style="text-align: right; color: #1B5E20;">$${sDeudor.toFixed(2)}</td>
+          <td style="text-align: right; color: #0D47A1;">$${sAcreedor.toFixed(2)}</td>
+        </tr>
+      `;
+    }).join('');
+
+    const excelTemplate = `
+      <html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:x="urn:schemas-microsoft-com:office:excel" xmlns="http://www.w3.org/TR/REC-html40">
+      <head>
+        <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+        <!--[if gte mso 9]>
+        <xml>
+          <x:ExcelWorkbook>
+            <x:ExcelWorksheets>
+              <x:ExcelWorksheet>
+                <x:Name>Balance de Comprobación</x:Name>
+                <x:WorksheetOptions>
+                  <x:DisplayGridlines/>
+                </x:WorksheetOptions>
+              </x:ExcelWorksheet>
+            </x:ExcelWorksheets>
+          </x:ExcelWorkbook>
+        </xml>
+        <![endif]-->
+        <style>
+          body { font-family: 'Segoe UI', Calibri, Arial, sans-serif; font-size: 10pt; color: #2C1810; }
+          .title-company { font-size: 15pt; font-weight: bold; color: #2C1810; margin-bottom: 3px; }
+          .title-rif { font-size: 9.5pt; color: #7A6B5D; margin-bottom: 6px; }
+          .title-report { font-size: 12pt; font-weight: bold; color: #8C531B; margin-bottom: 6px; }
+          .meta-info { font-size: 9pt; color: #555555; margin-bottom: 12px; }
+          table { border-collapse: collapse; width: 100%; margin-top: 10px; }
+          th { background-color: #2C1810; color: #FFFFFF; font-weight: bold; padding: 7px 10px; border: 1px solid #C48B44; }
+          td { padding: 6px 9px; border: 1px solid #D9CEBF; font-size: 9.5pt; }
+          .total-row td { background-color: #F8F5F0; font-weight: bold; border-top: 2px solid #2C1810; }
+        </style>
+      </head>
+      <body>
+        <div class="title-company">LA NUEVA PARISIENNE PANADERIA &amp; PASTELERIA C.A.</div>
+        <div class="title-rif">RIF: J-40123456-7 &bull; Sistema Contable y Financiero</div>
+        <div class="title-report">BALANCE DE COMPROBACIÓN (PLAN ÚNICO DE CUENTAS)</div>
+        <div class="meta-info"><strong>Fecha de Emisión:</strong> ${fechaEmision} &nbsp;|&nbsp; <strong>Estado:</strong> Ecuación Patrimonial Verificada</div>
+        <br/>
+        <table border="1">
+          <thead>
+            <tr style="background-color: #2C1810; color: #FFFFFF;">
+              <th>CÓDIGO PUC</th>
+              <th>DENOMINACIÓN DE LA CUENTA</th>
+              <th>GRUPO</th>
+              <th style="text-align: right;">SUMAS DEBE ($)</th>
+              <th style="text-align: right;">SUMAS HABER ($)</th>
+              <th style="text-align: right;">SALDO DEUDOR ($)</th>
+              <th style="text-align: right;">SALDO ACREEDOR ($)</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${rowsHtml}
+          </tbody>
+          <tfoot>
+            <tr class="total-row">
+              <td colspan="3" style="text-align: right; font-weight: bold;">TOTALES GENERALES CUADRADOS:</td>
+              <td style="text-align: right; font-weight: bold;">$${tDebe.toFixed(2)}</td>
+              <td style="text-align: right; font-weight: bold;">$${tHaber.toFixed(2)}</td>
+              <td style="text-align: right; font-weight: bold; color: #1B5E20;">$${tDeudor.toFixed(2)}</td>
+              <td style="text-align: right; font-weight: bold; color: #0D47A1;">$${tAcreedor.toFixed(2)}</td>
+            </tr>
+          </tfoot>
+        </table>
+      </body>
+      </html>
+    `;
+
+    const blob = new Blob(['\uFEFF', excelTemplate], { type: 'application/vnd.ms-excel;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
     const link = document.createElement('a');
-    link.setAttribute('href', encodedUri);
-    link.setAttribute('download', `balance_comprobacion_${new Date().toISOString().slice(0, 10)}.csv`);
+    link.href = url;
+    link.download = `balance_comprobacion_${now.toISOString().slice(0, 10)}.xls`;
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
+    URL.revokeObjectURL(url);
   }
 
-  btnExportBalanceCsv?.addEventListener('click', exportCsv);
-  btnExportBalanceCsvTop?.addEventListener('click', exportCsv);
-  btnExportBalanceCsvQuick?.addEventListener('click', exportCsv);
+  btnExportBalanceExcel?.addEventListener('click', exportarBalanceExcel);
+  btnExportBalanceExcelTop?.addEventListener('click', exportarBalanceExcel);
+  btnExportBalanceExcelQuick?.addEventListener('click', exportarBalanceExcel);
 }
 
 if (document.readyState === 'loading') {

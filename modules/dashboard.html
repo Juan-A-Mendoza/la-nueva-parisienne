@@ -12,7 +12,7 @@
   
   <!-- Hojas de Estilos Separadas (CSS3 Estricto) -->
   <link rel="stylesheet" href="../css/main.css">
-  <link rel="stylesheet" href="../css/modules/dashboard.css?v=20261016-modern-reports-v6">
+  <link rel="stylesheet" href="../css/modules/dashboard.css?v=20261016-clean-v11">
   <link rel="stylesheet" href="../css/modules/caja-reportes.css?v=20260930">
 </head>
 <body>
@@ -457,126 +457,137 @@
       <div id="executiveReportsView" class="dashboard-view-section" style="display: none;" aria-label="Centro de Reportes Gerenciales">
         <div class="executive-reports-container">
           
-          <!-- ENCABEZADO EJECUTIVO ARMONIOSO (ESTILO PARISIENNE) -->
-          <div class="reports-dedicated-header">
-            <div class="reports-dedicated-title-wrap">
-              <div class="reports-dedicated-icon">
-                <i data-lucide="file-spreadsheet" class="icon-md"></i>
-              </div>
-              <div class="reports-title-info">
-                <div class="reports-dedicated-eyebrow">
-                  <span class="eyebrow-dot"></span> LA PARISIENNE &bull; INTELIGENCIA DE NEGOCIOS
-                </div>
-                <h2 class="reports-dedicated-title">Centro de Reportes y Auditoría</h2>
-                <p class="reports-dedicated-sub">Balances consolidados, métricas de horneado, ventas POS y control gerencial en tiempo real</p>
-              </div>
-            </div>
-
-            <div class="reports-dedicated-actions no-print">
-              <button id="btnPrintExecutiveReport" type="button" class="btn-rep-action btn-rep-print" title="Imprimir reporte en hoja membretada o guardar en PDF">
-                <i data-lucide="printer" class="icon-sm"></i> <span>Imprimir / PDF</span>
-              </button>
-              <button id="btnExportExecutiveCsv" type="button" class="btn-rep-action btn-rep-export" title="Descargar datos en formato compatible con Excel">
-                <i data-lucide="download" class="icon-sm"></i> <span>Exportar Excel / CSV</span>
-              </button>
-            </div>
-          </div>
-
-          <!-- BARRA INTERACTIVA DE PARÁMETROS: 2 NIVELES LIMPIOS Y ESPACIOSOS -->
+          <!-- PANEL MAESTRO INTEGRADO: ENCABEZADO + ACCIONES + FILTROS -->
           <div class="report-generator-filter-bar dedicated-bar no-print">
-            <!-- Fila Superior: Selección de Reporte, Período Rápido y Estilo Visual -->
-            <div class="rep-filter-row primary-row">
-              <div class="rep-form-group rep-col-type">
-                <label for="repTypeSelect" class="rep-form-label"><i data-lucide="layers" class="icon-xs"></i> Tipo de Reporte</label>
-                <div class="rep-select-wrapper">
-                  <select id="repTypeSelect" class="rep-form-select">
-                    <optgroup label="👑 REPORTES GERENCIALES">
-                      <option value="ventas_resumen" selected>1. Resumen Ejecutivo Financiero &amp; KPIs</option>
-                      <option value="rentabilidad_productos">2. Rentabilidad &amp; Ranking de Productos (Top Ventas)</option>
-                      <option value="balance_contable">3. Balance de Comprobación &amp; Asientos Contables</option>
-                    </optgroup>
-                    <optgroup label="⚙️ REPORTES OPERATIVOS">
-                      <option value="ventas_detalladas">4. Detalle de Facturación POS (Renglón por Renglón)</option>
-                      <option value="cierres_turno">5. Auditoría de Cierres de Turno (Cortes Z y Arqueos)</option>
-                      <option value="eventos_anulaciones">6. Bitácora de Devoluciones &amp; Anulaciones de Caja</option>
-                      <option value="produccion_hornos">7. Control de Producción, Hornos &amp; Lotes Panaderos</option>
-                    </optgroup>
-                    <optgroup label="📋 REPORTES GENERALES &amp; AUDITORÍA">
-                      <option value="inventario_mermas">8. Valorización de Inventario &amp; Stock Mínimo</option>
-                      <option value="compras_proveedores">9. Compras, Proveedores &amp; Cuentas por Pagar</option>
-                      <option value="personal_rendimiento">10. Nómina, Turnos &amp; Rendimiento de Personal</option>
-                    </optgroup>
-                  </select>
+            
+            <!-- Barra Superior: Identidad del Módulo y Botonera Ejecutiva Integrada -->
+            <div class="reports-dedicated-header-integrated">
+              <div class="reports-dedicated-title-wrap">
+                <div class="reports-dedicated-icon">
+                  <i data-lucide="file-spreadsheet" class="icon-md"></i>
+                </div>
+                <div class="reports-title-info">
+                  <div class="reports-dedicated-eyebrow">
+                    <span class="eyebrow-dot"></span> LA PARISIENNE &bull; INTELIGENCIA DE NEGOCIOS
+                  </div>
+                  <h2 class="reports-dedicated-title">Centro de Reportes y Auditoría</h2>
+                  <p class="reports-dedicated-sub">Balances consolidados, métricas de horneado, ventas POS y control gerencial</p>
                 </div>
               </div>
 
-              <div class="rep-form-group rep-col-presets">
-                <label class="rep-form-label"><i data-lucide="clock" class="icon-xs"></i> Período Rápido</label>
-                <div class="rep-presets-group">
-                  <button type="button" class="rep-preset-btn" data-preset="today">Hoy</button>
-                  <button type="button" class="rep-preset-btn" data-preset="week">7 Días</button>
-                  <button type="button" class="rep-preset-btn active" data-preset="month">Este Mes</button>
-                  <button type="button" class="rep-preset-btn" data-preset="prev_month">Mes Anterior</button>
-                </div>
-              </div>
-
-              <div class="rep-form-group rep-col-style" id="repChartStyleGroup">
-                <label for="repChartStyleSelect" class="rep-form-label"><i data-lucide="line-chart" class="icon-xs"></i> Estilo de Gráfica</label>
-                <div class="rep-select-wrapper">
-                  <select id="repChartStyleSelect" class="rep-form-select rep-style-select">
-                    <option value="metricas" selected>📈 Tendencia &amp; Gradiente (Estilo Métricas)</option>
-                    <option value="barras">📊 Barras Ejecutivas</option>
-                    <option value="clasicas">⚡ Gráficas Clásicas Nativas (0 ms)</option>
-                    <option value="ninguna">📋 Ocultar Gráficas (Solo Tablas)</option>
-                  </select>
-                </div>
-              </div>
-            </div>
-
-            <!-- Fila Inferior: Rango de Fechas Preciso, Filtros Contextuales y Acción -->
-            <div class="rep-filter-row secondary-row">
-              <div class="rep-date-range-group">
-                <div class="rep-form-group">
-                  <label for="repDateFrom" class="rep-form-label"><i data-lucide="calendar" class="icon-xs"></i> Desde</label>
-                  <input type="date" id="repDateFrom" class="rep-form-input" />
-                </div>
-                <div class="rep-form-group">
-                  <label for="repDateTo" class="rep-form-label"><i data-lucide="calendar" class="icon-xs"></i> Hasta</label>
-                  <input type="date" id="repDateTo" class="rep-form-input" />
-                </div>
-              </div>
-
-              <!-- Filtros Contextuales Dinámicos -->
-              <div class="rep-context-filters">
-                <div class="rep-form-group" id="repCashierGroup" style="display: none;">
-                  <label for="repCashierSelect" class="rep-form-label"><i data-lucide="user" class="icon-xs"></i> Cajero</label>
-                  <select id="repCashierSelect" class="rep-form-select">
-                    <option value="">Todos los Cajeros</option>
-                  </select>
-                </div>
-
-                <div class="rep-form-group" id="repPaymentGroup" style="display: none;">
-                  <label for="repPaymentSelect" class="rep-form-label"><i data-lucide="credit-card" class="icon-xs"></i> Forma de Pago</label>
-                  <select id="repPaymentSelect" class="rep-form-select">
-                    <option value="">Todos los Métodos</option>
-                  </select>
-                </div>
-
-                <div class="rep-form-group" id="repCategoryGroup" style="display: none;">
-                  <label for="repCategorySelect" class="rep-form-label"><i data-lucide="tag" class="icon-xs"></i> Categoría</label>
-                  <select id="repCategorySelect" class="rep-form-select">
-                    <option value="">Todas las Categorías</option>
-                  </select>
-                </div>
-              </div>
-
-              <!-- Botón Primario de Generación -->
-              <div class="rep-submit-group">
-                <button id="btnRunReportQuery" type="button" class="btn-generate-report-submit">
-                  <i data-lucide="play" class="icon-xs"></i> <span>Consultar Reporte</span>
+              <!-- Botones de Exportación Integrados -->
+              <div class="rep-actions-group">
+                <button id="btnPrintExecutiveReport" type="button" class="btn-rep-action btn-rep-print" title="Imprimir reporte en hoja membretada o guardar en PDF">
+                  <i data-lucide="printer" class="icon-xs"></i> <span>PDF / Imprimir</span>
+                </button>
+                <button id="btnExportExecutiveExcel" type="button" class="btn-rep-action btn-rep-export" title="Descargar reporte en formato Excel (.xls)">
+                  <i data-lucide="file-spreadsheet" class="icon-xs"></i> <span>Excel (.xls)</span>
                 </button>
               </div>
             </div>
+
+            <!-- Divisor Sutil -->
+            <div class="rep-card-divider"></div>
+
+            <!-- Bloque de Parámetros y Filtros -->
+            <div class="rep-filters-container">
+              <!-- Fila 1: Selección del Tipo de Reporte + Estilo Visual de Gráfica -->
+              <div class="rep-filter-row primary-row">
+                <div class="rep-form-group rep-col-type">
+                  <label for="repTypeSelect" class="rep-form-label"><i data-lucide="layers" class="icon-xs"></i> Reporte Seleccionado</label>
+                  <div class="rep-select-wrapper">
+                    <select id="repTypeSelect" class="rep-form-select">
+                      <optgroup label="REPORTES GERENCIALES">
+                        <option value="ventas_resumen" selected>1. Resumen Ejecutivo Financiero &amp; KPIs</option>
+                        <option value="balance_contable">2. Balance de Comprobación &amp; Asientos Contables</option>
+                      </optgroup>
+                      <optgroup label="REPORTES OPERATIVOS">
+                        <option value="ventas_detalladas">3. Detalle de Facturación POS (Renglón por Renglón)</option>
+                        <option value="cierres_turno">4. Auditoría de Cierres de Turno (Cortes Z y Arqueos)</option>
+                        <option value="eventos_anulaciones">5. Bitácora de Devoluciones &amp; Anulaciones de Caja</option>
+                        <option value="produccion_hornos">6. Control de Producción, Hornos &amp; Lotes Panaderos</option>
+                      </optgroup>
+                      <optgroup label="REPORTES GENERALES &amp; AUDITORÍA">
+                        <option value="inventario_mermas">7. Valorización de Inventario &amp; Stock Mínimo</option>
+                        <option value="compras_proveedores">8. Compras, Proveedores &amp; Cuentas por Pagar</option>
+                        <option value="personal_rendimiento">9. Nómina, Turnos &amp; Rendimiento de Personal</option>
+                      </optgroup>
+                      <optgroup label="PROYECCIONES &amp; PLANIFICACIÓN ESTRATÉGICA">
+                        <option value="proyecciones">10. Proyecciones Financieras, Demanda &amp; Flujo de Caja</option>
+                      </optgroup>
+                    </select>
+                  </div>
+                </div>
+
+                <div class="rep-form-group rep-col-style" id="repChartStyleGroup">
+                  <label for="repChartStyleSelect" class="rep-form-label"><i data-lucide="line-chart" class="icon-xs"></i> Estilo de Gráfica</label>
+                  <div class="rep-select-wrapper">
+                    <select id="repChartStyleSelect" class="rep-form-select rep-style-select">
+                      <option value="metricas" selected>Tendencia &amp; Gradiente (Estilo Métricas)</option>
+                      <option value="barras">Barras Ejecutivas</option>
+                      <option value="clasicas">Gráficas Clásicas Nativas (0 ms)</option>
+                      <option value="ninguna">Ocultar Gráficas (Solo Tablas)</option>
+                    </select>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Fila 2: Período Rápido + Rango de Fechas + Filtros Contextuales + Botón Consultar Abajo -->
+              <div class="rep-filter-row secondary-row">
+                <div class="rep-form-group rep-col-presets">
+                  <label class="rep-form-label"><i data-lucide="clock" class="icon-xs"></i> Período Rápido</label>
+                  <div class="rep-presets-group">
+                    <button type="button" class="rep-preset-btn" data-preset="today">Hoy</button>
+                    <button type="button" class="rep-preset-btn" data-preset="week">7 Días</button>
+                    <button type="button" class="rep-preset-btn active" data-preset="month">Este Mes</button>
+                    <button type="button" class="rep-preset-btn" data-preset="prev_month">Mes Anterior</button>
+                  </div>
+                </div>
+
+                <div class="rep-date-range-group">
+                  <div class="rep-form-group">
+                    <label for="repDateFrom" class="rep-form-label"><i data-lucide="calendar" class="icon-xs"></i> Desde</label>
+                    <input type="date" id="repDateFrom" class="rep-form-input" />
+                  </div>
+                  <div class="rep-form-group">
+                    <label for="repDateTo" class="rep-form-label"><i data-lucide="calendar" class="icon-xs"></i> Hasta</label>
+                    <input type="date" id="repDateTo" class="rep-form-input" />
+                  </div>
+                </div>
+
+                <!-- Filtros Contextuales Dinámicos -->
+                <div class="rep-context-filters">
+                  <div class="rep-form-group" id="repCashierGroup" style="display: none;">
+                    <label for="repCashierSelect" class="rep-form-label"><i data-lucide="user" class="icon-xs"></i> Cajero</label>
+                    <select id="repCashierSelect" class="rep-form-select">
+                      <option value="">Todos los Cajeros</option>
+                    </select>
+                  </div>
+
+                  <div class="rep-form-group" id="repPaymentGroup" style="display: none;">
+                    <label for="repPaymentSelect" class="rep-form-label"><i data-lucide="credit-card" class="icon-xs"></i> Forma de Pago</label>
+                    <select id="repPaymentSelect" class="rep-form-select">
+                      <option value="">Todos los Métodos</option>
+                    </select>
+                  </div>
+
+                  <div class="rep-form-group" id="repCategoryGroup" style="display: none;">
+                    <label for="repCategorySelect" class="rep-form-label"><i data-lucide="tag" class="icon-xs"></i> Categoría</label>
+                    <select id="repCategorySelect" class="rep-form-select">
+                      <option value="">Todas las Categorías</option>
+                    </select>
+                  </div>
+                </div>
+
+                <!-- Botón de Consultar Reporte (Abajo a la derecha) -->
+                <div class="rep-submit-group">
+                  <button id="btnRunReportQuery" type="button" class="btn-generate-report-submit" title="Consultar y actualizar vista previa del reporte">
+                    <i data-lucide="play" class="icon-xs"></i> <span>Consultar Reporte</span>
+                  </button>
+                </div>
+              </div>
+            </div>
+
           </div>
 
           <!-- LIENZO DEDICADO DE REPORTE EJECUTIVO (ESPACIOSO Y FLUIDO) -->
@@ -1073,7 +1084,7 @@
   <script src="../js/core/icons.js"></script>
   <script src="../js/vendor/chart.umd.js"></script>
   <script type="module" src="../js/core/modules-nav.js"></script>
-  <script type="module" src="../js/modules/dashboard.js?v=20261016-modern-reports-v6"></script>
+  <script type="module" src="../js/modules/dashboard.js?v=20261016-norec-v12"></script>
   <script type="module" src="../js/modules/caja-reportes.js?v=20261016-modern-reports-v6"></script>
 
 </body>
