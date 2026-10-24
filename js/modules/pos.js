@@ -1672,8 +1672,10 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   if (btnPrintReceipt) {
     btnPrintReceipt.addEventListener('click', () => {
+      document.body.classList.add('printing-ticket');
       window.print();
       setTimeout(() => {
+        document.body.classList.remove('printing-ticket');
         receiptModal.classList.remove('active');
         resetPOS();
       }, 500);

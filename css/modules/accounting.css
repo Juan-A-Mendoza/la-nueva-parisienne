@@ -1294,11 +1294,21 @@
 }
 
 .report-signatures-grid {
-  display: grid;
+  display: none !important; /* Oculto en pantalla; solo visible al imprimir */
   grid-template-columns: 1fr 1fr;
   gap: 4rem;
   margin-top: 3.5rem;
   text-align: center;
+}
+
+@media print {
+  .report-signatures-grid {
+    display: grid !important;
+  }
+}
+
+body.printing-report .report-signatures-grid {
+  display: grid !important;
 }
 
 .report-signature-line {
@@ -1317,26 +1327,120 @@
   color: var(--color-muted);
 }
 
-/* MEDIA QUERY PARA IMPRESIÓN */
+/* MEDIA QUERY PARA IMPRESIÓN OFICIAL CARTA (8.5" x 11") */
 @media print {
+  @page {
+    size: letter portrait;
+    margin: 12mm 15mm 15mm 15mm;
+  }
+
+  body {
+    background: #FFFFFF !important;
+    color: #0F172A !important;
+    font-size: 9pt !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
   body * {
     visibility: hidden;
   }
-  #balanceReportModal,
-  #balanceReportSheet,
-  #balanceReportSheet * {
-    visibility: visible;
+
+  body.printing-report #balanceReportModal,
+  body.printing-report #balanceReportModal *,
+  body.printing-report #balanceReportSheet,
+  body.printing-report #balanceReportSheet * {
+    visibility: visible !important;
   }
+
   #balanceReportModal {
-    position: absolute;
-    left: 0;
-    top: 0;
-    width: 100%;
-    margin: 0;
-    padding: 0;
-    background: transparent;
+    position: absolute !important;
+    left: 0 !important;
+    top: 0 !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    height: auto !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    background: transparent !important;
+    border: none !important;
+    box-shadow: none !important;
+    display: block !important;
   }
-  .no-print {
+
+  .report-modal-card {
+    border: none !important;
+    box-shadow: none !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    max-width: 100% !important;
+    width: 100% !important;
+    background: transparent !important;
+  }
+
+  #balanceReportSheet {
+    display: block !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    background: #FFFFFF !important;
+    color: #0F172A !important;
+    border: none !important;
+    box-shadow: none !important;
+  }
+
+  .report-header-banner,
+  .report-section-heading,
+  .report-signatures-grid {
+    break-inside: avoid !important;
+    page-break-inside: avoid !important;
+  }
+
+  .report-data-table {
+    width: 100% !important;
+    border-collapse: collapse !important;
+    font-size: 8.5pt !important;
+  }
+
+  .report-data-table thead {
+    display: table-header-group !important;
+  }
+
+  .report-data-table tr {
+    break-inside: avoid !important;
+    page-break-inside: avoid !important;
+  }
+
+  .report-data-table th {
+    background-color: #1E293B !important;
+    color: #FFFFFF !important;
+    border: 1px solid #475569 !important;
+    padding: 6px 8px !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  .report-data-table td {
+    padding: 5px 8px !important;
+    border: 1px solid #CBD5E1 !important;
+    font-size: 8.5pt !important;
+  }
+
+  .report-data-table tfoot td {
+    border-top: 2px solid #1E293B !important;
+    border-bottom: 3px double #1E293B !important;
+    font-weight: 800 !important;
+    background-color: #F1F5F9 !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  .no-print,
+  .report-modal-toolbar,
+  .modal-close-btn,
+  #btnPrintBalanceModal,
+  #btnExportBalanceExcel {
     display: none !important;
   }
 }

@@ -252,16 +252,16 @@ button:active {
   }
 
   /* Caso 2: Impresión Térmica de Tickets POS (80mm) */
-  body:not(.printing-report) * {
+  body.printing-ticket * {
     visibility: hidden !important;
   }
 
-  body:not(.printing-report) #ticketPrintArea,
-  body:not(.printing-report) #ticketPrintArea * {
+  body.printing-ticket #ticketPrintArea,
+  body.printing-ticket #ticketPrintArea * {
     visibility: visible !important;
   }
 
-  body:not(.printing-report) #ticketPrintArea {
+  body.printing-ticket #ticketPrintArea {
     display: block !important;
     position: absolute !important;
     left: 0 !important;
@@ -801,163 +801,392 @@ button .lucide,
   color: #2C1D11;
 }
 
+/* ==========================================================================
+   SISTEMA DE DISEÑO ELEGANTE Y LEGIBLE PARA REPORTES Y DOCUMENTOS FORMALES
+   ========================================================================== */
 .report-header-banner {
   display: flex;
   justify-content: space-between;
   align-items: flex-start;
-  padding-bottom: 1.25rem;
-  border-bottom: 2px solid var(--color-gold);
-  margin-bottom: 1.5rem;
+  gap: 1.5rem;
+  padding-bottom: 1.5rem;
+  border-bottom: 3px double rgba(212, 155, 84, 0.45);
+  margin-bottom: 2rem;
+  position: relative;
+}
+
+.report-brand-col {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 0.85rem;
+}
+
+.report-brand-lockup {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.report-brand-emblem {
+  width: 52px;
+  height: 52px;
+  border-radius: 14px;
+  background: linear-gradient(135deg, #2C1D11 0%, #4A3320 100%);
+  border: 1.5px solid var(--color-gold, #D49B54);
+  color: var(--color-gold, #D49B54);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 4px 14px rgba(44, 29, 17, 0.12);
+  flex-shrink: 0;
+}
+
+.report-brand-kicker {
+  font-size: 0.72rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.14em;
+  color: var(--color-gold-dark, #8C6239);
+  margin-bottom: 0.15rem;
 }
 
 .report-brand-title {
-  font-size: 1.35rem;
-  font-weight: 900;
-  color: var(--color-espresso);
-  margin: 0 0 0.25rem 0;
+  font-family: 'Playfair Display', Georgia, serif;
+  font-size: 1.65rem;
+  font-weight: 800;
+  color: var(--color-espresso, #2C1D11);
+  margin: 0;
+  letter-spacing: -0.02em;
+  line-height: 1.15;
 }
 
 .report-brand-sub {
-  font-size: 0.85rem;
-  color: var(--color-muted);
+  font-size: 0.82rem;
+  color: var(--color-muted, #7E6E60);
   line-height: 1.4;
+}
+
+.report-brand-meta {
+  font-size: 0.82rem;
+  color: var(--color-muted, #7E6E60);
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-top: 0.25rem;
+}
+
+.report-doc-title-row {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  background: rgba(212, 155, 84, 0.08);
+  border: 1px solid rgba(212, 155, 84, 0.2);
+  border-left: 4px solid var(--color-gold-dark, #8C6239);
+  padding: 0.5rem 0.85rem;
+  border-radius: 0 8px 8px 0;
+}
+
+.report-doc-indicator {
+  font-size: 0.65rem;
+  font-weight: 900;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: #FFFFFF;
+  background: var(--color-espresso, #2C1D11);
+  padding: 2px 7px;
+  border-radius: 4px;
+}
+
+.report-doc-subtitle {
+  font-size: 0.96rem;
+  font-weight: 800;
+  color: var(--color-espresso, #2C1D11);
+  margin: 0;
+  letter-spacing: -0.01em;
+}
+
+.report-meta-card {
+  min-width: 310px;
+  background: #FFFFFF;
+  border: 1px solid rgba(212, 155, 84, 0.25);
+  border-radius: 14px;
+  padding: 1rem 1.25rem;
+  box-shadow: 0 4px 16px rgba(44, 29, 17, 0.04);
+  display: flex;
+  flex-direction: column;
+  gap: 0.65rem;
 }
 
 .report-meta-box {
   text-align: right;
-  font-size: 0.85rem;
-  color: var(--color-muted);
+  font-size: 0.82rem;
+  color: var(--color-muted, #7E6E60);
   line-height: 1.5;
 }
 
 .report-meta-badge {
-  display: inline-block;
-  background: rgba(212, 155, 84, 0.15);
-  color: var(--color-espresso);
-  font-weight: 700;
-  padding: 0.25rem 0.65rem;
-  border-radius: var(--radius-pill);
-  font-size: 0.8rem;
-  margin-bottom: 0.35rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, rgba(212, 155, 84, 0.18) 0%, rgba(140, 98, 57, 0.15) 100%);
+  color: var(--color-espresso, #2C1D11);
+  font-weight: 800;
+  font-size: 0.78rem;
+  padding: 0.35rem 0.85rem;
+  border-radius: 9999px;
+  border: 1px solid rgba(212, 155, 84, 0.35);
+  letter-spacing: 0.04em;
+  text-align: center;
 }
 
-.report-section-heading {
-  font-size: 1rem;
-  font-weight: 800;
-  color: var(--color-espresso);
-  margin: 1.5rem 0 0.85rem 0;
+.report-meta-items {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.report-meta-row {
   display: flex;
   align-items: center;
-  gap: 0.5rem;
-  border-left: 3px solid var(--color-gold);
-  padding-left: 0.65rem;
+  justify-content: space-between;
+  gap: 0.75rem;
+  font-size: 0.82rem;
+  line-height: 1.35;
 }
 
-.report-kpi-summary-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
-  gap: 1rem;
-  margin-bottom: 1.5rem;
-}
-
-.report-kpi-box {
-  background: var(--bg-surface);
-  border: 1px solid rgba(44, 29, 17, 0.08);
-  border-radius: 8px;
-  padding: 1rem;
-  text-align: left;
-}
-
-.report-kpi-box-label {
-  font-size: 0.78rem;
-  font-weight: 700;
-  color: var(--color-muted);
-  text-transform: uppercase;
-  letter-spacing: 0.03em;
-  margin-bottom: 0.35rem;
-}
-
-.report-kpi-box-value {
-  font-size: 1.3rem;
-  font-weight: 900;
-  color: var(--color-espresso);
-}
-
-.report-kpi-box-sub {
-  font-size: 0.75rem;
-  color: var(--color-success);
-  margin-top: 0.25rem;
+.report-meta-row .meta-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  color: var(--color-muted, #7E6E60);
   font-weight: 600;
 }
 
-.report-data-table {
-  width: 100%;
-  border-collapse: collapse;
-  font-size: 0.85rem;
-  margin-bottom: 1.5rem;
+.report-meta-row .meta-val {
+  color: var(--color-espresso, #2C1D11);
+  font-weight: 700;
+  text-align: right;
 }
 
-.report-data-table th {
-  background: #F8F5EE;
-  color: var(--color-espresso);
+/* SECCIONES Y ENCABEZADOS DE REPORTE */
+.report-section-heading {
+  font-size: 1.05rem;
   font-weight: 800;
-  padding: 0.65rem 0.85rem;
-  border: 1px solid rgba(44, 29, 17, 0.1);
+  color: var(--color-espresso, #2C1D11);
+  margin: 2rem 0 1rem 0;
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  position: relative;
+  letter-spacing: -0.01em;
+}
+
+.report-section-heading::after {
+  content: "";
+  flex: 1;
+  height: 1px;
+  background: linear-gradient(90deg, rgba(212, 155, 84, 0.4) 0%, rgba(212, 155, 84, 0.05) 100%);
+  margin-left: 0.5rem;
+}
+
+/* TARJETAS DE KPIS EN REPORTES */
+.report-kpi-summary-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+  gap: 1.15rem;
+  margin-bottom: 2rem;
+}
+
+.report-kpi-box {
+  background: linear-gradient(145deg, #FFFFFF 0%, #FDFBF8 100%);
+  border: 1px solid rgba(212, 155, 84, 0.22);
+  border-top: 3.5px solid var(--color-gold, #D49B54);
+  border-radius: 12px;
+  padding: 1.15rem 1.25rem;
+  box-shadow: 0 4px 14px rgba(44, 29, 17, 0.03);
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.report-kpi-box:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 20px rgba(212, 155, 84, 0.1);
+}
+
+.report-kpi-box-label {
+  font-size: 0.75rem;
+  font-weight: 800;
+  color: var(--color-muted, #7E6E60);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.report-kpi-box-value {
+  font-size: 1.55rem;
+  font-weight: 900;
+  color: var(--color-espresso, #2C1D11);
+  font-variant-numeric: tabular-nums;
+  line-height: 1.2;
+}
+
+.report-kpi-box-sub {
+  font-size: 0.78rem;
+  color: var(--color-gold-dark, #8C6239);
+  font-weight: 600;
+  margin-top: 0.15rem;
+}
+
+/* TABLAS FORMALES Y LEGIBLES DE DATOS */
+.report-data-table {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+  font-size: 0.86rem;
+  margin: 1rem 0 2rem 0;
+  border: 1px solid rgba(212, 155, 84, 0.2);
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 4px 16px rgba(44, 29, 17, 0.025);
+  background: #FFFFFF;
+}
+
+.report-data-table thead th {
+  background: linear-gradient(180deg, #F8F4EE 0%, #F1E9DD 100%);
+  color: var(--color-espresso, #2C1D11);
+  font-weight: 800;
+  font-size: 0.78rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  padding: 0.9rem 1rem;
+  border-bottom: 2px solid var(--color-gold, #D49B54);
+  border-right: 1px solid rgba(212, 155, 84, 0.15);
   text-align: left;
 }
 
-.report-data-table td {
-  padding: 0.6rem 0.85rem;
-  border: 1px solid rgba(44, 29, 17, 0.08);
-  color: #3D2B1F;
+.report-data-table thead th:last-child {
+  border-right: none;
 }
 
-.report-data-table tr:nth-child(even) td {
-  background: rgba(253, 251, 247, 0.7);
+.report-data-table tbody td {
+  padding: 0.75rem 1rem;
+  border-bottom: 1px solid #EFE8DE;
+  border-right: 1px solid rgba(44, 29, 17, 0.04);
+  color: #3D2B1F;
+  font-variant-numeric: tabular-nums;
+  vertical-align: middle;
+}
+
+.report-data-table tbody td:last-child {
+  border-right: none;
+}
+
+.report-data-table tbody tr:nth-child(even) td {
+  background: #FAF7F2;
+}
+
+.report-data-table tbody tr:hover td {
+  background: #FDF5E8 !important;
 }
 
 .report-data-table tfoot td {
-  background: #F1ECE1;
+  background: linear-gradient(180deg, #F6EFE5 0%, #EFE4D3 100%);
   font-weight: 800;
-  color: var(--color-espresso);
-  border-top: 2px solid var(--color-gold);
+  font-size: 0.92rem;
+  color: var(--color-espresso, #2C1D11);
+  border-top: 2.5px solid var(--color-gold-dark, #8C6239);
+  padding: 0.85rem 1rem;
+  font-variant-numeric: tabular-nums;
 }
 
+.report-data-table code {
+  font-family: 'Plus Jakarta Sans', monospace;
+  background: #F4EBE0;
+  color: #5C3D24;
+  padding: 0.2rem 0.55rem;
+  border-radius: 6px;
+  font-size: 0.8rem;
+  font-weight: 700;
+  border: 1px solid rgba(212, 155, 84, 0.25);
+  display: inline-block;
+}
+
+/* FIRMAS Y PIE DE PÁGINA FORMAL (EXCLUSIVAMENTE VISIBLES AL IMPRIMIR / PDF) */
 .report-signatures-grid {
-  display: none;
+  display: none !important; /* Oculto en pantalla; solo para impresión física o PDF */
   grid-template-columns: 1fr 1fr;
-  gap: 3rem;
-  margin-top: 3rem;
-  padding-top: 1rem;
+  gap: 3.5rem;
+  margin-top: 3.5rem;
+  padding-top: 1.5rem;
+  border-top: 1px dashed rgba(212, 155, 84, 0.35);
+  page-break-inside: avoid;
+  break-inside: avoid;
+}
+
+.report-signature-block {
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.report-signature-space {
+  height: 48px;
+}
+
+.report-signature-line {
+  border-top: 1.5px solid #2C1D11;
+  width: 75%;
+  margin-bottom: 0.65rem;
+}
+
+.report-signature-name {
+  font-weight: 800;
+  font-size: 0.92rem;
+  color: var(--color-espresso, #2C1D11);
+  letter-spacing: -0.01em;
+}
+
+.report-signature-role {
+  font-size: 0.8rem;
+  color: var(--color-gold-dark, #8C6239);
+  font-weight: 700;
+}
+
+.report-signature-sub {
+  font-size: 0.72rem;
+  color: var(--color-muted, #7E6E60);
+  margin-top: 0.15rem;
+}
+
+.report-print-watermark {
+  display: none !important; /* Oculto en pantalla; solo para impresión física o PDF */
+  margin-top: 2.5rem;
+  padding-top: 0.85rem;
+  border-top: 1px solid #EAE3D9;
+  text-align: center;
+  font-size: 0.72rem;
+  color: var(--color-muted, #7E6E60);
+  letter-spacing: 0.03em;
 }
 
 @media print {
   .report-signatures-grid {
     display: grid !important;
   }
+  .report-print-watermark {
+    display: block !important;
+  }
 }
 
-.report-signature-block {
-  text-align: center;
+body.printing-report .report-signatures-grid {
+  display: grid !important;
 }
 
-.report-signature-line {
-  border-top: 1px dashed #7A6A5A;
-  margin-bottom: 0.5rem;
-  width: 80%;
-  margin-left: auto;
-  margin-right: auto;
-}
-
-.report-signature-name {
-  font-weight: 800;
-  font-size: 0.9rem;
-  color: var(--color-espresso);
-}
-
-.report-signature-role {
-  font-size: 0.8rem;
-  color: var(--color-muted);
+body.printing-report .report-print-watermark {
+  display: block !important;
 }
 
 /* ==========================================================================

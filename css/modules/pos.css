@@ -1249,10 +1249,24 @@
    ESTILOS EXCLUSIVOS DE IMPRESIÓN PARA IMPRESORAS TÉRMICAS DE 80MM
    ========================================================================== */
 @media print {
-  @page { size: 80mm auto; margin: 0; }
-  body * { visibility: hidden; }
-  #ticket-container, #ticket-container * { visibility: visible; }
-  #ticket-container { position: absolute; left: 0; top: 0; width: 80mm; padding: 5mm; margin: 0; }
+  body.printing-ticket {
+    background: #FFFFFF !important;
+  }
+  body.printing-ticket * {
+    visibility: hidden;
+  }
+  body.printing-ticket #ticket-container,
+  body.printing-ticket #ticket-container * {
+    visibility: visible;
+  }
+  body.printing-ticket #ticket-container {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 80mm;
+    padding: 5mm;
+    margin: 0;
+  }
   .no-print { display: none !important; }
 }
 

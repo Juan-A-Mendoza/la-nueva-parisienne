@@ -7,7 +7,7 @@ const STORAGE_KEY = 'LN_PARISIENNE_SESSION';
 
 // Arreglo de usuarios por defecto (Semilla Inicial con Superadmin)
 const INITIAL_USERS = [
-  { id: 'usr_superadmin', name: 'Super Administrador', username: 'superadmin', role: 'Super Administrador', roleCode: 'SUPERADMIN', icon: 'shield-check', pin: '1234', description: 'Acceso total e irrestricto a todos los módulos y funciones del sistema.', redirectUrl: 'modules/dashboard.html', allowedModules: ['all'] },
+  { id: 'usr_superadmin', name: 'Super Administrador', username: 'superadmin', role: 'Super Administrador', roleCode: 'SUPERADMIN', icon: 'shield-check', pin: '1234', description: 'Acceso total e irrestricto a todas las funciones del sistema.', redirectUrl: 'modules/dashboard.html', allowedModules: ['all'] },
   { id: 'usr_001', name: 'Juan Mendoza', username: 'admin', role: 'Gerente General', roleCode: 'ADMIN', icon: 'shield-check', pin: '1234', description: 'Gestión y auditoría del panel gerencial, ventas e inventario.', redirectUrl: 'modules/dashboard.html', allowedModules: ['dashboard', 'inventory', 'suppliers'] },
   { id: 'usr_002', name: 'María Elena Suárez', username: 'cajero1', role: 'Cajero', roleCode: 'POS', icon: 'banknote', pin: '1234', description: 'Facturación directa a clientes, cobros rápidos y apertura de caja.', redirectUrl: 'modules/pos.html', allowedModules: ['pos'] },
   { id: 'usr_003', name: 'Carlos Eduardo Rivas', username: 'panadero1', role: 'Panadero', roleCode: 'KITCHEN', icon: 'chef-hat', pin: '1234', description: 'Gestión de hornos, recetas, orden del día y preparación de masa.', redirectUrl: 'modules/kitchen.html', allowedModules: ['kitchen', 'inventory'] },
@@ -24,7 +24,7 @@ const USERS_DATABASE = [
     roleCode: 'SUPERADMIN',
     icon: 'shield-check',
     pin: '1234',
-    description: 'Acceso total e irrestricto a todos los módulos y funciones del sistema.',
+    description: 'Acceso total e irrestricto a todas las funciones del sistema.',
     redirectUrl: 'modules/dashboard.html',
     allowedModules: ['all']
   },

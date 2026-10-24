@@ -781,7 +781,11 @@ function initPosCierreCaja() {
 
   if (btnPrintTicket) {
     btnPrintTicket.addEventListener('click', () => {
+      document.body.classList.add('printing-cierre-z');
       window.print();
+      setTimeout(() => {
+        document.body.classList.remove('printing-cierre-z');
+      }, 1000);
     });
   }
 

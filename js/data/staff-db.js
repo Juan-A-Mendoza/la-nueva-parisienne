@@ -10,7 +10,7 @@ export const STAFF_DATABASE = [
     name: 'Super Administrador',
     role: 'Super Administrador',
     roleCode: 'SUPERADMIN',
-    department: 'Control Total & Todos los Módulos',
+    department: 'Control Total del Sistema',
     shift: 'Acceso Total 24/7',
     phone: '(01) 555-SUPER',
     email: 'superadmin@parisienne.com',
@@ -156,7 +156,7 @@ export const ROLE_PERMISSIONS_MATRIX = [
   },
   {
     permissionId: 'system_control',
-    permissionName: 'Selector de 4 Módulos y Control Total del Sistema',
+    permissionName: 'Control Total del Sistema y Navegación',
     category: 'Superadmin',
     roles: { SUPERADMIN: true, ADMIN: false, BAKER: false, CASHIER: false, ACCOUNTANT: false }
   }

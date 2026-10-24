@@ -6,6 +6,7 @@
 import { SessionStore } from '../core/session-store.js';
 import { BcvRateStore } from '../core/bcv-rate-store.js';
 import { DASHBOARD_KPIS, SALES_TREND_DATA, SALES_TREND_PERIODS, RECENT_MOVEMENTS } from '../data/dashboard-db.js?v=20261005-chart-filters';
+import { ensureStyleEngine, generateStyledExcelReport } from '../core/excel-styler.js';
 
 // ==========================================================================
 // 1. MAESTRO DE DATOS Y ESTADO GLOBAL DEL MÓDULO
@@ -1317,7 +1318,11 @@ function printMovementVoucher(mov) {
     </div>
   `;
 
+  document.body.classList.add('printing-ticket');
   window.print();
+  setTimeout(() => {
+    document.body.classList.remove('printing-ticket');
+  }, 1000);
 }
 
 function renderInventoryTables() {
@@ -2872,7 +2877,7 @@ function inicializarReporteEjecutivo() {
       html += `
         <div class="classic-bar-row">
           <div class="classic-bar-meta">
-            <span class="classic-bar-title">
+            <span class="classic-bar-title" title="${item.label}">
               <span class="classic-bar-dot" style="background: ${color};"></span>
               <span>${item.label}</span>
             </span>
@@ -3013,6 +3018,37 @@ function inicializarReporteEjecutivo() {
               <span class="val">${f2}</span>
             </div>
           </div>
+        </div>
+      `;
+    });
+    html += '</div>';
+    container.innerHTML = html;
+  }
+
+  // RENDERIZADOR 5: HISTOGRAMA DE BARRAS VERTICALES CLÁSICAS
+  function renderClassicHistogram(containerId, items = [], options = {}) {
+    const container = getReportChartContainer(containerId);
+    if (!container) return;
+    if (!items || items.length === 0) {
+      container.innerHTML = '<div class="report-chart-empty-state"><span>Sin datos registrados para graficar</span></div>';
+      return;
+    }
+
+    const maxVal = Math.max(...items.map(i => Number(i.value) || 0), 1);
+    const unit = options.customUnit || '$';
+    const isCurr = !options.customUnit;
+
+    let html = '<div class="classic-histogram-wrap">';
+    items.forEach(item => {
+      const val = Number(item.value) || 0;
+      const pctHeight = Math.max(8, Math.min(100, Math.round((val / maxVal) * 100)));
+      const fVal = isCurr ? `$${val.toLocaleString('es-VE', { minimumFractionDigits: 0 })}` : `${val.toLocaleString('es-VE')} ${unit}`;
+
+      html += `
+        <div class="classic-hist-col" title="${item.label}: ${fVal}">
+          <span class="classic-hist-val">${fVal}</span>
+          <div class="classic-hist-bar" style="height: ${pctHeight}%;"></div>
+          <span class="classic-hist-label">${item.label}</span>
         </div>
       `;
     });
@@ -3364,22 +3400,47 @@ function inicializarReporteEjecutivo() {
     function makeBanner(title, badge, icon = 'croissant') {
       return `
         <div class="report-header-banner">
-          <div>
-            <div style="display: flex; align-items: center; gap: 0.6rem; margin-bottom: 0.35rem;">
-              <i data-lucide="${icon}" class="icon-lg" style="color: var(--color-gold);"></i>
-              <h1 class="report-brand-title">La Nueva Parisienne Panadería &amp; Pastelería C.A.</h1>
+          <div class="report-brand-col">
+            <div class="report-brand-lockup">
+              <div class="report-brand-emblem" aria-hidden="true">
+                <i data-lucide="${icon}" class="icon-md"></i>
+              </div>
+              <div>
+                <div class="report-brand-kicker">Panadería &amp; Pastelería Artesanal Francesa</div>
+                <h1 class="report-brand-title">La Nueva Parisienne</h1>
+                <div class="report-brand-meta">
+                  <span><strong>RIF:</strong> J-40123456-7</span>
+                  <span>&bull;</span>
+                  <span>Av. Lara con Calle 8, Barquisimeto</span>
+                </div>
+              </div>
             </div>
-            <p class="report-brand-sub">
-              RIF: J-40123456-7 &bull; Av. Lara con Calle 8, Barquisimeto, Edo. Lara<br>
-              Sistema de Gestión Integral &bull; ${title}
-            </p>
+            <div class="report-doc-title-row">
+              <span class="report-doc-indicator">DOCUMENTO OFICIAL</span>
+              <h2 class="report-doc-subtitle">${title}</h2>
+            </div>
           </div>
-          <div class="report-meta-box">
-            <span class="report-meta-badge">${badge}</span>
-            <div><strong>Período Auditado:</strong> ${fromDate} al ${toDate}</div>
-            <div><strong>Fecha Emisión:</strong> ${dateFormatted}, ${timeFormatted}</div>
-            <div><strong>BCV Oficial:</strong> Bs. ${Number(bcvRate).toLocaleString('es-VE', { minimumFractionDigits: 2 })} / USD</div>
-            <div><strong>Emitido por:</strong> ${activeUser.name} (${activeUser.role || 'Gerente General'})</div>
+
+          <div class="report-meta-card">
+            <div class="report-meta-badge">${badge}</div>
+            <div class="report-meta-items">
+              <div class="report-meta-row">
+                <span class="meta-label"><i data-lucide="calendar" class="icon-xs"></i> Período:</span>
+                <strong class="meta-val">${fromDate} al ${toDate}</strong>
+              </div>
+              <div class="report-meta-row">
+                <span class="meta-label"><i data-lucide="clock" class="icon-xs"></i> Emisión:</span>
+                <strong class="meta-val">${dateFormatted}, ${timeFormatted}</strong>
+              </div>
+              <div class="report-meta-row">
+                <span class="meta-label"><i data-lucide="coins" class="icon-xs"></i> Tasa BCV:</span>
+                <strong class="meta-val" style="color: var(--color-gold-dark, #8C6239);">Bs. ${Number(bcvRate).toLocaleString('es-VE', { minimumFractionDigits: 2 })} / USD</strong>
+              </div>
+              <div class="report-meta-row">
+                <span class="meta-label"><i data-lucide="shield-check" class="icon-xs"></i> Auditor:</span>
+                <strong class="meta-val">${activeUser.name} <small style="font-weight:600; opacity:0.8;">(${activeUser.role || 'Gerente General'})</small></strong>
+              </div>
+            </div>
           </div>
         </div>
       `;
@@ -3387,17 +3448,24 @@ function inicializarReporteEjecutivo() {
 
     function makeSignatures(role2 = 'Auditoría Interna & Finanzas', name2 = 'Supervisión General') {
       return `
-        <div class="report-signatures-grid" style="margin-top: 2.5rem;">
+        <div class="report-signatures-grid">
           <div class="report-signature-block">
+            <div class="report-signature-space"></div>
             <div class="report-signature-line"></div>
             <div class="report-signature-name">${activeUser.name}</div>
             <div class="report-signature-role">Gerente General &bull; La Nueva Parisienne</div>
+            <div class="report-signature-sub">Firma Autorizada y Sello de Gerencia</div>
           </div>
           <div class="report-signature-block">
+            <div class="report-signature-space"></div>
             <div class="report-signature-line"></div>
             <div class="report-signature-name">${name2}</div>
             <div class="report-signature-role">${role2}</div>
+            <div class="report-signature-sub">Control Interno, Auditoría &amp; Conformidad</div>
           </div>
+        </div>
+        <div class="report-print-watermark">
+          <span>La Nueva Parisienne Panadería & Pastelería C.A. &bull; Reporte Oficial de Auditoría y Control Operativo &bull; Documento Válido para Fines Administrativos</span>
         </div>
       `;
     }
@@ -3433,7 +3501,7 @@ function inicializarReporteEjecutivo() {
         };
 
         sheet.innerHTML = `
-          ${makeBanner('Módulo 4: Dirección Ejecutiva', 'INFORME EJECUTIVO DE VENTAS', 'trending-up')}
+          ${makeBanner('Dirección Ejecutiva', 'INFORME EJECUTIVO DE VENTAS', 'trending-up')}
 
           <div class="report-section-heading">
             <i data-lucide="bar-chart-3" class="icon-sm"></i>
@@ -3598,7 +3666,7 @@ function inicializarReporteEjecutivo() {
         };
 
         sheet.innerHTML = `
-          ${makeBanner('Módulo 7: Contabilidad y Partida Doble', 'BALANCE DE COMPROBACIÓN & LIBRO DIARIO', 'scale')}
+          ${makeBanner('Contabilidad y Partida Doble', 'BALANCE DE COMPROBACIÓN & LIBRO DIARIO', 'scale')}
 
           <div class="report-section-heading">
             <i data-lucide="check-circle-2" class="icon-sm"></i>
@@ -3708,7 +3776,7 @@ function inicializarReporteEjecutivo() {
                 <th>Comprobante</th>
                 <th>Fecha y Hora</th>
                 <th>Concepto Contable</th>
-                <th>Módulo Origen</th>
+                <th>Origen</th>
                 <th>Total Debe ($)</th>
                 <th>Total Haber ($)</th>
               </tr>
@@ -3750,7 +3818,7 @@ function inicializarReporteEjecutivo() {
         };
 
         sheet.innerHTML = `
-          ${makeBanner('Módulo 3: Punto de Venta (POS)', 'DETALLE TRANSACCIONAL RENGLÓN POR RENGLÓN', 'receipt')}
+          ${makeBanner('Punto de Venta (POS)', 'DETALLE TRANSACCIONAL RENGLÓN POR RENGLÓN', 'receipt')}
 
           <div class="report-section-heading">
             <i data-lucide="line-chart" class="icon-sm"></i>
@@ -3847,7 +3915,7 @@ function inicializarReporteEjecutivo() {
         };
 
         sheet.innerHTML = `
-          ${makeBanner('Módulo 3: Tesorería y Caja', 'AUDITORÍA DE CIERRES Z & ARQUEOS', 'shield-check')}
+          ${makeBanner('Tesorería y Caja', 'AUDITORÍA DE CIERRES Z & ARQUEOS', 'shield-check')}
 
           <div class="report-section-heading">
             <i data-lucide="wallet" class="icon-sm"></i>
@@ -3954,7 +4022,7 @@ function inicializarReporteEjecutivo() {
         };
 
         sheet.innerHTML = `
-          ${makeBanner('Módulo 3: Control y Seguridad en Caja', 'TRAZABILIDAD DE ANULACIONES Y DEVOLUCIONES', 'alert-triangle')}
+          ${makeBanner('Control y Seguridad en Caja', 'TRAZABILIDAD DE ANULACIONES Y DEVOLUCIONES', 'alert-triangle')}
 
           <div class="report-section-heading">
             <i data-lucide="shield-alert" class="icon-sm"></i>
@@ -4081,7 +4149,7 @@ function inicializarReporteEjecutivo() {
         };
 
         sheet.innerHTML = `
-          ${makeBanner('Módulo 2: Cocina, Hornos Industriales & KDS', 'EFICIENCIA DE PRODUCCIÓN PANADERA', 'chef-hat')}
+          ${makeBanner('Cocina, Hornos Industriales & KDS', 'EFICIENCIA DE PRODUCCIÓN PANADERA', 'chef-hat')}
 
           <div class="report-section-heading">
             <i data-lucide="flame" class="icon-sm"></i>
@@ -4228,7 +4296,7 @@ function inicializarReporteEjecutivo() {
         };
 
         sheet.innerHTML = `
-          ${makeBanner('Módulo 5: Almacén de Insumos & Vitrina POS', 'VALORIZACIÓN FÍSICA & AUDITORÍA DE STOCK', 'package')}
+          ${makeBanner('Almacén de Insumos & Vitrina POS', 'VALORIZACIÓN FÍSICA & AUDITORÍA DE STOCK', 'package')}
 
           <div class="report-section-heading">
             <i data-lucide="boxes" class="icon-sm"></i>
@@ -4354,7 +4422,7 @@ function inicializarReporteEjecutivo() {
         };
 
         sheet.innerHTML = `
-          ${makeBanner('Módulo 6: Proveedores, Abastecimiento & Compras', 'AUDITORÍA DE COMPRAS & CARTERA COMERCIAL', 'truck')}
+          ${makeBanner('Proveedores, Abastecimiento & Compras', 'AUDITORÍA DE COMPRAS & CARTERA COMERCIAL', 'truck')}
 
           <div class="report-section-heading">
             <i data-lucide="building-2" class="icon-sm"></i>
@@ -4521,7 +4589,7 @@ function inicializarReporteEjecutivo() {
         };
 
         sheet.innerHTML = `
-          ${makeBanner('Módulo 8: Talento Humano & Personal', 'AUDITORÍA DE NÓMINA, TURNOS Y EFICIENCIA', 'user-check')}
+          ${makeBanner('Talento Humano & Personal', 'AUDITORÍA DE NÓMINA, TURNOS Y EFICIENCIA', 'user-check')}
 
           <div class="report-section-heading">
             <i data-lucide="users" class="icon-sm"></i>
@@ -4869,7 +4937,7 @@ function inicializarReporteEjecutivo() {
         };
 
         sheet.innerHTML = `
-          ${makeBanner('Módulo 4: Dirección Ejecutiva &amp; Planificación', 'MODELO PROYECCIONAL ESTRATÉGICO', 'trending-up')}
+          ${makeBanner('Dirección Ejecutiva &amp; Planificación', 'MODELO PROYECCIONAL ESTRATÉGICO', 'trending-up')}
 
           <div class="report-section-heading">
             <i data-lucide="target" class="icon-sm"></i>
@@ -5162,46 +5230,53 @@ function inicializarReporteEjecutivo() {
   // Generador de tablas estructuradas de respaldo por tipo de reporte
   function generarTablasFallbackPorTipo(type, data, bcvRate) {
     let tablesHtml = '';
+    const tblHeadStyle = 'background-color: #1E293B; color: #FFFFFF; font-weight: bold; font-size: 9pt; padding: 8px 10px; border: 1px solid #475569; text-align: left;';
+    const tblHeadRightStyle = 'background-color: #1E293B; color: #FFFFFF; font-weight: bold; font-size: 9pt; padding: 8px 10px; border: 1px solid #475569; text-align: right;';
+    const tblCatStyle = 'background-color: #D97706; color: #FFFFFF; font-size: 10.5pt; font-weight: bold; padding: 9px 12px; text-align: left; border: 1px solid #B45309; letter-spacing: 0.03em;';
+    const cellStyle = 'padding: 7px 10px; border: 1px solid #E2E8F0; font-size: 9.5pt; color: #1E293B;';
+    const cellRightStyle = 'padding: 7px 10px; border: 1px solid #E2E8F0; font-size: 9.5pt; color: #1E293B; text-align: right; font-weight: 600;';
+    const cellBsStyle = 'padding: 7px 10px; border: 1px solid #E2E8F0; font-size: 9.5pt; color: #92400E; text-align: right; font-weight: 600;';
+
     if (type === 'ventas_resumen') {
       tablesHtml += `
-        <table border="1" style="margin-bottom: 20px;">
+        <table border="1" cellpadding="6" cellspacing="0" class="report-data-table" style="border-collapse: collapse; width: 100%; margin-bottom: 22px; font-family: 'Segoe UI', Calibri, Arial, sans-serif;">
           <thead>
-            <tr><th colspan="4" style="background-color: #8C531B; color: #FFFFFF; font-size: 11pt; padding: 6px;">RESUMEN POR CATEGORÍA COMERCIAL</th></tr>
-            <tr style="background-color: #2C1810; color: #FFFFFF;">
-              <th>CATEGORÍA COMERCIAL</th>
-              <th style="text-align: right;">CANTIDAD VENDIDA</th>
-              <th style="text-align: right;">TOTAL USD ($)</th>
-              <th style="text-align: right;">TOTAL BS (Bs.)</th>
+            <tr><th colspan="4" style="${tblCatStyle}">RESUMEN POR CATEGORÍA COMERCIAL</th></tr>
+            <tr>
+              <th style="${tblHeadStyle}">CATEGORÍA COMERCIAL</th>
+              <th style="${tblHeadRightStyle}">CANTIDAD VENDIDA</th>
+              <th style="${tblHeadRightStyle}">TOTAL USD ($)</th>
+              <th style="${tblHeadRightStyle}">TOTAL BS (Bs.)</th>
             </tr>
           </thead>
           <tbody>
-            ${(data.catTotals || []).map(c => `
-              <tr>
-                <td>${c.categoria}</td>
-                <td style="text-align: right;">${c.cantidad}</td>
-                <td style="text-align: right;">$${Number(c.total).toFixed(2)}</td>
-                <td style="text-align: right;">Bs. ${(Number(c.total) * bcvRate).toFixed(2)}</td>
+            ${(data.catTotals || []).map((c, idx) => `
+              <tr style="background-color: ${idx % 2 === 0 ? '#FFFFFF' : '#F8FAFC'};">
+                <td style="${cellStyle}">${c.categoria}</td>
+                <td style="${cellRightStyle}">${c.cantidad}</td>
+                <td style="${cellRightStyle}">$${Number(c.total).toFixed(2)}</td>
+                <td style="${cellBsStyle}">Bs. ${(Number(c.total) * bcvRate).toFixed(2)}</td>
               </tr>
             `).join('')}
           </tbody>
         </table>
-        <table border="1">
+        <table border="1" cellpadding="6" cellspacing="0" class="report-data-table" style="border-collapse: collapse; width: 100%; margin-bottom: 22px; font-family: 'Segoe UI', Calibri, Arial, sans-serif;">
           <thead>
-            <tr><th colspan="4" style="background-color: #8C531B; color: #FFFFFF; font-size: 11pt; padding: 6px;">RECAUDACIÓN POR FORMA DE PAGO</th></tr>
-            <tr style="background-color: #2C1810; color: #FFFFFF;">
-              <th>MÉTODO DE PAGO</th>
-              <th style="text-align: right;">TRANSACCIONES</th>
-              <th style="text-align: right;">TOTAL RECAUDADO USD ($)</th>
-              <th style="text-align: right;">TOTAL RECAUDADO BS (Bs.)</th>
+            <tr><th colspan="4" style="${tblCatStyle}">RECAUDACIÓN POR FORMA DE PAGO</th></tr>
+            <tr>
+              <th style="${tblHeadStyle}">MÉTODO DE PAGO</th>
+              <th style="${tblHeadRightStyle}">TRANSACCIONES</th>
+              <th style="${tblHeadRightStyle}">TOTAL RECAUDADO USD ($)</th>
+              <th style="${tblHeadRightStyle}">TOTAL RECAUDADO BS (Bs.)</th>
             </tr>
           </thead>
           <tbody>
-            ${(data.payments || []).map(p => `
-              <tr>
-                <td>${p.metodo}</td>
-                <td style="text-align: right;">${p.transacciones}</td>
-                <td style="text-align: right;">$${Number(p.total).toFixed(2)}</td>
-                <td style="text-align: right;">Bs. ${(Number(p.total) * bcvRate).toFixed(2)}</td>
+            ${(data.payments || []).map((p, idx) => `
+              <tr style="background-color: ${idx % 2 === 0 ? '#FFFFFF' : '#F8FAFC'};">
+                <td style="${cellStyle}">${p.metodo}</td>
+                <td style="${cellRightStyle}">${p.transacciones}</td>
+                <td style="${cellRightStyle}">$${Number(p.total).toFixed(2)}</td>
+                <td style="${cellBsStyle}">Bs. ${(Number(p.total) * bcvRate).toFixed(2)}</td>
               </tr>
             `).join('')}
           </tbody>
@@ -5209,22 +5284,23 @@ function inicializarReporteEjecutivo() {
       `;
     } else if (type === 'balance_contable') {
       tablesHtml += `
-        <table border="1">
+        <table border="1" cellpadding="6" cellspacing="0" class="report-data-table" style="border-collapse: collapse; width: 100%; margin-bottom: 22px; font-family: 'Segoe UI', Calibri, Arial, sans-serif;">
           <thead>
-            <tr style="background-color: #2C1810; color: #FFFFFF;">
-              <th>CÓDIGO PUC</th><th>NOMBRE CUENTA</th>
-              <th style="text-align: right;">SUMA DEBE USD</th><th style="text-align: right;">SUMA HABER USD</th>
-              <th style="text-align: right;">SALDO DEUDOR USD</th><th style="text-align: right;">SALDO ACREEDOR USD</th>
+            <tr><th colspan="6" style="${tblCatStyle}">BALANCE DE COMPROBACIÓN CONTABLE</th></tr>
+            <tr>
+              <th style="${tblHeadStyle}">CÓDIGO PUC</th><th style="${tblHeadStyle}">NOMBRE CUENTA</th>
+              <th style="${tblHeadRightStyle}">SUMA DEBE USD</th><th style="${tblHeadRightStyle}">SUMA HABER USD</th>
+              <th style="${tblHeadRightStyle}">SALDO DEUDOR USD</th><th style="${tblHeadRightStyle}">SALDO ACREEDOR USD</th>
             </tr>
           </thead>
           <tbody>
-            ${(data.trialBalance || []).map(t => `
-              <tr>
-                <td>${t.code}</td><td>${t.name}</td>
-                <td style="text-align: right;">$${Number(t.sumDebe).toFixed(2)}</td>
-                <td style="text-align: right;">$${Number(t.sumHaber).toFixed(2)}</td>
-                <td style="text-align: right;">$${Number(t.saldoDeudor).toFixed(2)}</td>
-                <td style="text-align: right;">$${Number(t.saldoAcreedor).toFixed(2)}</td>
+            ${(data.trialBalance || []).map((t, idx) => `
+              <tr style="background-color: ${idx % 2 === 0 ? '#FFFFFF' : '#F8FAFC'};">
+                <td style="${cellStyle}">${t.code}</td><td style="${cellStyle}">${t.name}</td>
+                <td style="${cellRightStyle}">$${Number(t.sumDebe).toFixed(2)}</td>
+                <td style="${cellRightStyle}">$${Number(t.sumHaber).toFixed(2)}</td>
+                <td style="${cellRightStyle}">$${Number(t.saldoDeudor).toFixed(2)}</td>
+                <td style="${cellRightStyle}">$${Number(t.saldoAcreedor).toFixed(2)}</td>
               </tr>
             `).join('')}
           </tbody>
@@ -5232,22 +5308,23 @@ function inicializarReporteEjecutivo() {
       `;
     } else if (type === 'ventas_detalladas') {
       tablesHtml += `
-        <table border="1">
+        <table border="1" cellpadding="6" cellspacing="0" class="report-data-table" style="border-collapse: collapse; width: 100%; margin-bottom: 22px; font-family: 'Segoe UI', Calibri, Arial, sans-serif;">
           <thead>
-            <tr style="background-color: #2C1810; color: #FFFFFF;">
-              <th>FACTURA</th><th>FECHA Y HORA</th><th>CAJERO</th><th>TURNO</th><th>MÉTODO PAGO</th>
-              <th>PRODUCTO</th><th style="text-align: right;">CANTIDAD</th><th style="text-align: right;">PVP USD</th>
-              <th style="text-align: right;">SUBTOTAL USD</th><th style="text-align: right;">SUBTOTAL BS</th>
+            <tr><th colspan="10" style="${tblCatStyle}">DETALLE CRONOLÓGICO DE OPERACIONES Y PRODUCTOS</th></tr>
+            <tr>
+              <th style="${tblHeadStyle}">FACTURA</th><th style="${tblHeadStyle}">FECHA Y HORA</th><th style="${tblHeadStyle}">CAJERO</th><th style="${tblHeadStyle}">TURNO</th><th style="${tblHeadStyle}">MÉTODO</th>
+              <th style="${tblHeadStyle}">PRODUCTO</th><th style="${tblHeadRightStyle}">CANTIDAD</th><th style="${tblHeadRightStyle}">PVP USD</th>
+              <th style="${tblHeadRightStyle}">SUBTOTAL USD</th><th style="${tblHeadRightStyle}">SUBTOTAL BS</th>
             </tr>
           </thead>
           <tbody>
-            ${(data.rows || []).map(r => `
-              <tr>
-                <td>${r.codigo}</td><td>${r.fecha_hora}</td><td>${r.cajero}</td><td>${r.turno}</td><td>${r.metodo_pago}</td>
-                <td>${r.producto}</td><td style="text-align: right;">${r.cantidad}</td>
-                <td style="text-align: right;">$${Number(r.precio_unitario).toFixed(2)}</td>
-                <td style="text-align: right;">$${Number(r.subtotal_linea).toFixed(2)}</td>
-                <td style="text-align: right;">Bs. ${(Number(r.subtotal_linea) * bcvRate).toFixed(2)}</td>
+            ${(data.rows || []).map((r, idx) => `
+              <tr style="background-color: ${idx % 2 === 0 ? '#FFFFFF' : '#F8FAFC'};">
+                <td style="${cellStyle}; text-align: center;">${r.codigo}</td><td style="${cellStyle}">${r.fecha_hora}</td><td style="${cellStyle}">${r.cajero}</td><td style="${cellStyle}; text-align: center;">${r.turno}</td><td style="${cellStyle}">${r.metodo_pago}</td>
+                <td style="${cellStyle}">${r.producto}</td><td style="${cellRightStyle}">${r.cantidad}</td>
+                <td style="${cellRightStyle}">$${Number(r.precio_unitario).toFixed(2)}</td>
+                <td style="${cellRightStyle}">$${Number(r.subtotal_linea).toFixed(2)}</td>
+                <td style="${cellBsStyle}">Bs. ${(Number(r.subtotal_linea) * bcvRate).toFixed(2)}</td>
               </tr>
             `).join('')}
           </tbody>
@@ -5255,24 +5332,25 @@ function inicializarReporteEjecutivo() {
       `;
     } else if (type === 'cierres_turno') {
       tablesHtml += `
-        <table border="1">
+        <table border="1" cellpadding="6" cellspacing="0" class="report-data-table" style="border-collapse: collapse; width: 100%; margin-bottom: 22px; font-family: 'Segoe UI', Calibri, Arial, sans-serif;">
           <thead>
-            <tr style="background-color: #2C1810; color: #FFFFFF;">
-              <th>REPORTE Z</th><th>FECHA TURNO</th><th>CAJA</th><th>TURNO</th><th>CAJERO</th>
-              <th style="text-align: right;">FACTURAS</th><th style="text-align: right;">VENTAS NETAS USD</th>
-              <th style="text-align: right;">EFECTIVO ESPERADO USD</th><th style="text-align: right;">EFECTIVO REAL USD</th>
-              <th style="text-align: right;">DIFERENCIA USD</th>
+            <tr><th colspan="10" style="${tblCatStyle}">HISTORIAL DE ARQUEOS Y CIERRES DE TURNO (REPORTE Z)</th></tr>
+            <tr>
+              <th style="${tblHeadStyle}">REPORTE Z</th><th style="${tblHeadStyle}">FECHA TURNO</th><th style="${tblHeadStyle}">CAJA</th><th style="${tblHeadStyle}">TURNO</th><th style="${tblHeadStyle}">RESPONSABLE</th>
+              <th style="${tblHeadRightStyle}">FACTURAS</th><th style="${tblHeadRightStyle}">VENTAS NETAS USD</th>
+              <th style="${tblHeadRightStyle}">EFECTIVO ESPERADO</th><th style="${tblHeadRightStyle}">EFECTIVO REAL</th>
+              <th style="${tblHeadRightStyle}">DIFERENCIA</th>
             </tr>
           </thead>
           <tbody>
-            ${(data.closures || []).map(c => `
-              <tr>
-                <td>${c.codigo_reporte}</td><td>${c.fecha_turno}</td><td>${c.caja_id}</td><td>${c.turno}</td>
-                <td>${c.firma_cajero || c.generado_por}</td><td style="text-align: right;">${c.facturas_emitidas}</td>
-                <td style="text-align: right;">$${Number(c.ventas_netas).toFixed(2)}</td>
-                <td style="text-align: right;">$${Number(c.monto_efectivo_esperado).toFixed(2)}</td>
-                <td style="text-align: right;">$${Number(c.monto_efectivo_real || c.monto_efectivo_esperado).toFixed(2)}</td>
-                <td style="text-align: right;">$${Number(c.diferencia_efectivo || 0).toFixed(2)}</td>
+            ${(data.closures || []).map((c, idx) => `
+              <tr style="background-color: ${idx % 2 === 0 ? '#FFFFFF' : '#F8FAFC'};">
+                <td style="${cellStyle}; text-align: center;">${c.codigo_reporte}</td><td style="${cellStyle}">${c.fecha_turno}</td><td style="${cellStyle}; text-align: center;">${c.caja_id}</td><td style="${cellStyle}; text-align: center;">${c.turno}</td>
+                <td style="${cellStyle}">${c.firma_cajero || c.generado_por}</td><td style="${cellRightStyle}">${c.facturas_emitidas}</td>
+                <td style="${cellRightStyle}">$${Number(c.ventas_netas).toFixed(2)}</td>
+                <td style="${cellRightStyle}">$${Number(c.monto_efectivo_esperado).toFixed(2)}</td>
+                <td style="${cellRightStyle}">$${Number(c.monto_efectivo_real || c.monto_efectivo_esperado).toFixed(2)}</td>
+                <td style="${cellRightStyle}; color: ${Number(c.diferencia_efectivo || 0) < 0 ? '#DC2626' : '#16A34A'};">$${Number(c.diferencia_efectivo || 0).toFixed(2)}</td>
               </tr>
             `).join('')}
           </tbody>
@@ -5280,21 +5358,22 @@ function inicializarReporteEjecutivo() {
       `;
     } else if (type === 'eventos_anulaciones') {
       tablesHtml += `
-        <table border="1">
+        <table border="1" cellpadding="6" cellspacing="0" class="report-data-table" style="border-collapse: collapse; width: 100%; margin-bottom: 22px; font-family: 'Segoe UI', Calibri, Arial, sans-serif;">
           <thead>
-            <tr style="background-color: #2C1810; color: #FFFFFF;">
-              <th>ID EVENTO</th><th>FECHA Y HORA</th><th>COMPROBANTE</th><th>CAJA</th><th>TURNO</th>
-              <th>TIPO EVENTO</th><th style="text-align: right;">MONTO USD</th><th style="text-align: right;">MONTO BS</th>
-              <th>MOTIVO</th><th>AUTORIZADO POR</th>
+            <tr><th colspan="10" style="${tblCatStyle}">AUDITORÍA DE NOVEDADES, ANULACIONES Y DEVOLUCIONES</th></tr>
+            <tr>
+              <th style="${tblHeadStyle}">ID EVENTO</th><th style="${tblHeadStyle}">FECHA Y HORA</th><th style="${tblHeadStyle}">DOCUMENTO</th><th style="${tblHeadStyle}">CAJA</th><th style="${tblHeadStyle}">TURNO</th>
+              <th style="${tblHeadStyle}">TIPO EVENTO</th><th style="${tblHeadRightStyle}">MONTO USD</th><th style="${tblHeadRightStyle}">MONTO BS</th>
+              <th style="${tblHeadStyle}">MOTIVO</th><th style="${tblHeadStyle}">AUTORIZADO POR</th>
             </tr>
           </thead>
           <tbody>
-            ${(data.events || []).map(e => `
-              <tr>
-                <td>${e.id}</td><td>${e.fecha_hora}</td><td>${e.codigo_venta}</td><td>${e.caja_id}</td><td>${e.turno}</td>
-                <td>${e.tipo_evento}</td><td style="text-align: right;">$${Number(e.monto).toFixed(2)}</td>
-                <td style="text-align: right;">Bs. ${(Number(e.monto) * bcvRate).toFixed(2)}</td>
-                <td>${e.motivo}</td><td>${e.registrado_por}</td>
+            ${(data.events || []).map((e, idx) => `
+              <tr style="background-color: ${idx % 2 === 0 ? '#FFFFFF' : '#F8FAFC'};">
+                <td style="${cellStyle}; text-align: center;">${e.id}</td><td style="${cellStyle}">${e.fecha_hora}</td><td style="${cellStyle}; text-align: center;">${e.codigo_venta}</td><td style="${cellStyle}; text-align: center;">${e.caja_id}</td><td style="${cellStyle}; text-align: center;">${e.turno}</td>
+                <td style="${cellStyle}">${e.tipo_evento}</td><td style="${cellRightStyle}">$${Number(e.monto).toFixed(2)}</td>
+                <td style="${cellBsStyle}">Bs. ${(Number(e.monto) * bcvRate).toFixed(2)}</td>
+                <td style="${cellStyle}">${e.motivo}</td><td style="${cellStyle}">${e.registrado_por}</td>
               </tr>
             `).join('')}
           </tbody>
@@ -5302,18 +5381,19 @@ function inicializarReporteEjecutivo() {
       `;
     } else if (type === 'produccion_hornos') {
       tablesHtml += `
-        <table border="1">
+        <table border="1" cellpadding="6" cellspacing="0" class="report-data-table" style="border-collapse: collapse; width: 100%; margin-bottom: 22px; font-family: 'Segoe UI', Calibri, Arial, sans-serif;">
           <thead>
-            <tr style="background-color: #2C1810; color: #FFFFFF;">
-              <th>CÓDIGO LOTE</th><th>PRODUCTO / RECETA</th><th style="text-align: right;">PIEZAS / BANDEJAS</th>
-              <th>FASE LEUDADO</th><th>TEMP RECOMENDADA</th><th>TIEMPO</th>
+            <tr><th colspan="6" style="${tblCatStyle}">REGISTRO TÉCNICO DE HORNEADO Y LEUDADO ARTESANAL</th></tr>
+            <tr>
+              <th style="${tblHeadStyle}">CÓDIGO LOTE</th><th style="${tblHeadStyle}">PRODUCTO / RECETA</th><th style="${tblHeadRightStyle}">PIEZAS / BANDEJAS</th>
+              <th style="${tblHeadStyle}">FASE LEUDADO</th><th style="${tblHeadStyle}">TEMP RECOMENDADA</th><th style="${tblHeadStyle}">TIEMPO COCCIÓN</th>
             </tr>
           </thead>
           <tbody>
-            ${(data.lotes || []).map(l => `
-              <tr>
-                <td>${l.codigo}</td><td>${l.producto}</td><td style="text-align: right;">${l.cantidad}</td>
-                <td>${l.estado_leudado}</td><td>${l.temperatura_recomendada || 190} °C</td><td>${l.tiempo_recomendado_min || 15} min</td>
+            ${(data.lotes || []).map((l, idx) => `
+              <tr style="background-color: ${idx % 2 === 0 ? '#FFFFFF' : '#F8FAFC'};">
+                <td style="${cellStyle}; text-align: center;">${l.codigo}</td><td style="${cellStyle}">${l.producto}</td><td style="${cellRightStyle}">${l.cantidad}</td>
+                <td style="${cellStyle}">${l.estado_leudado}</td><td style="${cellStyle}">${l.temperatura_recomendada || 190} °C</td><td style="${cellStyle}">${l.tiempo_recomendado_min || 15} min</td>
               </tr>
             `).join('')}
           </tbody>
@@ -5321,22 +5401,23 @@ function inicializarReporteEjecutivo() {
       `;
     } else if (type === 'inventario_mermas') {
       tablesHtml += `
-        <table border="1">
+        <table border="1" cellpadding="6" cellspacing="0" class="report-data-table" style="border-collapse: collapse; width: 100%; margin-bottom: 22px; font-family: 'Segoe UI', Calibri, Arial, sans-serif;">
           <thead>
-            <tr style="background-color: #2C1810; color: #FFFFFF;">
-              <th>CÓDIGO</th><th>NOMBRE</th><th>CATEGORÍA</th><th style="text-align: right;">STOCK ACTUAL</th>
-              <th>UNIDAD</th><th style="text-align: right;">STOCK MÍNIMO</th><th style="text-align: right;">COSTO/PVP USD</th>
-              <th style="text-align: right;">TOTAL USD</th><th style="text-align: right;">TOTAL BS</th>
+            <tr><th colspan="9" style="${tblCatStyle}">VALORIZACIÓN Y EXISTENCIAS DE INVENTARIO GENERAL</th></tr>
+            <tr>
+              <th style="${tblHeadStyle}">CÓDIGO</th><th style="${tblHeadStyle}">DESCRIPCIÓN</th><th style="${tblHeadStyle}">CATEGORÍA</th><th style="${tblHeadRightStyle}">STOCK ACTUAL</th>
+              <th style="${tblHeadStyle}">UNIDAD</th><th style="${tblHeadRightStyle}">STOCK MÍNIMO</th><th style="${tblHeadRightStyle}">COSTO / PVP USD</th>
+              <th style="${tblHeadRightStyle}">TOTAL USD</th><th style="${tblHeadRightStyle}">TOTAL BS</th>
             </tr>
           </thead>
           <tbody>
-            ${(data.items || []).map(i => `
-              <tr>
-                <td>${i.code}</td><td>${i.name}</td><td>${i.category === 'raw_material' ? 'Materia Prima' : 'Vitrina POS'}</td>
-                <td style="text-align: right;">${i.currentStock}</td><td>${i.unit}</td><td style="text-align: right;">${i.minStock}</td>
-                <td style="text-align: right;">$${Number(i.unitPrice).toFixed(2)}</td>
-                <td style="text-align: right;">$${(i.currentStock * i.unitPrice).toFixed(2)}</td>
-                <td style="text-align: right;">Bs. ${((i.currentStock * i.unitPrice) * bcvRate).toFixed(2)}</td>
+            ${(data.items || []).map((i, idx) => `
+              <tr style="background-color: ${idx % 2 === 0 ? '#FFFFFF' : '#F8FAFC'};">
+                <td style="${cellStyle}; text-align: center;">${i.code}</td><td style="${cellStyle}">${i.name}</td><td style="${cellStyle}">${i.category === 'raw_material' ? 'Materia Prima' : 'Vitrina POS'}</td>
+                <td style="${cellRightStyle}">${i.currentStock}</td><td style="${cellStyle}; text-align: center;">${i.unit}</td><td style="${cellRightStyle}">${i.minStock}</td>
+                <td style="${cellRightStyle}">$${Number(i.unitPrice).toFixed(2)}</td>
+                <td style="${cellRightStyle}">$${(i.currentStock * i.unitPrice).toFixed(2)}</td>
+                <td style="${cellBsStyle}">Bs. ${((i.currentStock * i.unitPrice) * bcvRate).toFixed(2)}</td>
               </tr>
             `).join('')}
           </tbody>
@@ -5344,19 +5425,20 @@ function inicializarReporteEjecutivo() {
       `;
     } else if (type === 'compras_proveedores') {
       tablesHtml += `
-        <table border="1">
+        <table border="1" cellpadding="6" cellspacing="0" class="report-data-table" style="border-collapse: collapse; width: 100%; margin-bottom: 22px; font-family: 'Segoe UI', Calibri, Arial, sans-serif;">
           <thead>
-            <tr style="background-color: #2C1810; color: #FFFFFF;">
-              <th>CÓDIGO ORDEN</th><th>PROVEEDOR</th><th>FECHA PEDIDO</th><th>FECHA ENTREGA</th>
-              <th style="text-align: right;">TOTAL USD</th><th style="text-align: right;">TOTAL BS</th><th>ESTATUS</th>
+            <tr><th colspan="7" style="${tblCatStyle}">ÓRDENES DE COMPRA Y ABASTECIMIENTO A PROVEEDORES</th></tr>
+            <tr>
+              <th style="${tblHeadStyle}">CÓDIGO ORDEN</th><th style="${tblHeadStyle}">PROVEEDOR</th><th style="${tblHeadStyle}">FECHA PEDIDO</th><th style="${tblHeadStyle}">FECHA ENTREGA</th>
+              <th style="${tblHeadRightStyle}">TOTAL USD</th><th style="${tblHeadRightStyle}">TOTAL BS</th><th style="${tblHeadStyle}">ESTATUS</th>
             </tr>
           </thead>
           <tbody>
-            ${(data.orders || []).map(o => `
-              <tr>
-                <td>${o.code}</td><td>${o.supplierName}</td><td>${o.orderDate}</td><td>${o.deliveryDate}</td>
-                <td style="text-align: right;">$${Number(o.totalAmount).toFixed(2)}</td>
-                <td style="text-align: right;">Bs. ${(Number(o.totalAmount) * bcvRate).toFixed(2)}</td><td>${o.status}</td>
+            ${(data.orders || []).map((o, idx) => `
+              <tr style="background-color: ${idx % 2 === 0 ? '#FFFFFF' : '#F8FAFC'};">
+                <td style="${cellStyle}; text-align: center;">${o.code}</td><td style="${cellStyle}">${o.supplierName}</td><td style="${cellStyle}">${o.orderDate}</td><td style="${cellStyle}">${o.deliveryDate}</td>
+                <td style="${cellRightStyle}">$${Number(o.totalAmount).toFixed(2)}</td>
+                <td style="${cellBsStyle}">Bs. ${(Number(o.totalAmount) * bcvRate).toFixed(2)}</td><td style="${cellStyle}; text-align: center;">${o.status}</td>
               </tr>
             `).join('')}
           </tbody>
@@ -5364,18 +5446,19 @@ function inicializarReporteEjecutivo() {
       `;
     } else if (type === 'personal_rendimiento') {
       tablesHtml += `
-        <table border="1">
+        <table border="1" cellpadding="6" cellspacing="0" class="report-data-table" style="border-collapse: collapse; width: 100%; margin-bottom: 22px; font-family: 'Segoe UI', Calibri, Arial, sans-serif;">
           <thead>
-            <tr style="background-color: #2C1810; color: #FFFFFF;">
-              <th>CÓDIGO</th><th>NOMBRE COMPLETO</th><th>CARGO / ROL</th><th>DEPARTAMENTO</th>
-              <th>TURNO OFICIAL</th><th>TELÉFONO</th><th>EMAIL</th><th>ESTADO</th>
+            <tr><th colspan="8" style="${tblCatStyle}">NÓMINA Y ASIGNACIÓN DE COLABORADORES</th></tr>
+            <tr>
+              <th style="${tblHeadStyle}">CÓDIGO</th><th style="${tblHeadStyle}">NOMBRE COMPLETO</th><th style="${tblHeadStyle}">CARGO / ROL</th><th style="${tblHeadStyle}">DEPARTAMENTO</th>
+              <th style="${tblHeadStyle}">TURNO OFICIAL</th><th style="${tblHeadStyle}">TELÉFONO</th><th style="${tblHeadStyle}">CORREO</th><th style="${tblHeadStyle}">ESTADO</th>
             </tr>
           </thead>
           <tbody>
-            ${(data.staff || []).map(s => `
-              <tr>
-                <td>${s.code}</td><td>${s.name}</td><td>${s.role}</td><td>${s.department}</td>
-                <td>${s.shift}</td><td>${s.phone}</td><td>${s.email}</td><td>${s.statusText || s.status}</td>
+            ${(data.staff || []).map((s, idx) => `
+              <tr style="background-color: ${idx % 2 === 0 ? '#FFFFFF' : '#F8FAFC'};">
+                <td style="${cellStyle}; text-align: center;">${s.code}</td><td style="${cellStyle}">${s.name}</td><td style="${cellStyle}">${s.role}</td><td style="${cellStyle}">${s.department}</td>
+                <td style="${cellStyle}; text-align: center;">${s.shift}</td><td style="${cellStyle}">${s.phone}</td><td style="${cellStyle}">${s.email}</td><td style="${cellStyle}; text-align: center;">${s.statusText || s.status}</td>
               </tr>
             `).join('')}
           </tbody>
@@ -5410,172 +5493,128 @@ function inicializarReporteEjecutivo() {
       if (currentReportData.type !== selectedType || !sheet.querySelector('table')) {
         await ejecutarGeneracionReporte();
       }
+      // 1. Asegurar carga del motor de estilos OpenXML
+      await ensureStyleEngine();
 
-      // 2. Extraer Bloque de KPIs del reporte visible
-      let kpisHtml = '';
+      // 2. Extraer Indicadores Clave (KPIs)
+      const kpis = [];
       const kpiBoxes = sheet.querySelectorAll('.report-kpi-box');
-      if (kpiBoxes.length > 0) {
-        kpisHtml = `
-          <table border="1" style="margin-bottom: 20px;">
-            <thead>
-              <tr style="background-color: #8C531B; color: #FFFFFF;">
-                <th colspan="3" style="font-size: 11pt; padding: 7px; text-align: left;">RESUMEN DE INDICADORES CLAVE (KPIS)</th>
-              </tr>
-              <tr style="background-color: #2C1810; color: #FFFFFF;">
-                <th style="padding: 6px 10px; width: 280px;">INDICADOR</th>
-                <th style="padding: 6px 10px; text-align: right; width: 180px;">VALOR PRINCIPAL</th>
-                <th style="padding: 6px 10px; text-align: right; width: 220px;">DETALLE / MONEDA LOCAL</th>
-              </tr>
-            </thead>
-            <tbody>
-        `;
-        kpiBoxes.forEach(box => {
-          const label = box.querySelector('.report-kpi-box-label')?.textContent?.trim() || '';
-          const val = box.querySelector('.report-kpi-box-value')?.textContent?.trim() || '';
-          const sub = box.querySelector('.report-kpi-box-sub')?.textContent?.trim() || '';
-          kpisHtml += `
-            <tr>
-              <td style="padding: 5px 8px;"><strong>${label}</strong></td>
-              <td style="padding: 5px 8px; text-align: right; font-weight: bold;">${val}</td>
-              <td style="padding: 5px 8px; text-align: right; color: #555555;">${sub}</td>
-            </tr>
-          `;
-        });
-        kpisHtml += `</tbody></table><br/>`;
-      }
+      kpiBoxes.forEach(box => {
+        const label = box.querySelector('.report-kpi-box-label')?.textContent?.trim() || '';
+        const rawVal = box.querySelector('.report-kpi-box-value')?.textContent?.trim() || '';
+        const sub = box.querySelector('.report-kpi-box-sub')?.textContent?.trim() || '';
+        let valNum = undefined;
+        if (/^\$?\s*[\d,]+(\.\d{1,2})?$/.test(rawVal)) {
+          const n = parseFloat(rawVal.replace(/[\$,\s]/g, ''));
+          if (!isNaN(n)) valNum = n;
+        }
+        kpis.push({ label, val: rawVal, valNum, sub });
+      });
 
-      // 3. Extraer Secciones y Tablas de Datos directamente del reporte renderizado
-      let tablesHtml = '';
+      // 3. Extraer Tablas de Datos del Reporte
+      const tables = [];
       const sectionElements = sheet.querySelectorAll('.report-section-heading, table');
+      let currentSectionTitle = '';
       if (sectionElements.length > 0) {
         sectionElements.forEach(el => {
           if (el.classList.contains('report-section-heading')) {
-            const titleText = el.textContent?.trim() || '';
-            tablesHtml += `
-              <table border="0" style="margin-top: 14px; margin-bottom: 4px;">
-                <tr>
-                  <td colspan="12" style="background-color: #F4EBE1; color: #2C1810; font-weight: bold; font-size: 11pt; padding: 8px 10px; border: 1px solid #C48B44;">
-                    ${titleText}
-                  </td>
-                </tr>
-              </table>
-            `;
+            currentSectionTitle = el.textContent?.trim() || '';
           } else if (el.tagName.toLowerCase() === 'table') {
-            const clone = el.cloneNode(true);
-            clone.setAttribute('border', '1');
-            clone.style.borderCollapse = 'collapse';
-            clone.style.width = '100%';
-            clone.style.marginTop = '4px';
-            clone.style.marginBottom = '20px';
+            const tblObj = {
+              title: currentSectionTitle,
+              headers: [],
+              rows: [],
+              footer: []
+            };
 
-            clone.querySelectorAll('thead tr').forEach(tr => {
-              tr.style.backgroundColor = '#2C1810';
-              tr.style.color = '#FFFFFF';
+            // Encabezados thead: diferenciar títulos de categoría con colspan de los encabezados reales
+            const theadRows = el.querySelectorAll('thead tr');
+            theadRows.forEach(tr => {
+              const ths = tr.querySelectorAll('th');
+              if (ths.length === 1 && ths[0].hasAttribute('colspan')) {
+                if (!tblObj.title) tblObj.title = ths[0].textContent?.trim() || '';
+              } else if (ths.length > 1) {
+                ths.forEach(th => tblObj.headers.push(th.textContent?.trim() || ''));
+              }
             });
-            clone.querySelectorAll('thead th').forEach(th => {
-              th.style.backgroundColor = '#2C1810';
-              th.style.color = '#FFFFFF';
-              th.style.fontWeight = 'bold';
-              th.style.padding = '7px 9px';
-              th.style.border = '1px solid #C48B44';
-            });
-            clone.querySelectorAll('tbody td').forEach(td => {
-              td.style.padding = '6px 9px';
-              td.style.border = '1px solid #D9CEBF';
-              td.style.fontSize = '9.5pt';
-            });
-            clone.querySelectorAll('tfoot tr').forEach(tr => {
-              tr.style.backgroundColor = '#FAF6F0';
-              tr.style.fontWeight = 'bold';
-            });
-            clone.querySelectorAll('tfoot td').forEach(td => {
-              td.style.padding = '7px 9px';
-              td.style.borderTop = '2px solid #2C1810';
-              td.style.fontWeight = 'bold';
+            if (tblObj.headers.length === 0 && theadRows.length > 0) {
+              theadRows[theadRows.length - 1].querySelectorAll('th').forEach(th => {
+                tblObj.headers.push(th.textContent?.trim() || '');
+              });
+            }
+
+            // Filas tbody: detectar celdas con colspan como filas de aviso centrado
+            el.querySelectorAll('tbody tr').forEach(tr => {
+              const tds = tr.querySelectorAll('td');
+              if (tds.length === 1 && tds[0].hasAttribute('colspan')) {
+                tblObj.rows.push([tds[0].textContent?.trim() || '']);
+              } else {
+                const rowVals = [];
+                tds.forEach(td => rowVals.push(td.textContent?.trim() || ''));
+                if (rowVals.length) tblObj.rows.push(rowVals);
+              }
             });
 
-            tablesHtml += clone.outerHTML;
+            // Pie de tabla tfoot
+            el.querySelectorAll('tfoot tr').forEach(tr => {
+              const rowVals = [];
+              tr.querySelectorAll('td, th').forEach(cell => rowVals.push(cell.textContent?.trim() || ''));
+              if (rowVals.length) tblObj.footer = rowVals;
+            });
+
+            tables.push(tblObj);
+            currentSectionTitle = '';
           }
         });
       }
 
-      // Si no se extrajeron tablas del DOM, usar generador estructurado por tipo
-      if (!tablesHtml.trim()) {
-        tablesHtml = generarTablasFallbackPorTipo(selectedType, currentReportData, bcvRate);
+      // Si no se extrajeron tablas del DOM, parsear el generador fallback
+      if (tables.length === 0) {
+        const tempDiv = document.createElement('div');
+        tempDiv.innerHTML = generarTablasFallbackPorTipo(selectedType, currentReportData, bcvRate);
+        tempDiv.querySelectorAll('table').forEach(tbl => {
+          const tblObj = { title: currentSectionTitle, headers: [], rows: [], footer: [] };
+          const theadRows = tbl.querySelectorAll('thead tr');
+          theadRows.forEach(tr => {
+            const ths = tr.querySelectorAll('th');
+            if (ths.length === 1 && ths[0].hasAttribute('colspan')) {
+              tblObj.title = ths[0].textContent?.trim() || '';
+            } else if (ths.length > 1) {
+              ths.forEach(th => tblObj.headers.push(th.textContent?.trim() || ''));
+            }
+          });
+          if (tblObj.headers.length === 0 && theadRows.length > 0) {
+            theadRows[theadRows.length - 1].querySelectorAll('th').forEach(th => tblObj.headers.push(th.textContent?.trim() || ''));
+          }
+
+          tbl.querySelectorAll('tbody tr').forEach(tr => {
+            const tds = tr.querySelectorAll('td');
+            if (tds.length === 1 && tds[0].hasAttribute('colspan')) {
+              tblObj.rows.push([tds[0].textContent?.trim() || '']);
+            } else {
+              const rowVals = [];
+              tds.forEach(td => rowVals.push(td.textContent?.trim() || ''));
+              if (rowVals.length) tblObj.rows.push(rowVals);
+            }
+          });
+          tbl.querySelectorAll('tfoot tr td, tfoot tr th').forEach(cell => tblObj.footer.push(cell.textContent?.trim() || ''));
+          tables.push(tblObj);
+        });
       }
 
-      const excelTemplate = `
-        <html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:x="urn:schemas-microsoft-com:office:excel" xmlns="http://www.w3.org/TR/REC-html40">
-        <head>
-          <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
-          <!--[if gte mso 9]>
-          <xml>
-            <x:ExcelWorkbook>
-              <x:ExcelWorksheets>
-                <x:ExcelWorksheet>
-                  <x:Name>${(reportTitle.replace(/[\/\\\?\*\[\]:]/g, '').slice(0, 31)) || 'Reporte'}</x:Name>
-                  <x:WorksheetOptions>
-                    <x:DisplayGridlines/>
-                  </x:WorksheetOptions>
-                </x:ExcelWorksheet>
-              </x:ExcelWorksheets>
-            </x:ExcelWorkbook>
-          </xml>
-          <![endif]-->
-          <style>
-            body { font-family: 'Segoe UI', Calibri, Arial, sans-serif; font-size: 10pt; color: #2C1810; margin: 15px; }
-            .title-company { font-size: 15pt; font-weight: bold; color: #2C1810; margin-bottom: 2px; }
-            .title-sub { font-size: 9.5pt; color: #7A6B5D; margin-bottom: 6px; }
-            .title-report { font-size: 13pt; font-weight: bold; color: #8C531B; margin-bottom: 6px; }
-            .meta-box { font-size: 9.5pt; color: #444444; margin-bottom: 15px; padding: 6px 0; border-top: 1px solid #D9CEBF; border-bottom: 1px solid #D9CEBF; }
-            table { border-collapse: collapse; width: 100%; margin-top: 6px; margin-bottom: 15px; }
-            th { background-color: #2C1810; color: #FFFFFF; font-weight: bold; padding: 7px 10px; border: 1px solid #C48B44; text-align: left; }
-            td { padding: 6px 9px; border: 1px solid #D9CEBF; font-size: 9.5pt; }
-            .signatures-box { margin-top: 30px; }
-          </style>
-        </head>
-        <body>
-          <div class="title-company">LA NUEVA PARISIENNE PANADERIA Y PASTELERIA C.A.</div>
-          <div class="title-sub">RIF: J-40123456-7 &bull; Av. Lara con Calle 8, Barquisimeto &bull; Sistema Gerencial</div>
-          <div class="title-report">${reportTitle}</div>
-          <div class="meta-box">
-            <strong>Período Auditado:</strong> ${periodo} &nbsp;|&nbsp;
-            <strong>Fecha Emisión:</strong> ${fechaEmision} &nbsp;|&nbsp;
-            <strong>Tasa Oficial BCV:</strong> Bs. ${Number(bcvRate).toLocaleString('es-VE', { minimumFractionDigits: 2 })} &nbsp;|&nbsp;
-            <strong>Emitido por:</strong> ${activeUser.name} (${activeUser.role || 'Gerente General'})
-          </div>
-
-          ${kpisHtml}
-          ${tablesHtml}
-
-          <br/>
-          <table border="0" class="signatures-box">
-            <tr>
-              <td style="border:none; text-align:center; width: 50%;">
-                _____________________________________<br>
-                <strong>${activeUser.name}</strong><br>
-                Gerencia General &bull; La Nueva Parisienne
-              </td>
-              <td style="border:none; text-align:center; width: 50%;">
-                _____________________________________<br>
-                <strong>Auditoría &amp; Control Interno</strong><br>
-                Revisión y Conformidad
-              </td>
-            </tr>
-          </table>
-        </body>
-        </html>
-      `;
-
-      const blob = new Blob(['\uFEFF', excelTemplate], { type: 'application/vnd.ms-excel;charset=utf-8' });
-      const url = URL.createObjectURL(blob);
-      const link = document.createElement('a');
-      link.href = url;
-      link.download = `reporte_${selectedType}_${new Date().toISOString().slice(0, 10)}.xls`;
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-      URL.revokeObjectURL(url);
+      // 4. Generar reporte con formato y estilos ejecutivos de alta gama (.xlsx)
+      const cleanFileName = `reporte_${selectedType}_${new Date().toISOString().slice(0, 10)}.xlsx`;
+      generateStyledExcelReport({
+        fileName: cleanFileName,
+        sheetName: reportTitle,
+        title: reportTitle,
+        periodo,
+        fechaEmision,
+        bcvRate,
+        activeUser,
+        kpis,
+        tables
+      });
 
     } catch (e) {
       console.error('Error al exportar a Excel:', e);

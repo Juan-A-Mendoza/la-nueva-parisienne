@@ -6,6 +6,7 @@
 
 import { SessionStore } from '../core/session-store.js';
 import { PLAN_CUENTAS, AUTOMATIC_ENTRIES, TRIAL_BALANCE_ACCOUNTS } from '../data/accounting-db.js';
+import { ensureStyleEngine, generateStyledExcelReport } from '../core/excel-styler.js';
 
 function initAccounting() {
   // 1. Verificación de Seguridad y Sesión
@@ -1273,19 +1274,44 @@ function initAccounting() {
 
     balanceSheet.innerHTML = `
       <div class="report-header-banner">
-        <div>
-          <h1 class="report-brand-title">La Nueva Parisienne Panadería &amp; Pastelería C.A.</h1>
-          <p class="report-brand-sub">
-            RIF: J-40123456-7 &bull; Av. Lara con Calle 8, Barquisimeto, Edo. Lara<br>
-            Departamento de Contabilidad &bull; Auditoría y Libros Oficiales Obligatorios
-          </p>
+        <div class="report-brand-left">
+          <div class="report-brand-emblem">
+            <i data-lucide="scale" style="width: 28px; height: 28px;"></i>
+          </div>
+          <div>
+            <div class="report-doc-tag">DOCUMENTO FINANCIERO CERTIFICADO</div>
+            <h1 class="report-brand-title">La Nueva Parisienne</h1>
+            <p class="report-brand-sub">
+              Panadería &amp; Pastelería Artesanal C.A. &bull; RIF: J-40123456-7<br>
+              Av. Lara con Calle 8, Barquisimeto &bull; Departamento de Contabilidad &bull; Auditoría Oficial
+            </p>
+          </div>
         </div>
-        <div class="report-meta-box">
-          <div style="font-weight: 800; text-transform: uppercase;">BALANCE DE COMPROBACIÓN</div>
-          <div>Fecha de Emisión: ${dateFormatted}, ${timeFormatted}</div>
-          <div>Moneda: Dólares Americanos ($ USD) &bull; Ref. BCV</div>
-          <div>Auditor: ${activeUser.name} (Contador General)</div>
+        <div class="report-meta-card">
+          <div class="report-meta-title">BALANCE DE COMPROBACIÓN</div>
+          <table class="report-meta-table">
+            <tr>
+              <td class="meta-label">EMISIÓN:</td>
+              <td class="meta-val">${dateFormatted}, ${timeFormatted}</td>
+            </tr>
+            <tr>
+              <td class="meta-label">MONEDA:</td>
+              <td class="meta-val">Dólares ($ USD) &bull; Ref. BCV</td>
+            </tr>
+            <tr>
+              <td class="meta-label">AUDITOR:</td>
+              <td class="meta-val">${activeUser.name} (Contador)</td>
+            </tr>
+            <tr>
+              <td class="meta-label">ESTADO:</td>
+              <td class="meta-val" style="color: #15803D; font-weight: 700;">ECUACIÓN CUADRADA</td>
+            </tr>
+          </table>
         </div>
+      </div>
+
+      <div class="report-section-heading">
+        <span>SUMAS Y SALDOS DEL PLAN ÚNICO DE CUENTAS (PUC)</span>
       </div>
 
       <table class="report-data-table">
@@ -1307,26 +1333,28 @@ function initAccounting() {
             <td colspan="2" style="text-align: right;"><strong>TOTALES GENERALES DE COMPROBACIÓN:</strong></td>
             <td style="text-align: right;"><strong>$${totalSumDebe.toLocaleString('es-VE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</strong></td>
             <td style="text-align: right;"><strong>$${totalSumHaber.toLocaleString('es-VE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</strong></td>
-            <td style="text-align: right;"><strong>$${totalSaldoDeudor.toLocaleString('es-VE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</strong></td>
-            <td style="text-align: right;"><strong>$${totalSaldoAcreedor.toLocaleString('es-VE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</strong></td>
+            <td style="text-align: right; color: var(--color-success);"><strong>$${totalSaldoDeudor.toLocaleString('es-VE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</strong></td>
+            <td style="text-align: right; color: #1D4ED8;"><strong>$${totalSaldoAcreedor.toLocaleString('es-VE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</strong></td>
           </tr>
         </tfoot>
       </table>
 
-      <div style="background: #FAF8F5; border: 1px solid #E2E8F0; padding: 0.85rem 1.25rem; font-size: 0.82rem; color: #4B5563; line-height: 1.5; margin: 1.5rem 0;">
-        <strong>Certificación de Auditoría Contable:</strong> Se hace constar que el presente Balance de Comprobación de Sumas y Saldos refleja fielmente la totalidad de las operaciones asentadas en el Libro Diario y Mayor de <em>La Nueva Parisienne Panadería &amp; Pastelería C.A.</em>, habiéndose verificado la exactitud matemática de las partidas dobles conforme a las Normas Internacionales de Información Financiera (NIIF para PYMES) y leyes mercantiles vigentes.
+      <div style="background: #FDFBF7; border-left: 4px solid var(--color-gold); border-top: 1px solid rgba(212, 155, 84, 0.25); border-right: 1px solid rgba(212, 155, 84, 0.25); border-bottom: 1px solid rgba(212, 155, 84, 0.25); padding: 0.95rem 1.25rem; font-size: 0.84rem; color: #4B5563; line-height: 1.5; margin: 1.5rem 0; border-radius: 6px;">
+        <strong style="color: var(--color-espresso);">Certificación de Auditoría Contable:</strong> Se hace constar que el presente Balance de Comprobación de Sumas y Saldos refleja fielmente la totalidad de las operaciones asentadas en el Libro Diario y Mayor de <em>La Nueva Parisienne Panadería &amp; Pastelería C.A.</em>, habiéndose verificado la exactitud matemática de las partidas dobles conforme a las Normas Internacionales de Información Financiera (NIIF para PYMES) y leyes mercantiles vigentes.
       </div>
 
       <div class="report-signatures-grid">
-        <div>
+        <div class="report-signature-cell">
           <div class="report-signature-line"></div>
           <div class="report-signature-name">${activeUser.name}</div>
           <div class="report-signature-role">Contador General &bull; C.P.C. N° 45.892</div>
+          <div class="report-signature-dept">Dirección de Administración y Finanzas</div>
         </div>
-        <div>
+        <div class="report-signature-cell">
           <div class="report-signature-line"></div>
           <div class="report-signature-name">Juan Mendoza</div>
           <div class="report-signature-role">Gerente General &bull; Representante Legal</div>
+          <div class="report-signature-dept">Presidencia &bull; La Nueva Parisienne C.A.</div>
         </div>
       </div>
     `;
@@ -1363,24 +1391,45 @@ function initAccounting() {
 
     balanceSheet.innerHTML = `
       <div class="report-header-banner">
-        <div>
-          <h1 class="report-brand-title">La Nueva Parisienne Panadería &amp; Pastelería C.A.</h1>
-          <p class="report-brand-sub">
-            RIF: J-40123456-7 &bull; Av. Lara con Calle 8, Barquisimeto, Edo. Lara<br>
-            Departamento de Contabilidad &bull; Libro Diario General Oficial
-          </p>
+        <div class="report-brand-left">
+          <div class="report-brand-emblem">
+            <i data-lucide="file-text" style="width: 28px; height: 28px;"></i>
+          </div>
+          <div>
+            <div class="report-doc-tag">ASIENTO CONTABLE OFICIAL</div>
+            <h1 class="report-brand-title">La Nueva Parisienne</h1>
+            <p class="report-brand-sub">
+              Panadería &amp; Pastelería Artesanal C.A. &bull; RIF: J-40123456-7<br>
+              Av. Lara con Calle 8, Barquisimeto &bull; Libro Diario General Oficial
+            </p>
+          </div>
         </div>
-        <div class="report-meta-box">
-          <div class="report-meta-badge">COMPROBANTE N° ${voucher.code}</div>
-          <div>Fecha: <strong>${voucher.date}</strong></div>
-          <div>Origen: <strong>${voucher.sourceModule}</strong></div>
-          <div>Tasa Oficial BCV: <strong>Bs. ${rateHist.toFixed(2)}</strong></div>
+        <div class="report-meta-card">
+          <div class="report-meta-title">COMPROBANTE N° ${voucher.code}</div>
+          <table class="report-meta-table">
+            <tr>
+              <td class="meta-label">FECHA:</td>
+              <td class="meta-val">${voucher.date}</td>
+            </tr>
+            <tr>
+              <td class="meta-label">ORIGEN:</td>
+              <td class="meta-val">${voucher.sourceModule}</td>
+            </tr>
+            <tr>
+              <td class="meta-label">TASA BCV:</td>
+              <td class="meta-val">Bs. ${rateHist.toFixed(2)}</td>
+            </tr>
+            <tr>
+              <td class="meta-label">ESTATUS:</td>
+              <td class="meta-val" style="color: #15803D; font-weight: 700;">CONTABILIZADO</td>
+            </tr>
+          </table>
         </div>
       </div>
 
-      <div style="background: #FAF7F2; border: 1px solid rgba(212, 155, 84, 0.25); border-radius: 8px; padding: 0.95rem 1.25rem; margin-bottom: 1.25rem; font-size: 0.88rem;">
-        <strong style="color: var(--color-espresso);">Por Concepto de (Glosa / P/R):</strong>
-        <p style="margin: 0.35rem 0 0; color: var(--color-espresso); font-style: italic; font-weight: 500;">${voucher.concept}</p>
+      <div style="background: #FDFBF7; border-left: 4px solid var(--color-gold); border-top: 1px solid rgba(212, 155, 84, 0.25); border-right: 1px solid rgba(212, 155, 84, 0.25); border-bottom: 1px solid rgba(212, 155, 84, 0.25); border-radius: 6px; padding: 0.95rem 1.25rem; margin-bottom: 1.25rem; font-size: 0.88rem;">
+        <strong style="color: var(--color-espresso); text-transform: uppercase; font-size: 0.78rem; letter-spacing: 0.05em; display: block; margin-bottom: 0.35rem;">Concepto de Operación (Glosa P/R):</strong>
+        <p style="margin: 0; color: var(--color-espresso); font-style: italic; font-weight: 500;">${voucher.concept}</p>
       </div>
 
       <table class="report-data-table">
@@ -1405,20 +1454,22 @@ function initAccounting() {
         </tfoot>
       </table>
 
-      <div style="background: #FAF8F5; border: 1px solid rgba(212, 155, 84, 0.2); padding: 0.85rem 1.25rem; font-size: 0.82rem; color: #4B5563; line-height: 1.5; margin: 1.5rem 0; border-radius: 6px;">
-        <strong>Certificación de Auditoría Contable:</strong> Se hace constar que el presente comprobante de diario ha sido procesado cumpliendo fielmente con el principio universal de partida doble, registrando débitos y créditos en sumas iguales conforme a las Normas Internacionales de Información Financiera (NIIF para PYMES). Equivalente fiscal: <strong>Bs. ${vesTotal.toLocaleString('es-VE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</strong>.
+      <div style="background: #FDFBF7; border: 1px solid rgba(212, 155, 84, 0.2); padding: 0.85rem 1.25rem; font-size: 0.82rem; color: #4B5563; line-height: 1.5; margin: 1.5rem 0; border-radius: 6px;">
+        <strong>Certificación de Auditoría Contable:</strong> Se hace constar que el presente comprobante de diario ha sido procesado cumpliendo fielmente con el principio universal de partida doble, registrando débitos y créditos en sumas iguales conforme a las Normas Internacionales de Información Financiera (NIIF para PYMES). Equivalente fiscal oficial: <strong>Bs. ${vesTotal.toLocaleString('es-VE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</strong>.
       </div>
 
       <div class="report-signatures-grid">
-        <div>
+        <div class="report-signature-cell">
           <div class="report-signature-line"></div>
           <div class="report-signature-name">${activeUser.name}</div>
           <div class="report-signature-role">Contador General &bull; C.P.C. N° 45.892</div>
+          <div class="report-signature-dept">Dirección de Administración y Finanzas</div>
         </div>
-        <div>
+        <div class="report-signature-cell">
           <div class="report-signature-line"></div>
           <div class="report-signature-name">Juan Mendoza</div>
           <div class="report-signature-role">Gerente General &bull; Representante Legal</div>
+          <div class="report-signature-dept">Presidencia &bull; La Nueva Parisienne C.A.</div>
         </div>
       </div>
     `;
@@ -1465,16 +1516,42 @@ function initAccounting() {
   });
 
   btnPrintBalanceModal?.addEventListener('click', () => {
+    document.body.classList.add('printing-report');
     window.print();
+    setTimeout(() => {
+      document.body.classList.remove('printing-report');
+    }, 1000);
   });
 
-  // Exportación Formal a Hoja de Cálculo Excel (.xls)
-  function exportarBalanceExcel() {
+  window.addEventListener('beforeprint', () => {
+    if (balanceModal && balanceModal.classList.contains('active')) {
+      document.body.classList.add('printing-report');
+    }
+  });
+
+  window.addEventListener('afterprint', () => {
+    document.body.classList.remove('printing-report');
+  });
+
+  // Exportación Formal a Hoja de Cálculo Excel (.xlsx nativo) con Estilos Ejecutivos
+  async function exportarBalanceExcel() {
     const now = new Date();
     const fechaEmision = now.toLocaleString('es-VE');
+    await ensureStyleEngine();
+
+    const headers = [
+      "CÓDIGO PUC",
+      "DENOMINACIÓN DE LA CUENTA",
+      "GRUPO / CLASIFICACIÓN",
+      "SUMAS DEBE ($)",
+      "SUMAS HABER ($)",
+      "SALDO DEUDOR ($)",
+      "SALDO ACREEDOR ($)"
+    ];
 
     let tDebe = 0, tHaber = 0, tDeudor = 0, tAcreedor = 0;
-    const rowsHtml = (trialBalance || []).map(acc => {
+    const rows = [];
+    (trialBalance || []).forEach(acc => {
       const sDebe = Number(acc.sumDebe || 0);
       const sHaber = Number(acc.sumHaber || 0);
       const sDeudor = Number(acc.saldoDeudor || 0);
@@ -1485,93 +1562,44 @@ function initAccounting() {
       tDeudor += sDeudor;
       tAcreedor += sAcreedor;
 
-      return `
-        <tr>
-          <td style="font-family: monospace; font-weight: bold;">${acc.code}</td>
-          <td>${acc.name}</td>
-          <td>${acc.type || 'Cuenta'}</td>
-          <td style="text-align: right;">$${sDebe.toFixed(2)}</td>
-          <td style="text-align: right;">$${sHaber.toFixed(2)}</td>
-          <td style="text-align: right; color: #1B5E20;">$${sDeudor.toFixed(2)}</td>
-          <td style="text-align: right; color: #0D47A1;">$${sAcreedor.toFixed(2)}</td>
-        </tr>
-      `;
-    }).join('');
+      rows.push([
+        acc.code,
+        acc.name,
+        acc.type || 'Cuenta',
+        sDebe > 0 ? `$${sDebe.toFixed(2)}` : '$0.00',
+        sHaber > 0 ? `$${sHaber.toFixed(2)}` : '$0.00',
+        sDeudor > 0 ? `$${sDeudor.toFixed(2)}` : '$0.00',
+        sAcreedor > 0 ? `$${sAcreedor.toFixed(2)}` : '$0.00'
+      ]);
+    });
 
-    const excelTemplate = `
-      <html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:x="urn:schemas-microsoft-com:office:excel" xmlns="http://www.w3.org/TR/REC-html40">
-      <head>
-        <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
-        <!--[if gte mso 9]>
-        <xml>
-          <x:ExcelWorkbook>
-            <x:ExcelWorksheets>
-              <x:ExcelWorksheet>
-                <x:Name>Balance de Comprobación</x:Name>
-                <x:WorksheetOptions>
-                  <x:DisplayGridlines/>
-                </x:WorksheetOptions>
-              </x:ExcelWorksheet>
-            </x:ExcelWorksheets>
-          </x:ExcelWorkbook>
-        </xml>
-        <![endif]-->
-        <style>
-          body { font-family: 'Segoe UI', Calibri, Arial, sans-serif; font-size: 10pt; color: #2C1810; }
-          .title-company { font-size: 15pt; font-weight: bold; color: #2C1810; margin-bottom: 3px; }
-          .title-rif { font-size: 9.5pt; color: #7A6B5D; margin-bottom: 6px; }
-          .title-report { font-size: 12pt; font-weight: bold; color: #8C531B; margin-bottom: 6px; }
-          .meta-info { font-size: 9pt; color: #555555; margin-bottom: 12px; }
-          table { border-collapse: collapse; width: 100%; margin-top: 10px; }
-          th { background-color: #2C1810; color: #FFFFFF; font-weight: bold; padding: 7px 10px; border: 1px solid #C48B44; }
-          td { padding: 6px 9px; border: 1px solid #D9CEBF; font-size: 9.5pt; }
-          .total-row td { background-color: #F8F5F0; font-weight: bold; border-top: 2px solid #2C1810; }
-        </style>
-      </head>
-      <body>
-        <div class="title-company">LA NUEVA PARISIENNE PANADERIA &amp; PASTELERIA C.A.</div>
-        <div class="title-rif">RIF: J-40123456-7 &bull; Sistema Contable y Financiero</div>
-        <div class="title-report">BALANCE DE COMPROBACIÓN (PLAN ÚNICO DE CUENTAS)</div>
-        <div class="meta-info"><strong>Fecha de Emisión:</strong> ${fechaEmision} &nbsp;|&nbsp; <strong>Estado:</strong> Ecuación Patrimonial Verificada</div>
-        <br/>
-        <table border="1">
-          <thead>
-            <tr style="background-color: #2C1810; color: #FFFFFF;">
-              <th>CÓDIGO PUC</th>
-              <th>DENOMINACIÓN DE LA CUENTA</th>
-              <th>GRUPO</th>
-              <th style="text-align: right;">SUMAS DEBE ($)</th>
-              <th style="text-align: right;">SUMAS HABER ($)</th>
-              <th style="text-align: right;">SALDO DEUDOR ($)</th>
-              <th style="text-align: right;">SALDO ACREEDOR ($)</th>
-            </tr>
-          </thead>
-          <tbody>
-            ${rowsHtml}
-          </tbody>
-          <tfoot>
-            <tr class="total-row">
-              <td colspan="3" style="text-align: right; font-weight: bold;">TOTALES GENERALES CUADRADOS:</td>
-              <td style="text-align: right; font-weight: bold;">$${tDebe.toFixed(2)}</td>
-              <td style="text-align: right; font-weight: bold;">$${tHaber.toFixed(2)}</td>
-              <td style="text-align: right; font-weight: bold; color: #1B5E20;">$${tDeudor.toFixed(2)}</td>
-              <td style="text-align: right; font-weight: bold; color: #0D47A1;">$${tAcreedor.toFixed(2)}</td>
-            </tr>
-          </tfoot>
-        </table>
-      </body>
-      </html>
-    `;
+    const footer = [
+      "TOTALES GENERALES:",
+      "SUMAS IGUALES VERIFICADAS (DEBE = HABER)",
+      "ECUACIÓN PATRIMONIAL",
+      `$${tDebe.toFixed(2)}`,
+      `$${tHaber.toFixed(2)}`,
+      `$${tDeudor.toFixed(2)}`,
+      `$${tAcreedor.toFixed(2)}`
+    ];
 
-    const blob = new Blob(['\uFEFF', excelTemplate], { type: 'application/vnd.ms-excel;charset=utf-8' });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement('a');
-    link.href = url;
-    link.download = `balance_comprobacion_${now.toISOString().slice(0, 10)}.xls`;
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    URL.revokeObjectURL(url);
+    const cleanFileName = `balance_comprobacion_${now.toISOString().slice(0, 10)}.xlsx`;
+    generateStyledExcelReport({
+      fileName: cleanFileName,
+      sheetName: 'Balance Comprobación',
+      title: 'Balance de Comprobación Contable Formal (Sumas y Saldos)',
+      periodo: 'Ejercicio Contable Vigente',
+      fechaEmision,
+      bcvRate: typeof getBcvRate === 'function' ? getBcvRate() : 761.21,
+      activeUser: { name: 'Juan Mendoza', role: 'Contador General & Gerente' },
+      tables: [{
+        title: 'Plan Único de Cuentas (PUC) • Sumas de Diario y Saldos de Mayor',
+        headers,
+        rows,
+        footer
+      }],
+      minCols: 7
+    });
   }
 
   btnExportBalanceExcel?.addEventListener('click', exportarBalanceExcel);

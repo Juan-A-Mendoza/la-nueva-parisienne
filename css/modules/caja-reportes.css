@@ -587,12 +587,19 @@
   transform: translateY(-1px);
 }
 
-/* ESTILOS TÉRMICOS EXCLUSIVOS PARA IMPRESIÓN DEL CIERRE Z */
+/* ESTILOS TÉRMICOS EXCLUSIVOS PARA IMPRESIÓN DEL CIERRE Z (80mm) */
 @media print {
-  @page { size: 80mm auto; margin: 0; }
-  body * { visibility: hidden; }
-  #ticketCierreContainer, #ticketCierreContainer * { visibility: visible; }
-  #ticketCierreContainer {
+  body.printing-cierre-z {
+    background: #FFFFFF !important;
+  }
+  body.printing-cierre-z * {
+    visibility: hidden;
+  }
+  body.printing-cierre-z #ticketCierreContainer,
+  body.printing-cierre-z #ticketCierreContainer * {
+    visibility: visible;
+  }
+  body.printing-cierre-z #ticketCierreContainer {
     position: absolute;
     left: 0;
     top: 0;

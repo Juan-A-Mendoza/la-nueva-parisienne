@@ -14,40 +14,40 @@ export const CORE_MODULES = [
   {
     id: 'gerente',
     role: 'Gerente General',
-    title: 'Módulo Gerente',
+    title: 'Gerente General',
     path: 'dashboard.html',
     icon: 'shield-check',
-    badge: 'Módulo 4 · Dashboard & KPIs',
+    badge: 'Dashboard & KPIs',
     desc: 'Panel de control con métricas financieras, inteligencia de negocios, ventas y auditoría global.',
     accent: '#D49B54'
   },
   {
     id: 'cajero',
     role: 'Cajero / POS',
-    title: 'Módulo Cajero',
+    title: 'Punto de Venta',
     path: 'pos.html',
     icon: 'banknote',
-    badge: 'Módulo 3 · Punto de Venta (POS)',
+    badge: 'Punto de Venta (POS)',
     desc: 'Facturación directa a clientes, cobros multimoneda ($ USD / Bs. VES), tickets térmicos y arqueos.',
     accent: '#2E7D32'
   },
   {
     id: 'panadero',
     role: 'Panadero / Cocina',
-    title: 'Módulo Panadero',
+    title: 'Producción & Hornos',
     path: 'kitchen.html',
     icon: 'chef-hat',
-    badge: 'Módulo 2 · Producción & Hornos',
+    badge: 'Producción & Hornos',
     desc: 'Monitoreo de hornos industriales, recetas panaderas, comandas KDS y preparación de masa.',
     accent: '#C85A32'
   },
   {
     id: 'contador',
     role: 'Contador / Finanzas',
-    title: 'Módulo Contador',
+    title: 'Contabilidad & Finanzas',
     path: 'accounting.html',
     icon: 'scale',
-    badge: 'Módulo 7 · Contabilidad',
+    badge: 'Contabilidad',
     desc: 'Auditoría contable, asientos de partida doble automáticos, balance de comprobación y libros.',
     accent: '#1565C0'
   }
@@ -172,7 +172,7 @@ export function initModulesNav() {
           </div>
           <p class="core-module-desc">${mod.desc}</p>
           <div class="core-module-footer">
-            <span class="core-module-action-text">${isCurrent ? '● Módulo Actual Activo' : `Entrar como ${mod.role}`}</span>
+            <span class="core-module-action-text">${isCurrent ? '● Sección Actual' : `Entrar como ${mod.role}`}</span>
             <span class="core-module-arrow"><i data-lucide="arrow-right" class="icon-sm"></i></span>
           </div>
         </a>
@@ -196,7 +196,7 @@ export function initModulesNav() {
         <div class="modules-modal-header">
           <h2>
             <i data-lucide="shield-alert" class="icon-lg" style="color: #6A1B9A;"></i>
-            <span>Acceso a los 4 Módulos del Sistema</span>
+            <span>Acceso al Sistema</span>
             <span style="font-size: 0.72rem; background: #6A1B9A; color: #FFF; padding: 0.2rem 0.65rem; border-radius: 999px; font-weight: 800; margin-left: 0.5rem; letter-spacing: 0.04em;">SUPERADMIN TOTAL</span>
           </h2>
           <p>Seleccione directamente a cuál de los 4 departamentos desea ingresar. No necesita volver a iniciar sesión.</p>
@@ -207,7 +207,7 @@ export function initModulesNav() {
         </div>
 
         <div class="secondary-modules-bar">
-          <span class="secondary-modules-label"><i data-lucide="layers" class="icon-xs"></i> Otros módulos de gestión:</span>
+          <span class="secondary-modules-label"><i data-lucide="layers" class="icon-xs"></i> Otras áreas de gestión:</span>
           <div class="secondary-modules-list">
             ${secondaryLinksHtml}
           </div>
@@ -260,10 +260,10 @@ export function initModulesNav() {
       launcherBtn.id = 'btnGlobalModulesLauncher';
       launcherBtn.type = 'button';
       launcherBtn.className = 'btn-modules-launcher is-superadmin';
-      launcherBtn.title = 'Entrar a los 4 Módulos: Gerente, Cajero, Panadero y Contador';
+      launcherBtn.title = 'Navegación: Gerente, Cajero, Panadero y Contador';
       launcherBtn.innerHTML = `
         <i data-lucide="shield-alert" class="icon-sm"></i>
-        <span>4 Módulos (Superadmin)</span>
+        <span>Navegación (Superadmin)</span>
       `;
 
       launcherBtn.addEventListener('click', openModulesModal);
