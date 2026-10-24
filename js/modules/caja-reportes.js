@@ -215,8 +215,17 @@ function initPosCierreCaja() {
       window.LucideIcons?.refresh();
     }
 
+    const contadoBs = contado * currentBcvRate;
+    const esperadoBs = esperado * currentBcvRate;
+    const diferenciaBs = diferencia * currentBcvRate;
+
+    const contadoBsEl = document.getElementById('cierreEfectivoContadoBs');
+    if (contadoBsEl) {
+      contadoBsEl.textContent = `Equivalente: Bs. ${contadoBs.toLocaleString('es-VE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} VES`;
+    }
+
     if (detalleDiferencia) {
-      detalleDiferencia.textContent = `Esperado: $${esperado.toFixed(2)} USD | Físico Contado: $${contado.toFixed(2)} USD`;
+      detalleDiferencia.textContent = `Esperado: $${esperado.toFixed(2)} USD (Bs. ${esperadoBs.toLocaleString('es-VE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}) | Físico: $${contado.toFixed(2)} USD (Bs. ${contadoBs.toLocaleString('es-VE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })})`;
     }
   }
 

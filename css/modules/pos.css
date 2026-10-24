@@ -374,10 +374,43 @@
   border-top: 1px dashed rgba(44, 29, 17, 0.08);
 }
 
+.product-price-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.2rem;
+  width: 100%;
+}
+
 .product-price {
   font-size: 1.05rem;
   font-weight: 800;
   color: var(--color-gold-dark);
+  line-height: 1.1;
+}
+
+.product-price-ves {
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: #1b5e20;
+  background: rgba(46, 125, 50, 0.1);
+  padding: 0.12rem 0.5rem;
+  border-radius: var(--radius-pill);
+  display: inline-block;
+  line-height: 1.2;
+}
+
+.cart-item-total-group {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  margin-left: 0.5rem;
+}
+
+.cart-item-total-ves {
+  font-size: 0.74rem;
+  color: #2e7d32;
+  font-weight: 700;
 }
 
 /* PANEL DERECHO DE CARRITO INTERACTIVO EN PASO 1 */

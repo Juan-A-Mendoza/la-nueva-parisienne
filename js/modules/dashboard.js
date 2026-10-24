@@ -762,9 +762,18 @@ function renderizarGraficos() {
   const marginBadgeEl = document.getElementById('kpiMarginBadge');
   const marginSubEl = document.getElementById('kpiMarginSub');
 
-  if (revenueVal) revenueVal.textContent = `$${Number(kpis.totalRevenue || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+  const currentRate = getActiveDashboardBcvRate();
+  const revUsd = Number(kpis.totalRevenue || 0);
+  const revVes = revUsd * currentRate;
+  if (revenueVal) {
+    revenueVal.innerHTML = `$${revUsd.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} <small style="display:block; font-size:0.82rem; font-weight:700; color:#2e7d32;">Bs. ${revVes.toLocaleString('es-VE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</small>`;
+  }
   if (ordersVal) ordersVal.textContent = `${kpis.totalOrders || 0} órdenes`;
-  if (ticketVal) ticketVal.textContent = `$${Number(kpis.averageTicket || 0).toFixed(2)}`;
+  const tktUsd = Number(kpis.averageTicket || 0);
+  const tktVes = tktUsd * currentRate;
+  if (ticketVal) {
+    ticketVal.innerHTML = `$${tktUsd.toFixed(2)} <small style="display:block; font-size:0.82rem; font-weight:700; color:#2e7d32;">Bs. ${tktVes.toLocaleString('es-VE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</small>`;
+  }
   if (marginVal) marginVal.textContent = `${kpis.profitMargin || 0}%`;
 
   if (revenueGrowthEl) {
@@ -1312,6 +1321,7 @@ function printMovementVoucher(mov) {
 }
 
 function renderInventoryTables() {
+  const activeRate = getActiveDashboardBcvRate();
   rawMaterialsData = getRawMaterialsFromStorage();
   finishedGoodsData = getPosCatalogFromStorage();
   suppliersData = getSuppliersFromStorage();
@@ -1339,12 +1349,16 @@ function renderInventoryTables() {
       const isLow = item.stock < item.minStock;
       const friendlyStock = UomConverter.formatFriendlyStock(item.stock, item.unit, item.category);
       const tr = document.createElement('tr');
+      const itemCostVes = item.unitCost * activeRate;
       tr.innerHTML = `
         <td class="table-code-badge">${item.code}</td>
         <td><strong>${renderItemIcon(item.icon, 'package')}${item.name}</strong></td>
         <td style="color: var(--color-muted);">${item.category}</td>
         <td><span class="table-status-tag" style="background: rgba(0,0,0,0.06); color: var(--color-espresso); font-weight: 700;">${item.unit}</span></td>
-        <td style="font-weight: 700; color: var(--color-gold-dark);">$${item.unitCost.toFixed(2)} / ${item.unit}</td>
+        <td style="font-weight: 700; color: var(--color-gold-dark);">
+          <div>$${item.unitCost.toFixed(2)} / ${item.unit}</div>
+          <small style="display: block; font-size: 0.75rem; color: #2e7d32; font-weight: 700;">Bs. ${itemCostVes.toLocaleString('es-VE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</small>
+        </td>
         <td style="font-weight: 800; font-size: 0.92rem; color: var(--color-espresso);" title="Stock Interno Base: ${item.stock} ${item.unit}">
           <div>${friendlyStock}</div>
           <small style="font-weight: 600; color: var(--color-muted); font-size: 0.78rem;">(${item.stock.toFixed(1)} ${item.unit})</small>
@@ -1387,13 +1401,23 @@ function renderInventoryTables() {
       const isLow = item.stock < item.minStock;
       const isVisiblePos = item.showInPos !== false;
       const tr = document.createElement('tr');
+      const itemCost = Number(item.unitCost || 0);
+      const itemCostVes = itemCost * activeRate;
+      const itemPrice = Number(item.salePrice || item.price || 0);
+      const itemPriceVes = itemPrice * activeRate;
       tr.innerHTML = `
         <td class="table-code-badge">${item.code}</td>
         <td><strong>${renderItemIcon(item.icon, 'shopping-bag')}${item.name}</strong></td>
         <td style="color: var(--color-espresso); font-weight: 600;">${item.category}</td>
         <td><span class="table-status-tag" style="background: rgba(0,0,0,0.06); color: var(--color-espresso); font-weight: 700;">${item.unit || 'Und'}</span></td>
-        <td style="color: var(--color-muted);">$${(item.unitCost || 0).toFixed(2)} / ${item.unit || 'Und'}</td>
-        <td style="font-weight: 700; color: var(--color-gold-dark);">$${(item.salePrice || item.price || 0).toFixed(2)} USD</td>
+        <td style="color: var(--color-muted);">
+          <div>$${itemCost.toFixed(2)}</div>
+          <small style="display: block; font-size: 0.72rem; color: #666;">Bs. ${itemCostVes.toLocaleString('es-VE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</small>
+        </td>
+        <td style="font-weight: 700; color: var(--color-gold-dark);">
+          <div style="font-size: 0.95rem;">$${itemPrice.toFixed(2)} USD</div>
+          <small style="display: block; font-size: 0.78rem; font-weight: 800; color: #1b5e20;">Bs. ${itemPriceVes.toLocaleString('es-VE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</small>
+        </td>
         <td style="font-weight: 800; font-size: 0.95rem;">${item.stock} ${item.unit || 'Und'}</td>
         <td>
           <span class="table-status-tag ${isVisiblePos ? 'active' : ''}" style="${isVisiblePos ? 'background: rgba(46,125,50,0.1); color: var(--color-success); font-weight: 700;' : 'background: rgba(0,0,0,0.06); color: var(--color-muted);'}">
@@ -2140,23 +2164,42 @@ function openProductoTerminadoModal(itemToEdit = null) {
   const productoTerminadoForm = document.getElementById('productoTerminadoForm');
   const showInPosCheckbox = document.getElementById('modalPtShowInPos');
 
-  if (itemToEdit) {
-    if (modalPtTitle) modalPtTitle.textContent = 'Editar Producto Terminado';
-    document.getElementById('modalPtCode').value = itemToEdit.code;
-    document.getElementById('modalPtNombre').value = itemToEdit.name;
-    document.getElementById('modalPtCategoria').value = itemToEdit.category;
-    document.getElementById('modalPtUnidad').value = itemToEdit.unit || 'Und';
-    document.getElementById('modalPtCostoUnitario').value = itemToEdit.unitCost;
-    document.getElementById('modalPtPrecioVenta').value = itemToEdit.salePrice || itemToEdit.price;
-    document.getElementById('modalPtStockInicial').value = itemToEdit.stock;
-    document.getElementById('modalPtStockMinimo').value = itemToEdit.minStock;
-    if (showInPosCheckbox) showInPosCheckbox.checked = itemToEdit.showInPos !== false;
-  } else {
-    if (modalPtTitle) modalPtTitle.textContent = 'Crear Nuevo Producto Terminado';
-    productoTerminadoForm?.reset();
-    document.getElementById('modalPtCode').value = '';
-    if (showInPosCheckbox) showInPosCheckbox.checked = true;
-  }
+    const ptCostInput = document.getElementById('modalPtCostoUnitario');
+    const ptPriceInput = document.getElementById('modalPtPrecioVenta');
+    const ptCostBs = document.getElementById('modalPtCostoUnitarioBs');
+    const ptPriceBs = document.getElementById('modalPtPrecioVentaBs');
+    const activeRate = getActiveDashboardBcvRate();
+
+    function updatePtBsPreviews() {
+      const c = parseFloat(ptCostInput?.value || 0);
+      const p = parseFloat(ptPriceInput?.value || 0);
+      if (ptCostBs) ptCostBs.textContent = `Equivalente: Bs. ${(c * activeRate).toLocaleString('es-VE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+      if (ptPriceBs) ptPriceBs.textContent = `Equivalente: Bs. ${(p * activeRate).toLocaleString('es-VE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+    }
+
+    if (itemToEdit) {
+      if (modalPtTitle) modalPtTitle.textContent = 'Editar Producto Terminado';
+      document.getElementById('modalPtCode').value = itemToEdit.code;
+      document.getElementById('modalPtNombre').value = itemToEdit.name;
+      document.getElementById('modalPtCategoria').value = itemToEdit.category;
+      document.getElementById('modalPtUnidad').value = itemToEdit.unit || 'Und';
+      if (ptCostInput) ptCostInput.value = itemToEdit.unitCost;
+      if (ptPriceInput) ptPriceInput.value = itemToEdit.salePrice || itemToEdit.price;
+      document.getElementById('modalPtStockInicial').value = itemToEdit.stock;
+      document.getElementById('modalPtStockMinimo').value = itemToEdit.minStock;
+      if (showInPosCheckbox) showInPosCheckbox.checked = itemToEdit.showInPos !== false;
+    } else {
+      if (modalPtTitle) modalPtTitle.textContent = 'Crear Nuevo Producto Terminado';
+      productoTerminadoForm?.reset();
+      document.getElementById('modalPtCode').value = '';
+      if (showInPosCheckbox) showInPosCheckbox.checked = true;
+    }
+
+    updatePtBsPreviews();
+    ptCostInput?.removeEventListener('input', updatePtBsPreviews);
+    ptPriceInput?.removeEventListener('input', updatePtBsPreviews);
+    ptCostInput?.addEventListener('input', updatePtBsPreviews);
+    ptPriceInput?.addEventListener('input', updatePtBsPreviews);
 
   if (modalProductoTerminado) {
     modalProductoTerminado.style.display = 'flex';

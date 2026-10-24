@@ -124,28 +124,40 @@
           <!-- FOOTER CON TOTALES Y BOTÓN DE AVANCE AL PASO 2 -->
           <footer class="cart-summary-footer">
             <div class="summary-row">
-              <span>Subtotal Neto</span>
-              <span id="step1SubtotalUsd">$0.00</span>
+              <span>Subtotal Neto:</span>
+              <div style="text-align: right;">
+                <span id="step1SubtotalUsd" style="font-weight: 700;">$0.00</span>
+                <small id="step1SubtotalVes" style="display: block; font-size: 0.74rem; color: #2e7d32; font-weight: 700;">Bs. 0,00</small>
+              </div>
             </div>
 
-            <div class="summary-row">
-              <span>IVA Fiscal (16%)</span>
-              <span id="step1TaxUsd">$0.00</span>
+            <div class="summary-row" style="background: rgba(212, 155, 84, 0.08); padding: 0.35rem 0.5rem; border-radius: var(--radius-sm);">
+              <div>
+                <span style="font-weight: 700;">IVA Fiscal (16% sobre Bs.):</span>
+                <small style="display: block; font-size: 0.68rem; color: var(--color-gold-dark); font-weight: 600;">Base Imponible en Bolívares</small>
+              </div>
+              <div style="text-align: right;">
+                <span id="step1TaxVes" style="font-weight: 800; color: var(--color-espresso);">Bs. 0,00</span>
+                <small id="step1TaxUsd" style="display: block; font-size: 0.72rem; color: var(--color-muted);">($0.00 USD)</small>
+              </div>
             </div>
 
             <div class="summary-row total-row">
-              <span>TOTAL (USD)</span>
+              <span>TOTAL (USD):</span>
               <span id="step1TotalUsd" class="total-amount-highlight">$0.00</span>
             </div>
 
             <div class="total-ves-row">
-              <span>EQUIVALENTE BCV (VES)</span>
+              <div>
+                <span style="font-size: 0.78rem; font-weight: 800; display: block;">TOTAL OFICIAL (VES):</span>
+                <small style="font-size: 0.68rem; opacity: 0.85;">Base Imponible + IVA en Bs.</small>
+              </div>
               <span id="step1TotalVes" class="total-ves-highlight">Bs. 0,00</span>
             </div>
 
             <!-- BOTÓN PRINCIPAL DE AVANCE "SIGUIENTE / PROCEDER AL PAGO" -->
             <button id="btnGoToStep2" type="button" class="btn-process-payment" disabled>
-              <span id="btnGoToStep2Text">Siguiente / Proceder al Pago ($0.00)</span>
+              <span id="btnGoToStep2Text">Siguiente / Proceder al Pago ($0.00 | Bs. 0,00)</span>
               <span>→</span>
             </button>
           </footer>
@@ -229,17 +241,40 @@
             <div class="checkout-financial-summary">
               <div class="summary-row">
                 <span>Subtotal Bruto:</span>
-                <span id="subtotalVal">$0.00</span>
+                <div style="text-align: right;">
+                  <span id="subtotalVal" style="font-weight: 700;">$0.00</span>
+                  <small id="subtotalVesVal" style="display: block; font-size: 0.75rem; color: #2e7d32; font-weight: 700;">Bs. 0,00</small>
+                </div>
               </div>
 
               <div class="summary-row">
                 <span>Ahorro por Descuento:</span>
-                <span id="discountVal" class="discount-val-text">-$0.00</span>
+                <div style="text-align: right;">
+                  <span id="discountVal" class="discount-val-text">-$0.00</span>
+                  <small id="discountVesVal" style="display: block; font-size: 0.75rem; color: var(--color-danger); font-weight: 600;">-Bs. 0,00</small>
+                </div>
               </div>
 
-              <div class="summary-row">
-                <span>IVA (16% Fiscal):</span>
-                <span id="taxVal">$0.00</span>
+              <div class="summary-row" style="background: rgba(212, 155, 84, 0.08); padding: 0.4rem 0.6rem; border-radius: var(--radius-sm);">
+                <div>
+                  <span style="font-weight: 700; color: var(--color-espresso);">Base Imponible (Bs.):</span>
+                  <small style="display: block; font-size: 0.7rem; color: var(--color-muted);">Base para cálculo del IVA</small>
+                </div>
+                <div style="text-align: right;">
+                  <span id="taxableBaseVesVal" style="font-weight: 800; color: var(--color-espresso);">Bs. 0,00</span>
+                  <small id="taxableBaseUsdVal" style="display: block; font-size: 0.72rem; color: var(--color-muted);">($0.00 USD)</small>
+                </div>
+              </div>
+
+              <div class="summary-row" style="background: rgba(46, 125, 50, 0.05); padding: 0.4rem 0.6rem; border-radius: var(--radius-sm); border: 1px dashed rgba(46, 125, 50, 0.3);">
+                <div>
+                  <span style="font-weight: 800; color: #1b5e20;">IVA Fiscal (16% sobre Bs.):</span>
+                  <small style="display: block; font-size: 0.7rem; color: #2e7d32;">Calculado formalmente en Bolívares</small>
+                </div>
+                <div style="text-align: right;">
+                  <span id="taxVal" style="font-weight: 800; color: #1b5e20; font-size: 1rem;">Bs. 0,00</span>
+                  <small id="taxUsdVal" style="display: block; font-size: 0.72rem; color: var(--color-muted);">($0.00 USD)</small>
+                </div>
               </div>
 
               <div class="summary-row total-row-main">
@@ -248,7 +283,10 @@
               </div>
 
               <div class="summary-row total-row-ves">
-                <span>EQUIVALENTE EN BOLÍVARES (BCV):</span>
+                <div>
+                  <span>TOTAL A PAGAR (BOLÍVARES BCV):</span>
+                  <small style="display: block; font-size: 0.7rem; opacity: 0.9;">Base Imponible + IVA en Bs.</small>
+                </div>
                 <span id="totalVesVal" class="total-amount-ves">Bs. 0,00</span>
               </div>
             </div>
@@ -555,6 +593,7 @@
                 <span class="currency-prefix">$</span>
                 <input type="number" id="cierreEfectivoContadoInput" step="0.01" min="0" placeholder="0.00" class="arqueo-input" />
               </div>
+              <small id="cierreEfectivoContadoBs" style="display: block; font-size: 0.8rem; color: #1b5e20; font-weight: 700; margin-top: 0.35rem;">Equivalente: Bs. 0,00 VES</small>
             </div>
 
             <div class="arqueo-diff-col">

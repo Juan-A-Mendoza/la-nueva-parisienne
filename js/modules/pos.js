@@ -104,7 +104,9 @@ document.addEventListener('DOMContentLoaded', async () => {
   
   // Previews y Totales Paso 1
   const step1SubtotalUsd = document.getElementById('step1SubtotalUsd');
+  const step1SubtotalVes = document.getElementById('step1SubtotalVes');
   const step1TaxUsd = document.getElementById('step1TaxUsd');
+  const step1TaxVes = document.getElementById('step1TaxVes');
   const step1TotalUsd = document.getElementById('step1TotalUsd');
   const step1TotalVes = document.getElementById('step1TotalVes');
   const bcvRateBadge = document.getElementById('bcvRateBadge');
@@ -114,13 +116,18 @@ document.addEventListener('DOMContentLoaded', async () => {
   const orderNumberEl = document.getElementById('orderNumber');
   const orderNumberPaso1 = document.getElementById('orderNumberPaso1');
   const subtotalEl = document.getElementById('subtotalVal');
+  const subtotalVesVal = document.getElementById('subtotalVesVal');
   const discountValEl = document.getElementById('discountVal');
+  const discountVesVal = document.getElementById('discountVesVal');
   const discountSelect = document.getElementById('discountSelect');
   const customDiscountWrapper = document.getElementById('customDiscountWrapper');
   const customDiscountInput = document.getElementById('customDiscountInput');
   const discountSavingsBadge = document.getElementById('discountSavingsBadge');
   const discountBadgeAmount = document.getElementById('discountBadgeAmount');
+  const taxableBaseVesVal = document.getElementById('taxableBaseVesVal');
+  const taxableBaseUsdVal = document.getElementById('taxableBaseUsdVal');
   const taxValEl = document.getElementById('taxVal');
+  const taxUsdVal = document.getElementById('taxUsdVal');
   const totalValEl = document.getElementById('totalVal');
   const totalVesEl = document.getElementById('totalVesVal');
   
@@ -281,6 +288,9 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   async function loadLiveBcvRate() {
     bcvRate = await resolveBcvRate();
+    renderProducts();
+    renderStep1Cart();
+    if (currentStep === 2) renderCheckoutCart();
     updateCartTotals();
   }
 
@@ -513,12 +523,16 @@ document.addEventListener('DOMContentLoaded', async () => {
       const card = document.createElement('div');
       card.className = 'product-card';
       const availableStock = prod.stock;
+      const priceVes = prod.price * bcvRate;
       card.innerHTML = `
         <span class="product-stock-badge" style="${availableStock <= 0 ? 'background: rgba(198, 40, 40, 0.12); color: var(--color-danger); border-color: rgba(198, 40, 40, 0.3);' : ''}">${availableStock > 0 ? `Disponibles: ${availableStock}` : 'Agotado (0)'}</span>
         <div class="product-card-icon">${getProductVisual(prod)}</div>
         <h3 class="product-card-title">${prod.name}</h3>
         <div class="product-card-footer">
-          <span class="product-price">$${prod.price.toFixed(2)}</span>
+          <div class="product-price-container">
+            <span class="product-price">$${prod.price.toFixed(2)}</span>
+            <span class="product-price-ves">Bs. ${priceVes.toLocaleString('es-VE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+          </div>
         </div>
       `;
       card.addEventListener('click', () => addToCart(prod));
@@ -567,17 +581,23 @@ document.addEventListener('DOMContentLoaded', async () => {
     cart.forEach(item => {
       const row = document.createElement('div');
       row.className = 'cart-item-row';
+      const itemPriceVes = item.product.price * bcvRate;
+      const lineTotalUsd = item.product.price * item.quantity;
+      const lineTotalVes = lineTotalUsd * bcvRate;
       row.innerHTML = `
         <div class="cart-item-info">
           <span class="cart-item-name">${getProductVisual(item.product)} ${item.product.name}</span>
-          <span class="cart-item-unit-price">$${item.product.price.toFixed(2)} c/u</span>
+          <span class="cart-item-unit-price">$${item.product.price.toFixed(2)} <span style="color: #2e7d32; font-weight: 600;">(Bs. ${itemPriceVes.toLocaleString('es-VE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })})</span> c/u</span>
         </div>
         <div class="cart-qty-controls">
           <button type="button" class="btn-qty btn-dec">-</button>
           <span class="cart-qty-val">${item.quantity}</span>
           <button type="button" class="btn-qty btn-inc">+</button>
         </div>
-        <span class="cart-item-total">$${(item.product.price * item.quantity).toFixed(2)}</span>
+        <div class="cart-item-total-group">
+          <span class="cart-item-total">$${lineTotalUsd.toFixed(2)}</span>
+          <span class="cart-item-total-ves">Bs. ${lineTotalVes.toLocaleString('es-VE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+        </div>
       `;
 
       row.querySelector('.btn-dec').addEventListener('click', (e) => {
@@ -608,72 +628,117 @@ document.addEventListener('DOMContentLoaded', async () => {
     });
   }
 
-  function updateCartTotals() {
-    // Requerimiento 3: Verificar si el modo es manual en localStorage antes de calcular
-    const modoTasaLocal = localStorage.getItem('modoTasa');
-    const tasaManualLocal = localStorage.getItem('tasaManual');
+  /**
+   * Cálculo Matemático Centralizado y Canónico del Pedido
+   * REGLA FISCAL SENIAT / VENEZUELA: El IVA se liquida OBLIGATORIAMENTE sobre la Base Imponible en Bolívares.
+   */
+  function getCalculatedTotals() {
+    const modoTasaLocal = localStorage.getItem('modoTasa') || localStorage.getItem('modo_tasa');
+    const tasaManualLocal = localStorage.getItem('tasaManual') || localStorage.getItem('tasa_manual');
+    let activeRate = bcvRate;
     if (modoTasaLocal === 'manual' && tasaManualLocal && parseFloat(tasaManualLocal) > 0) {
-      bcvRate = parseFloat(tasaManualLocal);
+      activeRate = parseFloat(tasaManualLocal);
+    } else {
+      const autoRate = parseFloat(localStorage.getItem('bcv_current_rate') || localStorage.getItem('tasa_auto'));
+      if (autoRate && autoRate > 0) activeRate = autoRate;
     }
+    bcvRate = activeRate;
 
-    let rawSubtotal = 0;
-
+    let rawSubtotalUsd = 0;
     cart.forEach(item => {
-      rawSubtotal += item.product.price * item.quantity;
+      rawSubtotalUsd += item.product.price * item.quantity;
     });
 
-    const discountAmount = rawSubtotal * (currentDiscountPercent / 100);
-    const taxableBase = rawSubtotal - discountAmount;
-    const taxAmount = taxableBase * IVA_RATE;
-    const finalTotalUsd = taxableBase + taxAmount;
-    
-    // FÓRMULA MATEMÁTICA CONVERSIÓN VES
-    const finalTotalVes = finalTotalUsd * bcvRate;
+    // Subtotal en Bolívares (VES)
+    const rawSubtotalVes = Math.round((rawSubtotalUsd * bcvRate) * 100) / 100;
+
+    // Descuentos en ambas monedas
+    const discountAmountUsd = Math.round((rawSubtotalUsd * (currentDiscountPercent / 100)) * 100) / 100;
+    const discountAmountVes = Math.round((rawSubtotalVes * (currentDiscountPercent / 100)) * 100) / 100;
+
+    // BASE IMPONIBLE EN BOLÍVARES (VES) - BASE LEGAL SENIAT
+    const taxableBaseVes = Math.round((rawSubtotalVes - discountAmountVes) * 100) / 100;
+    const taxableBaseUsd = rawSubtotalUsd - discountAmountUsd;
+
+    // IVA FISCAL (16%) CALCULADO EN BASE A BOLÍVARES (VES)
+    const taxAmountVes = Math.round((taxableBaseVes * IVA_RATE) * 100) / 100;
+
+    // TOTAL FINAL EN BOLÍVARES (VES)
+    const finalTotalVes = Math.round((taxableBaseVes + taxAmountVes) * 100) / 100;
+
+    // EQUIVALENTES EN DÓLARES ($ USD)
+    const taxAmountUsd = bcvRate > 0 ? (taxAmountVes / bcvRate) : (taxableBaseUsd * IVA_RATE);
+    const finalTotalUsd = bcvRate > 0 ? (finalTotalVes / bcvRate) : (taxableBaseUsd + taxAmountUsd);
+
+    return {
+      bcvRate,
+      rawSubtotalUsd,
+      rawSubtotalVes,
+      discountAmountUsd,
+      discountAmountVes,
+      taxableBaseUsd,
+      taxableBaseVes,
+      taxAmountUsd,
+      taxAmountVes,
+      finalTotalUsd,
+      finalTotalVes
+    };
+  }
+
+  function updateCartTotals() {
+    const t = getCalculatedTotals();
 
     // Actualizar Totales Paso 1
-    if (step1SubtotalUsd) step1SubtotalUsd.textContent = `$${rawSubtotal.toFixed(2)}`;
-    if (step1TaxUsd) step1TaxUsd.textContent = `$${taxAmount.toFixed(2)}`;
-    if (step1TotalUsd) step1TotalUsd.textContent = `$${finalTotalUsd.toFixed(2)}`;
+    if (step1SubtotalUsd) step1SubtotalUsd.textContent = `$${t.rawSubtotalUsd.toFixed(2)}`;
+    if (step1SubtotalVes) step1SubtotalVes.textContent = `Bs. ${t.rawSubtotalVes.toLocaleString('es-VE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+    if (step1TaxVes) step1TaxVes.textContent = `Bs. ${t.taxAmountVes.toLocaleString('es-VE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+    if (step1TaxUsd) step1TaxUsd.textContent = `($${t.taxAmountUsd.toFixed(2)} USD)`;
+    if (step1TotalUsd) step1TotalUsd.textContent = `$${t.finalTotalUsd.toFixed(2)}`;
     if (step1TotalVes) {
-      step1TotalVes.textContent = `Bs. ${finalTotalVes.toLocaleString('es-VE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+      step1TotalVes.textContent = `Bs. ${t.finalTotalVes.toLocaleString('es-VE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
     }
     
     if (btnGoToStep2) btnGoToStep2.disabled = cart.length === 0;
     if (btnGoToStep2Text) {
-      btnGoToStep2Text.textContent = `Siguiente / Proceder al Pago ($${finalTotalUsd.toFixed(2)})`;
+      btnGoToStep2Text.textContent = `Siguiente / Proceder al Pago ($${t.finalTotalUsd.toFixed(2)} | Bs. ${t.finalTotalVes.toLocaleString('es-VE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })})`;
     }
 
     // Actualizar Totales Paso 2
-    if (subtotalEl) subtotalEl.textContent = `$${rawSubtotal.toFixed(2)}`;
-    if (discountValEl) discountValEl.textContent = `-$${discountAmount.toFixed(2)}`;
-    if (taxValEl) taxValEl.textContent = `$${taxAmount.toFixed(2)}`;
-    if (totalValEl) totalValEl.textContent = `$${finalTotalUsd.toFixed(2)}`;
+    if (subtotalEl) subtotalEl.textContent = `$${t.rawSubtotalUsd.toFixed(2)}`;
+    if (subtotalVesVal) subtotalVesVal.textContent = `Bs. ${t.rawSubtotalVes.toLocaleString('es-VE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+    if (discountValEl) discountValEl.textContent = `-$${t.discountAmountUsd.toFixed(2)}`;
+    if (discountVesVal) discountVesVal.textContent = `-Bs. ${t.discountAmountVes.toLocaleString('es-VE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+    if (taxableBaseVesVal) taxableBaseVesVal.textContent = `Bs. ${t.taxableBaseVes.toLocaleString('es-VE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+    if (taxableBaseUsdVal) taxableBaseUsdVal.textContent = `($${t.taxableBaseUsd.toFixed(2)} USD)`;
+    if (taxValEl) taxValEl.textContent = `Bs. ${t.taxAmountVes.toLocaleString('es-VE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+    if (taxUsdVal) taxUsdVal.textContent = `($${t.taxAmountUsd.toFixed(2)} USD)`;
+    if (totalValEl) totalValEl.textContent = `$${t.finalTotalUsd.toFixed(2)}`;
     if (totalVesEl) {
-      totalVesEl.textContent = `Bs. ${finalTotalVes.toLocaleString('es-VE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+      totalVesEl.textContent = `Bs. ${t.finalTotalVes.toLocaleString('es-VE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
     }
 
     if (discountSavingsBadge && discountBadgeAmount) {
-      if (discountAmount > 0) {
+      if (t.discountAmountUsd > 0) {
         discountSavingsBadge.style.display = 'flex';
-        discountBadgeAmount.textContent = `-$${discountAmount.toFixed(2)} USD (-${currentDiscountPercent}%)`;
+        discountBadgeAmount.textContent = `-$${t.discountAmountUsd.toFixed(2)} USD (-Bs. ${t.discountAmountVes.toLocaleString('es-VE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}) (-${currentDiscountPercent}%)`;
       } else {
         discountSavingsBadge.style.display = 'none';
       }
     }
 
     // Actualizar Totales Prominentes Panel Tarjeta / Pago Móvil / Digitales
-    if (cardTotalUsdVal) cardTotalUsdVal.textContent = `$${finalTotalUsd.toFixed(2)}`;
+    if (cardTotalUsdVal) cardTotalUsdVal.textContent = `$${t.finalTotalUsd.toFixed(2)}`;
     if (cardTotalVesVal) {
-      cardTotalVesVal.textContent = `Bs. ${finalTotalVes.toLocaleString('es-VE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+      cardTotalVesVal.textContent = `Bs. ${t.finalTotalVes.toLocaleString('es-VE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
     }
-    if (digitalTotalUsdVal) digitalTotalUsdVal.textContent = `$${finalTotalUsd.toFixed(2)}`;
+    if (digitalTotalUsdVal) digitalTotalUsdVal.textContent = `$${t.finalTotalUsd.toFixed(2)}`;
     if (digitalTotalVesVal) {
-      digitalTotalVesVal.textContent = `Bs. ${finalTotalVes.toLocaleString('es-VE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+      digitalTotalVesVal.textContent = `Bs. ${t.finalTotalVes.toLocaleString('es-VE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
     }
 
     if (btnCompleteSale) btnCompleteSale.disabled = cart.length === 0;
 
-    calculateChange(finalTotalUsd);
+    calculateChange(t.finalTotalUsd);
   }
 
   /**
@@ -761,17 +826,23 @@ document.addEventListener('DOMContentLoaded', async () => {
       const itemEl = document.createElement('div');
       itemEl.className = 'cart-item-row';
       itemEl.style.background = '#FFFFFF';
+      const itemPriceVes = item.product.price * bcvRate;
+      const lineTotalUsd = item.product.price * item.quantity;
+      const lineTotalVes = lineTotalUsd * bcvRate;
       itemEl.innerHTML = `
         <div class="cart-item-info">
           <span class="cart-item-name">${getProductVisual(item.product)} ${item.product.name}</span>
-          <span class="cart-item-unit-price">$${item.product.price.toFixed(2)} c/u</span>
+          <span class="cart-item-unit-price">$${item.product.price.toFixed(2)} <span style="color: #2e7d32; font-weight: 600;">(Bs. ${itemPriceVes.toLocaleString('es-VE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })})</span> c/u</span>
         </div>
         <div class="cart-item-controls">
           <button type="button" class="btn-cart-qty btn-dec">-</button>
           <span class="cart-qty-val">${item.quantity}</span>
           <button type="button" class="btn-cart-qty btn-inc">+</button>
         </div>
-        <span class="cart-item-total">$${(item.product.price * item.quantity).toFixed(2)}</span>
+        <div class="cart-item-total-group">
+          <span class="cart-item-total">$${lineTotalUsd.toFixed(2)}</span>
+          <span class="cart-item-total-ves">Bs. ${lineTotalVes.toLocaleString('es-VE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+        </div>
       `;
 
       itemEl.querySelector('.btn-dec').addEventListener('click', () => {
@@ -1073,9 +1144,8 @@ document.addEventListener('DOMContentLoaded', async () => {
       tenderInput.value = currentTenderAmount.toFixed(2);
     }
 
-    let rawSubtotal = cart.reduce((acc, i) => acc + (i.product.price * i.quantity), 0);
-    let totalUsd = (rawSubtotal * (1 - currentDiscountPercent / 100)) * (1 + IVA_RATE);
-    calculateChange(totalUsd);
+    const totals = getCalculatedTotals();
+    calculateChange(totals.finalTotalUsd);
   }
 
   // 1. Escuchar clics en los botones del Numpad Táctil (0-9, 00, ⌫)
@@ -1112,8 +1182,8 @@ document.addEventListener('DOMContentLoaded', async () => {
   // Billetes Rápidos ($5, $10, $20, $50, Exacto)
   document.querySelectorAll('.fast-cash-btn').forEach(btn => {
     btn.addEventListener('click', () => {
-      let rawSubtotal = cart.reduce((acc, i) => acc + (i.product.price * i.quantity), 0);
-      let totalUsd = (rawSubtotal * (1 - currentDiscountPercent / 100)) * (1 + IVA_RATE);
+      const totals = getCalculatedTotals();
+      const totalUsd = totals.finalTotalUsd;
 
       if (btn.dataset.val === 'exact') {
         currentTenderAmount = totalUsd;
@@ -1193,10 +1263,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         return;
       }
 
-      let rawSubtotal = cart.reduce((acc, i) => acc + (i.product.price * i.quantity), 0);
-      let discountVal = rawSubtotal * (currentDiscountPercent / 100);
-      let totalUsd = (rawSubtotal - discountVal) * (1 + IVA_RATE);
-      let totalVes = totalUsd * bcvRate;
+      const t = getCalculatedTotals();
 
       const clientName = (clientNameInput && clientNameInput.value.trim()) ? clientNameInput.value.trim() : 'Consumidor Final';
       const clientRif = rawRif;
@@ -1212,14 +1279,19 @@ document.addEventListener('DOMContentLoaded', async () => {
         payment_method: selectedPaymentMethod === 'digitales' ? selectedDigitalSubMethod : selectedPaymentMethod,
         bank_name: selectedPaymentMethod === 'digitales' ? selectedDigitalSubMethod : bankName,
         discount_percent: currentDiscountPercent,
-        subtotal: rawSubtotal,
-        discount: discountVal,
-        tax: (rawSubtotal - discountVal) * IVA_RATE,
-        total_usd: totalUsd,
-        total_ves: totalVes,
-        bcv_rate: bcvRate,
+        subtotal: t.rawSubtotalUsd,
+        subtotal_ves: t.rawSubtotalVes,
+        discount: t.discountAmountUsd,
+        discount_ves: t.discountAmountVes,
+        taxable_base_usd: t.taxableBaseUsd,
+        taxable_base_ves: t.taxableBaseVes,
+        tax: t.taxAmountUsd,
+        tax_ves: t.taxAmountVes,
+        total_usd: t.finalTotalUsd,
+        total_ves: t.finalTotalVes,
+        bcv_rate: t.bcvRate,
         tender_amount: currentTenderAmount,
-        change_due: selectedPaymentMethod === 'efectivo' ? Math.max(0, currentTenderAmount - totalUsd) : 0,
+        change_due: selectedPaymentMethod === 'efectivo' ? Math.max(0, currentTenderAmount - t.finalTotalUsd) : 0,
         reference_code: selectedPaymentMethod === 'digitales' 
           ? (digitalRefInput ? digitalRefInput.value.trim() : '')
           : (referenceInput ? referenceInput.value.trim() : ''),
@@ -1229,7 +1301,9 @@ document.addEventListener('DOMContentLoaded', async () => {
           product_name: i.product.name,
           quantity: i.quantity,
           unit_price: i.product.price,
-          subtotal: i.product.price * i.quantity
+          unit_price_ves: Math.round((i.product.price * t.bcvRate) * 100) / 100,
+          subtotal: i.product.price * i.quantity,
+          subtotal_ves: Math.round((i.product.price * i.quantity * t.bcvRate) * 100) / 100
         }))
       };
 
@@ -1475,47 +1549,64 @@ document.addEventListener('DOMContentLoaded', async () => {
         <div style="border-top: 1px dashed #000000; margin: 4px 0;"></div>
 
         <!-- TABLA DETALLE DE COMPRA -->
+        <!-- TABLA DETALLE DE COMPRA (BIMONETARIA) -->
         <table style="width: 100%; font-size: 10px; border-collapse: collapse; text-align: left;">
           <thead>
             <tr style="border-bottom: 1px solid #000;">
-              <th style="width: 12%;">Cant</th>
-              <th style="width: 48%;">Descripción</th>
-              <th style="width: 20%; text-align: right;">P.U ($)</th>
-              <th style="width: 20%; text-align: right;">Total($)</th>
+              <th style="width: 10%;">Cant</th>
+              <th style="width: 42%;">Descripción</th>
+              <th style="width: 24%; text-align: right;">P.U ($ / Bs.)</th>
+              <th style="width: 24%; text-align: right;">Total ($ / Bs.)</th>
             </tr>
           </thead>
           <tbody>
-            ${saleData.items.map(item => `
-              <tr>
-                <td style="vertical-align: top;">${item.quantity}</td>
-                <td style="vertical-align: top;">${item.product_name}</td>
-                <td style="vertical-align: top; text-align: right;">$${item.unit_price.toFixed(2)}</td>
-                <td style="vertical-align: top; text-align: right;">$${item.subtotal.toFixed(2)}</td>
-              </tr>
-            `).join('')}
+            ${saleData.items.map(item => {
+              const uUsd = Number(item.unit_price || 0);
+              const uBs = Number(item.unit_price_ves || (uUsd * saleData.bcv_rate));
+              const tUsd = Number(item.subtotal || (uUsd * item.quantity));
+              const tBs = Number(item.subtotal_ves || (tUsd * saleData.bcv_rate));
+              return `
+                <tr style="border-bottom: 1px dotted #ccc;">
+                  <td style="vertical-align: top; padding: 2px 0;">${item.quantity}</td>
+                  <td style="vertical-align: top; padding: 2px 0;">${item.product_name}</td>
+                  <td style="vertical-align: top; text-align: right; padding: 2px 0;">
+                    <div>$${uUsd.toFixed(2)}</div>
+                    <div style="font-size: 8px; color: #444;">Bs. ${uBs.toLocaleString('es-VE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</div>
+                  </td>
+                  <td style="vertical-align: top; text-align: right; padding: 2px 0;">
+                    <div>$${tUsd.toFixed(2)}</div>
+                    <div style="font-size: 8px; color: #444;">Bs. ${tBs.toLocaleString('es-VE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</div>
+                  </td>
+                </tr>
+              `;
+            }).join('')}
           </tbody>
         </table>
 
         <div style="border-top: 1px dashed #000000; margin: 4px 0;"></div>
 
-        <!-- DESGLOSE DE TOTALES EN DÓLARES ($) -->
-        <div style="font-size: 10px; line-height: 1.3;">
+        <!-- DESGLOSE OFICIAL FISCAL EN BOLÍVARES (SENIAT) Y DÓLARES -->
+        <div style="font-size: 10px; line-height: 1.35;">
           <div style="display: flex; justify-content: space-between;">
-            <span>SUBTOTAL NETO:</span>
-            <span>$${saleData.subtotal.toFixed(2)}</span>
+            <span>SUBTOTAL BRUTO:</span>
+            <span>Bs. ${(saleData.subtotal_ves || (saleData.subtotal * saleData.bcv_rate)).toLocaleString('es-VE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} <small style="color:#555;">($${saleData.subtotal.toFixed(2)})</small></span>
           </div>
           ${saleData.discount > 0 ? `
-            <div style="display: flex; justify-content: space-between;">
+            <div style="display: flex; justify-content: space-between; color: #c00;">
               <span>DESCUENTO (${saleData.discount_percent}%):</span>
-              <span>-$${saleData.discount.toFixed(2)}</span>
+              <span>-Bs. ${(saleData.discount_ves || (saleData.discount * saleData.bcv_rate)).toLocaleString('es-VE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} <small>(-$${saleData.discount.toFixed(2)})</small></span>
             </div>
           ` : ''}
-          <div style="display: flex; justify-content: space-between;">
-            <span>IVA FISCAL (16%):</span>
-            <span>$${saleData.tax.toFixed(2)}</span>
+          <div style="display: flex; justify-content: space-between; font-weight: bold;">
+            <span>BASE IMPONIBLE (Bs.):</span>
+            <span>Bs. ${(saleData.taxable_base_ves || ((saleData.subtotal - saleData.discount) * saleData.bcv_rate)).toLocaleString('es-VE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} <small style="font-weight:normal; color:#555;">($${(saleData.taxable_base_usd || (saleData.subtotal - saleData.discount)).toFixed(2)})</small></span>
           </div>
-          <div style="display: flex; justify-content: space-between; font-weight: bold; font-size: 12px; margin-top: 2px;">
-            <span>TOTAL PAGADO ($):</span>
+          <div style="display: flex; justify-content: space-between; font-weight: bold; background: #eee; padding: 2px 4px; border-radius: 2px;">
+            <span>IVA FISCAL (16% sobre Bs.):</span>
+            <span>Bs. ${(saleData.tax_ves || (saleData.tax * saleData.bcv_rate)).toLocaleString('es-VE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} <small style="font-weight:normal; color:#555;">($${saleData.tax.toFixed(2)})</small></span>
+          </div>
+          <div style="display: flex; justify-content: space-between; font-weight: bold; font-size: 11px; margin-top: 3px;">
+            <span>TOTAL PAGADO (USD):</span>
             <span>$${saleData.total_usd.toFixed(2)}</span>
           </div>
         </div>
@@ -1523,9 +1614,9 @@ document.addEventListener('DOMContentLoaded', async () => {
         <div style="border-top: 2px double #000000; margin: 5px 0;"></div>
 
         <!-- INFORMACIÓN CAMBIARIA BCV (CRÍTICO SENIAT / VENEZUELA) -->
-        <div style="text-align: center; margin: 4px 0; padding: 4px 0; border: 1px solid #000; border-radius: 2px;">
-          <div style="font-size: 9px; font-weight: bold;">CONVERSIÓN TASA OFICIAL BCV</div>
-          <div style="font-size: 10px; font-weight: bold;">TASA BCV: Bs. ${saleData.bcv_rate.toFixed(2)} / USD</div>
+        <div style="text-align: center; margin: 4px 0; padding: 4px 0; border: 1px solid #000; border-radius: 2px; background: #fafafa;">
+          <div style="font-size: 9px; font-weight: bold;">BASE DE CÁLCULO FISCAL: BOLÍVARES (VES)</div>
+          <div style="font-size: 9.5px; font-weight: bold;">TASA OFICIAL BCV: Bs. ${saleData.bcv_rate.toFixed(2)} / USD</div>
           <div style="font-size: 13px; font-weight: bold; margin-top: 2px;">
             TOTAL EN BS: Bs. ${saleData.total_ves.toLocaleString('es-VE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
           </div>

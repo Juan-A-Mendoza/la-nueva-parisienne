@@ -146,15 +146,31 @@ document.addEventListener('DOMContentLoaded', () => {
     populateSelects();
   }
 
+  function getInventoryBcvRate() {
+    const modoGuardado = localStorage.getItem('modo_tasa') || localStorage.getItem('modoTasa');
+    if (modoGuardado === 'manual') {
+      const tasaManualVal = parseFloat(localStorage.getItem('tasa_manual') || localStorage.getItem('tasaManual'));
+      if (tasaManualVal && tasaManualVal > 0) return tasaManualVal;
+    }
+    return parseFloat(localStorage.getItem('bcv_current_rate') || localStorage.getItem('tasa_auto') || '784.66') || 784.66;
+  }
+
   // 4. Renderizado de KPIs
   function renderKPIs() {
     const alertsCount = inventory.filter(i => i.currentStock <= i.minStock).length;
     const totalVal = inventory.reduce((sum, i) => sum + (i.currentStock * i.unitPrice), 0);
+    const bcvRate = getInventoryBcvRate();
+    const totalValVes = totalVal * bcvRate;
+    const wasteVes = monthlyWasteTotal * bcvRate;
 
     if (kpiTotalItems) kpiTotalItems.textContent = `${inventory.length} ítems`;
     if (kpiStockAlerts) kpiStockAlerts.textContent = `${alertsCount} Alertas`;
-    if (kpiTotalValue) kpiTotalValue.textContent = `$${totalVal.toLocaleString('en-US', { minimumFractionDigits: 2 })}`;
-    if (kpiMonthlyWaste) kpiMonthlyWaste.textContent = `$${monthlyWasteTotal.toFixed(2)}`;
+    if (kpiTotalValue) {
+      kpiTotalValue.innerHTML = `$${totalVal.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} <small style="display:block; font-size:0.8rem; font-weight:700; color:#2e7d32;">Bs. ${totalValVes.toLocaleString('es-VE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</small>`;
+    }
+    if (kpiMonthlyWaste) {
+      kpiMonthlyWaste.innerHTML = `$${monthlyWasteTotal.toFixed(2)} <small style="display:block; font-size:0.8rem; font-weight:700; color:var(--color-danger);">Bs. ${wasteVes.toLocaleString('es-VE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</small>`;
+    }
   }
 
   // 5. Renderizado de la Tabla de Stock
@@ -185,6 +201,8 @@ document.addEventListener('DOMContentLoaded', () => {
       return;
     }
 
+    const bcvRate = getInventoryBcvRate();
+
     filtered.forEach(item => {
       const tr = document.createElement('tr');
 
@@ -200,6 +218,7 @@ document.addEventListener('DOMContentLoaded', () => {
       }
 
       const totalItemValue = item.currentStock * item.unitPrice;
+      const totalItemValueVes = totalItemValue * bcvRate;
 
       tr.innerHTML = `
         <td class="table-code-badge">${item.code}</td>
@@ -208,7 +227,10 @@ document.addEventListener('DOMContentLoaded', () => {
         <td><strong style="font-size: 1.05rem;">${item.currentStock}</strong> ${item.unit}</td>
         <td style="color: var(--color-muted);">${item.minStock} ${item.unit}</td>
         <td><span class="stock-status-tag ${statusTagClass}">${statusTagText}</span></td>
-        <td style="font-weight: 700;">$${totalItemValue.toFixed(2)}</td>
+        <td style="font-weight: 700;">
+          <div>$${totalItemValue.toFixed(2)}</div>
+          <small style="display: block; font-size: 0.75rem; color: #2e7d32; font-weight: 700;">Bs. ${totalItemValueVes.toLocaleString('es-VE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</small>
+        </td>
         <td>
           <div style="display: flex; gap: 0.4rem;">
             <button type="button" class="btn-row-touch btn-add-qty" title="Incrementar rápido (+1)">+</button>

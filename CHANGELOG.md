@@ -4,6 +4,34 @@ Todos los cambios significativos, nuevas funcionalidades y actualizaciones del s
 
 El formato está basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1.0.0/) y este proyecto se adhiere a [Semantic Versioning](https://semver.org/lang/es/).
 
+## [5.22.0] - 2026-10-23 (Cálculo Fiscal de IVA en Base a Bolívares y Precios Bimonetarios en USD y Bs.)
+
+### 🇻🇪 Cálculo Legal de IVA sobre Base Imponible en Bolívares (SENIAT) ([modules/pos.html](file:///c:/xampp/htdocs/la-nueva-parisienne/modules/pos.html), [js/modules/pos.js](file:///c:/xampp/htdocs/la-nueva-parisienne/js/modules/pos.js), [api/pos/procesar_venta.php](file:///c:/xampp/htdocs/la-nueva-parisienne/api/pos/procesar_venta.php))
+- **Base Imponible y Alícuota en Moneda de Cuenta Legal (Bs.)**:
+  - Se corrigió el cálculo del IVA fiscal (16%) para que se liquide formalmente sobre la Base Imponible expresada en Bolívares (`taxableBaseVes * 0.16`), eliminando las discrepancias de redondeo derivadas de calcular el impuesto en dólares y luego convertirlo a bolívares.
+  - El monto equivalente en dólares del IVA y el Total se derivan de la liquidación en bolívares dividida por la Tasa Oficial BCV, garantizando total consistencia contable y fiscal según normativas del SENIAT.
+- **Desglose Fiscal en Comprobante Térmico de Facturación (Ticket POS)**:
+  - El comprobante ahora muestra explícitamente:
+    - Base Imponible en Bolívares y su contraparte en USD.
+    - IVA Fiscal (16% sobre Bs.) en Bolívares y su contraparte en USD.
+    - Total Oficial en Bolívares (VES) y Total en Dólares ($ USD).
+    - Tasa de Cambio Oficial BCV aplicada.
+
+### 💰 Precios Bimonetarios Simultáneos ($ USD y Bs. VES) en Toda la Plataforma
+- **Catálogo y Cuadrícula de Productos del POS (`#productsGrid`)**:
+  - Cada tarjeta de producto ahora muestra de manera destacada su precio en Dólares ($) y su precio equivalente en Bolívares (Bs.) calculado en tiempo real con la tasa BCV activa.
+- **Carrito de Compras POS (Paso 1 y Paso 2)**:
+  - Cada renglón del carrito visualiza el precio unitario y el subtotal de línea en ambas denominaciones ($ USD y Bs. VES).
+  - Los resúmenes financieros de Paso 1 y Paso 2 detallan Subtotal Bruto, Descuentos, Base Imponible, IVA 16% y Total Final en ambas monedas.
+- **Dashboard Gerencial (Módulo 4)**:
+  - Tablas de Materias Primas y Productos Terminados muestran Costo Unitario y Precio de Venta en USD y Bolívares.
+  - Indicadores clave (KPIs de Ingresos Totales y Ticket Promedio) expresan sus valores simultáneamente en ambas monedas.
+  - Formulario de edición/creación de producto muestra el equivalente dinámico en Bolívares mientras se tipea el precio en USD.
+- **Inventario (Módulo 5)**:
+  - La tabla de control de existencias y los KPIs de Valor Estimado y Mermas muestran sus valores en Dólares y Bolívares.
+- **Cierre de Caja y Arqueo (Módulo de Reportes)**:
+  - El campo de efectivo físico contado en gaveta ahora calcula y muestra en vivo su contravalor en Bolívares (Bs. VES).
+
 ## [5.21.0] - 2026-10-07 (Quinto Medio de Pago: CRUD Completo de Canales Digitales, Código QR & Cobro Dinámico en POS)
 
 ### 💳 5to Medio de Pago en Caja POS ([modules/pos.html](file:///c:/Users/juana/.gemini/antigravity-ide/scratch/la-nueva-parisienne/modules/pos.html), [js/modules/pos.js](file:///c:/Users/juana/.gemini/antigravity-ide/scratch/la-nueva-parisienne/js/modules/pos.js), [css/modules/pos.css](file:///c:/Users/juana/.gemini/antigravity-ide/scratch/la-nueva-parisienne/css/modules/pos.css))

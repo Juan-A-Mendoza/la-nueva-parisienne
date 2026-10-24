@@ -333,7 +333,7 @@
                   <th>Descripción / Producto</th>
                   <th>Categoría</th>
                   <th>UoM</th>
-                  <th>Costo Unitario ($)</th>
+                  <th>Costo Unitario ($ / Bs.)</th>
                   <th>Stock Actual</th>
                   <th>Nivel Mínimo / Alerta</th>
                   <th>Acciones</th>
@@ -366,8 +366,8 @@
                   <th>Descripción / Producto</th>
                   <th>Categoría POS</th>
                   <th>UoM</th>
-                  <th>Costo Unit. ($)</th>
-                  <th>Precio Venta ($)</th>
+                  <th>Costo Unit. ($ / Bs.)</th>
+                  <th>Precio Venta ($ / Bs.)</th>
                   <th>Stock Actual</th>
                   <th>Visibilidad POS</th>
                   <th>Nivel Mínimo / Alerta</th>
@@ -927,10 +927,12 @@
             <div class="form-group-custom">
               <label for="modalPtCostoUnitario" class="form-label-custom"><i data-lucide="dollar-sign" class="icon-xs"></i> Costo Producción ($ USD) *</label>
               <input type="number" id="modalPtCostoUnitario" class="form-control-custom" placeholder="Ej: 1.20" min="0.01" step="0.01" required />
+              <small id="modalPtCostoUnitarioBs" style="display: block; font-size: 0.78rem; font-weight: 700; color: #2e7d32; margin-top: 0.25rem;">Equivalente: Bs. 0,00</small>
             </div>
             <div class="form-group-custom">
               <label for="modalPtPrecioVenta" class="form-label-custom"><i data-lucide="tag" class="icon-xs"></i> Precio Venta POS ($ USD) *</label>
               <input type="number" id="modalPtPrecioVenta" class="form-control-custom" placeholder="Ej: 2.50" min="0.01" step="0.01" required />
+              <small id="modalPtPrecioVentaBs" style="display: block; font-size: 0.78rem; font-weight: 700; color: #1b5e20; margin-top: 0.25rem;">Equivalente: Bs. 0,00</small>
             </div>
           </div>
 

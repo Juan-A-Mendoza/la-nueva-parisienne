@@ -36,17 +36,22 @@ if (empty($data)) {
 $orderNumber = isset($data['orderNumber']) ? trim($data['orderNumber']) : (isset($data['order_number']) ? trim($data['order_number']) : (isset($data['codigo']) ? trim($data['codigo']) : 'FAC-2026-' . rand(1000, 9999)));
 $sessionUserId = $_SESSION['user_id'] ?? null;
 $userId = $sessionUserId ?: (isset($data['userId']) ? trim($data['userId']) : (isset($data['user_id']) ? trim($data['user_id']) : 'usr_cashier'));
-$subtotal = isset($data['subtotal']) ? (float)$data['subtotal'] : 0.0;
-$tax = isset($data['tax']) ? (float)$data['tax'] : (isset($data['iva']) ? (float)$data['iva'] : 0.0);
-$discount = isset($data['discount']) ? (float)$data['discount'] : (isset($data['descuento']) ? (float)$data['descuento'] : 0.0);
-$total = isset($data['total']) ? (float)$data['total'] : (isset($data['total_usd']) ? (float)$data['total_usd'] : 0.0);
-$paymentMethod = isset($data['paymentMethod']) ? trim($data['paymentMethod']) : (isset($data['payment_method']) ? trim($data['payment_method']) : (isset($data['metodo_pago']) ? trim($data['metodo_pago']) : 'Efectivo'));
-$tenderAmount = isset($data['tenderAmount']) ? (float)$data['tenderAmount'] : (isset($data['tender_amount']) ? (float)$data['tender_amount'] : (isset($data['monto_pagado']) ? (float)$data['monto_pagado'] : $total));
-$changeDue = isset($data['changeDue']) ? (float)$data['changeDue'] : (isset($data['change_due']) ? (float)$data['change_due'] : (isset($data['cambio']) ? (float)$data['cambio'] : 0.0));
-$orderType = isset($data['orderType']) ? trim($data['orderType']) : (isset($data['order_type']) ? trim($data['order_type']) : 'Para Llevar');
 $bcvRate = isset($data['bcv_rate']) ? (float)$data['bcv_rate'] : (isset($data['tasa_bcv']) ? (float)$data['tasa_bcv'] : 1.0);
 if ($bcvRate <= 0) $bcvRate = 1.0;
-$totalBs = round($total * $bcvRate, 2);
+
+$subtotal = isset($data['subtotal']) ? (float)$data['subtotal'] : 0.0;
+$discount = isset($data['discount']) ? (float)$data['discount'] : (isset($data['descuento']) ? (float)$data['descuento'] : 0.0);
+
+// CÁLCULO LEGAL SENIAT / VENEZUELA: El IVA se liquida sobre la base en Bolívares
+$subtotalBs = isset($data['subtotal_ves']) ? (float)$data['subtotal_ves'] : round($subtotal * $bcvRate, 2);
+$descuentoBs = isset($data['discount_ves']) ? (float)$data['discount_ves'] : round($discount * $bcvRate, 2);
+$baseImponibleBs = round($subtotalBs - $descuentoBs, 2);
+
+$taxBs = isset($data['tax_ves']) ? (float)$data['tax_ves'] : round($baseImponibleBs * 0.16, 2);
+$totalBs = isset($data['total_ves']) ? (float)$data['total_ves'] : round($baseImponibleBs + $taxBs, 2);
+
+$tax = isset($data['tax']) ? (float)$data['tax'] : ($bcvRate > 0 ? round($taxBs / $bcvRate, 2) : 0.0);
+$total = isset($data['total_usd']) ? (float)$data['total_usd'] : (isset($data['total']) ? (float)$data['total'] : ($bcvRate > 0 ? round($totalBs / $bcvRate, 2) : 0.0));
 
 $items = isset($data['items']) ? $data['items'] : (isset($data['cart']) ? $data['cart'] : []);
 
