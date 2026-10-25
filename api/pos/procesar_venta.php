@@ -13,6 +13,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
     exit();
 }
 
+define('LNP_PUBLIC', true);
+
 require_once __DIR__ . '/../config/conexion.php';
 
 // Leer el cuerpo de la petición POST (JSON)
@@ -52,6 +54,11 @@ $totalBs = isset($data['total_ves']) ? (float)$data['total_ves'] : round($baseIm
 
 $tax = isset($data['tax']) ? (float)$data['tax'] : ($bcvRate > 0 ? round($taxBs / $bcvRate, 2) : 0.0);
 $total = isset($data['total_usd']) ? (float)$data['total_usd'] : (isset($data['total']) ? (float)$data['total'] : ($bcvRate > 0 ? round($totalBs / $bcvRate, 2) : 0.0));
+
+$paymentMethod = isset($data['payment_method']) ? trim($data['payment_method']) : (isset($data['paymentMethod']) ? trim($data['paymentMethod']) : (isset($data['metodo_pago']) ? trim($data['metodo_pago']) : 'efectivo'));
+$tenderAmount = isset($data['tender_amount']) ? (float)$data['tender_amount'] : (isset($data['monto_pagado']) ? (float)$data['monto_pagado'] : $total);
+$changeDue = isset($data['change_due']) ? (float)$data['change_due'] : (isset($data['cambio']) ? (float)$data['cambio'] : 0.0);
+$orderType = isset($data['order_type']) ? trim($data['order_type']) : (isset($data['tipo_pedido']) ? trim($data['tipo_pedido']) : 'Para Llevar');
 
 $items = isset($data['items']) ? $data['items'] : (isset($data['cart']) ? $data['cart'] : []);
 

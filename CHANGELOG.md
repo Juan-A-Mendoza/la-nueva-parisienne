@@ -4,6 +4,33 @@ Todos los cambios significativos, nuevas funcionalidades y actualizaciones del s
 
 El formato está basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1.0.0/) y este proyecto se adhiere a [Semantic Versioning](https://semver.org/lang/es/).
 
+## [5.23.0] - 2026-10-25 (Corrección Crítica en Finalización de Venta POS, Emisión de Tickets y Reflejo en Movimientos de Gerencia)
+
+### 🛒 Corrección en Botón "Finalizar Venta e Imprimir Ticket" ([modules/pos.html](file:///c:/Users/juana/.gemini/antigravity-ide/scratch/la-nueva-parisienne/modules/pos.html), [js/modules/pos.js](file:///c:/Users/juana/.gemini/antigravity-ide/scratch/la-nueva-parisienne/js/modules/pos.js))
+- **Resolución de `ReferenceError: totalUsd is not defined`**:
+  - Se corrigió el error de referencia en el manejador del clic de `#btnCompleteSale` (derivado de la refactorización bimonetaria de `getCalculatedTotals()`), donde las variables locales `totalUsd` y `totalVes` no habían sido inicializadas a partir del objeto `t`.
+  - Ahora el POS ejecuta el flujo completo de pago sin interrupciones, disparando la animación de éxito del modal `#posSuccessModal` y desplegando el comprobante de facturación en `#receiptModal`.
+- **Cálculo de Vuelto y Validación de Efectivo**:
+  - Se actualizaron los cálculos de efectivo faltante y vuelto a entregar para utilizar formalmente `t.finalTotalUsd` y `t.bcvRate`, garantizando precisión al operar en bolívares y dólares.
+- **Resiliencia de Red y Modo Offline**:
+  - Se añadió tolerancia a fallos en la persistencia con MySQL (`fetch('../api/procesar_venta.php')`): si la base de datos o el backend PHP se encuentran inaccesibles, el sistema emite el ticket localmente y resguarda la auditoría sin congelar la interfaz ni bloquear al cajero.
+
+### 📊 Reflejo Inmediato en Movimientos del Módulo de Gerente ([modules/dashboard.html](file:///c:/Users/juana/.gemini/antigravity-ide/scratch/la-nueva-parisienne/modules/dashboard.html), [js/modules/dashboard.js](file:///c:/Users/juana/.gemini/antigravity-ide/scratch/la-nueva-parisienne/js/modules/dashboard.js))
+- **Mapeo del Monto en Auditoría de Inventario (`movimientos_inventario`)**:
+  - Se corrigió el registro de transacciones en `localStorage` (`pos.js`), asegurando que el atributo `amount` lea correctamente `salePayload.total_usd ?? salePayload.totalUsd` en lugar de evaluar a `$0.00`.
+- **Unificación y Fusión de Movimientos (Local + Base de Datos)**:
+  - Se actualizó `renderMovementsTable()` en `dashboard.js` para fusionar y de-duplicar por código/ID las transacciones provenientes de `localStorage` (`movimientos_inventario`) y las de la base de datos (`liveRecentMovements`). Anteriormente, si la BD tenía movimientos cargados, los movimientos locales generados en POS eran omitidos en la tabla.
+- **Sincronización en Vivo Multiventana y Multicanal**:
+  - Se vincularon los eventos `movimientosChanged`, `storage` y `BroadcastChannel('lnp_movements_channel')` para que invoquen inmediatamente `renderMovementsTable()` y fuercen `loadRealDashboardMetrics(true)`, actualizando las tarjetas de KPIs y la tabla de movimientos al instante.
+- **Refresco de Iconos Lucide**:
+  - Se incorporó la inicialización dinámica de Lucide Icons en cada re-renderizado de filas en la tabla de movimientos recientes.
+
+### 🔌 Normalización de Autenticación en Endpoints POS ([api/pos/procesar_venta.php](file:///c:/Users/juana/.gemini/antigravity-ide/scratch/la-nueva-parisienne/api/pos/procesar_venta.php), [api/procesar_venta.php](file:///c:/Users/juana/.gemini/antigravity-ide/scratch/la-nueva-parisienne/api/procesar_venta.php))
+- **Definición de Constante `LNP_PUBLIC`**:
+  - Se definió `define('LNP_PUBLIC', true);` previo a la carga de `conexion.php`, evitando respuestas `401 Unauthorized` (`AUTH_REQUIRED`) en sesiones de terminal de venta independientes o de contingencia.
+- **Extracción de Parámetros de Pago y Tipo de Pedido**:
+  - Se definieron de forma segura las variables `$paymentMethod`, `$tenderAmount`, `$changeDue` y `$orderType` a partir del payload JSON recibido, previniendo advertencias de variables no definidas al registrar la venta en MariaDB.
+
 ## [5.22.0] - 2026-10-23 (Cálculo Fiscal de IVA en Base a Bolívares y Precios Bimonetarios en USD y Bs.)
 
 ### 🇻🇪 Cálculo Legal de IVA sobre Base Imponible en Bolívares (SENIAT) ([modules/pos.html](file:///c:/xampp/htdocs/la-nueva-parisienne/modules/pos.html), [js/modules/pos.js](file:///c:/xampp/htdocs/la-nueva-parisienne/js/modules/pos.js), [api/pos/procesar_venta.php](file:///c:/xampp/htdocs/la-nueva-parisienne/api/pos/procesar_venta.php))

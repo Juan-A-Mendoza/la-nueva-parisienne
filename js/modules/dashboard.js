@@ -1062,9 +1062,28 @@ function renderMovementsTable() {
   if (!tbody) return;
   tbody.innerHTML = '';
 
-  const allMovs = (liveRecentMovements && liveRecentMovements.length > 0)
-    ? liveRecentMovements
-    : getMovementsFromStorage();
+  const storageMovs = getMovementsFromStorage();
+  const dbMovs = (Array.isArray(liveRecentMovements) && liveRecentMovements.length > 0) ? liveRecentMovements : [];
+
+  // Combinar movimientos: priorizar movimientos en localStorage (ventas recientes del POS) y enriquecer con BD sin duplicar
+  const seenCodes = new Set();
+  const allMovs = [];
+
+  for (const mov of storageMovs) {
+    const key = mov.code || mov.id || `${mov.timestamp}-${mov.amount}`;
+    if (!seenCodes.has(key)) {
+      seenCodes.add(key);
+      allMovs.push(mov);
+    }
+  }
+
+  for (const mov of dbMovs) {
+    const key = mov.code || mov.id || `${mov.timestamp}-${mov.amount}`;
+    if (!seenCodes.has(key)) {
+      seenCodes.add(key);
+      allMovs.push(mov);
+    }
+  }
 
   const filtered = allMovs.filter(mov => {
     if (currentCategoryFilter === 'todos') return true;
@@ -1127,6 +1146,8 @@ function renderMovementsTable() {
 
     tbody.appendChild(tr);
   });
+
+  window.LucideIcons?.refresh?.() || (typeof lucide !== 'undefined' && lucide.createIcons?.());
 }
 
 function openMovementDetailModal(mov) {
@@ -1611,6 +1632,7 @@ function cargarInventario() {
     movChannel.onmessage = (e) => {
       if (e.data && e.data.type === 'movement_added') {
         renderMovementsTable();
+        loadRealDashboardMetrics(true);
       }
     };
   }
@@ -5645,11 +5667,15 @@ function initDashboard() {
   try { loadRealDashboardMetrics(); } catch (e) { console.error('Error Métricas Reales:', e); }
 
   // Reactividad en tiempo real cuando se registren ventas o cambien inventarios
-  window.addEventListener('catalogoPosChanged', () => loadRealDashboardMetrics());
-  window.addEventListener('movimientosChanged', () => loadRealDashboardMetrics());
+  window.addEventListener('catalogoPosChanged', () => loadRealDashboardMetrics(true));
+  window.addEventListener('movimientosChanged', () => {
+    renderMovementsTable();
+    loadRealDashboardMetrics(true);
+  });
   window.addEventListener('storage', (e) => {
     if (e.key === 'movimientos_inventario' || e.key === 'catalogo_pos') {
-      loadRealDashboardMetrics();
+      renderMovementsTable();
+      loadRealDashboardMetrics(true);
     }
   });
 }
