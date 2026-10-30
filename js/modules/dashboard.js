@@ -5212,6 +5212,15 @@ function inicializarReporteEjecutivo() {
       `;
     }
 
+    sheet.querySelectorAll('table.report-data-table').forEach(table => {
+      if (!table.parentElement.classList.contains('report-table-responsive')) {
+        const wrap = document.createElement('div');
+        wrap.className = 'report-table-responsive';
+        table.parentNode.insertBefore(wrap, table);
+        wrap.appendChild(table);
+      }
+    });
+
     setTimeout(() => {
       renderChartsForReport(reportType, currentReportData);
       window.LucideIcons?.refresh();
@@ -6030,7 +6039,7 @@ function inicializarGeneradorModular() {
         <div class="report-header-banner">
           <div class="report-brand-col">
             <div class="report-brand-lockup">
-              <div class="report-brand-emblem" aria-hidden="true" style="background: linear-gradient(135deg, #D49B54 0%, #B57F3A 100%); color: #FFF;">
+              <div class="report-brand-emblem" aria-hidden="true">
                 <i data-lucide="trending-up" class="icon-md"></i>
               </div>
               <div>
@@ -6044,13 +6053,13 @@ function inicializarGeneradorModular() {
               </div>
             </div>
             <div class="report-doc-title-row">
-              <span class="report-doc-indicator" style="background: #D49B54; color: #FFF;">INFORME DE TENDENCIAS &amp; PROYECCIONES</span>
+              <span class="report-doc-indicator">INFORME DE TENDENCIAS &amp; PROYECCIONES</span>
               <h2 class="report-doc-subtitle">Tendencias de Demanda, Planificación Operativa &amp; Punto de Equilibrio</h2>
             </div>
           </div>
 
           <div class="report-meta-card">
-            <div class="report-meta-badge" style="background: #3B82F6; color: #FFF;">DATOS DEL SISTEMA</div>
+            <div class="report-meta-badge">DATOS DEL SISTEMA</div>
             <div class="report-meta-items">
               <div class="report-meta-row">
                 <span class="meta-label"><i data-lucide="history" class="icon-xs"></i> Base Histórica:</span>
@@ -6383,6 +6392,14 @@ function inicializarGeneradorModular() {
       `;
 
       sheet.innerHTML = sheetHtml;
+      sheet.querySelectorAll('table.report-data-table').forEach(table => {
+        if (!table.parentElement.classList.contains('report-table-responsive')) {
+          const wrap = document.createElement('div');
+          wrap.className = 'report-table-responsive';
+          table.parentNode.insertBefore(wrap, table);
+          wrap.appendChild(table);
+        }
+      });
       window.LucideIcons?.refresh();
 
     } catch (e) {

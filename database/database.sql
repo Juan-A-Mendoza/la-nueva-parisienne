@@ -416,43 +416,62 @@ CREATE TABLE IF NOT EXISTS `comandas_cocina` (
 
 -- ============================================================================
 -- II. MIGRACIÓN / IDEMPOTENCIA DE ÍNDICES PARA TABLAS PREEXISTENTES
--- (Garantiza aceleración de consultas aunque las tablas ya hayan sido creadas)
+-- (Garantiza aceleración de consultas sin fallar en MySQL 5.7+, 8.0+ ni MariaDB)
 -- ============================================================================
 
-ALTER TABLE `ventas` 
-  ADD INDEX IF NOT EXISTS `idx_ventas_fecha` (`fecha_hora`),
-  ADD INDEX IF NOT EXISTS `idx_ventas_metodo` (`metodo_pago`),
-  ADD INDEX IF NOT EXISTS `idx_ventas_fecha_total` (`fecha_hora`, `total`);
+DELIMITER //
 
-ALTER TABLE `ventas_detalle` 
-  ADD INDEX IF NOT EXISTS `idx_ventas_detalle_venta` (`venta_id`),
-  ADD INDEX IF NOT EXISTS `idx_ventas_detalle_producto` (`producto_id`);
+DROP PROCEDURE IF EXISTS `sp_crear_indice_si_no_existe` //
+CREATE PROCEDURE `sp_crear_indice_si_no_existe`(
+    IN tbl_name VARCHAR(64),
+    IN idx_name VARCHAR(64),
+    IN cols_definition VARCHAR(255)
+)
+BEGIN
+    DECLARE idx_count INT DEFAULT 0;
+    SELECT COUNT(1) INTO idx_count
+    FROM information_schema.STATISTICS
+    WHERE table_schema = DATABASE()
+      AND table_name = tbl_name
+      AND index_name = idx_name;
 
-ALTER TABLE `comandas_cocina` 
-  ADD INDEX IF NOT EXISTS `idx_comandas_estado` (`estado_preparacion`),
-  ADD INDEX IF NOT EXISTS `idx_comandas_fecha` (`fecha_hora`);
+    IF idx_count = 0 THEN
+        SET @sql_cmd = CONCAT('ALTER TABLE `', tbl_name, '` ADD INDEX `', idx_name, '` (', cols_definition, ')');
+        PREPARE stmt FROM @sql_cmd;
+        EXECUTE stmt;
+        DEALLOCATE PREPARE stmt;
+    END IF;
+END //
 
-ALTER TABLE `lotes_produccion` 
-  ADD INDEX IF NOT EXISTS `idx_lotes_estado` (`estado_leudado`),
-  ADD INDEX IF NOT EXISTS `idx_lotes_producto` (`codigo_producto`);
+DELIMITER ;
 
-ALTER TABLE `estado_hornos` 
-  ADD INDEX IF NOT EXISTS `idx_hornos_estado` (`estado`);
+CALL sp_crear_indice_si_no_existe('ventas', 'idx_ventas_fecha', '`fecha_hora`');
+CALL sp_crear_indice_si_no_existe('ventas', 'idx_ventas_metodo', '`metodo_pago`');
+CALL sp_crear_indice_si_no_existe('ventas', 'idx_ventas_fecha_total', '`fecha_hora`, `total`');
 
-ALTER TABLE `asientos_contables` 
-  ADD INDEX IF NOT EXISTS `idx_asientos_fecha` (`fecha_hora`),
-  ADD INDEX IF NOT EXISTS `idx_asientos_modulo` (`modulo_origen`);
+CALL sp_crear_indice_si_no_existe('ventas_detalle', 'idx_ventas_detalle_venta', '`venta_id`');
+CALL sp_crear_indice_si_no_existe('ventas_detalle', 'idx_ventas_detalle_producto', '`producto_id`');
 
-ALTER TABLE `asientos_detalle` 
-  ADD INDEX IF NOT EXISTS `idx_asientos_detalle_asiento` (`asiento_id`),
-  ADD INDEX IF NOT EXISTS `idx_asientos_detalle_cuenta` (`cuenta_codigo`);
+CALL sp_crear_indice_si_no_existe('comandas_cocina', 'idx_comandas_estado', '`estado_preparacion`');
+CALL sp_crear_indice_si_no_existe('comandas_cocina', 'idx_comandas_fecha', '`fecha_hora`');
 
-ALTER TABLE `ordenes_compra` 
-  ADD INDEX IF NOT EXISTS `idx_ordenes_fecha` (`fecha_pedido`),
-  ADD INDEX IF NOT EXISTS `idx_ordenes_estado` (`estado`);
+CALL sp_crear_indice_si_no_existe('lotes_produccion', 'idx_lotes_estado', '`estado_leudado`');
+CALL sp_crear_indice_si_no_existe('lotes_produccion', 'idx_lotes_producto', '`codigo_producto`');
 
-ALTER TABLE `ordenes_compra_detalle` 
-  ADD INDEX IF NOT EXISTS `idx_ordenes_detalle_orden` (`orden_id`);
+CALL sp_crear_indice_si_no_existe('estado_hornos', 'idx_hornos_estado', '`estado`');
+
+CALL sp_crear_indice_si_no_existe('asientos_contables', 'idx_asientos_fecha', '`fecha_hora`');
+CALL sp_crear_indice_si_no_existe('asientos_contables', 'idx_asientos_modulo', '`modulo_origen`');
+
+CALL sp_crear_indice_si_no_existe('asientos_detalle', 'idx_asientos_detalle_asiento', '`asiento_id`');
+CALL sp_crear_indice_si_no_existe('asientos_detalle', 'idx_asientos_detalle_cuenta', '`cuenta_codigo`');
+
+CALL sp_crear_indice_si_no_existe('ordenes_compra', 'idx_ordenes_fecha', '`fecha_pedido`');
+CALL sp_crear_indice_si_no_existe('ordenes_compra', 'idx_ordenes_estado', '`estado`');
+
+CALL sp_crear_indice_si_no_existe('ordenes_compra_detalle', 'idx_ordenes_detalle_orden', '`orden_id`');
+
+DROP PROCEDURE IF EXISTS `sp_crear_indice_si_no_existe`;
 
 -- Garantiza que la columna pin soporte contraseñas hasheadas completas sin truncamiento en cualquier PC
 ALTER TABLE `usuarios` 
