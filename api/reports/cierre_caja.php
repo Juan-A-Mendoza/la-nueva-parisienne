@@ -28,17 +28,20 @@ function closureEventScope(array $actor, array $input, $context, array &$where, 
         $cashier = reportText($input['cajero_id'] ?? $input['cashier_id'] ?? '');
         if ($cashier !== '') { $where[] = 'e.usuario_id = :close_event_cashier'; $params['close_event_cashier'] = $cashier; }
         $shift = reportText($input['turno'] ?? $input['shift'] ?? '');
-        if ($shift !== '') { $where[] = "COALESCE(e.turno, 'SIN TURNO') = :close_event_shift"; $params['close_event_shift'] = $shift; }
+        if (!reportIsWildcardShift($shift)) {
+            $shiftCond = reportBuildShiftCondition($shift, "COALESCE(e.turno, 'SIN TURNO')", $params, 'close_event_shift');
+            if ($shiftCond !== null) { $where[] = $shiftCond; }
+        }
     } else {
         $date = reportValidDate($input['date'] ?? $input['fecha'] ?? '', date('Y-m-d'));
         $where[] = 'e.fecha_hora >= :close_event_date_from';
         $where[] = 'e.fecha_hora < :close_event_date_to';
         $params['close_event_date_from'] = $date . ' 00:00:00';
         $params['close_event_date_to'] = date('Y-m-d H:i:s', strtotime($date . ' +1 day'));
-        $shift = reportText($actor['shift']);
-        if ($shift !== '' && !reportIsManager($actor['role']) && stripos($shift, 'Acceso Total') === false) {
-            $where[] = "COALESCE(e.turno, 'SIN TURNO') = :close_event_shift";
-            $params['close_event_shift'] = $shift;
+        $shift = reportText($input['turno'] ?? $input['shift'] ?? $actor['shift'] ?? '');
+        if (!reportIsManager($actor['role']) && !reportIsWildcardShift($shift)) {
+            $shiftCond = reportBuildShiftCondition($shift, "COALESCE(e.turno, 'SIN TURNO')", $params, 'close_event_shift');
+            if ($shiftCond !== null) { $where[] = $shiftCond; }
         }
     }
 }
@@ -142,8 +145,14 @@ try {
         $forceReclose = filter_var($input['force'] ?? $input['force_reclose'] ?? false, FILTER_VALIDATE_BOOLEAN);
 
         // Verificar si ya existe cierre previo para alertar al usuario (a menos que fuerce re-cierre)
-        $duplicate = $pdo->prepare("SELECT id, codigo_reporte, generado_en, ventas_netas FROM reportes_caja_cierres WHERE fecha_turno = :fecha AND caja_id = :caja AND turno = :turno ORDER BY generado_en DESC LIMIT 1");
-        $duplicate->execute(['fecha' => $date, 'caja' => $box, 'turno' => $shift]);
+        $dupParams = ['fecha' => $date, 'caja' => $box];
+        $dupWhere = 'fecha_turno = :fecha AND caja_id = :caja';
+        $dupShiftCond = reportBuildShiftCondition($shift, 'turno', $dupParams, 'dup_shift');
+        if ($dupShiftCond !== null) {
+            $dupWhere .= ' AND ' . $dupShiftCond;
+        }
+        $duplicate = $pdo->prepare("SELECT id, codigo_reporte, generado_en, ventas_netas FROM reportes_caja_cierres WHERE $dupWhere ORDER BY generado_en DESC LIMIT 1");
+        $duplicate->execute($dupParams);
         $existing = $duplicate->fetch();
         if ($existing && !$forceReclose) {
             reportAudit($pdo, 'CIERRE_CAJA_Z', 'CONSULTA', $actor, $input);
@@ -242,15 +251,20 @@ try {
         $closureStmt->execute(['fecha' => $date]);
         $closures = $closureStmt->fetchAll();
     } else {
-        $from = reportValidDate($input['date_from'] ?? '', date('Y-m-01'));
-        $to = reportValidDate($input['date_to'] ?? '', date('Y-m-d'));
+        $from = reportValidDate($input['date_from'] ?? $input['fecha_desde'] ?? '', date('Y-m-01'));
+        $to = reportValidDate($input['date_to'] ?? $input['fecha_hasta'] ?? '', date('Y-m-d'));
         if ($from > $to) { $swap = $from; $from = $to; $to = $swap; }
         $closureWhere = ['fecha_turno BETWEEN :closure_from AND :closure_to'];
         $closureParams = ['closure_from' => $from, 'closure_to' => $to];
         $boxFilter = reportText($input['caja_id'] ?? $input['caja'] ?? '');
         if ($boxFilter !== '') { $closureWhere[] = 'caja_id = :closure_box'; $closureParams['closure_box'] = $boxFilter; }
-        $shiftFilter = reportText($input['turno'] ?? $input['shift'] ?? '');
-        if ($shiftFilter !== '') { $closureWhere[] = 'turno = :closure_shift'; $closureParams['closure_shift'] = $shiftFilter; }
+        $shiftFilter = reportText($input['turno_filtro'] ?? $input['turno'] ?? '');
+        if (!reportIsWildcardShift($shiftFilter) && $shiftFilter !== reportText($actor['shift'])) {
+            $shiftCond = reportBuildShiftCondition($shiftFilter, 'turno', $closureParams, 'closure_shift');
+            if ($shiftCond !== null) {
+                $closureWhere[] = $shiftCond;
+            }
+        }
         $closureStmt = $pdo->prepare("SELECT * FROM reportes_caja_cierres WHERE " . implode(' AND ', $closureWhere) . " ORDER BY fecha_turno DESC, generado_en DESC");
         $closureStmt->execute($closureParams);
         $closures = $closureStmt->fetchAll();

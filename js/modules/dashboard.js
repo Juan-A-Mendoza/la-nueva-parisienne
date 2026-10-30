@@ -3918,7 +3918,7 @@ function inicializarReporteEjecutivo() {
 
       // 5. REPORTE OPERATIVO: AUDITORÍA DE CIERRES DE TURNO (CORTES Z Y ARQUEOS)
       } else if (reportType === 'cierres_turno') {
-        const url = `../api/reports/cierre_caja.php?context=gerente&role_code=${encodeURIComponent(sessionRoleCode)}&user_id=${encodeURIComponent(sessionUserId)}&fecha_desde=${encodeURIComponent(fromDate)}&fecha_hasta=${encodeURIComponent(toDate)}&date_from=${encodeURIComponent(fromDate)}&date_to=${encodeURIComponent(toDate)}${cashierVal ? `&cajero_id=${encodeURIComponent(cashierVal)}` : ''}`;
+        const url = `../api/reports/cierre_caja.php?context=gerente&role_code=${encodeURIComponent(sessionRoleCode)}&user_id=${encodeURIComponent(sessionUserId)}&fecha_desde=${encodeURIComponent(fromDate)}&fecha_hasta=${encodeURIComponent(toDate)}&date_from=${encodeURIComponent(fromDate)}&date_to=${encodeURIComponent(toDate)}&shift=todos${cashierVal ? `&cajero_id=${encodeURIComponent(cashierVal)}` : ''}`;
         const res = await fetch(url);
         const data = await res.json();
         const closures = data.closures || [];

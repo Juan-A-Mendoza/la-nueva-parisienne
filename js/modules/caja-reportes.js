@@ -237,7 +237,8 @@ function initPosCierreCaja() {
     currentBcvRate = getBcvRate();
     const user = currentSessionUser();
     const cashierName = user.name || document.getElementById('cashierName')?.textContent || 'María Elena Suárez';
-    const shiftName = user.shift || 'Turno Mañana';
+    const badgeShift = document.querySelector('.cashier-badge .shift-status')?.textContent?.replace(/^[●\s]+/, '') || '';
+    const shiftName = user.shift || badgeShift || 'Turno Mañana';
 
     const cajeroEl = document.getElementById('cierreCajeroNombre');
     const turnoEl = document.getElementById('cierreTurnoNombre');
@@ -745,8 +746,25 @@ function initPosCierreCaja() {
             const ch = new BroadcastChannel('lnp_cierres_channel');
             ch.postMessage({ type: 'cierre_generado', closure: res.closure });
           }
+          window.dispatchEvent(new CustomEvent('lnp_cierre_realizado', { detail: res.closure }));
         } catch (e) {
           console.warn('Error guardando en localStorage lnp_cierres_caja:', e);
+        }
+
+        // Reflejar de inmediato en la alerta y contador del modal de cierre
+        const alertaPrevio = document.getElementById('cierreAlertaPrevio');
+        const previoCodigo = document.getElementById('cierrePrevioCodigo');
+        const previoHora = document.getElementById('cierrePrevioHora');
+        const histCount = document.getElementById('cierreHistoricoCount');
+        if (alertaPrevio) alertaPrevio.style.display = 'flex';
+        if (previoCodigo) previoCodigo.textContent = res.closure.codigo_reporte;
+        if (previoHora) {
+          const gen = res.closure.generado_en || '';
+          previoHora.textContent = gen.includes(' ') ? gen.split(' ')[1].slice(0, 5) : gen;
+        }
+        if (histCount) {
+          const currentCount = parseInt(histCount.textContent || '0', 10);
+          histCount.textContent = String(currentCount + 1);
         }
 
         closeCierreModal();
@@ -865,7 +883,10 @@ function initManagerReports(section) {
         context: 'gerente',
         date_from: '2026-01-01',
         date_to: today(),
-        ...sessionParams()
+        fecha_desde: '2026-01-01',
+        fecha_hasta: today(),
+        ...sessionParams(),
+        shift: 'todos'
       });
       const data = await getJson(`${API_ROOT}cierre_caja.php?${q}`);
       const closures = data.closures || [];
@@ -907,6 +928,26 @@ function initManagerReports(section) {
 
   root.querySelector('#btnRefreshManagerCierres')?.addEventListener('click', loadManagerCierres);
   loadManagerCierres();
+
+  // Escuchar eventos en tiempo real de nuevos cierres sellados desde el POS
+  if (typeof BroadcastChannel !== 'undefined') {
+    try {
+      const ch = new BroadcastChannel('lnp_cierres_channel');
+      ch.onmessage = (ev) => {
+        if (ev.data && ev.data.type === 'cierre_generado') {
+          loadManagerCierres();
+        }
+      };
+    } catch (e) {
+      console.warn('BroadcastChannel no soportado:', e);
+    }
+  }
+  window.addEventListener('lnp_cierre_realizado', loadManagerCierres);
+  window.addEventListener('storage', (ev) => {
+    if (ev.key === 'lnp_cierres_caja') {
+      loadManagerCierres();
+    }
+  });
 }
 
 function bindManagerNavigation() {

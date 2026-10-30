@@ -171,6 +171,49 @@ function reportRequireContext(array $actor, $context) {
     }
 }
 
+function reportIsWildcardShift($shift) {
+    $s = trim(strtolower((string)$shift));
+    if ($s === '' || in_array($s, ['todos', 'all', 'sin turno', 'general', 'turno general', 'turno completo', 'completo'], true)) {
+        return true;
+    }
+    if (stripos($s, 'acceso total') !== false || stripos($s, '24/7') !== false) {
+        return true;
+    }
+    return false;
+}
+
+function reportBuildShiftCondition($shift, $shiftExpr, array &$params, $prefix = 'scope_shift') {
+    if (reportIsWildcardShift($shift)) {
+        return null;
+    }
+
+    $raw = trim((string)$shift);
+    // Quitar la palabra "Turno" o "turno"
+    $clean = trim(preg_replace('/\bturno\b/iu', '', $raw));
+    
+    // Normalizar raíces clave comunes: mañana, tarde, noche
+    if (stripos($clean, 'mañana') !== false || stripos($clean, 'manana') !== false) {
+        $likePattern = '%ma%ana%';
+    } elseif (stripos($clean, 'tarde') !== false) {
+        $likePattern = '%tarde%';
+    } elseif (stripos($clean, 'noche') !== false) {
+        $likePattern = '%noche%';
+    } else {
+        $likePattern = '%' . ($clean !== '' ? $clean : $raw) . '%';
+    }
+
+    $paramExact = $prefix . '_exact';
+    $paramLike = $prefix . '_like';
+    $paramContains = $prefix . '_contains';
+    $paramRev = $prefix . '_rev';
+    $params[$paramExact] = $raw;
+    $params[$paramLike] = $likePattern;
+    $params[$paramContains] = '%' . ($clean !== '' ? $clean : $raw) . '%';
+    $params[$paramRev] = $raw;
+
+    return "($shiftExpr = :$paramExact OR $shiftExpr LIKE :$paramLike OR :$paramRev LIKE CONCAT('%', $shiftExpr, '%') OR $shiftExpr LIKE :$paramContains)";
+}
+
 function reportApplySaleScope(array $actor, array $input, array &$where, array &$params, $context) {
     $isManager = $context === 'gerente';
     $shiftExpr = "COALESCE(rvm.turno, u.turno, 'SIN TURNO')";
@@ -202,9 +245,11 @@ function reportApplySaleScope(array $actor, array $input, array &$where, array &
         }
 
         $shift = reportText($input['turno'] ?? $input['shift'] ?? '');
-        if ($shift !== '' && strtolower($shift) !== 'todos') {
-            $where[] = $shiftExpr . ' = :scope_shift';
-            $params['scope_shift'] = $shift;
+        if (!reportIsWildcardShift($shift)) {
+            $shiftCond = reportBuildShiftCondition($shift, $shiftExpr, $params, 'scope_shift');
+            if ($shiftCond !== null) {
+                $where[] = $shiftCond;
+            }
         }
 
         return ['date_from' => $from, 'date_to' => $to, 'shift' => $shift];
@@ -216,12 +261,19 @@ function reportApplySaleScope(array $actor, array $input, array &$where, array &
     $params['scope_date_from'] = $date . ' 00:00:00';
     $params['scope_date_to'] = date('Y-m-d H:i:s', strtotime($date . ' +1 day'));
 
+    $box = reportText($input['caja_id'] ?? $input['caja'] ?? '');
+    if ($box !== '') {
+        $where[] = $boxExpr . ' = :scope_box';
+        $params['scope_box'] = $box;
+    }
+
     $shift = reportText($input['turno'] ?? $input['shift'] ?? '');
-    // Si se especifica un turno concreto distinto de 'todos' y 'sin turno', filtramos por coincidencia
-    if ($shift !== '' && strtolower($shift) !== 'todos' && strtolower($shift) !== 'sin turno' && stripos($shift, 'acceso total') === false) {
-        $where[] = "($shiftExpr = :scope_shift OR $shiftExpr LIKE :scope_shift_like)";
-        $params['scope_shift'] = $shift;
-        $params['scope_shift_like'] = '%' . $shift . '%';
+    // Si se especifica un turno concreto y no es comodín, aplicamos coincidencia flexible
+    if (!reportIsWildcardShift($shift)) {
+        $shiftCond = reportBuildShiftCondition($shift, $shiftExpr, $params, 'scope_shift');
+        if ($shiftCond !== null) {
+            $where[] = $shiftCond;
+        }
     }
 
     return ['date' => $date, 'shift' => $shift];
