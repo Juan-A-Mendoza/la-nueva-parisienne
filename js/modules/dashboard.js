@@ -500,24 +500,47 @@ function inicializarSesionYBarraSuperior() {
 /**
  * 2. Inicialización de Navegación por Pestañas y Filtros
  */
+/**
+ * 2. Inicialización de Navegación por Pestañas y Filtros
+ */
 function inicializarNavegacionTabs() {
   const navBtnAnalytics = document.getElementById('navBtnAnalytics');
+  const navBtnReportGenerator = document.getElementById('navBtnReportGenerator');
   const navBtnInventory = document.getElementById('navBtnInventory');
   const navBtnCashReports = document.getElementById('navBtnCashReports');
   const navBtnExecutiveReports = document.getElementById('navBtnExecutiveReports');
   const analyticsView = document.getElementById('analyticsView');
+  const modularReportGeneratorView = document.getElementById('modularReportGeneratorView');
   const inventoryView = document.getElementById('inventoryView');
   const cashReportsView = document.getElementById('cashReportsView');
   const executiveReportsView = document.getElementById('executiveReportsView');
   const breadcrumbActiveItem = document.getElementById('breadcrumbActiveItem');
 
   function switchDashboardView(viewName) {
-    if (viewName === 'inventory') {
+    if (viewName === 'generator') {
       if (navBtnAnalytics) navBtnAnalytics.classList.remove('active');
+      if (navBtnReportGenerator) navBtnReportGenerator.classList.add('active');
+      if (navBtnInventory) navBtnInventory.classList.remove('active');
+      if (navBtnCashReports) navBtnCashReports.classList.remove('active');
+      if (navBtnExecutiveReports) navBtnExecutiveReports.classList.remove('active');
+      if (analyticsView) analyticsView.style.display = 'none';
+      if (modularReportGeneratorView) modularReportGeneratorView.style.display = 'block';
+      if (inventoryView) inventoryView.style.display = 'none';
+      if (cashReportsView) cashReportsView.style.display = 'none';
+      if (executiveReportsView) executiveReportsView.style.display = 'none';
+      if (breadcrumbActiveItem) breadcrumbActiveItem.textContent = 'Generador de Informes & Tendencias';
+      const modSheet = document.getElementById('modularReportSheet');
+      if (modSheet && !modSheet.querySelector('table')) {
+        ejecutarGeneracionReporteModular();
+      }
+    } else if (viewName === 'inventory') {
+      if (navBtnAnalytics) navBtnAnalytics.classList.remove('active');
+      if (navBtnReportGenerator) navBtnReportGenerator.classList.remove('active');
       if (navBtnInventory) navBtnInventory.classList.add('active');
       if (navBtnCashReports) navBtnCashReports.classList.remove('active');
       if (navBtnExecutiveReports) navBtnExecutiveReports.classList.remove('active');
       if (analyticsView) analyticsView.style.display = 'none';
+      if (modularReportGeneratorView) modularReportGeneratorView.style.display = 'none';
       if (inventoryView) inventoryView.style.display = 'block';
       if (cashReportsView) cashReportsView.style.display = 'none';
       if (executiveReportsView) executiveReportsView.style.display = 'none';
@@ -525,10 +548,12 @@ function inicializarNavegacionTabs() {
       try { syncInventoryFromBackend(); } catch (e) {}
     } else if (viewName === 'cash_reports') {
       if (navBtnAnalytics) navBtnAnalytics.classList.remove('active');
+      if (navBtnReportGenerator) navBtnReportGenerator.classList.remove('active');
       if (navBtnInventory) navBtnInventory.classList.remove('active');
       if (navBtnCashReports) navBtnCashReports.classList.add('active');
       if (navBtnExecutiveReports) navBtnExecutiveReports.classList.remove('active');
       if (analyticsView) analyticsView.style.display = 'none';
+      if (modularReportGeneratorView) modularReportGeneratorView.style.display = 'none';
       if (inventoryView) inventoryView.style.display = 'none';
       if (cashReportsView) cashReportsView.style.display = 'block';
       if (executiveReportsView) executiveReportsView.style.display = 'none';
@@ -537,10 +562,12 @@ function inicializarNavegacionTabs() {
       if (refreshBtn) refreshBtn.click();
     } else if (viewName === 'reports') {
       if (navBtnAnalytics) navBtnAnalytics.classList.remove('active');
+      if (navBtnReportGenerator) navBtnReportGenerator.classList.remove('active');
       if (navBtnInventory) navBtnInventory.classList.remove('active');
       if (navBtnCashReports) navBtnCashReports.classList.remove('active');
       if (navBtnExecutiveReports) navBtnExecutiveReports.classList.add('active');
       if (analyticsView) analyticsView.style.display = 'none';
+      if (modularReportGeneratorView) modularReportGeneratorView.style.display = 'none';
       if (inventoryView) inventoryView.style.display = 'none';
       if (cashReportsView) cashReportsView.style.display = 'none';
       if (executiveReportsView) executiveReportsView.style.display = 'block';
@@ -550,10 +577,12 @@ function inicializarNavegacionTabs() {
       }
     } else {
       if (navBtnAnalytics) navBtnAnalytics.classList.add('active');
+      if (navBtnReportGenerator) navBtnReportGenerator.classList.remove('active');
       if (navBtnInventory) navBtnInventory.classList.remove('active');
       if (navBtnCashReports) navBtnCashReports.classList.remove('active');
       if (navBtnExecutiveReports) navBtnExecutiveReports.classList.remove('active');
       if (analyticsView) analyticsView.style.display = 'block';
+      if (modularReportGeneratorView) modularReportGeneratorView.style.display = 'none';
       if (inventoryView) inventoryView.style.display = 'none';
       if (cashReportsView) cashReportsView.style.display = 'none';
       if (executiveReportsView) executiveReportsView.style.display = 'none';
@@ -565,15 +594,17 @@ function inicializarNavegacionTabs() {
   window.switchDashboardView = switchDashboardView;
 
   if (navBtnAnalytics) navBtnAnalytics.addEventListener('click', (e) => { e.preventDefault(); switchDashboardView('analytics'); });
+  if (navBtnReportGenerator) navBtnReportGenerator.addEventListener('click', (e) => { e.preventDefault(); switchDashboardView('generator'); });
   if (navBtnInventory) navBtnInventory.addEventListener('click', (e) => { e.preventDefault(); switchDashboardView('inventory'); });
   if (navBtnCashReports) navBtnCashReports.addEventListener('click', (e) => { e.preventDefault(); switchDashboardView('cash_reports'); });
   if (navBtnExecutiveReports) navBtnExecutiveReports.addEventListener('click', (e) => { e.preventDefault(); switchDashboardView('reports'); });
 
   document.addEventListener('click', (e) => {
-    const tabBtn = e.target.closest('#navBtnAnalytics, #navBtnInventory, #navBtnCashReports, #navBtnExecutiveReports');
+    const tabBtn = e.target.closest('#navBtnAnalytics, #navBtnReportGenerator, #navBtnInventory, #navBtnCashReports, #navBtnExecutiveReports');
     if (tabBtn) {
       e.preventDefault();
       if (tabBtn.id === 'navBtnAnalytics') switchDashboardView('analytics');
+      else if (tabBtn.id === 'navBtnReportGenerator') switchDashboardView('generator');
       else if (tabBtn.id === 'navBtnInventory') switchDashboardView('inventory');
       else if (tabBtn.id === 'navBtnCashReports') switchDashboardView('cash_reports');
       else if (tabBtn.id === 'navBtnExecutiveReports') switchDashboardView('reports');
@@ -5504,9 +5535,9 @@ function inicializarReporteEjecutivo() {
       const reportTitle = selectedOption ? selectedOption.text : (currentReportData.title || 'Reporte Gerencial');
       const bcvRate = BcvRateStore.getRate ? BcvRateStore.getRate() : 761.21;
       const fechaEmision = new Date().toLocaleString('es-VE');
-      const fromDate = repDateFrom ? repDateFrom.value : (currentReportData.from || '');
-      const toDate = repDateTo ? repDateTo.value : (currentReportData.to || '');
-      const periodo = (fromDate && toDate) ? `${fromDate} al ${toDate}` : 'Todos los registros disponibles';
+      const fromDate = currentReportData.from || (repDateFrom ? repDateFrom.value : '');
+      const toDate = currentReportData.to || (repDateTo ? repDateTo.value : '');
+      const periodo = currentReportData.periodo || ((fromDate && toDate) ? `${fromDate} al ${toDate}` : 'Todos los registros disponibles');
 
       const session = SessionStore.getSession();
       const activeUser = session?.user || { name: 'Juan Mendoza', role: 'Gerente General' };
@@ -5651,12 +5682,731 @@ function inicializarReporteEjecutivo() {
   btnExportExcel?.addEventListener('click', exportarExcelReporte);
 }
 
+// ==========================================================================
+// 5. GENERADOR INDEPENDIENTE DE INFORMES Y TENDENCIAS PREDICTIVAS
+// ==========================================================================
+function inicializarGeneradorModular() {
+  const modularView = document.getElementById('modularReportGeneratorView');
+  const sheet = document.getElementById('modularReportSheet');
+  const btnPrint = document.getElementById('btnPrintModularReport');
+  const btnExportExcel = document.getElementById('btnExportModularExcel');
+  const btnGenerate = document.getElementById('btnGenerateModularReport');
+
+  const modgenHistPeriod = document.getElementById('modgenHistPeriod');
+  const modgenHorizon = document.getElementById('modgenHorizon');
+  const modgenScenario = document.getElementById('modgenScenario');
+  const modgenBreakEven = document.getElementById('modgenBreakEven');
+
+  const chkModExecutive = document.getElementById('chkModExecutive');
+  const chkModTrends = document.getElementById('chkModTrends');
+  const chkModOvens = document.getElementById('chkModOvens');
+  const chkModSupplies = document.getElementById('chkModSupplies');
+  const chkModScenarios = document.getElementById('chkModScenarios');
+  const chkModInsights = document.getElementById('chkModInsights');
+  const countText = document.getElementById('modgenSelectedCountText');
+
+  const btnSelectAll = document.getElementById('btnModgenSelectAll');
+  const btnPresetTrends = document.getElementById('btnModgenPresetTrends');
+  const btnPresetFinancial = document.getElementById('btnModgenPresetFinancial');
+  const btnPresetKitchen = document.getElementById('btnModgenPresetKitchen');
+
+  if (!modularView || !sheet) return;
+
+  const allCheckboxes = [chkModExecutive, chkModTrends, chkModOvens, chkModSupplies, chkModScenarios, chkModInsights].filter(Boolean);
+
+  function actualizarContadorBloques() {
+    const selected = allCheckboxes.filter(c => c.checked).length;
+    if (countText) {
+      countText.innerHTML = `<i data-lucide="${selected > 0 ? 'check-circle-2' : 'alert-circle'}" class="icon-xs ${selected > 0 ? 'text-success' : 'text-danger'}"></i> ${selected} de ${allCheckboxes.length} bloques seleccionados`;
+      window.LucideIcons?.refresh();
+    }
+  }
+
+  allCheckboxes.forEach(chk => {
+    chk.addEventListener('change', actualizarContadorBloques);
+  });
+
+  // Presets rápidos
+  btnSelectAll?.addEventListener('click', () => {
+    allCheckboxes.forEach(c => { c.checked = true; });
+    actualizarContadorBloques();
+  });
+
+  btnPresetTrends?.addEventListener('click', () => {
+    allCheckboxes.forEach(c => { c.checked = false; });
+    if (chkModExecutive) chkModExecutive.checked = true;
+    if (chkModTrends) chkModTrends.checked = true;
+    actualizarContadorBloques();
+  });
+
+  btnPresetFinancial?.addEventListener('click', () => {
+    allCheckboxes.forEach(c => { c.checked = false; });
+    if (chkModExecutive) chkModExecutive.checked = true;
+    if (chkModScenarios) chkModScenarios.checked = true;
+    actualizarContadorBloques();
+  });
+
+  btnPresetKitchen?.addEventListener('click', () => {
+    allCheckboxes.forEach(c => { c.checked = false; });
+    if (chkModOvens) chkModOvens.checked = true;
+    if (chkModSupplies) chkModSupplies.checked = true;
+    if (chkModInsights) chkModInsights.checked = true;
+    actualizarContadorBloques();
+  });
+
+  // Exportar / Imprimir PDF
+  btnPrint?.addEventListener('click', () => {
+    document.body.classList.add('printing-report');
+    window.print();
+    document.body.classList.remove('printing-report');
+  });
+
+  // Exportar Excel (.xlsx) con el motor OpenXML estilizado
+  async function exportarExcelModular() {
+    if (!btnExportExcel) return;
+    const originalBtnHtml = btnExportExcel.innerHTML;
+    btnExportExcel.disabled = true;
+    btnExportExcel.innerHTML = '<i data-lucide="loader-2" class="icon-sm spin"></i> <span>Generando Excel...</span>';
+    window.LucideIcons?.refresh();
+
+    try {
+      if (!sheet.querySelector('table')) {
+        await ejecutarGeneracionReporteModular();
+      }
+
+      await ensureStyleEngine();
+
+      const bcvRate = BcvRateStore.getRate ? BcvRateStore.getRate() : 761.21;
+      const session = SessionStore.getSession();
+      const activeUser = session?.user || { name: 'Juan Mendoza', role: 'Gerente General' };
+      const histDays = parseInt(modgenHistPeriod?.value || '14', 10);
+      const horizonDays = parseInt(modgenHorizon?.value || '30', 10);
+      const scenario = modgenScenario?.value || 'base';
+
+      // Extraer KPIs
+      const kpis = [];
+      sheet.querySelectorAll('.report-kpi-box').forEach(box => {
+        const label = box.querySelector('.report-kpi-box-label')?.textContent?.trim() || '';
+        const rawVal = box.querySelector('.report-kpi-box-value')?.textContent?.trim() || '';
+        const sub = box.querySelector('.report-kpi-box-sub')?.textContent?.trim() || '';
+        let valNum = undefined;
+        if (/^\$?\s*[\d,]+(\.\d{1,2})?$/.test(rawVal)) {
+          const n = parseFloat(rawVal.replace(/[\$,\s]/g, ''));
+          if (!isNaN(n)) valNum = n;
+        }
+        kpis.push({ label, val: rawVal, valNum, sub });
+      });
+
+      // Extraer Tablas
+      const tables = [];
+      sheet.querySelectorAll('table').forEach(tbl => {
+        const tblObj = { title: tbl.getAttribute('data-table-title') || '', headers: [], rows: [], footer: [] };
+        tbl.querySelectorAll('thead tr').forEach(tr => {
+          const ths = tr.querySelectorAll('th');
+          if (ths.length === 1 && ths[0].hasAttribute('colspan')) {
+            tblObj.title = ths[0].textContent?.trim() || '';
+          } else if (ths.length > 1) {
+            ths.forEach(th => tblObj.headers.push(th.textContent?.trim() || ''));
+          }
+        });
+        tbl.querySelectorAll('tbody tr').forEach(tr => {
+          const rowVals = [];
+          tr.querySelectorAll('td').forEach(td => rowVals.push(td.textContent?.trim() || ''));
+          if (rowVals.length) tblObj.rows.push(rowVals);
+        });
+        tbl.querySelectorAll('tfoot tr td, tfoot tr th').forEach(cell => tblObj.footer.push(cell.textContent?.trim() || ''));
+        tables.push(tblObj);
+      });
+
+      const fileName = `informe_tendencias_proyecciones_${new Date().toISOString().slice(0, 10)}.xlsx`;
+      generateStyledExcelReport({
+        fileName,
+        sheetName: 'Informe Tendencias',
+        title: 'Informe Gerencial de Tendencias y Proyecciones',
+        periodo: `Histórico: ${histDays} días | Horizonte Proyectado: ${horizonDays} días (${scenario.toUpperCase()})`,
+        fechaEmision: new Date().toLocaleString('es-VE'),
+        bcvRate,
+        activeUser,
+        kpis,
+        tables
+      });
+    } catch (e) {
+      console.error('Error al exportar Excel modular:', e);
+      alert('Error al exportar informe modular: ' + (e.message || 'Error desconocido'));
+    } finally {
+      btnExportExcel.disabled = false;
+      btnExportExcel.innerHTML = originalBtnHtml;
+      window.LucideIcons?.refresh();
+    }
+  }
+
+  btnExportExcel?.addEventListener('click', exportarExcelModular);
+  btnGenerate?.addEventListener('click', () => ejecutarGeneracionReporteModular());
+
+  // MOTOR CENTRAL DE COMPILACIÓN MODULAR Y CÁLCULO ESTADÍSTICO
+  async function ejecutarGeneracionReporteModular() {
+    if (!sheet) return;
+
+    sheet.innerHTML = `
+      <div style="padding: 4rem 2rem; text-align: center; color: var(--color-muted);">
+        <div style="font-size: 2.2rem; margin-bottom: 0.75rem;">⚡</div>
+        <p style="font-size: 1.05rem; font-weight: 700; color: var(--color-espresso);">Compilando modelo matemático de proyección y tendencias...</p>
+        <span style="font-size: 0.85rem;">Cruzando historial de ventas POS con requerimientos de panadería y costos fijos</span>
+      </div>
+    `;
+
+    try {
+      const histDays = parseInt(modgenHistPeriod?.value || '14', 10);
+      const horizonDays = parseInt(modgenHorizon?.value || '30', 10);
+      const scenario = modgenScenario?.value || 'base';
+      const scenarioMult = scenario === 'optimista' ? 1.15 : (scenario === 'conservador' ? 0.90 : 1.0);
+      const fixedCosts = parseFloat(modgenBreakEven?.value || '3800') || 3800;
+      const bcvRate = BcvRateStore.getRate ? BcvRateStore.getRate() : 761.21;
+
+      // Calcular fechas para el periodo histórico
+      const today = new Date();
+      const pastDate = new Date();
+      pastDate.setDate(today.getDate() - histDays);
+
+      const toIso = d => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+      const fromStr = toIso(pastDate);
+      const toStr = toIso(today);
+
+      const session = SessionStore.getSession();
+      const sessionRoleCode = session?.user?.role_code || 'GERENTE';
+      const sessionUserId = session?.user?.id || 1;
+
+      // Consultar ventas reales de la base de datos MySQL en vivo
+      let salesRows = [];
+      try {
+        const res = await fetch(`../api/reports/ventas_cobros.php?context=gerente&role_code=${encodeURIComponent(sessionRoleCode)}&user_id=${encodeURIComponent(sessionUserId)}&fecha_desde=${encodeURIComponent(fromStr)}&fecha_hasta=${encodeURIComponent(toStr)}`);
+        const json = await res.json();
+        if (json.success && Array.isArray(json.rows)) {
+          salesRows = json.rows;
+        }
+      } catch (err) {
+        console.warn('Fallo fetch de ventas para proyecciones:', err);
+      }
+
+      // 1. OBTENER CATÁLOGO REAL DE PRODUCTOS DEL USUARIO (catalogo_pos)
+      const realCatalog = (typeof getPosCatalogFromStorage === 'function') ? getPosCatalogFromStorage() : [];
+      // 2. OBTENER MATERIAS PRIMAS E INVENTARIO REAL DEL USUARIO (materias_primas)
+      const realMaterials = (typeof getRawMaterialsFromStorage === 'function') ? getRawMaterialsFromStorage() : [];
+
+      // Mapear ventas reales sobre los productos del catálogo del usuario
+      const midpointTime = pastDate.getTime() + (today.getTime() - pastDate.getTime()) / 2;
+
+      const productStats = realCatalog.map(item => {
+        const itemNameLower = (item.name || '').toLowerCase().trim();
+        const itemCodeLower = (item.code || '').toLowerCase().trim();
+
+        const matched = salesRows.filter(r => {
+          const rowName = (r.producto || r.producto_nombre || r.descripcion || '').toLowerCase().trim();
+          const rowCode = (r.producto_codigo || '').toLowerCase().trim();
+          return (rowName && (rowName === itemNameLower || rowName.includes(itemNameLower) || itemNameLower.includes(rowName))) ||
+                 (itemCodeLower && rowCode && rowCode === itemCodeLower);
+        });
+
+        let oldHalfUnits = 0;
+        let recentHalfUnits = 0;
+        let totalUnits = 0;
+
+        if (matched.length > 0) {
+          matched.forEach(r => {
+            const u = parseFloat(r.cantidad || r.unidades || 1) || 0;
+            const dt = new Date(r.fecha || r.created_at || today).getTime();
+            if (dt < midpointTime) oldHalfUnits += u;
+            else recentHalfUnits += u;
+            totalUnits += u;
+          });
+        }
+
+        // Tasa de aceleración porcentual (Delta %) basada estrictamente en ventas reales
+        let deltaPercent = 0;
+        if (oldHalfUnits > 0) {
+          deltaPercent = ((recentHalfUnits - oldHalfUnits) / oldHalfUnits) * 100;
+        } else if (recentHalfUnits > 0) {
+          deltaPercent = 100;
+        }
+
+        const dailyVelocity = totalUnits / Math.max(1, histDays);
+        const projectedUnits = Math.round(dailyVelocity * horizonDays * scenarioMult);
+        const price = Number(item.salePrice || item.price || 0);
+        const projectedRevenueUsd = projectedUnits * price;
+        const projectedRevenueBs = projectedRevenueUsd * bcvRate;
+
+        // Capacidad por lote según categoría real del producto
+        const catLower = (item.category || '').toLowerCase();
+        const batchSize = catLower.includes('pan') ? 20 : (catLower.includes('beb') || catLower.includes('caf') ? 40 : 16);
+        const dailyBatchesNeeded = projectedUnits > 0 ? Math.ceil((dailyVelocity * scenarioMult) / batchSize) : 0;
+        const totalHorizonBatches = projectedUnits > 0 ? Math.ceil(projectedUnits / batchSize) : 0;
+
+        return {
+          id: item.id || item.code,
+          code: item.code || 'PRD',
+          name: item.name,
+          cat: item.category || 'General',
+          price,
+          unitCost: Number(item.unitCost || 0),
+          batchSize,
+          totalUnits,
+          oldHalfUnits,
+          recentHalfUnits,
+          deltaPercent,
+          dailyVelocity,
+          projectedUnits,
+          projectedRevenueUsd,
+          projectedRevenueBs,
+          dailyBatchesNeeded,
+          totalHorizonBatches
+        };
+      });
+
+      // Ordenar por volumen de ventas reales primero, luego por ingresos proyectados
+      productStats.sort((a, b) => (b.totalUnits - a.totalUnits) || (b.projectedRevenueUsd - a.projectedRevenueUsd));
+
+      const totalProjectedRevUsd = productStats.reduce((acc, p) => acc + p.projectedRevenueUsd, 0);
+      const totalProjectedRevBs = totalProjectedRevUsd * bcvRate;
+      const totalProjectedUnits = productStats.reduce((acc, p) => acc + p.projectedUnits, 0);
+      const totalUnitsSoldPeriod = productStats.reduce((acc, p) => acc + p.totalUnits, 0);
+      const dailyAverageRevUsd = horizonDays > 0 ? totalProjectedRevUsd / horizonDays : 0;
+      const dailyAverageRevBs = dailyAverageRevUsd * bcvRate;
+      
+      const estimatedCostSuppliesUsd = totalProjectedRevUsd * 0.42;
+      const estimatedContributionMarginUsd = totalProjectedRevUsd - estimatedCostSuppliesUsd;
+      const marginPercent = totalProjectedRevUsd > 0 ? ((estimatedContributionMarginUsd / totalProjectedRevUsd) * 100).toFixed(1) : '0.0';
+      
+      const proratedFixedCosts = (fixedCosts / 30) * horizonDays;
+      const projectedEbitdaUsd = estimatedContributionMarginUsd - proratedFixedCosts;
+      const projectedEbitdaBs = projectedEbitdaUsd * bcvRate;
+
+      const dailyMargin = (totalProjectedRevUsd * 0.58) / Math.max(1, horizonDays);
+      const breakEvenDays = dailyMargin > 0 ? Math.ceil(fixedCosts / dailyMargin) : 30;
+
+      // Consumo estimado de materias primas reales del almacén
+      const stockEstimado = realMaterials.map(m => {
+        const mName = (m.name || '').toLowerCase();
+        let req = 0;
+
+        if (mName.includes('harina')) {
+          req = productStats.filter(p => (p.cat || '').toLowerCase().includes('pan') || (p.cat || '').toLowerCase().includes('past')).reduce((s, p) => s + (p.projectedUnits * 0.12), 0);
+        } else if (mName.includes('mantequilla') || mName.includes('margarina')) {
+          req = productStats.filter(p => (p.cat || '').toLowerCase().includes('pan') || (p.name || '').toLowerCase().includes('croissant')).reduce((s, p) => s + (p.projectedUnits * 0.035), 0);
+        } else if (mName.includes('chocolate') || mName.includes('cacao')) {
+          req = productStats.filter(p => (p.name || '').toLowerCase().includes('choc') || (p.name || '').toLowerCase().includes('éclair') || (p.cat || '').toLowerCase().includes('past')).reduce((s, p) => s + (p.projectedUnits * 0.025), 0);
+        } else if (mName.includes('azúcar') || mName.includes('azucar')) {
+          req = productStats.filter(p => !(p.cat || '').toLowerCase().includes('salado')).reduce((s, p) => s + (p.projectedUnits * 0.015), 0);
+        } else if (mName.includes('huevo')) {
+          req = productStats.filter(p => (p.cat || '').toLowerCase().includes('past') || (p.name || '').toLowerCase().includes('brioche')).reduce((s, p) => s + (p.projectedUnits * 0.4), 0);
+        } else if (mName.includes('levadura')) {
+          req = productStats.filter(p => (p.cat || '').toLowerCase().includes('pan')).reduce((s, p) => s + (p.projectedUnits * 0.008), 0);
+        } else {
+          req = totalProjectedUnits * 0.01;
+        }
+
+        return {
+          code: m.code || '',
+          name: m.name,
+          unit: m.unit || 'Kg',
+          stock: Number(m.stock || 0),
+          minStock: Number(m.minStock || 0),
+          req: Math.round(req * 10) / 10,
+          reorderLeadDays: 4
+        };
+      });
+
+      const showExecutive = chkModExecutive?.checked ?? true;
+      const showTrends = chkModTrends?.checked ?? true;
+      const showOvens = chkModOvens?.checked ?? true;
+      const showSupplies = chkModSupplies?.checked ?? true;
+      const showScenarios = chkModScenarios?.checked ?? true;
+      const showInsights = chkModInsights?.checked ?? true;
+
+      const now = new Date();
+      const dateFormatted = now.toLocaleDateString('es-VE', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+      const timeFormatted = now.toLocaleTimeString('es-VE', { hour: '2-digit', minute: '2-digit' });
+
+      let sheetHtml = `
+        <div class="report-header-banner">
+          <div class="report-brand-col">
+            <div class="report-brand-lockup">
+              <div class="report-brand-emblem" aria-hidden="true" style="background: linear-gradient(135deg, #D49B54 0%, #B57F3A 100%); color: #FFF;">
+                <i data-lucide="trending-up" class="icon-md"></i>
+              </div>
+              <div>
+                <div class="report-brand-kicker">Panadería &amp; Pastelería Artesanal Francesa</div>
+                <h1 class="report-brand-title">La Nueva Parisienne</h1>
+                <div class="report-brand-meta">
+                  <span><strong>RIF:</strong> J-40123456-7</span>
+                  <span>&bull;</span>
+                  <span>Av. Lara con Calle 8, Barquisimeto</span>
+                </div>
+              </div>
+            </div>
+            <div class="report-doc-title-row">
+              <span class="report-doc-indicator" style="background: #D49B54; color: #FFF;">INFORME DE TENDENCIAS &amp; PROYECCIONES</span>
+              <h2 class="report-doc-subtitle">Tendencias de Demanda, Planificación Operativa &amp; Punto de Equilibrio</h2>
+            </div>
+          </div>
+
+          <div class="report-meta-card">
+            <div class="report-meta-badge" style="background: #3B82F6; color: #FFF;">DATOS DEL SISTEMA</div>
+            <div class="report-meta-items">
+              <div class="report-meta-row">
+                <span class="meta-label"><i data-lucide="history" class="icon-xs"></i> Base Histórica:</span>
+                <strong class="meta-val">${histDays} Días (${fromStr} al ${toStr})</strong>
+              </div>
+              <div class="report-meta-row">
+                <span class="meta-label"><i data-lucide="calendar" class="icon-xs"></i> Horizonte:</span>
+                <strong class="meta-val">${horizonDays} Días (${scenario.toUpperCase()})</strong>
+              </div>
+              <div class="report-meta-row">
+                <span class="meta-label"><i data-lucide="clock" class="icon-xs"></i> Emisión:</span>
+                <strong class="meta-val">${dateFormatted}, ${timeFormatted}</strong>
+              </div>
+              <div class="report-meta-row">
+                <span class="meta-label"><i data-lucide="coins" class="icon-xs"></i> Tasa BCV:</span>
+                <strong class="meta-val" style="color: var(--color-gold-dark, #8C6239);">Bs. ${Number(bcvRate).toLocaleString('es-VE', { minimumFractionDigits: 2 })} / USD</strong>
+              </div>
+            </div>
+          </div>
+        </div>
+      `;
+
+      if (totalUnitsSoldPeriod === 0) {
+        sheetHtml += `
+          <div style="background: #F8FAFC; border: 1px solid #CBD5E1; border-left: 4px solid #D49B54; border-radius: 6px; padding: 1rem 1.25rem; margin-bottom: 1.5rem; font-size: 0.88rem; color: #475569;">
+            <strong style="color: #1E293B;"><i data-lucide="info" class="icon-xs"></i> Sin Ventas Registradas en el Rango Histórico:</strong>
+            No se han registrado transacciones de ventas en la base de datos entre el <strong>${fromStr}</strong> y el <strong>${toStr}</strong>. Las proyecciones y tandas de horneado se calcularán automáticamente en tiempo real conforme se registren ventas en el punto de venta (POS).
+          </div>
+        `;
+      }
+
+      if (showExecutive) {
+        sheetHtml += `
+          <div class="report-section-heading">
+            <i data-lucide="target" class="icon-xs"></i>
+            <span>1. Resumen Ejecutivo, Run Rate &amp; Cobertura de Costos Fijos</span>
+          </div>
+
+          <div class="report-kpi-summary-grid">
+            <div class="report-kpi-box">
+              <div class="report-kpi-box-label">Facturación Proyectada (${horizonDays}d)</div>
+              <div class="report-kpi-box-value">$${totalProjectedRevUsd.toLocaleString('es-VE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</div>
+              <div class="report-kpi-box-sub">Bs. ${totalProjectedRevBs.toLocaleString('es-VE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} (Tasa BCV)</div>
+            </div>
+
+            <div class="report-kpi-box">
+              <div class="report-kpi-box-label">Run Rate Diario Promedio</div>
+              <div class="report-kpi-box-value">$${dailyAverageRevUsd.toLocaleString('es-VE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} / día</div>
+              <div class="report-kpi-box-sub">Bs. ${dailyAverageRevBs.toLocaleString('es-VE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} / día</div>
+            </div>
+
+            <div class="report-kpi-box">
+              <div class="report-kpi-box-label">Margen de Contribución</div>
+              <div class="report-kpi-box-value">${marginPercent}%</div>
+              <div class="report-kpi-box-sub">$${estimatedContributionMarginUsd.toLocaleString('es-VE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} brutos</div>
+            </div>
+
+            <div class="report-kpi-box">
+              <div class="report-kpi-box-label">Punto de Equilibrio ($${fixedCosts.toLocaleString()})</div>
+              <div class="report-kpi-box-value">${totalProjectedRevUsd > 0 ? `Día ${breakEvenDays}` : 'En espera de ventas'}</div>
+              <div class="report-kpi-box-sub">${totalProjectedRevUsd > 0 ? (breakEvenDays <= 20 ? 'Cobertura holgada y segura' : 'Atención a costos fijos') : 'Sin facturación registrada'}</div>
+            </div>
+          </div>
+        `;
+      }
+
+      if (showTrends) {
+        sheetHtml += `
+          <div class="report-section-heading" style="margin-top: 2rem;">
+            <i data-lucide="trending-up" class="icon-xs"></i>
+            <span>2. Radar de Tendencias de Demanda (&Delta;% Aceleración) &amp; Ranking de Rotación</span>
+          </div>
+
+          <table class="report-data-table" data-table-title="Radar de Tendencias de Demanda">
+            <thead>
+              <tr>
+                <th style="width: 50px; text-align: center;">#</th>
+                <th>CÓDIGO</th>
+                <th>PRODUCTO EN CATÁLOGO</th>
+                <th>CATEGORÍA</th>
+                <th style="text-align: right;">VENTAS EN PERÍODO</th>
+                <th style="text-align: right;">RUN RATE (U/DÍA)</th>
+                <th style="text-align: center;">TENDENCIA (&Delta;%)</th>
+                <th style="text-align: right;">PROYECCIÓN (${horizonDays}D)</th>
+                <th style="text-align: right;">INGRESOS EST. USD</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${productStats.map((p, idx) => {
+                const badgeClass = p.totalUnits === 0 ? 'trend-neutral' : (p.deltaPercent >= 15 ? 'trend-up' : (p.deltaPercent >= 0 ? 'trend-neutral' : 'trend-down'));
+                const badgeText = p.totalUnits === 0 ? '0.0%' : (p.deltaPercent >= 0 ? `▲ +${p.deltaPercent.toFixed(1)}%` : `▼ ${p.deltaPercent.toFixed(1)}%`);
+                const statusTag = p.totalUnits === 0 ? 'Sin movimientos en período' : (p.deltaPercent >= 15 ? 'En Expansión' : (p.deltaPercent >= 0 ? 'Sostenido' : 'Desacelerando'));
+
+                return `
+                  <tr>
+                    <td style="text-align: center; font-weight: 700; color: var(--color-gold-dark, #8C6239);">${idx + 1}</td>
+                    <td style="font-family: monospace; font-size: 0.85rem; color: #64748B;">${p.code}</td>
+                    <td>
+                      <strong>${p.name}</strong>
+                      <span style="display: block; font-size: 0.75rem; color: var(--color-muted);">${statusTag} &bull; $${p.price.toFixed(2)} c/u</span>
+                    </td>
+                    <td>${p.cat}</td>
+                    <td style="text-align: right; font-weight: 600;">${p.totalUnits} uds</td>
+                    <td style="text-align: right; font-weight: 600;">${p.dailyVelocity.toFixed(1)} u/día</td>
+                    <td style="text-align: center;">
+                      <span class="trend-badge ${badgeClass}">${badgeText}</span>
+                    </td>
+                    <td style="text-align: right; font-weight: 700; color: var(--color-espresso);">${p.projectedUnits.toLocaleString()} uds</td>
+                    <td style="text-align: right; font-weight: 700; color: var(--color-gold-dark, #8C6239);">$${p.projectedRevenueUsd.toLocaleString('es-VE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
+                  </tr>
+                `;
+              }).join('')}
+            </tbody>
+            <tfoot>
+              <tr>
+                <th colspan="7" style="text-align: right;">TOTAL ESTIMADO EN DEMANDA:</th>
+                <th style="text-align: right;">${totalProjectedUnits.toLocaleString()} uds</th>
+                <th style="text-align: right;">$${totalProjectedRevUsd.toLocaleString('es-VE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</th>
+              </tr>
+            </tfoot>
+          </table>
+        `;
+      }
+
+      if (showOvens) {
+        sheetHtml += `
+          <div class="report-section-heading" style="margin-top: 2rem;">
+            <i data-lucide="flame" class="icon-xs"></i>
+            <span>3. Planificación de Capacidad de Hornos &amp; Tandas Recomendadas</span>
+          </div>
+
+          <table class="report-data-table" data-table-title="Planificación de Capacidad de Hornos">
+            <thead>
+              <tr>
+                <th>PRODUCTO</th>
+                <th style="text-align: center;">CAPACIDAD BANDEJA/TANDA</th>
+                <th style="text-align: right;">DEMANDA DIARIA</th>
+                <th style="text-align: center;">TANDAS DIARIAS</th>
+                <th style="text-align: center;">TURNO MAÑANA (60%)</th>
+                <th style="text-align: center;">TURNO TARDE (40%)</th>
+                <th style="text-align: right;">TOTAL TANDAS (${horizonDays}D)</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${productStats.map(p => {
+                const morningBatches = Math.ceil(p.dailyBatchesNeeded * 0.60);
+                const afternoonBatches = Math.max(0, p.dailyBatchesNeeded - morningBatches);
+
+                return `
+                  <tr>
+                    <td><strong>${p.name}</strong></td>
+                    <td style="text-align: center;">${p.batchSize} uds / bandeja</td>
+                    <td style="text-align: right; font-weight: 600;">${Math.round(p.dailyVelocity * scenarioMult)} uds/día</td>
+                    <td style="text-align: center; font-weight: 700; color: #C65D3B;">${p.dailyBatchesNeeded} tandas/día</td>
+                    <td style="text-align: center;"><span style="color: #D49B54; font-weight: 700;">☀️ ${morningBatches}</span> (06:00 - 09:00)</td>
+                    <td style="text-align: center;"><span style="color: #3B82F6; font-weight: 700;">⛅ ${afternoonBatches}</span> (14:00 - 16:30)</td>
+                    <td style="text-align: right; font-weight: 700;">${p.totalHorizonBatches} tandas</td>
+                  </tr>
+                `;
+              }).join('')}
+            </tbody>
+          </table>
+        `;
+      }
+
+      if (showSupplies) {
+        sheetHtml += `
+          <div class="report-section-heading" style="margin-top: 2rem;">
+            <i data-lucide="package" class="icon-xs"></i>
+            <span>4. Estimación de Insumos &amp; Cobertura de Materia Prima vs. Stock en Almacén</span>
+          </div>
+
+          <table class="report-data-table" data-table-title="Estimación de Insumos y Materia Prima">
+            <thead>
+              <tr>
+                <th>INSUMO REGISTRADO</th>
+                <th style="text-align: right;">STOCK ACTUAL EN ALMACÉN</th>
+                <th style="text-align: right;">CONSUMO PROYECTADO (${horizonDays}D)</th>
+                <th style="text-align: center;">DÍAS DE COBERTURA</th>
+                <th style="text-align: center;">TIEMPO DE ENTREGA</th>
+                <th style="text-align: center;">ESTADO DE REABASTECIMIENTO</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${stockEstimado.map(i => {
+                const dailyUsage = horizonDays > 0 ? (i.req / horizonDays) : 0;
+                const daysCovered = dailyUsage > 0 ? Math.floor(i.stock / dailyUsage) : 99;
+                let statusLabel = 'Stock Óptimo';
+                let statusColor = '#10B981';
+                if (i.req > 0 && daysCovered <= i.reorderLeadDays) {
+                  statusLabel = 'ALERTA: Reordenar Pronto';
+                  statusColor = '#EF4444';
+                } else if (i.req > 0 && daysCovered <= i.reorderLeadDays + 5) {
+                  statusLabel = 'Reorden Preventiva';
+                  statusColor = '#F59E0B';
+                } else if (i.req === 0) {
+                  statusLabel = 'Sin Consumo Proyectado';
+                  statusColor = '#64748B';
+                }
+
+                return `
+                  <tr>
+                    <td><strong>${i.name}</strong> <span style="font-family: monospace; font-size: 0.75rem; color: #94A3B8;">(${i.code})</span></td>
+                    <td style="text-align: right; font-weight: 600;">${i.stock.toFixed(2)} ${i.unit}</td>
+                    <td style="text-align: right; font-weight: 700; color: var(--color-espresso);">${i.req.toFixed(1)} ${i.unit}</td>
+                    <td style="text-align: center; font-weight: 700; color: ${statusColor};">${daysCovered >= 90 ? '> 90 días' : `${daysCovered} días`}</td>
+                    <td style="text-align: center;">${i.reorderLeadDays} días proveedor</td>
+                    <td style="text-align: center; font-weight: 700; color: ${statusColor};">${statusLabel}</td>
+                  </tr>
+                `;
+              }).join('')}
+            </tbody>
+          </table>
+        `;
+      }
+
+      if (showScenarios) {
+        const scenarios = [
+          { name: 'Conservador (-10%)', mult: 0.90, desc: 'Lluvias o menor afluencia peatonal' },
+          { name: 'Base (Ritmo Actual)', mult: 1.00, desc: 'Comportamiento comercial ordinario' },
+          { name: 'Optimista (+15%)', mult: 1.15, desc: 'Campañas festivas, fin de mes o promociones' }
+        ];
+
+        sheetHtml += `
+          <div class="report-section-heading" style="margin-top: 2rem;">
+            <i data-lucide="bar-chart-2" class="icon-xs"></i>
+            <span>5. Matriz de Sensibilidad de Escenarios Proyectuales (${horizonDays} Días)</span>
+          </div>
+
+          <table class="report-data-table" data-table-title="Matriz de Sensibilidad de Escenarios">
+            <thead>
+              <tr>
+                <th>ESCENARIO</th>
+                <th>SUPUESTO DE DEMANDA</th>
+                <th style="text-align: right;">FACTURACIÓN USD</th>
+                <th style="text-align: right;">FACTURACIÓN BS (BCV)</th>
+                <th style="text-align: right;">COSTO INSUMOS (42%)</th>
+                <th style="text-align: right;">COSTOS FIJOS (${horizonDays}D)</th>
+                <th style="text-align: right;">EBITDA OPERATIVO USD</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${scenarios.map(sc => {
+                const revUsd = (totalProjectedRevUsd / scenarioMult) * sc.mult;
+                const revBs = revUsd * bcvRate;
+                const costUsd = revUsd * 0.42;
+                const marginUsd = revUsd - costUsd;
+                const ebitdaUsd = marginUsd - proratedFixedCosts;
+                const isSelected = (scenario === 'optimista' && sc.mult > 1) || (scenario === 'conservador' && sc.mult < 1) || (scenario === 'base' && sc.mult === 1);
+
+                return `
+                  <tr style="${isSelected ? 'background-color: rgba(212, 155, 84, 0.08); font-weight: 600;' : ''}">
+                    <td><strong>${sc.name} ${isSelected ? '★ (SELECCIONADO)' : ''}</strong></td>
+                    <td style="color: var(--color-muted);">${sc.desc}</td>
+                    <td style="text-align: right; font-weight: 700; color: var(--color-espresso);">$${revUsd.toLocaleString('es-VE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
+                    <td style="text-align: right; color: var(--color-gold-dark, #8C6239);">Bs. ${revBs.toLocaleString('es-VE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
+                    <td style="text-align: right; color: #EF4444;">-$${costUsd.toLocaleString('es-VE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
+                    <td style="text-align: right; color: #64748B;">-$${proratedFixedCosts.toLocaleString('es-VE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
+                    <td style="text-align: right; font-weight: 700; color: ${ebitdaUsd >= 0 ? '#10B981' : '#EF4444'};">
+                      $${ebitdaUsd.toLocaleString('es-VE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                    </td>
+                  </tr>
+                `;
+              }).join('')}
+            </tbody>
+          </table>
+        `;
+      }
+
+      if (showInsights) {
+        const topGrower = productStats.find(p => p.totalUnits > 0) || productStats[0] || { name: 'Catálogo de Panadería', deltaPercent: 0 };
+        const lowPerformer = [...productStats].reverse().find(p => p.totalUnits > 0) || productStats[productStats.length - 1] || { name: 'Productos en vitrina', deltaPercent: 0 };
+
+        sheetHtml += `
+          <div class="report-section-heading" style="margin-top: 2rem;">
+            <i data-lucide="lightbulb" class="icon-xs"></i>
+            <span>6. Diagnóstico Gerencial &amp; Recomendaciones Tácticas</span>
+          </div>
+
+          <div class="modrep-insights-box">
+            <div class="modrep-insight-item">
+              <div class="modrep-insight-icon gold"><i data-lucide="trending-up" class="icon-xs"></i></div>
+              <div class="modrep-insight-body">
+                <strong>Análisis de Rotación de Catálogo Real:</strong>
+                <p>El sistema cuenta actualmente con <strong>${realCatalog.length} productos registrados</strong> en el catálogo POS y <strong>${realMaterials.length} insumos</strong> en almacén. ${totalUnitsSoldPeriod > 0 ? `El producto con mayor volumen registrado en el período es <em>${topGrower.name}</em> (${topGrower.totalUnits} uds vendidas).` : 'Al no haber ventas registradas en el período seleccionado, las proyecciones se encuentran en estado de reposo a la espera de movimientos en caja.'}</p>
+              </div>
+            </div>
+
+            <div class="modrep-insight-item">
+              <div class="modrep-insight-icon blue"><i data-lucide="scale" class="icon-xs"></i></div>
+              <div class="modrep-insight-body">
+                <strong>Cobertura de Costos Fijos &amp; Punto de Equilibrio:</strong>
+                <p>Con costos fijos mensuales fijados en <strong>$${fixedCosts.toLocaleString()}</strong>, se requiere una facturación mensual mínima de <strong>$${(fixedCosts / 0.58).toFixed(2)}</strong> (a margen del 58%) para cubrir gastos operativos sin pérdidas.</p>
+              </div>
+            </div>
+
+            <div class="modrep-insight-item">
+              <div class="modrep-insight-icon green"><i data-lucide="check-circle" class="icon-xs"></i></div>
+              <div class="modrep-insight-body">
+                <strong>Control de Almacén &amp; Materias Primas:</strong>
+                <p>El inventario actual de materias primas registra existencias activas en almacén. Se sugiere mantener los niveles de stock mínimo de Harina y Levadura para garantizar la producción diaria.</p>
+              </div>
+            </div>
+          </div>
+        `;
+      }
+
+      // BLOQUE DE FIRMAS: OCULTO POR COMPLETO EN PANTALLA, VISIBLE EXCLUSIVAMENTE AL IMPRIMIR / PDF
+      const activeUser = session?.user || { name: 'Juan Mendoza', role: 'Gerente General' };
+      sheetHtml += `
+        <div class="report-signatures-grid" style="display: none;">
+          <div class="report-signature-block">
+            <div class="report-signature-space"></div>
+            <div class="report-signature-line"></div>
+            <div class="report-signature-name">${activeUser.name || 'Juan Mendoza'}</div>
+            <div class="report-signature-role">${activeUser.role || 'Gerente General'}</div>
+            <div class="report-signature-sub">Firma Autorizada y Sello de Gerencia</div>
+          </div>
+          <div class="report-signature-block">
+            <div class="report-signature-space"></div>
+            <div class="report-signature-line"></div>
+            <div class="report-signature-name">Maestro Panadero / Jefe de Producción</div>
+            <div class="report-signature-role">Dirección Operativa &amp; Hornos</div>
+            <div class="report-signature-sub">Planificación, Hornadas &amp; Conformidad</div>
+          </div>
+        </div>
+        <div class="report-print-watermark" style="display: none;">
+          <span>La Nueva Parisienne Panadería & Pastelería C.A. &bull; Módulo de Tendencias y Proyecciones &bull; Documento Válido para Planificación Estratégica</span>
+        </div>
+      `;
+
+      sheet.innerHTML = sheetHtml;
+      window.LucideIcons?.refresh();
+
+    } catch (e) {
+      console.error('Error al generar informe modular:', e);
+      sheet.innerHTML = `
+        <div style="padding: 3rem 1.5rem; text-align: center; color: var(--color-danger);">
+          <div style="font-size: 2rem; margin-bottom: 0.5rem;">⚠️</div>
+          <p style="font-weight: 700;">No se pudo compilar el informe modular</p>
+          <span style="font-size: 0.85rem;">Detalle del error: ${e.message || 'Error desconocido'}</span>
+        </div>
+      `;
+    }
+  }
+
+  window.ejecutarGeneracionReporteModular = ejecutarGeneracionReporteModular;
+}
+
 function initDashboard() {
   try {
     const authorized = inicializarSesionYBarraSuperior();
     if (authorized === false) return;
   } catch (e) { console.error('Error Sesión & Header:', e); }
   try { inicializarReporteEjecutivo(); } catch (e) { console.error('Error Reporte Ejecutivo:', e); }
+  try { inicializarGeneradorModular(); } catch (e) { console.error('Error Generador Modular:', e); }
   try { inicializarNavegacionTabs(); } catch (e) { console.error('Error Tabs:', e); }
   try { cargarTasaCambio(); } catch (e) { console.error('Error Tasa:', e); }
   try { renderizarGraficos(); } catch (e) { console.error('Error Graficos:', e); }

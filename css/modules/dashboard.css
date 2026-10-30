@@ -864,7 +864,8 @@ select.form-control-custom {
   background: var(--bg-surface);
   border-bottom: 1px solid var(--color-gold-light);
   width: 100%;
-  padding: 0;
+  padding: 0.4rem 0;
+  box-shadow: 0 1px 3px rgba(44, 29, 17, 0.02);
 }
 
 .view-nav-container {
@@ -874,29 +875,67 @@ select.form-control-custom {
   padding: 0 2rem;
   display: flex;
   align-items: center;
-  gap: 0.75rem;
+  gap: 0.55rem;
   box-sizing: border-box;
+  overflow-x: auto;
 }
 
 .dashboard-nav-tab {
-  padding: 0.85rem 1.4rem;
-  background: transparent;
-  border: none;
-  border-bottom: 3px solid transparent;
-  font-size: 0.92rem;
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 0.65rem 1.25rem;
+  background: rgba(250, 247, 242, 0.65);
+  border: 1px solid rgba(212, 155, 84, 0.22);
+  border-radius: var(--radius-sm, 8px);
+  font-size: 0.88rem;
   font-weight: 700;
   color: var(--color-muted);
   cursor: pointer;
-  transition: all 0.2s ease;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  white-space: nowrap;
+}
+
+/* Divisor sutil y elegante a la derecha de cada botón */
+.dashboard-nav-tab:not(:last-child)::after {
+  content: '';
+  position: absolute;
+  right: -0.32rem;
+  top: 25%;
+  height: 50%;
+  width: 1px;
+  background: var(--color-gold-light);
+  pointer-events: none;
+}
+
+.dashboard-nav-tab i {
+  color: var(--color-gold-dark);
+  transition: transform 0.2s ease, color 0.2s ease;
 }
 
 .dashboard-nav-tab:hover {
+  background: #FFFFFF;
   color: var(--color-espresso);
+  border-color: var(--color-gold);
+  box-shadow: 0 2px 6px rgba(44, 29, 17, 0.05);
+  transform: translateY(-1px);
+}
+
+.dashboard-nav-tab:hover i {
+  transform: scale(1.1);
 }
 
 .dashboard-nav-tab.active {
+  background: #FFFFFF;
   color: var(--color-espresso);
-  border-bottom-color: var(--color-gold-dark);
+  border-color: var(--color-gold-dark);
+  border-bottom: 3px solid var(--color-gold-dark);
+  box-shadow: 0 3px 10px rgba(181, 123, 54, 0.12);
+}
+
+.dashboard-nav-tab.active i {
+  color: var(--color-gold-dark);
 }
 
 /* VISTA DE PANEL DE INVENTARIO Y ALMACÉN */
@@ -2248,6 +2287,7 @@ select.form-control-custom {
    FIRMAS Y PIE DE PÁGINA FORMAL (EXCLUSIVAMENTE VISIBLES AL IMPRIMIR / PDF)
    ========================================================================== */
 .report-signatures-grid,
+.report-signatures-container,
 .report-print-watermark {
   display: none !important;
 }
@@ -2276,11 +2316,14 @@ select.form-control-custom {
   }
 
   body.printing-report #executiveReportSheet,
-  body.printing-report #executiveReportSheet * {
+  body.printing-report #executiveReportSheet *,
+  body.printing-report #modularReportSheet,
+  body.printing-report #modularReportSheet * {
     visibility: visible;
   }
 
-  body.printing-report #executiveReportSheet {
+  body.printing-report #executiveReportSheet,
+  body.printing-report #modularReportSheet {
     position: absolute !important;
     left: 0 !important;
     top: 0 !important;
@@ -2291,6 +2334,17 @@ select.form-control-custom {
     box-shadow: none !important;
     background: #FFFFFF !important;
   }
+
+.nav-pill-new {
+  font-size: 0.62rem;
+  font-weight: 800;
+  padding: 0.12rem 0.45rem;
+  border-radius: 6px;
+  background: linear-gradient(135deg, #D49B54 0%, #B57F3A 100%);
+  color: #FFFFFF;
+  letter-spacing: 0.05em;
+  margin-left: 0.35rem;
+}
 
   body.printing-report .report-header-banner {
     border-bottom: 2px solid #8C531B !important;
@@ -2359,7 +2413,8 @@ select.form-control-custom {
     print-color-adjust: exact !important;
   }
 
-  body.printing-report .report-signatures-grid {
+  body.printing-report .report-signatures-grid,
+  body.printing-report .report-signatures-container {
     display: grid !important;
     grid-template-columns: 1fr 1fr !important;
     gap: 3.5rem !important;
@@ -2371,7 +2426,8 @@ select.form-control-custom {
     visibility: visible !important;
   }
 
-  body.printing-report .report-signatures-grid * {
+  body.printing-report .report-signatures-grid *,
+  body.printing-report .report-signatures-container * {
     visibility: visible !important;
   }
 
@@ -2470,6 +2526,445 @@ select.form-control-custom {
   }
 }
 
+/* ==========================================================================
+   GENERADOR MODULAR DE REPORTES & TENDENCIAS (PROPUESTA A)
+   ========================================================================== */
 
+/* Barra de Conmutación de Modo (Visor Estándar vs Generador Modular) */
+.rep-mode-switcher-bar {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  padding: 0.5rem 1.25rem;
+  background: rgba(44, 29, 17, 0.04);
+  border-bottom: 1px solid rgba(192, 160, 128, 0.25);
+}
 
+.rep-mode-tab {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  padding: 0.55rem 1.15rem;
+  font-size: 0.84rem;
+  font-weight: 700;
+  color: #5C4A3A;
+  background: #FFFFFF;
+  border: 1px solid rgba(192, 160, 128, 0.35);
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.03);
+}
 
+.rep-mode-tab:hover {
+  color: #1A120B;
+  border-color: #D49B54;
+  transform: translateY(-1px);
+}
+
+.rep-mode-tab.active {
+  color: #FFFFFF;
+  background: linear-gradient(135deg, #2C1D11 0%, #1A120B 100%);
+  border-color: #1A120B;
+  box-shadow: 0 3px 8px rgba(44, 29, 17, 0.22);
+}
+
+.rep-mode-tab.active i {
+  color: #D49B54;
+}
+
+.rep-mode-pill-new {
+  font-size: 0.65rem;
+  font-weight: 800;
+  padding: 0.15rem 0.45rem;
+  border-radius: 10px;
+  background: linear-gradient(135deg, #D49B54 0%, #B57F3A 100%);
+  color: #FFFFFF;
+  letter-spacing: 0.05em;
+  box-shadow: 0 1px 4px rgba(212, 155, 84, 0.4);
+}
+
+/* Panel Contenedor del Generador Modular */
+.modular-generator-container {
+  padding: 1.25rem 1.5rem;
+  background: #FAF7F2;
+  border-bottom: 2px solid rgba(212, 155, 84, 0.3);
+  animation: fadeInDown 0.25s ease-out;
+}
+
+@keyframes fadeInDown {
+  from { opacity: 0; transform: translateY(-6px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* Banner Introductorio */
+.modgen-intro-banner {
+  display: flex;
+  align-items: center;
+  gap: 0.85rem;
+  padding: 0.85rem 1.15rem;
+  background: rgba(212, 155, 84, 0.12);
+  border-left: 4px solid #D49B54;
+  border-radius: 8px;
+  margin-bottom: 1.25rem;
+}
+
+.modgen-intro-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  background: #D49B54;
+  color: #FFFFFF;
+  flex-shrink: 0;
+}
+
+.modgen-intro-text {
+  font-size: 0.85rem;
+  color: #3D2D1E;
+  line-height: 1.45;
+}
+
+/* Cuadrícula de Parámetros Proyectivos */
+.modgen-params-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 1rem;
+  background: #FFFFFF;
+  padding: 1.1rem 1.25rem;
+  border-radius: 10px;
+  border: 1px solid rgba(192, 160, 128, 0.3);
+  box-shadow: 0 2px 6px rgba(44, 29, 17, 0.03);
+  margin-bottom: 1.25rem;
+}
+
+.modgen-form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+.modgen-label {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  font-size: 0.78rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: #5C4A3A;
+}
+
+.modgen-select,
+.modgen-input {
+  width: 100%;
+  padding: 0.6rem 0.85rem;
+  font-size: 0.88rem;
+  font-weight: 600;
+  color: #1A120B;
+  background: #FFFFFF;
+  border: 1.5px solid rgba(192, 160, 128, 0.45);
+  border-radius: 7px;
+  outline: none;
+  transition: all 0.2s ease;
+}
+
+.modgen-select:focus,
+.modgen-input:focus {
+  border-color: #D49B54;
+  box-shadow: 0 0 0 3px rgba(212, 155, 84, 0.2);
+}
+
+/* Sección de Bloques Modulares */
+.modgen-blocks-wrapper {
+  margin-bottom: 1.25rem;
+}
+
+.modgen-blocks-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  margin-bottom: 0.85rem;
+}
+
+.modgen-blocks-title {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.88rem;
+  font-weight: 800;
+  color: #2C1D11;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+.modgen-quick-presets {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  flex-wrap: wrap;
+}
+
+.modgen-quick-btn {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: #5C4A3A;
+  background: #FFFFFF;
+  border: 1px solid rgba(192, 160, 128, 0.4);
+  border-radius: 6px;
+  padding: 0.3rem 0.65rem;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.modgen-quick-btn:hover {
+  background: rgba(212, 155, 84, 0.1);
+  border-color: #D49B54;
+  color: #1A120B;
+}
+
+/* Cards Grid de Selección */
+.modgen-cards-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(290px, 1fr));
+  gap: 0.85rem;
+}
+
+.modgen-card {
+  display: flex;
+  flex-direction: column;
+  background: #FFFFFF;
+  border: 1.5px solid rgba(192, 160, 128, 0.3);
+  border-radius: 10px;
+  padding: 0.9rem 1rem;
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.03);
+  position: relative;
+  user-select: none;
+}
+
+.modgen-card:hover {
+  border-color: #D49B54;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 10px rgba(44, 29, 17, 0.08);
+}
+
+.modgen-card:has(.modgen-card-checkbox:checked) {
+  border-color: #D49B54;
+  background: #FFFDF9;
+  box-shadow: 0 0 0 1px #D49B54, 0 4px 10px rgba(212, 155, 84, 0.12);
+}
+
+.modgen-card-top {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  margin-bottom: 0.6rem;
+}
+
+.modgen-card-checkbox {
+  width: 18px;
+  height: 18px;
+  accent-color: #D49B54;
+  cursor: pointer;
+}
+
+.modgen-card-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  border-radius: 7px;
+  color: #FFFFFF;
+  flex-shrink: 0;
+}
+
+.modgen-card-icon.gold { background: #D49B54; }
+.modgen-card-icon.green { background: #10B981; }
+.modgen-card-icon.terracotta { background: #C65D3B; }
+.modgen-card-icon.amber { background: #F59E0B; }
+.modgen-card-icon.blue { background: #3B82F6; }
+.modgen-card-icon.purple { background: #8B5CF6; }
+
+.modgen-card-badge {
+  margin-left: auto;
+  font-size: 0.65rem;
+  font-weight: 800;
+  letter-spacing: 0.05em;
+  padding: 0.15rem 0.5rem;
+  border-radius: 4px;
+  background: rgba(44, 29, 17, 0.06);
+  color: #5C4A3A;
+}
+
+.modgen-card-badge.active {
+  background: rgba(16, 185, 129, 0.15);
+  color: #047857;
+}
+
+.modgen-card-content {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+}
+
+.modgen-card-title {
+  font-size: 0.88rem;
+  font-weight: 700;
+  color: #1A120B;
+  margin: 0;
+}
+
+.modgen-card-desc {
+  font-size: 0.77rem;
+  color: #6B5848;
+  line-height: 1.4;
+  margin: 0;
+}
+
+/* Barra de Acción Inferior */
+.modgen-actions-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  flex-wrap: wrap;
+  padding-top: 1rem;
+  border-top: 1px dashed rgba(192, 160, 128, 0.4);
+}
+
+.modgen-status-text {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.84rem;
+  font-weight: 600;
+  color: #5C4A3A;
+}
+
+.btn-modgen-submit {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 0.75rem 1.65rem;
+  font-size: 0.92rem;
+  font-weight: 700;
+  color: #FFFFFF;
+  background: linear-gradient(135deg, #D49B54 0%, #B57F3A 100%);
+  border: 1px solid #B57F3A;
+  border-radius: 8px;
+  cursor: pointer;
+  box-shadow: 0 4px 12px rgba(212, 155, 84, 0.35);
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.btn-modgen-submit:hover {
+  background: linear-gradient(135deg, #B57F3A 0%, #8C531B 100%);
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(212, 155, 84, 0.45);
+}
+
+.btn-modgen-submit:active {
+  transform: translateY(0);
+}
+
+/* ==========================================================================
+   ESTILOS DE LOS BLOQUES DEL INFORME MODULAR GENERADO
+   ========================================================================== */
+.modrep-container {
+  display: flex;
+  flex-direction: column;
+  gap: 1.75rem;
+}
+
+/* Badges de Tendencia */
+.trend-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  font-size: 0.76rem;
+  font-weight: 800;
+  padding: 0.2rem 0.55rem;
+  border-radius: 6px;
+  white-space: nowrap;
+}
+
+.trend-badge.up {
+  background: #E8F5E9;
+  color: #1B5E20;
+  border: 1px solid #A5D6A7;
+}
+
+.trend-badge.steady {
+  background: #FEF3C7;
+  color: #92400E;
+  border: 1px solid #FDE68A;
+}
+
+.trend-badge.down {
+  background: #FFEBEE;
+  color: #B71C1C;
+  border: 1px solid #FFCDD2;
+}
+
+/* Callout de Recomendaciones & Conclusiones Tácticas */
+.modrep-insights-box {
+  background: #FAF7F2;
+  border-left: 5px solid #8B5CF6;
+  border-radius: 8px;
+  padding: 1.15rem 1.35rem;
+  margin-top: 0.5rem;
+  border-top: 1px solid rgba(139, 92, 246, 0.2);
+  border-right: 1px solid rgba(139, 92, 246, 0.2);
+  border-bottom: 1px solid rgba(139, 92, 246, 0.2);
+}
+
+.modrep-insights-title {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.92rem;
+  font-weight: 800;
+  color: #4C1D95;
+  margin-bottom: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+.modrep-insights-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+  margin: 0;
+  padding-left: 1.25rem;
+  font-size: 0.85rem;
+  color: #2D2319;
+  line-height: 1.5;
+}
+
+.modrep-insights-list li strong {
+  color: #1A120B;
+}
+
+/* Ajustes de Impresión para Bloques Modulares */
+@media print {
+  body.printing-report .modrep-container {
+    gap: 1.25rem !important;
+  }
+  body.printing-report .modrep-insights-box {
+    background: #FFFFFF !important;
+    border: 1.5px solid #6D28D9 !important;
+    page-break-inside: avoid !important;
+  }
+  body.printing-report .trend-badge {
+    border: 1px solid #666666 !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+}

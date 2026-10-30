@@ -12,7 +12,7 @@
   
   <!-- Hojas de Estilos Separadas (CSS3 Estricto) -->
   <link rel="stylesheet" href="../css/main.css?v=20261024-print-signatures-v1">
-  <link rel="stylesheet" href="../css/modules/dashboard.css?v=20261024-classic-bars-fix-v2">
+  <link rel="stylesheet" href="../css/modules/dashboard.css?v=20261030-nav-tabs-dividers-v1">
   <link rel="stylesheet" href="../css/modules/caja-reportes.css?v=20260930">
 </head>
 <body>
@@ -61,6 +61,9 @@
       <div class="view-nav-container">
         <button id="navBtnAnalytics" type="button" class="dashboard-nav-tab active">
           <i data-lucide="bar-chart-3" class="icon-sm"></i> <span>Métricas &amp; Inteligencia de Negocios</span>
+        </button>
+        <button id="navBtnReportGenerator" type="button" class="dashboard-nav-tab">
+          <i data-lucide="trending-up" class="icon-sm"></i> <span>Generador de Informes &amp; Tendencias</span>
         </button>
         <button id="navBtnExecutiveReports" type="button" class="dashboard-nav-tab">
           <i data-lucide="file-spreadsheet" class="icon-sm"></i> <span>Centro de Reportes</span>
@@ -593,6 +596,215 @@
           <!-- LIENZO DEDICADO DE REPORTE EJECUTIVO (ESPACIOSO Y FLUIDO) -->
           <div class="dedicated-report-sheet-wrapper">
             <div id="executiveReportSheet" class="printable-report-sheet dedicated-sheet">
+              <!-- Renderizado dinámico desde dashboard.js -->
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+      <!-- VISTA 5: MÓDULO INDEPENDIENTE - GENERADOR DE INFORMES & TENDENCIAS -->
+      <div id="modularReportGeneratorView" class="dashboard-view-section" style="display: none;" aria-label="Generador de Informes y Tendencias">
+        <div class="executive-reports-container">
+          
+          <!-- PANEL MAESTRO DEDICADO: ENCABEZADO + ACCIONES + CONSTRUCTOR -->
+          <div class="report-generator-filter-bar dedicated-bar no-print">
+            
+            <!-- Barra Superior: Identidad del Módulo y Botonera -->
+            <div class="reports-dedicated-header-integrated">
+              <div class="reports-dedicated-title-wrap">
+                <div class="reports-dedicated-icon" style="background: linear-gradient(135deg, #D49B54 0%, #B57F3A 100%);">
+                  <i data-lucide="line-chart" class="icon-md" style="color: #FFFFFF;"></i>
+                </div>
+                <div class="reports-title-info">
+                  <div class="reports-dedicated-eyebrow">
+                    <span class="eyebrow-dot"></span> LA PARISIENNE &bull; INTELIGENCIA PREDICTIVA
+                  </div>
+                  <h2 class="reports-dedicated-title">Generador de Informes &amp; Tendencias</h2>
+                  <p class="reports-dedicated-sub">Constructor a medida: detección de aceleración de demanda, proyecciones a 7/15/30 días, hornadas e insumos</p>
+                </div>
+              </div>
+
+              <!-- Botones de Exportación Dedicados -->
+              <div class="rep-actions-group">
+                <button id="btnPrintModularReport" type="button" class="btn-rep-action btn-rep-print" title="Imprimir informe en hoja membretada o guardar en PDF">
+                  <i data-lucide="printer" class="icon-xs"></i> <span>PDF / Imprimir</span>
+                </button>
+                <button id="btnExportModularExcel" type="button" class="btn-rep-action btn-rep-export" title="Descargar informe consolidado en formato Excel (.xlsx)">
+                  <i data-lucide="file-spreadsheet" class="icon-xs"></i> <span>Excel (.xlsx)</span>
+                </button>
+              </div>
+            </div>
+
+            <!-- Divisor Sutil -->
+            <div class="rep-card-divider"></div>
+
+            <!-- Constructor Modular (Parámetros + Bloques + Acciones) -->
+            <div id="modularGeneratorContainer" class="modular-generator-container" style="display: block;">
+              <!-- Barra Explicativa / Subtítulo -->
+              <div class="modgen-intro-banner">
+                <div class="modgen-intro-icon"><i data-lucide="line-chart" class="icon-sm"></i></div>
+                <div class="modgen-intro-text">
+                  <strong>Constructor Inteligente de Informes:</strong> Personaliza los bloques que deseas incluir, selecciona el horizonte de análisis y el motor cruzará datos de ventas en vivo con el modelo proyectivo para detectar tendencias (&plusmn;%), prever insumos y sugerir tandas de horneado.
+                </div>
+              </div>
+
+              <!-- SECCIÓN 1: PARÁMETROS PROYECTIVOS -->
+              <div class="modgen-params-grid">
+                <div class="modgen-form-group">
+                  <label class="modgen-label" for="modgenHistPeriod">
+                    <i data-lucide="history" class="icon-xs"></i> Período Histórico Base
+                  </label>
+                  <select id="modgenHistPeriod" class="modgen-select">
+                    <option value="7">Últimos 7 Días (Tendencia Corto Plazo)</option>
+                    <option value="14" selected>Últimos 14 Días (Quincena Recomendada)</option>
+                    <option value="30">Últimos 30 Días (Mes Completo)</option>
+                    <option value="60">Últimos 60 Días (Bimestral)</option>
+                  </select>
+                </div>
+
+                <div class="modgen-form-group">
+                  <label class="modgen-label" for="modgenHorizon">
+                    <i data-lucide="calendar" class="icon-xs"></i> Horizonte de Proyección
+                  </label>
+                  <select id="modgenHorizon" class="modgen-select">
+                    <option value="7">Próximos 7 Días (Plan Semanal)</option>
+                    <option value="15">Próximos 15 Días (Plan Quincenal)</option>
+                    <option value="30" selected>Próximos 30 Días (Plan Mensual)</option>
+                  </select>
+                </div>
+
+                <div class="modgen-form-group">
+                  <label class="modgen-label" for="modgenScenario">
+                    <i data-lucide="trending-up" class="icon-xs"></i> Escenario Proyectual
+                  </label>
+                  <select id="modgenScenario" class="modgen-select">
+                    <option value="base" selected>Escenario Base (Ritmo Actual 100%)</option>
+                    <option value="optimista">Escenario Optimista (+15% Demanda)</option>
+                    <option value="conservador">Escenario Conservador (-10% Demanda)</option>
+                  </select>
+                </div>
+
+                <div class="modgen-form-group">
+                  <label class="modgen-label" for="modgenBreakEven">
+                    <i data-lucide="scale" class="icon-xs"></i> Costos Fijos Mensuales ($)
+                  </label>
+                  <input type="number" id="modgenBreakEven" class="modgen-input" value="3800" min="0" step="50" placeholder="Ej. 3800" />
+                </div>
+              </div>
+
+              <!-- SECCIÓN 2: SELECTOR DE BLOQUES MODULARES -->
+              <div class="modgen-blocks-wrapper">
+                <div class="modgen-blocks-header">
+                  <div class="modgen-blocks-title">
+                    <i data-lucide="layout-grid" class="icon-xs"></i>
+                    <span>Bloques Modulares a Incluir en el Informe:</span>
+                  </div>
+                  <div class="modgen-quick-presets">
+                    <button type="button" id="btnModgenSelectAll" class="modgen-quick-btn">Seleccionar Todos</button>
+                    <button type="button" id="btnModgenPresetTrends" class="modgen-quick-btn">Tendencias &amp; Demanda</button>
+                    <button type="button" id="btnModgenPresetFinancial" class="modgen-quick-btn">Financiero &amp; Caja</button>
+                    <button type="button" id="btnModgenPresetKitchen" class="modgen-quick-btn">Hornos &amp; Insumos</button>
+                  </div>
+                </div>
+
+                <div class="modgen-cards-grid">
+                  <!-- Bloque 1: Resumen Ejecutivo -->
+                  <label class="modgen-card" for="chkModExecutive">
+                    <div class="modgen-card-top">
+                      <input type="checkbox" id="chkModExecutive" class="modgen-card-checkbox" checked />
+                      <div class="modgen-card-icon gold"><i data-lucide="target" class="icon-sm"></i></div>
+                      <span class="modgen-card-badge">FINANCIERO</span>
+                    </div>
+                    <div class="modgen-card-content">
+                      <h4 class="modgen-card-title">1. Resumen Ejecutivo &amp; Run Rate</h4>
+                      <p class="modgen-card-desc">Velocidad comercial ($/día y Bs/día), facturación proyectada, margen de contribución y velocidad para alcanzar el Punto de Equilibrio.</p>
+                    </div>
+                  </label>
+
+                  <!-- Bloque 2: Radar de Tendencias -->
+                  <label class="modgen-card" for="chkModTrends">
+                    <div class="modgen-card-top">
+                      <input type="checkbox" id="chkModTrends" class="modgen-card-checkbox" checked />
+                      <div class="modgen-card-icon green"><i data-lucide="trending-up" class="icon-sm"></i></div>
+                      <span class="modgen-card-badge active">PREDICTIVO</span>
+                    </div>
+                    <div class="modgen-card-content">
+                      <h4 class="modgen-card-title">2. Radar de Tendencias de Demanda (&Delta;%)</h4>
+                      <p class="modgen-card-desc">Cálculo de aceleración/desaceleración (&plusmn;%) de cada producto, ranking de rotación, productos estrella y alertas de caída.</p>
+                    </div>
+                  </label>
+
+                  <!-- Bloque 3: Planificación de Hornos -->
+                  <label class="modgen-card" for="chkModOvens">
+                    <div class="modgen-card-top">
+                      <input type="checkbox" id="chkModOvens" class="modgen-card-checkbox" checked />
+                      <div class="modgen-card-icon terracotta"><i data-lucide="flame" class="icon-sm"></i></div>
+                      <span class="modgen-card-badge">OPERATIVO</span>
+                    </div>
+                    <div class="modgen-card-content">
+                      <h4 class="modgen-card-title">3. Planificación de Producción &amp; Hornos</h4>
+                      <p class="modgen-card-desc">Cálculo de tandas de horneado necesarias (matutinas/vespertinas) por producto para cubrir la demanda estimada sin generar merma.</p>
+                    </div>
+                  </label>
+
+                  <!-- Bloque 4: Estimación de Insumos -->
+                  <label class="modgen-card" for="chkModSupplies">
+                    <div class="modgen-card-top">
+                      <input type="checkbox" id="chkModSupplies" class="modgen-card-checkbox" checked />
+                      <div class="modgen-card-icon amber"><i data-lucide="package" class="icon-sm"></i></div>
+                      <span class="modgen-card-badge">INVENTARIO</span>
+                    </div>
+                    <div class="modgen-card-content">
+                      <h4 class="modgen-card-title">4. Estimación de Insumos &amp; Materia Prima</h4>
+                      <p class="modgen-card-desc">Cálculo proyectado de kg de harina, mantequilla, café, chocolate y azúcar necesarios contra el stock actual en almacén.</p>
+                    </div>
+                  </label>
+
+                  <!-- Bloque 5: Matriz de Escenarios -->
+                  <label class="modgen-card" for="chkModScenarios">
+                    <div class="modgen-card-top">
+                      <input type="checkbox" id="chkModScenarios" class="modgen-card-checkbox" checked />
+                      <div class="modgen-card-icon blue"><i data-lucide="bar-chart-2" class="icon-sm"></i></div>
+                      <span class="modgen-card-badge">ESCENARIOS</span>
+                    </div>
+                    <div class="modgen-card-content">
+                      <h4 class="modgen-card-title">5. Matriz de Escenarios &amp; Flujo de Caja</h4>
+                      <p class="modgen-card-desc">Comparativa Conservador vs Base vs Optimista con desglose en USD y Bs (tasa BCV), costo de insumos (42%), costos fijos y EBITDA neto.</p>
+                    </div>
+                  </label>
+
+                  <!-- Bloque 6: Diagnóstico & Recomendaciones -->
+                  <label class="modgen-card" for="chkModInsights">
+                    <div class="modgen-card-top">
+                      <input type="checkbox" id="chkModInsights" class="modgen-card-checkbox" checked />
+                      <div class="modgen-card-icon purple"><i data-lucide="lightbulb" class="icon-sm"></i></div>
+                      <span class="modgen-card-badge">ESTRATÉGICO</span>
+                    </div>
+                    <div class="modgen-card-content">
+                      <h4 class="modgen-card-title">6. Diagnóstico &amp; Recomendaciones Tácticas</h4>
+                      <p class="modgen-card-desc">Conclusiones analíticas redactadas automáticamente sobre cuellos de botella en hornos, productos a potenciar y alertas de stock.</p>
+                    </div>
+                  </label>
+                </div>
+              </div>
+
+              <!-- BARRA DE ACCIÓN INFERIOR -->
+              <div class="modgen-actions-bar">
+                <div class="modgen-status-text" id="modgenSelectedCountText">
+                  <i data-lucide="check-circle-2" class="icon-xs text-success"></i> 6 de 6 bloques seleccionados
+                </div>
+                <button type="button" id="btnGenerateModularReport" class="btn-modgen-submit">
+                  <i data-lucide="play" class="icon-sm"></i> <span>Compilar &amp; Generar Informe de Tendencias</span>
+                </button>
+              </div>
+            </div>
+
+          </div>
+
+          <!-- LIENZO DEDICADO DE REPORTE MODULAR (ESPACIOSO Y FLUIDO) -->
+          <div class="dedicated-report-sheet-wrapper">
+            <div id="modularReportSheet" class="printable-report-sheet dedicated-sheet">
               <!-- Renderizado dinámico desde dashboard.js -->
             </div>
           </div>
