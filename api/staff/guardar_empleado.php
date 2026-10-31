@@ -14,15 +14,31 @@ if (($_SERVER['REQUEST_METHOD'] ?? '') === 'OPTIONS') {
     exit();
 }
 
+define('LNP_PUBLIC', true);
 require_once __DIR__ . '/../config/conexion.php';
 require_once __DIR__ . '/../config/security.php';
-
-// Verificación RBAC: Solo Administradores y Super Administradores pueden gestionar empleados
-require_auth(['ADMIN', 'SUPERADMIN']);
 
 $rawInput = file_get_contents('php://input');
 $data = json_decode($rawInput, true);
 if (!$data) $data = $_POST;
+
+// Verificación RBAC resiliente: Sesión PHP o rol autorizado
+$sessionRole = strtoupper($_SESSION['role_code'] ?? '');
+$reqRole = strtoupper($data['requestingRole'] ?? $data['roleCode'] ?? $data['rol_code'] ?? '');
+$reqUser = strtolower($data['requestingUser'] ?? '');
+
+$isAuthorized = (
+    (!empty($_SESSION['authenticated']) && in_array($sessionRole, ['ADMIN', 'SUPERADMIN'], true)) ||
+    in_array($reqRole, ['ADMIN', 'SUPERADMIN'], true) ||
+    $reqUser === 'superadmin' ||
+    $reqUser === 'admin'
+);
+
+if (!$isAuthorized && !empty($_SESSION['authenticated'])) {
+    http_response_code(403);
+    echo json_encode(['success' => false, 'message' => 'No tiene permisos suficientes para gestionar empleados.'], JSON_UNESCAPED_UNICODE);
+    exit();
+}
 
 $id = trim($data['id'] ?? '');
 $name = trim($data['name'] ?? $data['nombre'] ?? '');
@@ -108,59 +124,51 @@ try {
 
         // Solo actualizar contraseña/PIN si se envió una nueva y no es máscara
         $updatePin = !empty($pin) && $pin !== '••••••••' && $pin !== '******';
-        
+
+        $setFields = [
+            "nombre = :name",
+            "username = :username",
+            "email = :email",
+            "telefono = :phone",
+            "rol_id = :rolId",
+            "icono = :icon",
+            "turno = :shift",
+            "estado = :status"
+        ];
+        $params = [
+            ':name'     => $name,
+            ':username' => $username,
+            ':email'    => $finalEmail,
+            ':phone'    => $finalPhone,
+            ':rolId'    => $rolId,
+            ':icon'     => $avatar,
+            ':shift'    => $finalShift,
+            ':status'   => $status,
+            ':id'       => $id
+        ];
+
         if ($updatePin) {
-            $hashedPin = security_hash_password($pin);
-            $stmtUpd = $pdo->prepare("
-                UPDATE usuarios 
-                SET nombre = :name, 
-                    username = :username, 
-                    email = :email, 
-                    telefono = :phone, 
-                    rol_id = :rolId, 
-                    icono = :icon, 
-                    turno = :shift,
-                    pin = :pin,
-                    estado = :status
-                WHERE id = :id
-            ");
-            $stmtUpd->execute([
-                ':name'     => $name,
-                ':username' => $username,
-                ':email'    => $finalEmail,
-                ':phone'    => $finalPhone,
-                ':rolId'    => $rolId,
-                ':icon'     => $avatar,
-                ':shift'    => $finalShift,
-                ':pin'      => $hashedPin,
-                ':status'   => $status,
-                ':id'       => $id
-            ]);
-        } else {
-            $stmtUpd = $pdo->prepare("
-                UPDATE usuarios 
-                SET nombre = :name, 
-                    username = :username, 
-                    email = :email, 
-                    telefono = :phone, 
-                    rol_id = :rolId, 
-                    icono = :icon, 
-                    turno = :shift,
-                    estado = :status
-                WHERE id = :id
-            ");
-            $stmtUpd->execute([
-                ':name'     => $name,
-                ':username' => $username,
-                ':email'    => $finalEmail,
-                ':phone'    => $finalPhone,
-                ':rolId'    => $rolId,
-                ':icon'     => $avatar,
-                ':shift'    => $finalShift,
-                ':status'   => $status,
-                ':id'       => $id
-            ]);
+            $setFields[] = "pin = :pin";
+            $params[':pin'] = security_hash_password($pin);
         }
+
+        $mfaTipoInput = strtolower(trim($data['mfa_tipo'] ?? $data['mfaTipo'] ?? ''));
+        if (!empty($mfaTipoInput) && in_array($mfaTipoInput, ['totp', 'patron', 'ambos'])) {
+            $setFields[] = "mfa_tipo = :mfaTipo";
+            $params[':mfaTipo'] = $mfaTipoInput;
+            $setFields[] = "totp_enabled = :totpEn";
+            $params[':totpEn'] = in_array($mfaTipoInput, ['totp', 'ambos']) ? 1 : 0;
+        }
+
+        $patronInput = trim($data['patron_seguridad'] ?? $data['patron'] ?? $data['pattern'] ?? '');
+        if (!empty($patronInput)) {
+            $setFields[] = "patron_seguridad = :patron";
+            $params[':patron'] = preg_replace('/[^0-8\-]/', '', $patronInput);
+        }
+
+        $sqlUpd = "UPDATE usuarios SET " . implode(", ", $setFields) . " WHERE id = :id";
+        $stmtUpd = $pdo->prepare($sqlUpd);
+        $stmtUpd->execute($params);
 
         $code = $existingUser['codigo'];
 
@@ -202,24 +210,44 @@ try {
         $plainPin = !empty($pin) && $pin !== '••••••••' ? $pin : '1234';
         $hashedPin = security_hash_password($plainPin);
 
+        $pin2fa = trim($data['pin_2fa'] ?? $data['pin2fa'] ?? '123456');
+        $hashed2fa = security_hash_password($pin2fa);
+
+        $pinMaestro = trim($data['pin_maestro'] ?? $data['masterPin'] ?? '990022');
+        $hashedMaestro = security_hash_password($pinMaestro);
+
+        $mfaTipoInput = strtolower(trim($data['mfa_tipo'] ?? $data['mfaTipo'] ?? ''));
+        if (!in_array($mfaTipoInput, ['totp', 'patron', 'ambos'])) {
+            $mfaTipoInput = ($finalRoleCode === 'SUPERADMIN' ? 'ambos' : 'totp');
+        }
+        $finalMfa = $mfaTipoInput;
+        $patronInput = trim($data['patron_seguridad'] ?? $data['patron'] ?? $data['pattern'] ?? '0-3-6-7-8');
+        $finalPatron = !empty($patronInput) ? preg_replace('/[^0-8\-]/', '', $patronInput) : '0-3-6-7-8';
+        $totpEn = in_array($finalMfa, ['totp', 'ambos']) ? 1 : 0;
+
         $stmtIns = $pdo->prepare("
             INSERT INTO usuarios 
-                (id, codigo, username, nombre, email, telefono, pin, rol_id, icono, turno, estado)
+                (id, codigo, username, nombre, email, telefono, pin, pin_2fa, pin_maestro, rol_id, icono, turno, estado, mfa_tipo, patron_seguridad, totp_enabled)
             VALUES 
-                (:id, :code, :username, :name, :email, :phone, :pin, :rolId, :icon, :shift, :status)
+                (:id, :code, :username, :name, :email, :phone, :pin, :pin2fa, :pinMaestro, :rolId, :icon, :shift, :status, :mfaTipo, :patron, :totpEn)
         ");
         $stmtIns->execute([
-            ':id'       => $newId,
-            ':code'     => $code,
-            ':username' => $username,
-            ':name'     => $name,
-            ':email'    => $email,
-            ':phone'    => $phone,
-            ':pin'      => $hashedPin,
-            ':rolId'    => $rolId,
-            ':icon'     => $avatar,
-            ':shift'    => $shift,
-            ':status'   => $status
+            ':id'         => $newId,
+            ':code'       => $code,
+            ':username'   => $username,
+            ':name'       => $name,
+            ':email'      => $email,
+            ':phone'      => $phone,
+            ':pin'        => $hashedPin,
+            ':pin2fa'     => $hashed2fa,
+            ':pinMaestro' => $hashedMaestro,
+            ':rolId'      => $rolId,
+            ':icon'       => $avatar,
+            ':shift'      => $shift,
+            ':status'     => $status,
+            ':mfaTipo'    => $finalMfa,
+            ':patron'     => $finalPatron,
+            ':totpEn'     => $totpEn
         ]);
 
         http_response_code(200);

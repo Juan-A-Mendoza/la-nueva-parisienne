@@ -74,7 +74,7 @@ async function fetchLiveBcvRate() {
   for (const url of apis) {
     try {
       const controller = typeof AbortController !== 'undefined' ? new AbortController() : null;
-      const timeoutId = controller ? setTimeout(() => controller.abort(), 1500) : null;
+      const timeoutId = controller ? setTimeout(() => controller.abort(), 4000) : null;
       const res = await fetch(`${url}?t=${Date.now()}`, { 
         cache: 'no-store',
         signal: controller ? controller.signal : undefined 
@@ -267,7 +267,7 @@ function inicializarEmpresaFiscalConfig() {
 
   // Sincronizar datos fiscales iniciales desde MySQL
   try {
-    fetch('../api/get_empresa.php')
+    fetch('../api/get_empresa.php', { credentials: 'include' })
       .then(r => r.json())
       .then(res => {
         if (res && res.empresa) {
@@ -299,6 +299,7 @@ function inicializarEmpresaFiscalConfig() {
       try {
         const resp = await fetch('../api/update_empresa.php', {
           method: 'POST',
+          credentials: 'include',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(payload)
         });
@@ -469,6 +470,7 @@ function inicializarTasaBcvConfig() {
       try {
         fetch('../api/update_empresa.php', {
           method: 'POST',
+          credentials: 'include',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             modo_tasa: modoVal,
@@ -508,9 +510,26 @@ function inicializarGestionUsuarios() {
   const closeUserModalBtn = document.getElementById('closeUserModalBtn');
   const cancelUserModalBtn = document.getElementById('cancelUserModalBtn');
 
+  // Auto-desbloqueo inmediato si el usuario activo es Superadmin
+  let currentSession = null;
+  try { currentSession = SessionStore.getSession(); } catch (e) {}
+  const activeUser = currentSession?.user || null;
+  const uRole = (activeUser?.role || '').toLowerCase();
+  const uRoleCode = (activeUser?.roleCode || activeUser?.role_code || '').toUpperCase();
+  const isSuperadminLoggedIn = uRoleCode === 'SUPERADMIN' || uRole.includes('superadmin') || (activeUser?.username || '').toLowerCase() === 'superadmin';
+
+  if (isSuperadminLoggedIn) {
+    isUsersUnlocked = true;
+    if (usersLockedPlaceholder) usersLockedPlaceholder.style.display = 'none';
+    if (usersCrudPanel) usersCrudPanel.style.display = 'block';
+    if (btnUnlockUserManagement) {
+      btnUnlockUserManagement.innerHTML = '<i data-lucide="unlock" class="icon-sm"></i> <span>Gestión Desbloqueada</span>';
+    }
+  }
+
   async function loadUsersFromDb() {
     try {
-      const res = await fetch(`../api/staff/get_staff.php?t=${Date.now()}`, { cache: 'no-store' });
+      const res = await fetch(`../api/staff/get_staff.php?t=${Date.now()}`, { cache: 'no-store', credentials: 'include' });
       if (res.ok) {
         const data = await res.json();
         if (data.success && Array.isArray(data.staff) && data.staff.length > 0) {
@@ -540,7 +559,10 @@ function inicializarGestionUsuarios() {
               status: emp.status || 'active',
               email: emp.email || '',
               phone: emp.phone || '',
-              shift: emp.shift || ''
+              shift: emp.shift || '',
+              mfa_tipo: emp.mfa_tipo || 'totp',
+              totp_enabled: emp.totp_enabled !== undefined ? emp.totp_enabled : 1,
+              patron_seguridad: emp.patron_seguridad || '0-3-6-7-8'
             };
           });
 
@@ -601,17 +623,35 @@ function inicializarGestionUsuarios() {
           </span>
         </td>
         <td>
-          ${statusBadgeHtml}
+          <div style="display: flex; flex-direction: column; gap: 0.25rem;">
+            ${statusBadgeHtml}
+            ${(() => {
+              const mfa = (user.mfa_tipo || 'totp').toLowerCase();
+              if (mfa === 'ambos') {
+                return `<span style="font-size: 0.68rem; font-weight: 800; color: #B78103; background: rgba(245, 166, 35, 0.15); border: 1px solid rgba(245, 166, 35, 0.4); padding: 2px 6px; border-radius: 4px; display: inline-flex; align-items: center; gap: 3px;"><i data-lucide="shield-alert" class="icon-xs"></i> 3FA (TOTP + Patrón)</span>`;
+              } else if (mfa === 'patron') {
+                return `<span style="font-size: 0.68rem; font-weight: 800; color: #8E44AD; background: rgba(142, 68, 173, 0.12); border: 1px solid rgba(142, 68, 173, 0.35); padding: 2px 6px; border-radius: 4px; display: inline-flex; align-items: center; gap: 3px;"><i data-lucide="fingerprint" class="icon-xs"></i> 2FA (Patrón 3x3)</span>`;
+              } else {
+                return `<span style="font-size: 0.68rem; font-weight: 800; color: var(--color-success); background: rgba(46, 125, 50, 0.1); border: 1px solid rgba(46, 125, 50, 0.3); padding: 2px 6px; border-radius: 4px; display: inline-flex; align-items: center; gap: 3px;"><i data-lucide="shield-check" class="icon-xs"></i> 2FA (Google Auth)</span>`;
+              }
+            })()}
+          </div>
         </td>
         <td>
-          <div style="display: flex; gap: 0.35rem;">
-            <button type="button" class="btn-table-action-sm btn-edit-usr" title="Editar usuario"><i data-lucide="edit-3" class="icon-xs"></i> <span>Editar</span></button>
+          <div style="display: flex; gap: 0.35rem; align-items: center;">
+            <button type="button" class="btn-table-action-sm btn-totp-usr" style="background: rgba(46, 125, 50, 0.12); color: var(--color-success); border-color: rgba(46, 125, 50, 0.3); font-weight: 800;" title="Ver Código QR de Google Authenticator"><i data-lucide="qr-code" class="icon-xs"></i> <span>QR 2FA</span></button>
+            <button type="button" class="btn-table-action-sm btn-patron-usr" style="background: rgba(142, 68, 173, 0.12); color: #8E44AD; border-color: rgba(142, 68, 173, 0.35); font-weight: 800;" title="Configurar Patrón Gestual 3x3"><i data-lucide="fingerprint" class="icon-xs"></i> <span>Patrón</span></button>
+            <button type="button" class="btn-table-action-sm btn-pin-usr" style="background: var(--color-gold-light); color: var(--color-gold-dark); font-weight: 800;" title="Modificar Modalidad de Segundo Factor (2FA)"><i data-lucide="shield-check" class="icon-xs"></i> <span>Seguridad</span></button>
+            <button type="button" class="btn-table-action-sm btn-edit-usr" title="Editar usuario (nombre, login, clave)"><i data-lucide="edit-3" class="icon-xs"></i> <span>Editar</span></button>
             ${deleteActionBtn}
           </div>
         </td>
       `;
 
+      tr.querySelector('.btn-totp-usr')?.addEventListener('click', () => openModalTotpSetup(user));
+      tr.querySelector('.btn-patron-usr')?.addEventListener('click', () => openModalConfigurarPatron(user));
       tr.querySelector('.btn-edit-usr')?.addEventListener('click', () => openUserFormModal(user));
+      tr.querySelector('.btn-pin-usr')?.addEventListener('click', () => openModalCambiarPin(user));
       tr.querySelector('.btn-del-usr')?.addEventListener('click', () => {
         openAuthPasswordModal('DELETE_USER', user, 'Confirmar Eliminación de Usuario', `Ingrese su clave gerencial para autorizar la eliminación de "${user.name}"`);
       });
@@ -619,6 +659,614 @@ function inicializarGestionUsuarios() {
       usuariosTbody.appendChild(tr);
     });
   }
+
+  // --- MODAL DE CAMBIO DE MODALIDAD 2FA (BOTÓN SEGURIDAD) ---
+  const modalCambiarPinUsuario = document.getElementById('modalCambiarPinUsuario');
+  const closeCambiarPinModalBtn = document.getElementById('closeCambiarPinModalBtn');
+  const cancelCambiarPinModalBtn = document.getElementById('cancelCambiarPinModalBtn');
+  const formCambiarPinUsuario = document.getElementById('formCambiarPinUsuario');
+  const pinTargetUserId = document.getElementById('pinTargetUserId');
+  const pinTargetUserRole = document.getElementById('pinTargetUserRole');
+  const pinModalTargetUser = document.getElementById('pinModalTargetUser');
+  const selectNuevoMfaModal = document.getElementById('selectNuevoMfaModal');
+
+  let currentUserBeingConfigured = null;
+
+  function openModalCambiarPin(user) {
+    if (!modalCambiarPinUsuario) return;
+    currentUserBeingConfigured = user;
+    const codeUpper = (user.roleCode || '').toUpperCase();
+    const rLower = (user.role || '').toLowerCase();
+    const isSuper = (codeUpper === 'SUPERADMIN' || rLower.includes('super') || user.username === 'superadmin');
+
+    if (pinTargetUserId) pinTargetUserId.value = user.id;
+    if (pinTargetUserRole) pinTargetUserRole.value = isSuper ? 'SUPERADMIN' : 'REGULAR';
+    if (pinModalTargetUser) pinModalTargetUser.textContent = `Modalidad 2FA: ${user.name || user.username}`;
+
+    if (selectNuevoMfaModal) {
+      selectNuevoMfaModal.value = user.mfa_tipo || (isSuper ? 'ambos' : 'totp');
+    }
+
+    syncPinModalUI();
+
+    modalCambiarPinUsuario.style.display = 'flex';
+    modalCambiarPinUsuario.setAttribute('aria-hidden', 'false');
+    setTimeout(() => window.LucideIcons?.refresh(), 0);
+  }
+
+  function closeModalCambiarPin() {
+    if (modalCambiarPinUsuario) {
+      modalCambiarPinUsuario.style.display = 'none';
+      modalCambiarPinUsuario.setAttribute('aria-hidden', 'true');
+      formCambiarPinUsuario?.reset();
+    }
+  }
+
+  closeCambiarPinModalBtn?.addEventListener('click', closeModalCambiarPin);
+  cancelCambiarPinModalBtn?.addEventListener('click', closeModalCambiarPin);
+
+  function syncPinModalUI() {
+    const currentMfa = selectNuevoMfaModal?.value || 'totp';
+    document.querySelectorAll('#securityMfaCards .mfa-selector-card').forEach(card => {
+      if (card.dataset.mfa === currentMfa) {
+        card.classList.add('active');
+      } else {
+        card.classList.remove('active');
+      }
+    });
+    setTimeout(() => window.LucideIcons?.refresh(), 0);
+  }
+
+  document.querySelectorAll('#securityMfaCards .mfa-selector-card').forEach(card => {
+    card.addEventListener('click', () => {
+      if (selectNuevoMfaModal) {
+        selectNuevoMfaModal.value = card.dataset.mfa;
+        syncPinModalUI();
+      }
+    });
+  });
+
+  selectNuevoMfaModal?.addEventListener('change', syncPinModalUI);
+
+  formCambiarPinUsuario?.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const targetId = pinTargetUserId?.value;
+    const newMfa = selectNuevoMfaModal?.value || 'totp';
+
+    if (!targetId) {
+      alert('Por favor seleccione el usuario a configurar.');
+      return;
+    }
+
+    let session = null;
+    try { session = SessionStore.getSession(); } catch (err) {}
+    const activeU = (session && session.user) ? session.user : { name: 'Super Administrador' };
+
+    try {
+      const payload = {
+        empId: targetId,
+        tipoPin: 'mfa_tipo',
+        newMfaTipo: newMfa,
+        requestingRole: 'SUPERADMIN',
+        requestingUser: activeU.name || 'superadmin'
+      };
+
+      const res = await fetch('../api/staff/cambiar_pin.php', {
+        method: 'POST',
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
+
+      const data = await res.json();
+      if (!data.success) throw new Error(data.message || 'Error al actualizar modalidad 2FA');
+
+      if (currentUserBeingConfigured) {
+        currentUserBeingConfigured.mfa_tipo = newMfa;
+      }
+      const uIndex = usersData.findIndex(u => u.id === targetId);
+      if (uIndex >= 0) {
+        usersData[uIndex].mfa_tipo = newMfa;
+        saveUsersToStorage(usersData);
+      }
+
+      closeModalCambiarPin();
+      loadUsersFromDb();
+      showSuccessModal(
+        '¡Modalidad 2FA Actualizada!',
+        `Se configuró con éxito en MySQL: ${data.message}`
+      );
+    } catch (err) {
+      alert(`Error al actualizar modalidad 2FA: ${err.message}`);
+    }
+  });
+
+  // ==========================================================================
+  // MODAL DE CONFIGURACIÓN DE PATRÓN GESTUAL 3x3 INTERACTIVO
+  // ==========================================================================
+  const modalConfigurarPatron = document.getElementById('modalConfigurarPatron');
+  const closePatronModalBtn = document.getElementById('closePatronModalBtn');
+  const btnResetSetupPattern = document.getElementById('btnResetSetupPattern');
+  const btnSaveSetupPattern = document.getElementById('btnSaveSetupPattern');
+  const patronModalTargetUser = document.getElementById('patronModalTargetUser');
+  const patronTargetUserId = document.getElementById('patronTargetUserId');
+  const setupPatternSequenceDisplay = document.getElementById('setupPatternSequenceDisplay');
+  const setupPatternAlert = document.getElementById('setupPatternAlert');
+  const setupPatternCanvas = document.getElementById('setupPatternCanvas');
+  const setupPatternCtx = setupPatternCanvas?.getContext('2d');
+
+  let currentTargetPatternUser = null;
+  let setupSelectedPoints = [];
+  let isSetupDrawing = false;
+  let setupPointerPos = null;
+
+  const SETUP_GRID = 3;
+  const SETUP_CANVAS_SIZE = 260;
+  const SETUP_PADDING = 38;
+  const SETUP_SPACING = (SETUP_CANVAS_SIZE - SETUP_PADDING * 2) / (SETUP_GRID - 1); // 92px
+
+  const setupPoints = [];
+  for (let r = 0; r < SETUP_GRID; r++) {
+    for (let c = 0; c < SETUP_GRID; c++) {
+      setupPoints.push({
+        index: r * SETUP_GRID + c,
+        row: r,
+        col: c,
+        x: SETUP_PADDING + c * SETUP_SPACING,
+        y: SETUP_PADDING + r * SETUP_SPACING
+      });
+    }
+  }
+
+  function initSetupPatternCanvas() {
+    if (!setupPatternCanvas || !setupPatternCtx) return;
+    const dpr = window.devicePixelRatio || 1;
+    setupPatternCanvas.width = SETUP_CANVAS_SIZE * dpr;
+    setupPatternCanvas.height = SETUP_CANVAS_SIZE * dpr;
+    setupPatternCtx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    renderSetupPattern();
+  }
+
+  function renderSetupPattern() {
+    if (!setupPatternCtx) return;
+    setupPatternCtx.clearRect(0, 0, SETUP_CANVAS_SIZE, SETUP_CANVAS_SIZE);
+
+    // 1. Líneas entre puntos
+    if (setupSelectedPoints.length > 0) {
+      setupPatternCtx.beginPath();
+      const firstPt = setupPoints[setupSelectedPoints[0]];
+      setupPatternCtx.moveTo(firstPt.x, firstPt.y);
+
+      for (let i = 1; i < setupSelectedPoints.length; i++) {
+        const pt = setupPoints[setupSelectedPoints[i]];
+        setupPatternCtx.lineTo(pt.x, pt.y);
+      }
+
+      if (isSetupDrawing && setupPointerPos) {
+        setupPatternCtx.lineTo(setupPointerPos.x, setupPointerPos.y);
+      }
+
+      setupPatternCtx.lineWidth = 5;
+      setupPatternCtx.lineCap = 'round';
+      setupPatternCtx.lineJoin = 'round';
+      setupPatternCtx.strokeStyle = '#D49B54';
+      setupPatternCtx.shadowColor = 'rgba(212, 155, 84, 0.7)';
+      setupPatternCtx.shadowBlur = 10;
+      setupPatternCtx.stroke();
+      setupPatternCtx.shadowBlur = 0;
+    }
+
+    // 2. Dibujar 9 círculos
+    setupPoints.forEach(pt => {
+      const isSel = setupSelectedPoints.includes(pt.index);
+
+      setupPatternCtx.beginPath();
+      setupPatternCtx.arc(pt.x, pt.y, isSel ? 20 : 15, 0, Math.PI * 2);
+
+      if (isSel) {
+        setupPatternCtx.strokeStyle = '#D49B54';
+        setupPatternCtx.fillStyle = 'rgba(212, 155, 84, 0.25)';
+        setupPatternCtx.lineWidth = 2.5;
+        setupPatternCtx.fill();
+        setupPatternCtx.stroke();
+      } else {
+        setupPatternCtx.strokeStyle = 'rgba(212, 155, 84, 0.35)';
+        setupPatternCtx.lineWidth = 1.5;
+        setupPatternCtx.stroke();
+      }
+
+      // Punto central
+      setupPatternCtx.beginPath();
+      setupPatternCtx.arc(pt.x, pt.y, isSel ? 6 : 4, 0, Math.PI * 2);
+      setupPatternCtx.fillStyle = isSel ? '#F5D096' : 'rgba(212, 155, 84, 0.6)';
+      setupPatternCtx.fill();
+    });
+  }
+
+  function getSetupCanvasPointer(e) {
+    if (!setupPatternCanvas) return { x: 0, y: 0 };
+    const rect = setupPatternCanvas.getBoundingClientRect();
+    return {
+      x: e.clientX - rect.left,
+      y: e.clientY - rect.top
+    };
+  }
+
+  function getNearbySetupPoint(pos, radius = 26) {
+    return setupPoints.find(pt => {
+      const dx = pt.x - pos.x;
+      const dy = pt.y - pos.y;
+      return Math.sqrt(dx * dx + dy * dy) <= radius;
+    });
+  }
+
+  if (setupPatternCanvas) {
+    setupPatternCanvas.addEventListener('pointerdown', (e) => {
+      e.preventDefault();
+      try { setupPatternCanvas.setPointerCapture(e.pointerId); } catch (_) {}
+      setupSelectedPoints = [];
+      if (setupPatternAlert) setupPatternAlert.style.display = 'none';
+
+      const pos = getSetupCanvasPointer(e);
+      const startPt = getNearbySetupPoint(pos);
+      if (startPt) {
+        isSetupDrawing = true;
+        setupSelectedPoints.push(startPt.index);
+        setupPointerPos = pos;
+        updateSetupSequenceDisplay();
+        renderSetupPattern();
+      }
+    });
+
+    setupPatternCanvas.addEventListener('pointermove', (e) => {
+      if (!isSetupDrawing) return;
+      e.preventDefault();
+      const pos = getSetupCanvasPointer(e);
+      setupPointerPos = pos;
+
+      const pt = getNearbySetupPoint(pos);
+      if (pt && !setupSelectedPoints.includes(pt.index)) {
+        setupSelectedPoints.push(pt.index);
+        updateSetupSequenceDisplay();
+      }
+      renderSetupPattern();
+    });
+
+    const endSetupDrawing = (e) => {
+      if (!isSetupDrawing) return;
+      isSetupDrawing = false;
+      setupPointerPos = null;
+      try {
+        if (setupPatternCanvas.hasPointerCapture(e.pointerId)) {
+          setupPatternCanvas.releasePointerCapture(e.pointerId);
+        }
+      } catch (_) {}
+      updateSetupSequenceDisplay();
+      renderSetupPattern();
+    };
+
+    setupPatternCanvas.addEventListener('pointerup', endSetupDrawing);
+    setupPatternCanvas.addEventListener('pointercancel', endSetupDrawing);
+  }
+
+  function updateSetupSequenceDisplay() {
+    if (!setupPatternSequenceDisplay) return;
+    if (setupSelectedPoints.length === 0) {
+      setupPatternSequenceDisplay.textContent = '(Ninguno trazado aún)';
+      setupPatternSequenceDisplay.style.color = 'var(--color-muted)';
+    } else {
+      setupPatternSequenceDisplay.textContent = setupSelectedPoints.join(' → ');
+      setupPatternSequenceDisplay.style.color = setupSelectedPoints.length >= 4 ? 'var(--color-success)' : 'var(--color-gold-dark)';
+    }
+  }
+
+  function openModalConfigurarPatron(user) {
+    if (!modalConfigurarPatron) return;
+    currentTargetPatternUser = user;
+    if (patronTargetUserId) patronTargetUserId.value = user.id;
+    if (patronModalTargetUser) patronModalTargetUser.textContent = `Patrón 3x3: ${user.name || user.username}`;
+    if (setupPatternAlert) setupPatternAlert.style.display = 'none';
+
+    // Si el usuario ya tiene un patrón guardado, precargarlo
+    const saved = user.patron_seguridad || '0-3-6-7-8';
+    setupSelectedPoints = saved.split('-').map(n => parseInt(n, 10)).filter(n => !isNaN(n));
+    updateSetupSequenceDisplay();
+
+    modalConfigurarPatron.style.display = 'flex';
+    modalConfigurarPatron.setAttribute('aria-hidden', 'false');
+    setTimeout(() => {
+      initSetupPatternCanvas();
+      window.LucideIcons?.refresh();
+    }, 50);
+  }
+
+  function closeModalConfigurarPatron() {
+    if (modalConfigurarPatron) {
+      modalConfigurarPatron.style.display = 'none';
+      modalConfigurarPatron.setAttribute('aria-hidden', 'true');
+      setupSelectedPoints = [];
+    }
+  }
+
+  closePatronModalBtn?.addEventListener('click', closeModalConfigurarPatron);
+
+  btnResetSetupPattern?.addEventListener('click', () => {
+    setupSelectedPoints = [];
+    updateSetupSequenceDisplay();
+    renderSetupPattern();
+    if (setupPatternAlert) setupPatternAlert.style.display = 'none';
+  });
+
+  btnSaveSetupPattern?.addEventListener('click', async () => {
+    if (setupSelectedPoints.length < 4) {
+      if (setupPatternAlert) {
+        setupPatternAlert.style.display = 'block';
+        setupPatternAlert.style.background = 'rgba(198, 40, 40, 0.12)';
+        setupPatternAlert.style.color = 'var(--color-danger)';
+        setupPatternAlert.textContent = 'El patrón debe conectar al menos 4 puntos para ser seguro.';
+      }
+      return;
+    }
+
+    const patternStr = setupSelectedPoints.join('-');
+    const targetId = patronTargetUserId?.value || currentTargetPatternUser?.id;
+
+    let session = null;
+    try { session = SessionStore.getSession(); } catch (err) {}
+    const activeU = (session && session.user) ? session.user : { name: 'Super Administrador' };
+
+    btnSaveSetupPattern.disabled = true;
+    btnSaveSetupPattern.innerHTML = '<span>Guardando...</span>';
+
+    try {
+      const res = await fetch('../api/staff/cambiar_pin.php', {
+        method: 'POST',
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          empId: targetId,
+          tipoPin: 'patron',
+          newPattern: patternStr,
+          requestingRole: 'SUPERADMIN',
+          requestingUser: activeU.name || 'superadmin'
+        })
+      });
+
+      const data = await res.json();
+      if (!data.success) throw new Error(data.message || 'Error al guardar patrón');
+
+      if (currentTargetPatternUser) {
+        currentTargetPatternUser.patron_seguridad = patternStr;
+      }
+      const localU = usersData.find(u => u.id === targetId);
+      if (localU) localU.patron_seguridad = patternStr;
+      saveUsersToStorage(usersData);
+
+      closeModalConfigurarPatron();
+      loadUsersFromDb();
+      showSuccessModal(
+        '¡Patrón Gestual Guardado!',
+        `El nuevo patrón 3x3 (${patternStr}) se ha asignado correctamente a "${currentTargetPatternUser?.name || 'usuario'}" en MySQL.`
+      );
+    } catch (err) {
+      if (setupPatternAlert) {
+        setupPatternAlert.style.display = 'block';
+        setupPatternAlert.style.background = 'rgba(198, 40, 40, 0.12)';
+        setupPatternAlert.style.color = 'var(--color-danger)';
+        setupPatternAlert.textContent = `Error: ${err.message}`;
+      }
+    } finally {
+      btnSaveSetupPattern.disabled = false;
+      btnSaveSetupPattern.innerHTML = '<i data-lucide="check" class="icon-sm"></i> <span>Guardar Patrón</span>';
+      window.LucideIcons?.refresh();
+    }
+  });
+
+
+
+  // ==========================================================================
+  // MODAL DE CONFIGURACIÓN Y CÓDIGO QR GOOGLE AUTHENTICATOR (TOTP RFC 6238)
+  // ==========================================================================
+  const modalTotpSetup = document.getElementById('modalTotpSetup');
+  const closeTotpModalBtn = document.getElementById('closeTotpModalBtn');
+  const btnDoneTotpModal = document.getElementById('btnDoneTotpModal');
+  const btnRegenerateTotpKey = document.getElementById('btnRegenerateTotpKey');
+  const btnCopyTotpSecret = document.getElementById('btnCopyTotpSecret');
+  const totpQrCodeContainer = document.getElementById('totpQrCodeContainer');
+  const totpSecretTextDisplay = document.getElementById('totpSecretTextDisplay');
+  const totpCurrentValidCode = document.getElementById('totpCurrentValidCode');
+  const totpModalCountdown = document.getElementById('totpModalCountdown');
+  const totpModalTargetUser = document.getElementById('totpModalTargetUser');
+
+  let currentTotpUser = null;
+  let totpModalTimerId = null;
+  let currentQrInstance = null;
+
+  async function openModalTotpSetup(user) {
+    if (!modalTotpSetup) return;
+    currentTotpUser = user;
+
+    if (totpModalTargetUser) {
+      totpModalTargetUser.textContent = `Google Authenticator: ${user.name || user.username}`;
+    }
+
+    modalTotpSetup.style.display = 'flex';
+    modalTotpSetup.setAttribute('aria-hidden', 'false');
+
+    await fetchAndRenderTotpData(user.id);
+    startTotpModalCountdown();
+    window.LucideIcons?.refresh();
+  }
+
+  function closeModalTotpSetup() {
+    if (modalTotpSetup) {
+      modalTotpSetup.style.display = 'none';
+      modalTotpSetup.setAttribute('aria-hidden', 'true');
+    }
+    if (totpModalTimerId) {
+      clearInterval(totpModalTimerId);
+      totpModalTimerId = null;
+    }
+    const testInput = document.getElementById('totpTestVerifyInput');
+    const testAlert = document.getElementById('totpTestResultAlert');
+    if (testInput) testInput.value = '';
+    if (testAlert) testAlert.style.display = 'none';
+    currentTotpUser = null;
+  }
+
+  async function fetchAndRenderTotpData(userId, action = 'get_setup') {
+    if (totpQrCodeContainer) {
+      totpQrCodeContainer.innerHTML = '<span style="font-size:0.85rem; color:var(--color-muted);">Generando Código QR...</span>';
+    }
+
+    try {
+      const res = await fetch(`../api/auth/totp_manage.php?action=${action}&userId=${encodeURIComponent(userId)}`, { credentials: 'include' });
+      const data = await res.json();
+
+      if (!data.success || !data.user) {
+        throw new Error(data.message || 'No se pudo obtener la configuración TOTP');
+      }
+
+      const u = data.user;
+      if (totpSecretTextDisplay) {
+        totpSecretTextDisplay.textContent = u.totp_secret_readable || u.totp_secret;
+      }
+      if (totpCurrentValidCode) {
+        totpCurrentValidCode.textContent = u.current_valid_code || '------';
+      }
+
+      // Renderizar Código QR usando la librería local QRCode.js
+      if (totpQrCodeContainer) {
+        totpQrCodeContainer.innerHTML = '';
+        if (typeof QRCode !== 'undefined') {
+          currentQrInstance = new QRCode(totpQrCodeContainer, {
+            text: u.otpauth_url,
+            width: 190,
+            height: 190,
+            colorDark: '#2C1D11',
+            colorLight: '#FFFFFF',
+            correctLevel: QRCode.CorrectLevel.M
+          });
+        } else {
+          // Fallback con imagen SVG/API
+          const encodedUrl = encodeURIComponent(u.otpauth_url);
+          totpQrCodeContainer.innerHTML = `<img src="https://api.qrserver.com/v1/create-qr-code/?size=190x190&data=${encodedUrl}" alt="Código QR TOTP" style="border-radius: 8px;" />`;
+        }
+      }
+
+      window.LucideIcons?.refresh();
+    } catch (err) {
+      console.error('Error cargando datos TOTP:', err);
+      if (totpQrCodeContainer) {
+        totpQrCodeContainer.innerHTML = `<span style="font-size:0.85rem; color:var(--color-terracotta);">Error al generar QR: ${err.message}</span>`;
+      }
+    }
+  }
+
+  function startTotpModalCountdown() {
+    if (totpModalTimerId) clearInterval(totpModalTimerId);
+
+    async function tick() {
+      const sec = Math.floor(Date.now() / 1000);
+      const rem = 30 - (sec % 30);
+      if (totpModalCountdown) totpModalCountdown.textContent = `${rem}s`;
+
+      // Si el ciclo llega a 30s exactos, refrescar el código de prueba
+      if (rem === 30 && currentTotpUser) {
+        try {
+          const res = await fetch(`../api/auth/totp_manage.php?action=get_setup&userId=${encodeURIComponent(currentTotpUser.id)}`, { credentials: 'include' });
+          const d = await res.json();
+          if (d.success && d.user && totpCurrentValidCode) {
+            totpCurrentValidCode.textContent = d.user.current_valid_code || '------';
+          }
+        } catch (e) {}
+      }
+    }
+
+    tick();
+    totpModalTimerId = setInterval(tick, 1000);
+  }
+
+  closeTotpModalBtn?.addEventListener('click', closeModalTotpSetup);
+  btnDoneTotpModal?.addEventListener('click', closeModalTotpSetup);
+
+
+
+  btnRegenerateTotpKey?.addEventListener('click', async () => {
+    if (!currentTotpUser) return;
+    if (!confirm('¿Está seguro de regenerar la clave secreta TOTP? Deberá volver a escanear el código QR en su aplicación.')) return;
+    await fetchAndRenderTotpData(currentTotpUser.id, 'regenerate');
+    showSuccessModal('¡Clave TOTP Regenerada!', 'Se ha generado un nuevo secreto criptográfico y el código QR ha sido actualizado.');
+  });
+
+  btnCopyTotpSecret?.addEventListener('click', () => {
+    const rawSecret = totpSecretTextDisplay?.textContent.replace(/\s+/g, '') || '';
+    if (rawSecret && navigator.clipboard) {
+      navigator.clipboard.writeText(rawSecret).then(() => {
+        showSuccessModal('¡Copiado!', 'Clave secreta copiada al portapapeles.');
+      }).catch(() => {
+        alert(`Clave secreta: ${rawSecret}`);
+      });
+    }
+  });
+
+  const btnTestVerifyTotp = document.getElementById('btnTestVerifyTotp');
+  const totpTestVerifyInput = document.getElementById('totpTestVerifyInput');
+  const totpTestResultAlert = document.getElementById('totpTestResultAlert');
+
+  btnTestVerifyTotp?.addEventListener('click', async () => {
+    const code = totpTestVerifyInput?.value.trim();
+    if (!code || code.length !== 6) {
+      if (totpTestResultAlert) {
+        totpTestResultAlert.style.display = 'block';
+        totpTestResultAlert.style.background = 'rgba(192, 57, 43, 0.12)';
+        totpTestResultAlert.style.color = 'var(--color-terracotta)';
+        totpTestResultAlert.textContent = 'Ingrese el código de 6 dígitos que ve en su celular.';
+      }
+      return;
+    }
+
+    if (!currentTotpUser) return;
+
+    try {
+      btnTestVerifyTotp.disabled = true;
+      btnTestVerifyTotp.textContent = 'Verificando...';
+
+      const res = await fetch(`../api/auth/totp_manage.php?action=verify_test&userId=${encodeURIComponent(currentTotpUser.id)}&code=${encodeURIComponent(code)}`, { credentials: 'include' });
+      const data = await res.json();
+
+      if (totpTestResultAlert) {
+        totpTestResultAlert.style.display = 'block';
+        if (data.success) {
+          totpTestResultAlert.style.background = 'rgba(46, 125, 50, 0.12)';
+          totpTestResultAlert.style.color = 'var(--color-success)';
+          totpTestResultAlert.innerHTML = `<i data-lucide="check-circle-2" class="icon-xs" style="vertical-align: middle; margin-right: 4px;"></i><strong>¡Sincronizado con éxito!</strong> El código es correcto. Este usuario ya puede iniciar sesión con Google Authenticator.`;
+        } else {
+          totpTestResultAlert.style.background = 'rgba(192, 57, 43, 0.12)';
+          totpTestResultAlert.style.color = 'var(--color-terracotta)';
+          totpTestResultAlert.innerHTML = `<i data-lucide="alert-circle" class="icon-xs" style="vertical-align: middle; margin-right: 4px;"></i><strong>Código no coincide:</strong> Verifique que la hora de su teléfono esté en automático y coincida con el servidor.`;
+        }
+        window.LucideIcons?.refresh();
+      }
+    } catch (e) {
+      if (totpTestResultAlert) {
+        totpTestResultAlert.style.display = 'block';
+        totpTestResultAlert.style.background = 'rgba(192, 57, 43, 0.12)';
+        totpTestResultAlert.style.color = 'var(--color-terracotta)';
+        totpTestResultAlert.textContent = 'Error al comunicarse con el servidor.';
+      }
+    } finally {
+      btnTestVerifyTotp.disabled = false;
+      btnTestVerifyTotp.textContent = 'Verificar';
+    }
+  });
+
+  totpTestVerifyInput?.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      btnTestVerifyTotp?.click();
+    }
+  });
 
   function openAuthPasswordModal(actionType, data = null, customTitle = null, customSubtitle = null) {
     pendingAuthAction = { actionType, data };
@@ -692,11 +1340,15 @@ function inicializarGestionUsuarios() {
         }
       }
       updateActiveEmojiButton(userToEdit.icon || 'shield-check');
+      const mfaSelect = document.getElementById('modalUserMfaTipo');
+      if (mfaSelect) mfaSelect.value = userToEdit.mfa_tipo || 'totp';
     } else {
       if (modalUserTitle) modalUserTitle.textContent = 'Crear Nuevo Usuario';
       usuarioForm?.reset();
       document.getElementById('modalUserId').value = '';
       updateActiveEmojiButton('shield-check');
+      const mfaSelect = document.getElementById('modalUserMfaTipo');
+      if (mfaSelect) mfaSelect.value = 'totp';
     }
 
     if (modalUsuarioForm) {
@@ -715,11 +1367,35 @@ function inicializarGestionUsuarios() {
 
   // RECONECTAR BOTÓN DE DESBLOQUEO DE USUARIOS Y SELECTOR DE EMOJI
   btnUnlockUserManagement?.addEventListener('click', () => {
-    loadUsersFromDb();
-    if (isUsersUnlocked) {
-      renderUsersTable();
+    let session = null;
+    try { session = SessionStore.getSession(); } catch (e) {}
+    const activeU = (session && session.user) ? session.user : null;
+    const userRoleStr = (activeU?.role || '').toLowerCase();
+    const userRoleCode = (activeU?.roleCode || activeU?.role_code || '').toUpperCase();
+    const isSuper = userRoleCode === 'SUPERADMIN' || userRoleStr.includes('superadmin') || (activeU?.username || '').toLowerCase() === 'superadmin';
+    const isAdmin = userRoleCode === 'ADMIN' || userRoleStr.includes('gerente') || userRoleStr.includes('admin');
+
+    if (!isSuper && !isAdmin) {
+      showErrorModal(
+        'Acceso Restringido: Administrador Requerido',
+        'Únicamente el Super Administrador o el Gerente General tienen autorización para desbloquear y gestionar usuarios en el sistema.'
+      );
       return;
     }
+
+    if (isSuper || isUsersUnlocked) {
+      isUsersUnlocked = true;
+      if (usersLockedPlaceholder) usersLockedPlaceholder.style.display = 'none';
+      if (usersCrudPanel) usersCrudPanel.style.display = 'block';
+      if (btnUnlockUserManagement) {
+        btnUnlockUserManagement.innerHTML = '<i data-lucide="unlock" class="icon-sm"></i> <span>Gestión Desbloqueada</span>';
+      }
+      loadUsersFromDb();
+      renderUsersTable();
+      window.LucideIcons?.refresh();
+      return;
+    }
+
     openAuthPasswordModal('UNLOCK_VIEW', null, 'Autorizar Desbloqueo de Usuarios', 'Ingrese su contraseña gerencial para ver credenciales');
   });
 
@@ -761,6 +1437,7 @@ function inicializarGestionUsuarios() {
       try {
         const res = await fetch('../api/auth/validar_gerente.php', {
           method: 'POST',
+          credentials: 'include',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ password: pass })
         });
@@ -795,7 +1472,7 @@ function inicializarGestionUsuarios() {
       loadUsersFromDb();
       showSuccessModal('¡Acceso Autorizado!', 'Gestión de Usuarios y Roles sincronizada con MySQL exitosamente.');
     } else if (actionType === 'SAVE_USER') {
-      const { id, name, username, password, role, icon } = data;
+      const { id, name, username, password, role, icon, mfa_tipo } = data;
       let roleCode = 'POS';
       let finalIcon = icon || 'shield-check';
 
@@ -817,6 +1494,7 @@ function inicializarGestionUsuarios() {
       try {
         fetch('../api/staff/guardar_empleado.php', {
           method: 'POST',
+          credentials: 'include',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             id: id || '',
@@ -824,10 +1502,13 @@ function inicializarGestionUsuarios() {
             username: username,
             password: password,
             pin: password || '1234',
+            mfa_tipo: mfa_tipo || 'totp',
             rol: role,
             roleCode: roleCode,
             icon: finalIcon,
-            estado: 'active'
+            estado: 'active',
+            requestingRole: 'SUPERADMIN',
+            requestingUser: 'superadmin'
           })
         }).then(res => res.json()).then(resp => {
           if (resp && resp.success && resp.employee) {
@@ -879,8 +1560,9 @@ function inicializarGestionUsuarios() {
       try {
         fetch('../api/staff/eliminar_empleado.php', {
           method: 'POST',
+          credentials: 'include',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ id: userToDelete.id })
+          body: JSON.stringify({ id: userToDelete.id, requestingRole: 'SUPERADMIN', requestingUser: 'superadmin' })
         }).then(res => res.json()).then(resp => {
           loadUsersFromDb();
         }).catch(err => console.warn('Error eliminando usuario en MySQL:', err));
@@ -903,6 +1585,7 @@ function inicializarGestionUsuarios() {
     const password = document.getElementById('modalUserPassword')?.value;
     const role = document.getElementById('modalUserRol')?.value;
     const icon = document.getElementById('modalUserIcon')?.value || 'shield-check';
+    const mfa_tipo = document.getElementById('modalUserMfaTipo')?.value || 'totp';
 
     if (!name || !username || !role) return;
 
@@ -952,7 +1635,7 @@ function inicializarGestionUsuarios() {
     const title = isEdit ? 'Confirmar Actualización de Usuario' : 'Confirmar Creación de Usuario';
     const sub = isEdit ? `Autorice la actualización del usuario "${name}"` : `Autorice la creación del nuevo usuario "${name}"`;
 
-    openAuthPasswordModal('SAVE_USER', { id, name, username, password, role, icon }, title, sub);
+    openAuthPasswordModal('SAVE_USER', { id, name, username, password, role, icon, mfa_tipo }, title, sub);
   });
 }
 
@@ -1371,4 +2054,5 @@ document.addEventListener('DOMContentLoaded', () => {
   try { inicializarGestionUsuarios(); } catch (e) { console.error('Error Gestión Usuarios:', e); }
   try { inicializarModalesYEventos(); } catch (e) { console.error('Error Modales Config:', e); }
 });
+
 

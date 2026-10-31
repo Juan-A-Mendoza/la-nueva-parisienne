@@ -206,3 +206,31 @@ function api_error(Exception $e, string $context = 'Operación', int $httpCode =
     ], JSON_UNESCAPED_UNICODE);
     exit();
 }
+
+/**
+ * Registra un intento de acceso en la bitácora de auditoría registro_accesos
+ */
+function security_log_access(?string $userId, string $username, string $ip, string $tipoIntento, string $estado, ?string $detalles = null): void {
+    try {
+        if (function_exists('getDbConnection')) {
+            $pdo = getDbConnection();
+            $device = substr($_SERVER['HTTP_USER_AGENT'] ?? 'Desconocido', 0, 250);
+            $stmt = $pdo->prepare("
+                INSERT INTO registro_accesos (usuario_id, username, ip_origen, dispositivo, tipo_intento, estado, detalles, fecha_hora)
+                VALUES (:uid, :uname, :ip, :device, :tipo, :estado, :detalles, NOW())
+            ");
+            $stmt->execute([
+                ':uid' => $userId,
+                ':uname' => substr($username, 0, 50),
+                ':ip' => substr($ip, 0, 45),
+                ':device' => $device,
+                ':tipo' => $tipoIntento,
+                ':estado' => $estado,
+                ':detalles' => substr($detalles ?? '', 0, 250)
+            ]);
+        }
+    } catch (Exception $e) {
+        error_log("[LNP AUDIT LOG ERROR] " . $e->getMessage());
+    }
+}
+

@@ -210,30 +210,47 @@
 
   <!-- MODAL DE CAMBIO DE PIN -->
   <div id="changePinModal" class="pin-modal-overlay" role="dialog" aria-modal="true" aria-labelledby="pinModalTitle">
-    <div class="pin-modal-card payment-modal-card">
+    <div class="pin-modal-card payment-modal-card" style="max-width: 460px;">
       <button id="closePinModalBtn" class="modal-close-btn" aria-label="Cerrar modal">&times;</button>
 
       <div class="selected-user-header" style="margin-bottom: 1.25rem;">
         <div class="selected-user-avatar"><i data-lucide="key-round"></i></div>
         <h3 id="pinModalTitle" class="selected-user-name">Restablecimiento de PIN</h3>
-        <span class="selected-user-role">Asignación de Clave Táctil de 4 Dígitos</span>
+        <span class="selected-user-role">Gestión de Credenciales (Exclusivo Superadmin)</span>
       </div>
 
-      <form id="changePinForm" style="display: flex; flex-direction: column; gap: 1.25rem; text-align: left;">
+      <form id="changePinForm" style="display: flex; flex-direction: column; gap: 1.15rem; text-align: left;">
         <div>
-          <label for="pinEmpSelect" style="font-weight: 700; font-size: 0.9rem; display: block; margin-bottom: 0.4rem;">Seleccionar Empleado:</label>
+          <label for="pinEmpSelect" style="font-weight: 700; font-size: 0.85rem; display: block; margin-bottom: 0.35rem;">Seleccionar Empleado:</label>
           <select id="pinEmpSelect" class="pos-search-input" style="padding: 0.65rem 1rem;">
             <!-- Opciones dinámicas -->
           </select>
         </div>
 
         <div>
-          <label for="newPinInput" style="font-weight: 700; font-size: 0.85rem; display: block; margin-bottom: 0.4rem;">Nuevo PIN (4 Dígitos):</label>
-          <input type="password" id="newPinInput" class="pos-search-input" value="1234" maxlength="4" pattern="\d{4}" style="text-align: center; font-size: 1.5rem; letter-spacing: 0.3em;" required>
+          <label for="pinTypeSelect" style="font-weight: 700; font-size: 0.85rem; display: block; margin-bottom: 0.35rem;">Tipo de Credencial a Modificar:</label>
+          <select id="pinTypeSelect" class="pos-search-input" style="padding: 0.65rem 1rem;">
+            <option value="primario">🔑 PIN Primario (Paso 1 - 4 Dígitos)</option>
+            <option value="2fa">🛡️ Código 2FA Segundo Factor (Paso 2 - 6 Dígitos)</option>
+            <option value="maestro" id="staffOptPinMaestro">⭐ PIN Maestro Superadmin (6 Dígitos)</option>
+          </select>
+        </div>
+
+        <div>
+          <label for="newPinInput" id="newPinLabel" style="font-weight: 700; font-size: 0.85rem; display: block; margin-bottom: 0.35rem;">Nuevo PIN:</label>
+          <div style="position: relative;">
+            <input type="password" id="newPinInput" class="pos-search-input" value="1234" maxlength="30" style="text-align: center; font-size: 1.4rem; letter-spacing: 0.25em; padding-right: 44px;" required>
+            <button type="button" id="btnToggleStaffPin" style="position: absolute; right: 10px; top: 50%; transform: translateY(-50%); background: transparent; border: none; cursor: pointer; color: var(--color-muted);" title="Ver / Ocultar PIN">
+              <i data-lucide="eye" class="icon-sm"></i>
+            </button>
+          </div>
+          <small id="newPinHint" style="font-size: 0.75rem; color: var(--color-muted); display: block; margin-top: 0.3rem;">
+            PIN primario solicitado en el Paso 1 de inicio de sesión.
+          </small>
         </div>
 
         <button type="submit" class="btn-process-payment" style="margin-top: 0.5rem;">
-          <i data-lucide="check" class="icon-sm"></i> <span>Confirmar Nuevo PIN</span>
+          <i data-lucide="check" class="icon-sm"></i> <span>Confirmar y Guardar PIN</span>
         </button>
       </form>
     </div>

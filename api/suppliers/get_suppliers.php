@@ -83,6 +83,7 @@ try {
             'orderDate' => $ord['orderDate'],
             'deliveryDate' => $ord['deliveryDate'],
             'status' => $ord['status'],
+            'statusText' => $ord['status'] === 'paid' ? 'Pagada' : ($ord['status'] === 'received' ? 'Recibido en Almacén' : 'En Tránsito'),
             'totalAmount' => (float)$ord['totalAmount'],
             'itemsSummary' => $summary,
             'items' => $items

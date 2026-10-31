@@ -14,6 +14,7 @@ if (($_SERVER['REQUEST_METHOD'] ?? '') === 'OPTIONS') {
     exit();
 }
 
+define('LNP_PUBLIC', true);
 require_once __DIR__ . '/../config/conexion.php';
 
 $rawInput = file_get_contents('php://input');

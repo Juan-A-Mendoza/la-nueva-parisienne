@@ -28,7 +28,10 @@ try {
                COALESCE(u.turno, 'Turno Completo') AS shift,
                u.telefono AS phone, u.email,
                u.estado AS status,
-               COALESCE(u.icono, 'user') AS avatar
+               COALESCE(u.icono, 'user') AS avatar,
+               COALESCE(u.mfa_tipo, 'totp') AS mfa_tipo,
+               COALESCE(u.totp_enabled, 1) AS totp_enabled,
+               COALESCE(u.patron_seguridad, '0-3-6-7-8') AS patron_seguridad
         FROM usuarios u
         LEFT JOIN roles r ON u.rol_id = r.id
         ORDER BY u.codigo ASC
@@ -53,7 +56,10 @@ try {
             'status' => $r['status'],
             'statusText' => $isActive ? 'Activo' : 'Inactivo',
             'avatar' => $r['avatar'] ?: 'user',
-            'icon' => $r['avatar'] ?: 'user'
+            'icon' => $r['avatar'] ?: 'user',
+            'mfa_tipo' => $r['mfa_tipo'] ?: 'totp',
+            'totp_enabled' => (int)$r['totp_enabled'],
+            'patron_seguridad' => $r['patron_seguridad'] ?: '0-3-6-7-8'
         ];
     }, $rows);
 

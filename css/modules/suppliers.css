@@ -257,4 +257,42 @@
 .po-status-tag.received {
   background: rgba(46, 125, 50, 0.14);
   color: var(--color-success);
+  border: 1px solid rgba(46, 125, 50, 0.25);
+}
+
+.po-status-tag.paid {
+  background: rgba(16, 185, 129, 0.15);
+  color: #059669;
+  border: 1px solid rgba(16, 185, 129, 0.35);
+}
+
+.btn-pay-order {
+  background: linear-gradient(135deg, #d49b54 0%, #b8833e 100%) !important;
+  color: #1a120b !important;
+  font-weight: 700 !important;
+  border: none;
+  cursor: pointer;
+  box-shadow: 0 2px 6px rgba(212, 155, 84, 0.25);
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.45rem 0.85rem;
+  border-radius: var(--radius-sm);
+  font-size: 0.82rem;
+}
+
+.btn-pay-order:hover {
+  background: linear-gradient(135deg, #e5ab64 0%, #c9934c 100%) !important;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 10px rgba(212, 155, 84, 0.35);
+}
+
+.btn-confirm-receive {
+  transition: all 0.2s ease;
+}
+
+.btn-confirm-receive:hover {
+  filter: brightness(1.08);
+  transform: translateY(-1px);
 }

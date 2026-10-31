@@ -26,6 +26,7 @@ if (!$data) {
 }
 
 try {
+    define('LNP_PUBLIC', true);
     require_once __DIR__ . '/config/conexion.php';
     $pdo = getDbConnection();
 

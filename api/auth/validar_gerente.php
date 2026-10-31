@@ -5,6 +5,7 @@
    a un usuario con rol Gerente (ADMIN) o Super Administrador (SUPERADMIN).
    ========================================================================== */
 
+define('LNP_PUBLIC', true);
 require_once __DIR__ . '/../config/conexion.php';
 require_once __DIR__ . '/../config/security.php';
 

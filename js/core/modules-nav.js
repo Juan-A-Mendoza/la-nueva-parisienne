@@ -70,7 +70,7 @@ export const PAGE_PERMISSIONS = {
   'accounting.html': ['SUPERADMIN', 'ACCOUNTANT'],
   'inventory.html': ['SUPERADMIN', 'ADMIN', 'BAKER', 'KITCHEN'],
   'suppliers.html': ['SUPERADMIN', 'ADMIN'],
-  'staff.html': ['SUPERADMIN'],
+  'staff.html': ['SUPERADMIN', 'ADMIN'],
   'configuraciones.html': ['SUPERADMIN', 'ADMIN'],
   'settings.html': ['SUPERADMIN', 'ADMIN']
 };

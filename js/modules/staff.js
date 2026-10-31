@@ -22,12 +22,13 @@ document.addEventListener('DOMContentLoaded', () => {
     icon: 'shield-check'
   };
 
-  // 1.1 Verificación de Seguridad: Gestión de Personal y PINs es EXCLUSIVA de SUPERADMIN
+  // 1.1 Verificación de Seguridad: Gestión de Personal y PINs accesible a SUPERADMIN y ADMIN
   const userRole = (activeUser.role || '').toLowerCase();
   const userRoleCode = (activeUser.roleCode || activeUser.role_code || '').toUpperCase();
-  const isSuperadmin = userRoleCode === 'SUPERADMIN' || userRole.includes('superadmin');
+  const isSuperadmin = userRoleCode === 'SUPERADMIN' || userRole.includes('superadmin') || (activeUser.username || '').toLowerCase() === 'superadmin';
+  const isAdmin = userRoleCode === 'ADMIN' || userRole.includes('gerente') || userRole.includes('admin');
 
-  if (!isSuperadmin) {
+  if (!isSuperadmin && !isAdmin) {
     let redirectUrl = 'dashboard.html';
     if (userRoleCode === 'ACCOUNTANT' || userRole.includes('contador')) redirectUrl = 'accounting.html';
     else if (userRoleCode === 'POS' || userRoleCode === 'CASHIER' || userRole.includes('cajero')) redirectUrl = 'pos.html';
@@ -74,7 +75,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   async function loadStaffFromApi() {
     try {
-      const res = await fetch(`../api/staff/get_staff.php?t=${Date.now()}`, { cache: 'no-store' });
+      const res = await fetch(`../api/staff/get_staff.php?t=${Date.now()}`, { cache: 'no-store', credentials: 'include' });
       if (res.ok) {
         const data = await res.json();
         if (data.success && Array.isArray(data.staff) && data.staff.length > 0) {
@@ -137,11 +138,17 @@ document.addEventListener('DOMContentLoaded', () => {
         <td><span style="font-size: 0.85rem; color: var(--color-muted);">${emp.department}</span></td>
         <td style="font-size: 0.85rem;">${emp.shift}</td>
         <td><span style="font-weight: 700; color: var(--color-success);">${emp.statusText}</span></td>
-        <td><span style="font-family: monospace; font-size: 1.1rem; letter-spacing: 0.15em;">••••</span></td>
+        <td>
+          <div style="display: flex; align-items: center; gap: 0.35rem;">
+            <span style="font-family: monospace; font-size: 1.1rem; letter-spacing: 0.15em;">••••</span>
+            <span style="font-size: 0.68rem; font-weight: 800; background: rgba(46, 125, 50, 0.12); color: var(--color-success); padding: 0.15rem 0.45rem; border-radius: 9999px; border: 1px solid rgba(46, 125, 50, 0.25);" title="Segundo Factor 2FA Activo">2FA</span>
+            ${emp.roleCode === 'SUPERADMIN' ? '<span style="font-size: 0.68rem; font-weight: 800; background: rgba(212, 155, 84, 0.18); color: var(--color-gold-dark); padding: 0.15rem 0.45rem; border-radius: 9999px; border: 1px solid var(--color-gold);" title="PIN Maestro Activo">MAESTRO</span>' : ''}
+          </div>
+        </td>
         <td>
           <div style="display: flex; gap: 0.4rem;">
             <button type="button" class="btn-table-action btn-edit-emp" style="background: var(--bg-main); border: var(--border-subtle); color: var(--color-espresso);"><i data-lucide="edit-3" class="icon-xs"></i> <span>Editar</span></button>
-            <button type="button" class="btn-table-action btn-pin-emp" style="background: var(--color-gold-light); color: var(--color-gold-dark);"><i data-lucide="key-round" class="icon-xs"></i> <span>PIN</span></button>
+            <button type="button" class="btn-table-action btn-pin-emp" style="background: var(--color-gold-light); color: var(--color-gold-dark);"><i data-lucide="key-round" class="icon-xs"></i> <span>PIN / 2FA</span></button>
           </div>
         </td>
       `;
@@ -233,8 +240,17 @@ document.addEventListener('DOMContentLoaded', () => {
     try {
       const res = await fetch('../api/staff/guardar_empleado.php', {
         method: 'POST',
+        credentials: 'include',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name, roleCode, shift, department: dept, pin: '1234' })
+        body: JSON.stringify({ 
+          name, 
+          roleCode, 
+          shift, 
+          department: dept, 
+          pin: '1234',
+          requestingRole: isSuperadmin ? 'SUPERADMIN' : 'ADMIN',
+          requestingUser: activeUser.name || activeUser.username
+        })
       });
       const data = await res.json();
       if (data.success && data.employee) {
@@ -266,10 +282,68 @@ document.addEventListener('DOMContentLoaded', () => {
     alert(`Empleado ${name} incorporado exitosamente en el sistema con PIN por defecto 1234.`);
   });
 
+  const pinTypeSelect = document.getElementById('pinTypeSelect');
+  const newPinInput = document.getElementById('newPinInput');
+  const newPinLabel = document.getElementById('newPinLabel');
+  const newPinHint = document.getElementById('newPinHint');
+  const btnToggleStaffPin = document.getElementById('btnToggleStaffPin');
+  const staffOptPinMaestro = document.getElementById('staffOptPinMaestro');
+
+  btnToggleStaffPin?.addEventListener('click', () => {
+    if (!newPinInput) return;
+    const isPass = newPinInput.type === 'password';
+    newPinInput.type = isPass ? 'text' : 'password';
+    btnToggleStaffPin.innerHTML = isPass ? '<i data-lucide="eye-off" class="icon-sm"></i>' : '<i data-lucide="eye" class="icon-sm"></i>';
+    window.LucideIcons?.refresh();
+  });
+
+  function syncPinTypeUI() {
+    if (!pinTypeSelect || !newPinInput) return;
+    const val = pinTypeSelect.value;
+    if (val === 'primario') {
+      if (newPinLabel) newPinLabel.textContent = 'Nuevo PIN Primario (Paso 1):';
+      if (newPinHint) newPinHint.textContent = 'PIN de 4 dígitos o contraseña solicitada en el Paso 1.';
+      newPinInput.placeholder = '1234';
+      newPinInput.maxLength = 20;
+    } else if (val === '2fa') {
+      if (newPinLabel) newPinLabel.textContent = 'Nuevo Código 2FA (Paso 2):';
+      if (newPinHint) newPinHint.textContent = 'Código numérico de 6 dígitos para la verificación de segundo factor.';
+      newPinInput.placeholder = '123456';
+      newPinInput.maxLength = 6;
+    } else if (val === 'maestro') {
+      if (newPinLabel) newPinLabel.textContent = 'Nuevo PIN Maestro Superadmin:';
+      if (newPinHint) newPinHint.textContent = 'PIN maestro de 6 dígitos exclusivo para alta dirección (Superadmin).';
+      newPinInput.placeholder = '990022';
+      newPinInput.maxLength = 6;
+    }
+  }
+
+  pinTypeSelect?.addEventListener('change', syncPinTypeUI);
+
+  pinEmpSelect?.addEventListener('change', () => {
+    updateMaestroAvailability();
+  });
+
+  function updateMaestroAvailability() {
+    if (!pinEmpSelect || !staffOptPinMaestro) return;
+    const selEmp = staff.find(e => e.id === pinEmpSelect.value);
+    const isTargetSuper = selEmp && (selEmp.roleCode === 'SUPERADMIN' || (selEmp.role && selEmp.role.toLowerCase().includes('super')));
+    staffOptPinMaestro.disabled = !isTargetSuper;
+    if (!isTargetSuper && pinTypeSelect.value === 'maestro') {
+      pinTypeSelect.value = 'primario';
+      syncPinTypeUI();
+    }
+  }
+
   function openPinModal(empId = null) {
     populateEmpSelect();
     if (empId) pinEmpSelect.value = empId;
+    updateMaestroAvailability();
+    if (pinTypeSelect) pinTypeSelect.value = 'primario';
+    syncPinTypeUI();
+    if (newPinInput) newPinInput.value = '';
     changePinModal.classList.add('active');
+    setTimeout(() => window.LucideIcons?.refresh(), 0);
   }
 
   btnOpenPinModal?.addEventListener('click', () => openPinModal());
@@ -278,26 +352,37 @@ document.addEventListener('DOMContentLoaded', () => {
   changePinForm?.addEventListener('submit', async (e) => {
     e.preventDefault();
     const empId = pinEmpSelect.value;
-    const newPin = document.getElementById('newPinInput').value;
+    const tipoPin = pinTypeSelect ? pinTypeSelect.value : 'primario';
+    const newPin = newPinInput.value.trim();
+
+    if (!newPin) {
+      alert('Por favor ingrese el nuevo PIN.');
+      return;
+    }
 
     try {
       const res = await fetch('../api/staff/cambiar_pin.php', {
         method: 'POST',
+        credentials: 'include',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ empId, newPin })
+        body: JSON.stringify({ 
+          empId, 
+          tipoPin, 
+          newPin,
+          requestingRole: isSuperadmin ? 'SUPERADMIN' : 'ADMIN',
+          requestingUser: activeUser.name || 'superadmin'
+        })
       });
       const data = await res.json();
+      if (!data.success) throw new Error(data.message || 'Error al actualizar PIN');
+
       const emp = staff.find(e => e.id === empId);
-      if (emp) emp.pin = newPin;
+      if (emp && tipoPin === 'primario') emp.pin = newPin;
       changePinModal.classList.remove('active');
       changePinForm.reset();
-      alert(data.message || `PIN de acceso para ${emp ? emp.name : 'empleado'} actualizado correctamente.`);
+      alert(`✅ ¡Operación Exitosa!\n${data.message}`);
     } catch (err) {
-      const emp = staff.find(e => e.id === empId);
-      if (emp) emp.pin = newPin;
-      changePinModal.classList.remove('active');
-      changePinForm.reset();
-      alert(`PIN de acceso para ${emp ? emp.name : 'empleado'} actualizado correctamente.`);
+      alert(`Error al actualizar PIN: ${err.message}`);
     }
   });
 });

@@ -3,15 +3,17 @@
    Manejo de estado de usuario, integración con API PHP/MySQL y fallback local
    ========================================================================== */
 
+import { TOTPOffline } from './totp-offline.js';
+
 const STORAGE_KEY = 'LN_PARISIENNE_SESSION';
 
-// Arreglo de usuarios por defecto (Semilla Inicial con Superadmin)
+// Arreglo de usuarios por defecto (Semilla Inicial con Superadmin y Secretos TOTP RFC 6238)
 const INITIAL_USERS = [
-  { id: 'usr_superadmin', name: 'Super Administrador', username: 'superadmin', role: 'Super Administrador', roleCode: 'SUPERADMIN', icon: 'shield-check', pin: '1234', description: 'Acceso total e irrestricto a todas las funciones del sistema.', redirectUrl: 'modules/dashboard.html', allowedModules: ['all'] },
-  { id: 'usr_001', name: 'Juan Mendoza', username: 'admin', role: 'Gerente General', roleCode: 'ADMIN', icon: 'shield-check', pin: '1234', description: 'Gestión y auditoría del panel gerencial, ventas e inventario.', redirectUrl: 'modules/dashboard.html', allowedModules: ['dashboard', 'inventory', 'suppliers'] },
-  { id: 'usr_002', name: 'María Elena Suárez', username: 'cajero1', role: 'Cajero', roleCode: 'POS', icon: 'banknote', pin: '1234', description: 'Facturación directa a clientes, cobros rápidos y apertura de caja.', redirectUrl: 'modules/pos.html', allowedModules: ['pos'] },
-  { id: 'usr_003', name: 'Carlos Eduardo Rivas', username: 'panadero1', role: 'Panadero', roleCode: 'KITCHEN', icon: 'chef-hat', pin: '1234', description: 'Gestión de hornos, recetas, orden del día y preparación de masa.', redirectUrl: 'modules/kitchen.html', allowedModules: ['kitchen', 'inventory'] },
-  { id: 'usr_004', name: 'Sebastian Finanzas', username: 'contador', role: 'Contador General', roleCode: 'ACCOUNTANT', icon: 'bar-chart-3', pin: '1234', description: 'Auditoría financiera, balance de comprobación y libros contables.', redirectUrl: 'modules/accounting.html', allowedModules: ['accounting'] }
+  { id: 'usr_superadmin', name: 'Super Administrador', username: 'superadmin', role: 'Super Administrador', roleCode: 'SUPERADMIN', icon: 'shield-check', pin: '1234', totpSecret: 'PARISIENNESUPER2', description: 'Acceso total e irrestricto a todas las funciones del sistema.', redirectUrl: 'modules/dashboard.html', allowedModules: ['all'] },
+  { id: 'usr_001', name: 'Juan Mendoza', username: 'admin', role: 'Gerente General', roleCode: 'ADMIN', icon: 'shield-check', pin: '1234', totpSecret: 'PARISIENNEADMIN2', description: 'Gestión y auditoría del panel gerencial, ventas e inventario.', redirectUrl: 'modules/dashboard.html', allowedModules: ['dashboard', 'inventory', 'suppliers'] },
+  { id: 'usr_002', name: 'María Elena Suárez', username: 'cajero1', role: 'Cajero', roleCode: 'POS', icon: 'banknote', pin: '1234', totpSecret: 'PARISIENNECASHR2', description: 'Facturación directa a clientes, cobros rápidos y apertura de caja.', redirectUrl: 'modules/pos.html', allowedModules: ['pos'] },
+  { id: 'usr_003', name: 'Carlos Eduardo Rivas', username: 'panadero1', role: 'Panadero', roleCode: 'KITCHEN', icon: 'chef-hat', pin: '1234', totpSecret: 'PARISIENNEBAKER2', description: 'Gestión de hornos, recetas, orden del día y preparación de masa.', redirectUrl: 'modules/kitchen.html', allowedModules: ['kitchen', 'inventory'] },
+  { id: 'usr_004', name: 'Sebastian Finanzas', username: 'contador', role: 'Contador General', roleCode: 'ACCOUNTANT', icon: 'bar-chart-3', pin: '1234', totpSecret: 'PARISIENNECOUNT2', description: 'Auditoría financiera, balance de comprobación y libros contables.', redirectUrl: 'modules/accounting.html', allowedModules: ['accounting'] }
 ];
 
 // Base de datos simulada de empleados y perfiles (Fallback local)
@@ -24,6 +26,7 @@ const USERS_DATABASE = [
     roleCode: 'SUPERADMIN',
     icon: 'shield-check',
     pin: '1234',
+    totpSecret: 'PARISIENNESUPER2',
     description: 'Acceso total e irrestricto a todas las funciones del sistema.',
     redirectUrl: 'modules/dashboard.html',
     allowedModules: ['all']
@@ -36,6 +39,7 @@ const USERS_DATABASE = [
     roleCode: 'ADMIN',
     icon: 'shield-check',
     pin: '1234',
+    totpSecret: 'PARISIENNEADMIN2',
     description: 'Gestión y auditoría del panel gerencial, ventas e inventario.',
     redirectUrl: 'modules/dashboard.html',
     allowedModules: ['dashboard', 'inventory', 'suppliers']
@@ -48,6 +52,7 @@ const USERS_DATABASE = [
     roleCode: 'KITCHEN',
     icon: 'chef-hat',
     pin: '1234',
+    totpSecret: 'PARISIENNEBAKER2',
     description: 'Gestión de hornos, recetas, orden del día y preparación de masa.',
     redirectUrl: 'modules/kitchen.html',
     allowedModules: ['kitchen', 'inventory']
@@ -60,6 +65,7 @@ const USERS_DATABASE = [
     roleCode: 'POS',
     icon: 'banknote',
     pin: '1234',
+    totpSecret: 'PARISIENNECASHR2',
     description: 'Facturación directa a clientes, cobros rápidos y apertura de caja.',
     redirectUrl: 'modules/pos.html',
     allowedModules: ['pos']
@@ -72,6 +78,7 @@ const USERS_DATABASE = [
     roleCode: 'ACCOUNTANT',
     icon: 'bar-chart-3',
     pin: '1234',
+    totpSecret: 'PARISIENNECOUNT2',
     description: 'Auditoría financiera, balance de comprobación y libros contables.',
     redirectUrl: 'modules/accounting.html',
     allowedModules: ['accounting']
@@ -195,6 +202,7 @@ export const SessionStore = {
           role: user.role || 'Super Administrador',
           roleCode: roleCode,
           icon: icon,
+          totpSecret: user.totpSecret || (roleCode === 'SUPERADMIN' ? 'PARISIENNESUPER2' : 'PARISIENNEADMIN2'),
           description: user.description || `Acceso asignado como ${user.role || 'Empleado'}.`,
           redirectUrl: redirectUrl,
           allowedModules: allowedModules
@@ -226,7 +234,19 @@ export const SessionStore = {
         body: JSON.stringify({ userId: username, inputPin: password })
       });
       const data = await res.json();
-      if (res.ok && data.success && data.user) {
+
+      if (res.ok && data.success && (data.requires_2fa || data.requires_pattern)) {
+        return {
+          success: true,
+          requires2FA: !!data.requires_2fa,
+          requiresPattern: !!data.requires_pattern,
+          mfaTipo: data.mfa_tipo || (data.requires_pattern ? 'patron' : 'totp'),
+          isSuperadmin: !!data.is_superadmin,
+          tempToken: data.temp_token,
+          user: data.user,
+          message: data.message
+        };
+      } else if (res.ok && data.success && data.user) {
         const userPayload = {
           id: data.user.id,
           name: data.user.name,
@@ -257,6 +277,221 @@ export const SessionStore = {
   },
 
   /**
+   * Valida el segundo factor (2FA o PIN Maestro de Superadministrador)
+   */
+  async verify2FAAsync(tempToken, code, user) {
+    try {
+      const apiBase = window.location.pathname.includes('/modules/') ? '../api' : 'api';
+      const res = await fetch(`${apiBase}/auth/verificar_2fa.php`, {
+        method: 'POST',
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ tempToken, code, userId: user?.username || user?.id })
+      });
+      const data = await res.json();
+      if (res.ok && data.success) {
+        // Si requiere Tercer Factor (Patrón Gestual 3x3 para Superadmin)
+        if (data.requires_3fa) {
+          return {
+            success: true,
+            requires3FA: true,
+            factor3Type: data.factor3_type || 'pattern',
+            tempToken: data.temp_token || tempToken,
+            user: data.user,
+            message: data.message
+          };
+        }
+
+        // Acceso final para usuarios regulares
+        const userPayload = {
+          id: data.user.id,
+          name: data.user.name,
+          username: data.user.code || data.user.username || data.user.id,
+          role: data.user.role,
+          roleCode: data.user.roleCode,
+          icon: data.user.icon,
+          redirectUrl: data.user.redirectUrl || 'modules/dashboard.html',
+          allowedModules: ['all']
+        };
+
+        this.setSession({
+          user: userPayload,
+          token: data.token || `AUTH_${Date.now()}`,
+          csrfToken: data.csrf_token || '',
+          loginTimestamp: data.timestamp || new Date().toISOString()
+        });
+
+        return { success: true, redirectUrl: userPayload.redirectUrl, user: userPayload };
+      } else if (!res.ok) {
+        return { success: false, message: data.message || 'Código de seguridad incorrecto.' };
+      }
+    } catch (e) {
+      console.warn('Validación 2FA MySQL no disponible, usando respaldo local:', e);
+    }
+
+    // Respaldo local si no hay conexión a base de datos
+    const isSuper = (user?.roleCode || '').toUpperCase() === 'SUPERADMIN' || (user?.username || '').toLowerCase() === 'superadmin' || !!user?.isSuperadmin;
+    const cleanCode = String(code || '').trim();
+    
+    // Obtener secreto TOTP local del usuario
+    const localProfile = this.getProfileById(user?.username || user?.id);
+    const totpSecret = localProfile?.totpSecret || user?.totpSecret || (isSuper ? '4NPNBUQA7UMCBF56' : 'PARISIENNEADMIN2');
+
+    // Validar código dinámico Google Authenticator (RFC 6238 TOTP offline con tolerancia ±120s)
+    let isSecondFactorValid = false;
+
+    if (totpSecret && (typeof TOTPOffline !== 'undefined' ? TOTPOffline.verifyCode(totpSecret, cleanCode, 4) : cleanCode.length === 6)) {
+      isSecondFactorValid = true;
+    }
+
+    if (isSecondFactorValid) {
+      if (isSuper) {
+        // El Superadministrador pasa al Tercer Factor (Patrón Gestual)
+        return {
+          success: true,
+          requires3FA: true,
+          factor3Type: 'pattern',
+          tempToken: tempToken || `3FA_OFFLINE_${Date.now()}`,
+          user: user,
+          message: 'Código de Google Authenticator verificado. Trace su Patrón Gestual para acceder.'
+        };
+      }
+
+      const userPayload = {
+        id: user?.id || localProfile?.id || 'usr_001',
+        name: user?.name || localProfile?.name || user?.username,
+        username: user?.username || localProfile?.username,
+        role: user?.role || localProfile?.role || 'Personal de Tienda',
+        roleCode: user?.roleCode || localProfile?.roleCode || 'CASHIER',
+        icon: user?.icon || localProfile?.icon || 'user',
+        redirectUrl: user?.redirectUrl || localProfile?.redirectUrl || 'modules/pos.html',
+        allowedModules: ['all']
+      };
+      this.setSession({
+        user: userPayload,
+        token: `AUTH_LOCAL_${Date.now()}`,
+        csrfToken: '',
+        authSource: 'google_authenticator_totp_offline',
+        loginTimestamp: new Date().toISOString()
+      });
+      return { success: true, redirectUrl: userPayload.redirectUrl, user: userPayload };
+    } else {
+      return {
+        success: false,
+        message: 'Código de Google Authenticator incorrecto o expirado.'
+      };
+    }
+  },
+
+  /**
+   * Valida el tercer factor (Patrón Gestual 3x3 exclusivo de Superadministrador)
+   */
+  async verifyPatternAsync(tempToken, pattern, user) {
+    try {
+      const apiBase = window.location.pathname.includes('/modules/') ? '../api' : 'api';
+      const res = await fetch(`${apiBase}/auth/verificar_patron.php`, {
+        method: 'POST',
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ tempToken, pattern, userId: user?.username || user?.id })
+      });
+      const data = await res.json();
+      if (res.ok && data.success && data.user) {
+        const userPayload = {
+          id: data.user.id,
+          name: data.user.name,
+          username: data.user.code || data.user.username || data.user.id,
+          role: data.user.role,
+          roleCode: data.user.roleCode,
+          icon: data.user.icon,
+          redirectUrl: data.user.redirectUrl || 'modules/dashboard.html',
+          allowedModules: ['all']
+        };
+
+        this.setSession({
+          user: userPayload,
+          token: data.token || `AUTH_${Date.now()}`,
+          csrfToken: data.csrf_token || '',
+          loginTimestamp: data.timestamp || new Date().toISOString()
+        });
+
+        return { success: true, redirectUrl: userPayload.redirectUrl, user: userPayload };
+      } else if (!res.ok) {
+        return { success: false, message: data.message || 'Patrón gestual incorrecto.' };
+      }
+    } catch (e) {
+      console.warn('Validación de Patrón Gestual MySQL no disponible, usando respaldo local:', e);
+    }
+
+    // Respaldo local offline para patrón gestual
+    const cleanInput = String(pattern || '').replace(/[^0-8]/g, '');
+    const validPatterns = ['03678']; // Por defecto 'L'
+    if (validPatterns.includes(cleanInput)) {
+      const userPayload = {
+        id: user?.id || (user?.username === 'superadmin' ? 'usr_superadmin' : 'usr_001'),
+        name: user?.name || user?.username || 'Usuario Autorizado',
+        username: user?.username || 'usuario',
+        role: user?.role || (user?.isSuperadmin ? 'Super Administrador' : 'Personal Autorizado'),
+        roleCode: user?.roleCode || (user?.isSuperadmin ? 'SUPERADMIN' : 'STAFF'),
+        icon: user?.icon || (user?.isSuperadmin ? 'crown' : 'user'),
+        redirectUrl: user?.redirectUrl || 'modules/dashboard.html',
+        allowedModules: ['all']
+      };
+      this.setSession({
+        user: userPayload,
+        token: `AUTH_LOCAL_3FA_${Date.now()}`,
+        csrfToken: '',
+        authSource: 'pattern_lock_offline',
+        loginTimestamp: new Date().toISOString()
+      });
+      return { success: true, redirectUrl: userPayload.redirectUrl, user: userPayload };
+    } else {
+      return {
+        success: false,
+        message: 'Patrón gestual incorrecto. Trace la combinación correcta.'
+      };
+    }
+  },
+
+  /**
+   * Obtiene la configuración y datos para el código QR de Google Authenticator (con fallback 100% offline)
+   */
+  async getTotpSetupForUser(userIdOrUsername) {
+    try {
+      const apiBase = window.location.pathname.includes('/modules/') ? '../api' : 'api';
+      const res = await fetch(`${apiBase}/auth/totp_manage.php?action=get_setup&userId=${encodeURIComponent(userIdOrUsername)}`);
+      if (res.ok) {
+        const data = await res.json();
+        if (data.success && data.user) {
+          return data.user;
+        }
+      }
+    } catch (e) {
+      console.warn('API totp_manage no disponible, generando datos TOTP 100% offline:', e);
+    }
+
+    // Fallback 100% offline
+    const profile = this.getProfileById(userIdOrUsername) || {
+      id: userIdOrUsername,
+      name: userIdOrUsername,
+      username: userIdOrUsername,
+      totpSecret: 'PARISIENNESUPER2'
+    };
+    const secret = profile.totpSecret || 'PARISIENNESUPER2';
+    const account = profile.username || profile.name || 'Usuario';
+    return {
+      id: profile.id,
+      username: profile.username,
+      nombre: profile.name,
+      totp_secret: secret,
+      totp_secret_readable: TOTPOffline.formatSecret(secret),
+      otpauth_url: TOTPOffline.getOtpAuthUrl(account, secret, 'La Nueva Parisienne'),
+      current_valid_code: TOTPOffline.calculateCode(secret),
+      remaining_seconds: TOTPOffline.getRemainingSeconds()
+    };
+  },
+
+  /**
    * Valida credenciales de login síncronas contra el almacenamiento local
    */
   validateCredentials(username, password) {
@@ -278,8 +513,9 @@ export const SessionStore = {
             let redirectUrl = user.redirectUrl || 'modules/dashboard.html';
             const roleLower = (user.role || '').toLowerCase();
             const codeUpper = (user.roleCode || '').toUpperCase();
+            const isSuper = codeUpper === 'SUPERADMIN' || roleLower.includes('superadmin') || cleanUser === 'superadmin';
 
-            if (codeUpper === 'SUPERADMIN' || roleLower.includes('superadmin')) redirectUrl = 'modules/dashboard.html';
+            if (isSuper) redirectUrl = 'modules/dashboard.html';
             else if (roleLower.includes('cajero') || codeUpper === 'POS' || codeUpper === 'CASHIER') redirectUrl = 'modules/pos.html';
             else if (roleLower.includes('panadero') || codeUpper === 'KITCHEN' || codeUpper === 'BAKER') redirectUrl = 'modules/kitchen.html';
             else if (roleLower.includes('contador') || codeUpper === 'ACCOUNTANT') redirectUrl = 'modules/accounting.html';
@@ -290,58 +526,31 @@ export const SessionStore = {
               name: user.name || user.username,
               username: user.username,
               role: user.role,
-              roleCode: user.roleCode || (roleLower.includes('superadmin') ? 'SUPERADMIN' : 'ADMIN'),
+              roleCode: isSuper ? 'SUPERADMIN' : (user.roleCode || 'ADMIN'),
               icon: user.icon || 'shield-check',
+              isSuperadmin: isSuper,
               redirectUrl: redirectUrl,
               allowedModules: ['all']
             };
 
-            this.setSession({
+            return {
+              success: true,
+              requires2FA: true,
+              isSuperadmin: isSuper,
+              tempToken: 'LOCAL_2FA_TOKEN',
               user: userPayload,
-              token: `AUTH_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
-              loginTimestamp: new Date().toISOString()
-            });
-
-            return { success: true, redirectUrl: redirectUrl, user: userPayload };
-          } else {
-            return { success: false, message: 'Contraseña incorrecta. Verifique sus datos.' };
+              message: isSuper 
+                ? 'Credenciales primarias correctas. Ingrese el PIN Maestro de Superadministrador.' 
+                : 'Credenciales primarias correctas. Ingrese su código de verificación de 2 factores (2FA).'
+            };
           }
         }
       }
     } catch (e) {
-      console.warn('Error en validación tradicional de credenciales:', e);
+      console.warn('Error en validación síncrona local:', e);
     }
 
-    const fallbackUser = USERS_DATABASE.find(u => 
-      (u.username || u.id || '').toLowerCase() === cleanUser
-    );
-
-    if (!fallbackUser) {
-      return { success: false, message: 'Nombre de usuario no encontrado en el sistema.' };
-    }
-
-    if (fallbackUser.pin === cleanPass) {
-      const userPayload = {
-        id: fallbackUser.id,
-        name: fallbackUser.name,
-        username: fallbackUser.username || fallbackUser.id,
-        role: fallbackUser.role,
-        roleCode: fallbackUser.roleCode,
-        icon: fallbackUser.icon,
-        redirectUrl: fallbackUser.redirectUrl,
-        allowedModules: fallbackUser.allowedModules || ['all']
-      };
-
-      this.setSession({
-        user: userPayload,
-        token: `AUTH_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
-        loginTimestamp: new Date().toISOString()
-      });
-
-      return { success: true, redirectUrl: fallbackUser.redirectUrl, user: userPayload };
-    } else {
-      return { success: false, message: 'Contraseña incorrecta.' };
-    }
+    return { success: false, message: 'Usuario o contraseña incorrectos.' };
   },
 
   /**

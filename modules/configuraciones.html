@@ -46,6 +46,76 @@
       outline: 2px solid var(--color-gold-dark);
     }
 
+    .security-tab-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 0.45rem;
+      margin-bottom: 0.25rem;
+    }
+    .security-tab-btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.45rem;
+      padding: 0.55rem 0.65rem;
+      border: 1.5px solid var(--border-subtle);
+      background: #FFFFFF;
+      border-radius: 8px;
+      font-size: 0.76rem;
+      font-weight: 700;
+      color: var(--color-espresso);
+      cursor: pointer;
+      transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+    .security-tab-btn:hover {
+      border-color: var(--color-gold);
+      background: rgba(212, 155, 84, 0.08);
+      transform: translateY(-1px);
+    }
+    .security-tab-btn.active {
+      border-color: var(--color-gold-dark);
+      background: rgba(212, 155, 84, 0.16);
+      color: var(--color-gold-dark);
+      box-shadow: 0 2px 8px rgba(212, 155, 84, 0.25);
+    }
+    .mfa-selector-grid {
+      display: flex;
+      flex-direction: column;
+      gap: 0.45rem;
+      margin-top: 0.35rem;
+    }
+    .mfa-selector-card {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      padding: 0.55rem 0.75rem;
+      border: 1.5px solid var(--border-subtle);
+      background: #FFFFFF;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      text-align: left;
+      width: 100%;
+    }
+    .mfa-selector-card:hover {
+      border-color: var(--color-gold);
+      background: rgba(212, 155, 84, 0.05);
+    }
+    .mfa-selector-card.active {
+      border-color: var(--color-gold-dark);
+      background: rgba(212, 155, 84, 0.12);
+      box-shadow: 0 2px 8px rgba(212, 155, 84, 0.2);
+    }
+    .mfa-card-icon {
+      width: 32px;
+      height: 32px;
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+
     .config-card {
       background: #FFFFFF;
       border-radius: var(--radius-md);
@@ -477,6 +547,20 @@
             </div>
           </div>
 
+          <div class="form-group-custom">
+            <label for="modalUserMfaTipo" class="form-label-custom"><i data-lucide="shield" class="icon-xs"></i> Modalidad de Segundo Factor / 2FA *</label>
+            <select id="modalUserMfaTipo" class="form-control-custom">
+              <option value="ambos">Ambos Factores (Google Authenticator + Patrón Gestual 3x3)</option>
+              <option value="totp" selected>Google Authenticator (TOTP Offline)</option>
+              <option value="patron">Patrón Gestual 3x3</option>
+            </select>
+            <small style="font-size: 0.74rem; color: var(--color-muted); display: block; margin-top: 0.2rem;">
+              Seleccione los factores de seguridad requeridos al iniciar sesión (mínimo 2 activos: contraseña + factor secundario).
+            </small>
+          </div>
+
+
+
         </div>
 
         <div class="modal-card-footer">
@@ -484,6 +568,193 @@
           <button type="submit" class="btn-modal-action primary"><i data-lucide="save" class="icon-sm"></i> <span>Guardar Usuario</span></button>
         </div>
       </form>
+    </div>
+  </div>
+
+  <!-- MODAL DE CAMBIO DE MODALIDAD 2FA PARA USUARIOS (EXCLUSIVO SUPERADMIN) -->
+  <div id="modalCambiarPinUsuario" class="modal-overlay" aria-hidden="true" style="display: none;">
+    <div class="modal-card-container" style="max-width: 480px; width: 92%;">
+      <div class="modal-card-header">
+        <div class="modal-header-title">
+          <span class="modal-header-icon" style="background: rgba(46, 125, 50, 0.15); color: var(--color-success);"><i data-lucide="shield-check"></i></span>
+          <div>
+            <h2 id="pinModalTargetUser" class="modal-title-text">Modalidad de Seguridad / 2FA</h2>
+            <span class="modal-subtitle-text">Control de Segundo y Tercer Factor de Acceso</span>
+          </div>
+        </div>
+        <button id="closeCambiarPinModalBtn" type="button" class="btn-modal-close" aria-label="Cerrar ventana">&times;</button>
+      </div>
+
+      <form id="formCambiarPinUsuario">
+        <input type="hidden" id="pinTargetUserId" value="">
+        <input type="hidden" id="pinTargetUserRole" value="">
+
+        <div class="modal-card-body" style="padding: 1.5rem; gap: 1rem;">
+          
+          <div style="background: rgba(46, 125, 50, 0.08); border: 1px solid rgba(46, 125, 50, 0.25); padding: 0.85rem; border-radius: 8px; font-size: 0.84rem; color: var(--color-espresso);">
+            <strong style="color: var(--color-success);"><i data-lucide="shield-check" class="icon-xs"></i> Mínimo 2 Factores Activos:</strong> La contraseña/PIN primario siempre es obligatoria (puede modificarse en el botón Editar). Seleccione el método complementario que se solicitará al iniciar sesión:
+          </div>
+
+          <!-- SELECTOR DE MODALIDAD MFA -->
+          <div id="wrapperMfaTipoModal" class="form-group-custom" style="display: block;">
+            <label class="form-label-custom"><i data-lucide="shield" class="icon-xs"></i> Seleccionar Modalidad Secundaria *</label>
+            <!-- TARJETAS INTERACTIVAS CON ICONOS LUCIDE -->
+            <div class="mfa-selector-grid" id="securityMfaCards">
+              <button type="button" class="mfa-selector-card active" data-mfa="totp">
+                <span class="mfa-card-icon" style="background: rgba(46, 125, 50, 0.12); color: var(--color-success);">
+                  <i data-lucide="qr-code"></i>
+                </span>
+                <div style="flex: 1;">
+                  <strong style="display: block; font-size: 0.84rem; color: var(--color-espresso);">Google Authenticator (TOTP)</strong>
+                  <span style="font-size: 0.73rem; color: var(--color-muted);">Código dinámico de 6 dígitos offline generado en móvil</span>
+                </div>
+              </button>
+
+              <button type="button" class="mfa-selector-card" data-mfa="patron">
+                <span class="mfa-card-icon" style="background: rgba(142, 68, 173, 0.12); color: #8E44AD;">
+                  <i data-lucide="fingerprint"></i>
+                </span>
+                <div style="flex: 1;">
+                  <strong style="display: block; font-size: 0.84rem; color: var(--color-espresso);">Patrón Gestual 3x3</strong>
+                  <span style="font-size: 0.73rem; color: var(--color-muted);">Trazo gestual táctil o ratón conectando cuadrícula</span>
+                </div>
+              </button>
+
+              <button type="button" class="mfa-selector-card" data-mfa="ambos">
+                <span class="mfa-card-icon" style="background: rgba(245, 166, 35, 0.15); color: #B78103;">
+                  <i data-lucide="shield-alert"></i>
+                </span>
+                <div style="flex: 1;">
+                  <strong style="display: block; font-size: 0.84rem; color: var(--color-espresso);">Ambos Factores (3FA)</strong>
+                  <span style="font-size: 0.73rem; color: var(--color-muted);">Google Authenticator + Patrón Gestual requeridos</span>
+                </div>
+              </button>
+            </div>
+
+            <select id="selectNuevoMfaModal" class="form-control-custom" style="display: none;">
+              <option value="ambos">Ambos (Google Authenticator + Patrón Gestual 3x3)</option>
+              <option value="totp" selected>Google Authenticator (TOTP Offline)</option>
+              <option value="patron">Patrón Gestual 3x3</option>
+            </select>
+          </div>
+
+        </div>
+
+        <div class="modal-card-footer">
+          <button id="cancelCambiarPinModalBtn" type="button" class="btn-modal-action secondary">Cancelar</button>
+          <button type="submit" class="btn-modal-action primary" style="background: var(--gradient-gold); color: var(--color-espresso); font-weight: 800;">
+            <i data-lucide="check" class="icon-sm"></i> <span>Guardar Modalidad 2FA</span>
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- MODAL DE CONFIGURACIÓN DE PATRÓN GESTUAL 3x3 INTERACTIVO -->
+  <div id="modalConfigurarPatron" class="modal-overlay" aria-hidden="true" style="display: none; z-index: 10060;">
+    <div class="modal-card-container" style="max-width: 440px; width: 92%;">
+      <div class="modal-card-header">
+        <div class="modal-header-title">
+          <span class="modal-header-icon" style="background: rgba(142, 68, 173, 0.15); color: #8E44AD;"><i data-lucide="fingerprint"></i></span>
+          <div>
+            <h2 id="patronModalTargetUser" class="modal-title-text">Configurar Patrón Gestual 3x3</h2>
+            <span class="modal-subtitle-text">Trace la combinación de seguridad en la cuadrícula</span>
+          </div>
+        </div>
+        <button id="closePatronModalBtn" type="button" class="btn-modal-close" aria-label="Cerrar ventana">&times;</button>
+      </div>
+
+      <div class="modal-card-body" style="padding: 1.25rem; gap: 0.85rem; text-align: center; align-items: center;">
+        <input type="hidden" id="patronTargetUserId" value="">
+        
+        <p style="font-size: 0.84rem; color: var(--color-espresso); line-height: 1.4; margin: 0;">
+          Trace el patrón con su ratón o pantalla táctil conectando <strong>al menos 4 puntos</strong>.
+        </p>
+
+        <!-- CANVAS PATRÓN 3X3 INTERACTIVO -->
+        <div style="background: #20130B; border: 2px solid var(--border-subtle); border-radius: 16px; padding: 10px; display: inline-flex; justify-content: center; align-items: center; box-shadow: 0 4px 16px rgba(0,0,0,0.25);">
+          <canvas id="setupPatternCanvas" width="260" height="260" style="touch-action: none; cursor: crosshair;"></canvas>
+        </div>
+
+        <div style="background: rgba(44, 29, 17, 0.05); padding: 0.6rem 0.85rem; border-radius: 8px; border: 1px solid var(--border-subtle); width: 100%;">
+          <span style="font-size: 0.72rem; font-weight: 700; color: var(--color-muted); text-transform: uppercase; display: block; margin-bottom: 2px;">Trazo Registrado:</span>
+          <strong id="setupPatternSequenceDisplay" style="font-size: 0.95rem; color: var(--color-espresso); letter-spacing: 0.1em; font-family: monospace;">(Ninguno trazado aún)</strong>
+        </div>
+
+        <div id="setupPatternAlert" style="display: none; font-size: 0.78rem; padding: 0.45rem 0.75rem; border-radius: 6px; font-weight: 600; width: 100%;"></div>
+      </div>
+
+      <div class="modal-card-footer" style="justify-content: space-between;">
+        <button type="button" id="btnResetSetupPattern" class="btn-modal-action secondary">
+          <i data-lucide="rotate-ccw" class="icon-xs"></i> <span>Borrar Trazo</span>
+        </button>
+        <button type="button" id="btnSaveSetupPattern" class="btn-modal-action primary" style="background: var(--gradient-gold); color: var(--color-espresso); font-weight: 800;">
+          <i data-lucide="check" class="icon-sm"></i> <span>Guardar Patrón</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL DE CONFIGURACIÓN Y CÓDIGO QR GOOGLE AUTHENTICATOR (TOTP RFC 6238) -->
+  <div id="modalTotpSetup" class="modal-overlay" aria-hidden="true" style="display: none; z-index: 10050;">
+    <div class="modal-card-container" style="max-width: 520px; width: 94%;">
+      <div class="modal-card-header">
+        <div class="modal-header-title">
+          <span class="modal-header-icon" style="background: rgba(46, 125, 50, 0.15); color: var(--color-success);"><i data-lucide="shield-check"></i></span>
+          <div>
+            <h2 id="totpModalTargetUser" class="modal-title-text">Google Authenticator (TOTP)</h2>
+            <span class="modal-subtitle-text">Segundo Factor Dinámico (100% Offline)</span>
+          </div>
+        </div>
+        <button id="closeTotpModalBtn" type="button" class="btn-modal-close" aria-label="Cerrar ventana">&times;</button>
+      </div>
+
+      <div class="modal-card-body" style="padding: 1.5rem; gap: 1rem; align-items: center; text-align: center;">
+        
+        <p style="font-size: 0.85rem; color: var(--color-espresso); line-height: 1.4; max-width: 440px;">
+          Escanea este código con <strong>Google Authenticator, Microsoft Authenticator o Authy</strong>. Tu teléfono generará códigos dinámicos que cambian cada 30 segundos sin necesidad de internet.
+        </p>
+
+        <!-- CONTENEDOR DEL CÓDIGO QR GENERADO EN CANVAS/SVG OFFLINE -->
+        <div style="background: #FFFFFF; padding: 1rem; border-radius: 12px; border: 2px solid var(--border-subtle); box-shadow: 0 4px 14px rgba(44, 29, 17, 0.08); display: flex; justify-content: center; align-items: center; min-height: 200px; min-width: 200px;">
+          <div id="totpQrCodeContainer"></div>
+        </div>
+
+        <!-- CLAVE SECRETA EN TEXTO (HUMAN READABLE) -->
+        <div style="width: 100%; max-width: 400px; background: rgba(44, 29, 17, 0.04); border: 1px solid var(--border-subtle); border-radius: 8px; padding: 0.65rem 0.85rem; text-align: left;">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.25rem;">
+            <span style="font-size: 0.72rem; font-weight: 700; color: var(--color-muted); text-transform: uppercase;">Clave Secreta Manual</span>
+            <button type="button" id="btnCopyTotpSecret" style="background: transparent; border: none; color: var(--color-gold-dark); cursor: pointer; font-size: 0.72rem; font-weight: 700; display: inline-flex; align-items: center; gap: 0.2rem;">
+              <i data-lucide="copy" class="icon-xs"></i> <span>Copiar</span>
+            </button>
+          </div>
+          <code id="totpSecretTextDisplay" style="font-size: 1rem; font-weight: 800; color: var(--color-espresso); letter-spacing: 0.15em; font-family: monospace; display: block; text-align: center;">---- ---- ---- ----</code>
+        </div>
+
+        <!-- PROBAR SINCRONIZACIÓN CON EL CELULAR IN SITU -->
+        <div style="width: 100%; max-width: 400px; background: #FCFAF7; border: 1.5px solid var(--border-subtle); border-radius: 8px; padding: 0.85rem; text-align: left;">
+          <label for="totpTestVerifyInput" style="font-size: 0.76rem; font-weight: 700; color: var(--color-espresso); display: block; margin-bottom: 0.35rem;">
+            <i data-lucide="smartphone" class="icon-xs"></i> Probar código que ves en tu celular:
+          </label>
+          <div style="display: flex; gap: 0.5rem;">
+            <input type="text" id="totpTestVerifyInput" maxlength="6" inputmode="numeric" placeholder="Ej. 123456" style="flex: 1; padding: 0.45rem 0.65rem; border: 1.5px solid var(--border-subtle); border-radius: 6px; font-family: monospace; font-size: 1.15rem; letter-spacing: 0.15em; text-align: center; color: var(--color-espresso);" />
+            <button type="button" id="btnTestVerifyTotp" class="btn-modal-action primary" style="padding: 0.45rem 0.95rem; font-size: 0.78rem; font-weight: 700; background: var(--gradient-gold); color: var(--color-espresso); white-space: nowrap;">
+              Verificar
+            </button>
+          </div>
+          <div id="totpTestResultAlert" style="display: none; margin-top: 0.5rem; font-size: 0.78rem; padding: 0.45rem 0.65rem; border-radius: 6px; font-weight: 600; line-height: 1.4;"></div>
+        </div>
+
+      </div>
+
+      <div class="modal-card-footer" style="justify-content: space-between;">
+        <button type="button" id="btnRegenerateTotpKey" class="btn-modal-action secondary" style="color: var(--color-terracotta); border-color: rgba(192, 57, 43, 0.3);">
+          <i data-lucide="refresh-cw" class="icon-xs"></i> <span>Regenerar Clave</span>
+        </button>
+        <button type="button" id="btnDoneTotpModal" class="btn-modal-action primary" style="background: var(--gradient-gold); color: var(--color-espresso); font-weight: 800;">
+          <i data-lucide="check" class="icon-sm"></i> <span>Completado / Cerrar</span>
+        </button>
+      </div>
     </div>
   </div>
 
@@ -643,6 +914,7 @@
   </div>
 
   <script src="../js/vendor/lucide.min.js"></script>
+  <script src="../js/vendor/qrcode.min.js"></script>
   <script src="../js/core/icons.js"></script>
   <script type="module" src="../js/core/modules-nav.js"></script>
   <script type="module" src="../js/modules/configuraciones.js"></script>

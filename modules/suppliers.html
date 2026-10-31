@@ -124,7 +124,8 @@
           <div class="table-filter-pills">
             <button type="button" class="inv-filter-btn po-filter-btn active" data-filter="all">Todas las Órdenes</button>
             <button type="button" class="inv-filter-btn po-filter-btn" data-filter="in_transit" style="color: var(--color-gold-dark);"><i data-lucide="truck" class="icon-xs"></i> <span>En Tránsito</span></button>
-            <button type="button" class="inv-filter-btn po-filter-btn" data-filter="received"><i data-lucide="check" class="icon-xs"></i> <span>Recibidas en Almacén</span></button>
+            <button type="button" class="inv-filter-btn po-filter-btn" data-filter="received"><i data-lucide="package-check" class="icon-xs"></i> <span>Recibidas</span></button>
+            <button type="button" class="inv-filter-btn po-filter-btn" data-filter="paid" style="color: #059669;"><i data-lucide="check-circle-2" class="icon-xs"></i> <span>Pagadas</span></button>
           </div>
         </div>
 
@@ -138,9 +139,9 @@
                 <th>Resumen de Insumos</th>
                 <th>Fecha Pedido</th>
                 <th>Entrega Estimada</th>
-                <th>Estado Logístico</th>
+                <th>Estado</th>
                 <th>Monto Total ($)</th>
-                <th>Acción de Recepción</th>
+                <th>Acción / Pago</th>
               </tr>
             </thead>
             <tbody id="ordersBody">
@@ -242,6 +243,103 @@
 
         <button type="submit" class="btn-process-payment" style="margin-top: 0.5rem;">
           <i data-lucide="save" class="icon-sm"></i> <span>Registrar Proveedor</span>
+        </button>
+      </form>
+    </div>
+  </div>
+
+
+  <!-- MODAL DE PAGO Y LIQUIDACIÓN DE ORDEN DE COMPRA -->
+  <div id="payOrderModal" class="pin-modal-overlay" role="dialog" aria-modal="true" aria-labelledby="payOrderModalTitle">
+    <div class="pin-modal-card payment-modal-card" style="max-width: 520px;">
+      <button id="closePayOrderModalBtn" class="modal-close-btn" aria-label="Cerrar modal">&times;</button>
+
+      <div class="selected-user-header" style="margin-bottom: 1rem;">
+        <div class="selected-user-avatar" style="background: rgba(212, 155, 84, 0.2); color: var(--color-gold-dark);"><i data-lucide="credit-card"></i></div>
+        <h3 id="payOrderModalTitle" class="selected-user-name">Registrar Pago a Proveedor</h3>
+        <span class="selected-user-role">Liquidación de Cuenta por Pagar y Asiento Contable</span>
+      </div>
+
+      <!-- Resumen visual de la orden -->
+      <div style="background: rgba(44, 29, 17, 0.04); border: 1px solid rgba(44, 29, 17, 0.08); border-radius: var(--radius-md); padding: 0.85rem 1rem; margin-bottom: 1.15rem; display: flex; justify-content: space-between; align-items: center;">
+        <div>
+          <span style="font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.05em; color: var(--color-muted); font-weight: 700; display: block;">Orden & Proveedor</span>
+          <strong id="payModalOrderCode" style="color: var(--color-gold-dark); font-family: var(--font-heading); font-size: 1.05rem;">OC-XXXX</strong>
+          <div id="payModalSupplierName" style="font-size: 0.85rem; color: var(--color-text-secondary); margin-top: 0.15rem;">Proveedor</div>
+        </div>
+        <div style="text-align: right;">
+          <span style="font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.05em; color: var(--color-muted); font-weight: 700; display: block;">Total a Liquidar</span>
+          <span id="payModalAmountDisplay" style="font-size: 1.35rem; font-weight: 800; color: #2C1D11;">$0.00</span>
+        </div>
+      </div>
+
+      <form id="payOrderForm" style="display: flex; flex-direction: column; gap: 1rem; text-align: left;">
+        <input type="hidden" id="payOrderId">
+        <input type="hidden" id="payOrderCode">
+
+        <div style="display: grid; grid-template-columns: 1.2fr 1fr; gap: 0.85rem;">
+          <div>
+            <label for="payMethodSelect" style="font-weight: 700; font-size: 0.85rem; display: block; margin-bottom: 0.35rem;">Método de Pago:</label>
+            <select id="payMethodSelect" class="pos-search-input" style="padding: 0.65rem 0.85rem;" required>
+              <option value="banco">Transferencia Bancaria</option>
+              <option value="pago_movil">Pago Móvil Interbancario</option>
+              <option value="caja">Efectivo Caja General</option>
+            </select>
+          </div>
+
+          <div id="payBankGroup">
+            <label for="payBankSelect" style="font-weight: 700; font-size: 0.85rem; display: block; margin-bottom: 0.35rem;">Banco Origen:</label>
+            <select id="payBankSelect" class="pos-search-input" style="padding: 0.65rem 0.85rem;">
+              <option value="Banesco Banco Universal">Banesco Banco Universal</option>
+              <option value="Banco Mercantil">Banco Mercantil</option>
+              <option value="BBVA Provincial">BBVA Provincial</option>
+              <option value="Banco de Venezuela">Banco de Venezuela</option>
+              <option value="Bancamiga">Bancamiga</option>
+            </select>
+          </div>
+        </div>
+
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.85rem;">
+          <div>
+            <label for="payReferenceInput" style="font-weight: 700; font-size: 0.85rem; display: block; margin-bottom: 0.35rem;">N° Referencia / Comprobante:</label>
+            <input type="text" id="payReferenceInput" class="pos-search-input" placeholder="Ej: REF-983102" required>
+          </div>
+
+          <div>
+            <label for="payDateInput" style="font-weight: 700; font-size: 0.85rem; display: block; margin-bottom: 0.35rem;">Fecha de Pago:</label>
+            <input type="date" id="payDateInput" class="pos-search-input" required>
+          </div>
+        </div>
+
+        <div style="display: grid; grid-template-columns: 1fr 1.2fr; gap: 0.85rem;">
+          <div>
+            <label for="payAmountInput" style="font-weight: 700; font-size: 0.85rem; display: block; margin-bottom: 0.35rem;">Monto Pagado ($):</label>
+            <input type="number" id="payAmountInput" class="pos-search-input" step="0.01" min="0.01" required>
+          </div>
+
+          <div>
+            <label for="payNotesInput" style="font-weight: 700; font-size: 0.85rem; display: block; margin-bottom: 0.35rem;">Observaciones (Opcional):</label>
+            <input type="text" id="payNotesInput" class="pos-search-input" placeholder="Ej: Factura N° 1024 cancelada">
+          </div>
+        </div>
+
+        <!-- Preview Contable Automático -->
+        <div style="background: rgba(212, 155, 84, 0.08); border: 1px dashed rgba(212, 155, 84, 0.4); border-radius: var(--radius-sm); padding: 0.75rem 0.9rem; font-size: 0.8rem; line-height: 1.45;">
+          <strong style="color: var(--color-gold-dark); display: flex; align-items: center; gap: 0.35rem; margin-bottom: 0.25rem;">
+            <i data-lucide="scale" class="icon-xs"></i> Asiento Contable Automático (Partida Doble):
+          </strong>
+          <div style="display: flex; justify-content: space-between; margin-bottom: 0.15rem;">
+            <span><span style="color: #b91c1c; font-weight: 700;">DEBE:</span> 2205 Proveedores Nacionales (Pasivo)</span>
+            <strong id="previewDebe">$0.00</strong>
+          </div>
+          <div style="display: flex; justify-content: space-between;">
+            <span><span style="color: #1d4ed8; font-weight: 700;">HABER:</span> <span id="previewHaberAccount">1110 Bancos Nacionales</span></span>
+            <strong id="previewHaber">$0.00</strong>
+          </div>
+        </div>
+
+        <button type="submit" class="btn-process-payment" style="background: linear-gradient(135deg, #d49b54 0%, #b8833e 100%); color: #1a120b; font-weight: 800; margin-top: 0.35rem;">
+          <i data-lucide="check-circle" class="icon-sm"></i> <span>Confirmar y Contabilizar Pago</span>
         </button>
       </form>
     </div>

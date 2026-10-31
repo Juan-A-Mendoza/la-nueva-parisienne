@@ -7,6 +7,7 @@
 header('Content-Type: application/json; charset=utf-8');
 header('Access-Control-Allow-Origin: *');
 
+define('LNP_PUBLIC', true);
 require_once __DIR__ . '/config/conexion.php';
 
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {

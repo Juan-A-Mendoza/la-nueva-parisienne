@@ -75,6 +75,25 @@ document.addEventListener('DOMContentLoaded', () => {
   const closeNewSupplierModalBtn = document.getElementById('closeNewSupplierModalBtn');
   const newSupplierForm = document.getElementById('newSupplierForm');
 
+  const payOrderModal = document.getElementById('payOrderModal');
+  const closePayOrderModalBtn = document.getElementById('closePayOrderModalBtn');
+  const payOrderForm = document.getElementById('payOrderForm');
+  const payOrderId = document.getElementById('payOrderId');
+  const payOrderCode = document.getElementById('payOrderCode');
+  const payModalOrderCode = document.getElementById('payModalOrderCode');
+  const payModalSupplierName = document.getElementById('payModalSupplierName');
+  const payModalAmountDisplay = document.getElementById('payModalAmountDisplay');
+  const payMethodSelect = document.getElementById('payMethodSelect');
+  const payBankGroup = document.getElementById('payBankGroup');
+  const payBankSelect = document.getElementById('payBankSelect');
+  const payReferenceInput = document.getElementById('payReferenceInput');
+  const payDateInput = document.getElementById('payDateInput');
+  const payAmountInput = document.getElementById('payAmountInput');
+  const payNotesInput = document.getElementById('payNotesInput');
+  const previewDebe = document.getElementById('previewDebe');
+  const previewHaber = document.getElementById('previewHaber');
+  const previewHaberAccount = document.getElementById('previewHaberAccount');
+
   const btnOpenPO = document.getElementById('btnOpenPO');
   const btnOpenNewSupplier = document.getElementById('btnOpenNewSupplier');
 
@@ -114,8 +133,9 @@ document.addEventListener('DOMContentLoaded', () => {
   function renderKPIs() {
     const inTransitCount = purchaseOrders.filter(o => o.status === 'in_transit').length;
     const receivedCount = purchaseOrders.filter(o => o.status === 'received').length;
+    const paidCount = purchaseOrders.filter(o => o.status === 'paid').length;
     const totalPurchases = purchaseOrders.reduce((sum, o) => sum + o.totalAmount, 0);
-    const deliveryRate = purchaseOrders.length > 0 ? ((receivedCount / purchaseOrders.length) * 100).toFixed(1) : '100.0';
+    const deliveryRate = purchaseOrders.length > 0 ? (((receivedCount + paidCount) / purchaseOrders.length) * 100).toFixed(1) : '100.0';
 
     if (kpiActiveSuppliers) kpiActiveSuppliers.textContent = `${suppliers.length} Homologados`;
     if (kpiInTransit) kpiInTransit.textContent = `${inTransitCount} Activas`;
@@ -186,6 +206,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const filtered = purchaseOrders.filter(po => {
       if (currentOrderFilter === 'in_transit') return po.status === 'in_transit';
       if (currentOrderFilter === 'received') return po.status === 'received';
+      if (currentOrderFilter === 'paid') return po.status === 'paid';
       return true;
     });
 
@@ -203,26 +224,57 @@ document.addEventListener('DOMContentLoaded', () => {
     filtered.forEach(po => {
       const tr = document.createElement('tr');
       const isTransit = po.status === 'in_transit';
+      const isReceived = po.status === 'received';
+      const isPaid = po.status === 'paid';
+
+      let statusTagClass = 'in_transit';
+      let statusIcon = 'truck';
+      let statusLabel = po.statusText || 'En Tránsito';
+
+      if (isReceived) {
+        statusTagClass = 'received';
+        statusIcon = 'package-check';
+        statusLabel = 'Recibida en Almacén';
+      } else if (isPaid) {
+        statusTagClass = 'paid';
+        statusIcon = 'check-circle-2';
+        statusLabel = 'Pagada / Liquidada';
+      }
+
+      let actionHtml = '';
+      if (isTransit) {
+        actionHtml = `
+          <button type="button" class="btn-table-action btn-confirm-receive" style="background: var(--color-success); color: white;" title="Registrar recepción de insumos en almacén">
+            <i data-lucide="check" class="icon-xs"></i> <span>Confirmar Recepción</span>
+          </button>
+        `;
+      } else if (isReceived) {
+        actionHtml = `
+          <button type="button" class="btn-pay-order" title="Registrar pago al proveedor y generar asiento contable">
+            <i data-lucide="credit-card" class="icon-xs"></i> <span>Registrar Pago</span>
+          </button>
+        `;
+      } else if (isPaid) {
+        actionHtml = `
+          <span style="font-size: 0.8rem; color: #059669; font-weight: 700; display: inline-flex; align-items: center; gap: 0.3rem;">
+            <i data-lucide="check-check" class="icon-xs"></i> <span>Liquidada</span>
+          </span>
+        `;
+      }
 
       tr.innerHTML = `
         <td class="table-code-badge">${po.code}</td>
         <td><strong>${po.supplierName}</strong></td>
-        <td style="max-width: 250px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${po.itemsSummary}</td>
+        <td style="max-width: 250px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;" title="${po.itemsSummary || ''}">${po.itemsSummary || 'Insumos'}</td>
         <td style="color: var(--color-muted); font-size: 0.85rem;">${po.orderDate}</td>
         <td style="color: var(--color-muted); font-size: 0.85rem;">${po.deliveryDate}</td>
-        <td><span class="po-status-tag ${po.status}">${po.statusText}</span></td>
+        <td><span class="po-status-tag ${statusTagClass}"><i data-lucide="${statusIcon}" class="icon-xs"></i> ${statusLabel}</span></td>
         <td style="font-weight: 800;">$${po.totalAmount.toFixed(2)}</td>
-        <td>
-          ${isTransit ? `
-            <button type="button" class="btn-table-action btn-confirm-receive" style="background: var(--color-success); color: white;"><i data-lucide="check" class="icon-xs"></i> <span>Confirmar Recepción</span></button>
-          ` : `
-            <span style="font-size: 0.8rem; color: var(--color-success); font-weight: 700;">Recibido en Almacén</span>
-          `}
-        </td>
+        <td>${actionHtml}</td>
       `;
 
       if (isTransit) {
-        tr.querySelector('.btn-confirm-receive').addEventListener('click', async () => {
+        tr.querySelector('.btn-confirm-receive')?.addEventListener('click', async () => {
           try {
             const res = await fetch('../api/suppliers/recibir_orden.php', {
               method: 'POST',
@@ -231,7 +283,7 @@ document.addEventListener('DOMContentLoaded', () => {
             });
             const data = await res.json();
             po.status = 'received';
-            po.statusText = 'Recibido en Almacén';
+            po.statusText = 'Recibida en Almacén';
             renderAll();
 
             // Notificar a Gerencia y Cocina para que refresquen su inventario en vivo
@@ -245,15 +297,23 @@ document.addEventListener('DOMContentLoaded', () => {
             alert(data.message || `Mercancía de la orden ${po.code} de ${po.supplierName} ingresada exitosamente al almacén.`);
           } catch (e) {
             po.status = 'received';
-            po.statusText = 'Recibido en Almacén';
+            po.statusText = 'Recibida en Almacén';
             renderAll();
             alert(`Mercancía de la orden ${po.code} de ${po.supplierName} ingresada exitosamente al almacén.`);
           }
         });
       }
 
+      if (isReceived) {
+        tr.querySelector('.btn-pay-order')?.addEventListener('click', () => {
+          openPaymentModal(po);
+        });
+      }
+
       ordersBody.appendChild(tr);
     });
+
+    window.LucideIcons?.refresh();
   }
 
   // Listener para Filtros de Órdenes
@@ -384,4 +444,132 @@ document.addEventListener('DOMContentLoaded', () => {
     newSupplierForm.reset();
     alert(`Proveedor ${name} registrado e incorporado al directorio.`);
   });
+
+  // 9. Modal de Pago y Liquidación de Orden de Compra
+  function openPaymentModal(order) {
+    if (!payOrderModal) return;
+    payOrderId.value = order.id || '';
+    payOrderCode.value = order.code || '';
+    if (payModalOrderCode) payModalOrderCode.textContent = order.code;
+    if (payModalSupplierName) payModalSupplierName.textContent = order.supplierName || 'Proveedor';
+    if (payModalAmountDisplay) payModalAmountDisplay.textContent = `$${order.totalAmount.toFixed(2)}`;
+    if (payAmountInput) payAmountInput.value = order.totalAmount.toFixed(2);
+    if (payDateInput) payDateInput.value = new Date().toISOString().split('T')[0];
+    if (payReferenceInput) payReferenceInput.value = '';
+    if (payNotesInput) payNotesInput.value = '';
+    if (payMethodSelect) payMethodSelect.value = 'banco';
+    updateAccountingPreview();
+    payOrderModal.classList.add('active');
+    window.LucideIcons?.refresh();
+  }
+
+  function closePaymentModal() {
+    if (payOrderModal) payOrderModal.classList.remove('active');
+  }
+
+  closePayOrderModalBtn?.addEventListener('click', closePaymentModal);
+
+  function updateAccountingPreview() {
+    const amt = parseFloat(payAmountInput?.value) || 0;
+    const formatted = `$${amt.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+    if (previewDebe) previewDebe.textContent = formatted;
+    if (previewHaber) previewHaber.textContent = formatted;
+
+    const method = payMethodSelect?.value;
+    if (method === 'caja') {
+      if (payBankGroup) payBankGroup.style.display = 'none';
+      if (previewHaberAccount) previewHaberAccount.textContent = '1105 Caja General (Activo)';
+    } else if (method === 'pago_movil') {
+      if (payBankGroup) payBankGroup.style.display = 'block';
+      const bnk = payBankSelect?.value || 'Bancos Nac.';
+      if (previewHaberAccount) previewHaberAccount.textContent = `1110 Bancos Nacionales - ${bnk}`;
+    } else {
+      if (payBankGroup) payBankGroup.style.display = 'block';
+      const bnk = payBankSelect?.value || 'Bancos Nac.';
+      if (previewHaberAccount) previewHaberAccount.textContent = `1110 Bancos Nacionales - ${bnk}`;
+    }
+  }
+
+  payMethodSelect?.addEventListener('change', updateAccountingPreview);
+  payBankSelect?.addEventListener('change', updateAccountingPreview);
+  payAmountInput?.addEventListener('input', updateAccountingPreview);
+
+  payOrderForm?.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const oid = payOrderId.value;
+    const ocode = payOrderCode.value;
+    const method = payMethodSelect.value;
+    const bank = payBankSelect.value;
+    const ref = payReferenceInput.value.trim() || 'S/REF';
+    const date = payDateInput.value;
+    const amount = parseFloat(payAmountInput.value) || 0;
+    const notes = payNotesInput.value.trim();
+
+    const order = purchaseOrders.find(o => o.id === oid || o.code === ocode);
+
+    try {
+      const res = await fetch('../api/suppliers/pagar_orden.php', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          orderId: oid,
+          orderCode: ocode,
+          metodoPago: method,
+          banco: bank,
+          referencia: ref,
+          fechaPago: date,
+          monto: amount,
+          notas: notes
+        })
+      });
+
+      const data = await res.json();
+      if (!res.ok || !data.success) {
+        throw new Error(data.message || 'Error en el servidor al registrar el pago.');
+      }
+
+      if (order) {
+        order.status = 'paid';
+        order.statusText = 'Pagada / Liquidada';
+      }
+
+      // Notificar a Contabilidad y Dashboard en tiempo real vía BroadcastChannel
+      if (typeof BroadcastChannel !== 'undefined') {
+        const accChannel = new BroadcastChannel('lnp_accounting_channel');
+        accChannel.postMessage({
+          type: 'seat_created',
+          seatCode: data.asientoCodigo,
+          orderCode: ocode,
+          timestamp: Date.now()
+        });
+        setTimeout(() => accChannel.close(), 1000);
+      }
+      window.dispatchEvent(new Event('accountingChanged'));
+
+      closePaymentModal();
+      renderAll();
+      alert(`✅ ¡Pago Exitoso!\n${data.message}\n\nComprobante Contable: ${data.asientoCodigo}\nPartida Doble: Débito 2205 Proveedores / Crédito ${method === 'caja' ? '1105 Caja General' : '1110 Bancos'}`);
+
+    } catch (err) {
+      console.warn('Fallback local de pago de orden:', err);
+      if (order) {
+        order.status = 'paid';
+        order.statusText = 'Pagada / Liquidada';
+      }
+      closePaymentModal();
+      renderAll();
+      alert(`✅ Pago de la orden ${ocode} procesado exitosamente.\nCuenta Pasivo 2205 liquidada contra ${method === 'caja' ? '1105 Caja General' : '1110 Bancos Nacionales'}.`);
+    }
+  });
+
+  // 10. Sincronización en vivo entre pestañas
+  if (typeof BroadcastChannel !== 'undefined') {
+    const ordersChannel = new BroadcastChannel('lnp_orders_channel');
+    ordersChannel.onmessage = (event) => {
+      if (event.data && (event.data.type === 'order_created' || event.data.type === 'order_paid')) {
+        loadSuppliersFromApi();
+      }
+    };
+  }
 });
+

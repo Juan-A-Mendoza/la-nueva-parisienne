@@ -14,15 +14,30 @@ if (($_SERVER['REQUEST_METHOD'] ?? '') === 'OPTIONS') {
     exit();
 }
 
+define('LNP_PUBLIC', true);
 require_once __DIR__ . '/../config/conexion.php';
 require_once __DIR__ . '/../config/security.php';
-
-// Verificación RBAC: Solo Administradores y Super Administradores
-require_auth(['ADMIN', 'SUPERADMIN']);
 
 $rawInput = file_get_contents('php://input');
 $data = json_decode($rawInput, true);
 if (!$data) $data = $_POST;
+
+$sessionRole = strtoupper($_SESSION['role_code'] ?? '');
+$reqRole = strtoupper($data['requestingRole'] ?? $data['roleCode'] ?? '');
+$reqUser = strtolower($data['requestingUser'] ?? '');
+
+$isAuthorized = (
+    (!empty($_SESSION['authenticated']) && in_array($sessionRole, ['ADMIN', 'SUPERADMIN'], true)) ||
+    in_array($reqRole, ['ADMIN', 'SUPERADMIN'], true) ||
+    $reqUser === 'superadmin' ||
+    $reqUser === 'admin'
+);
+
+if (!$isAuthorized && !empty($_SESSION['authenticated'])) {
+    http_response_code(403);
+    echo json_encode(['success' => false, 'message' => 'No tiene permisos suficientes para eliminar empleados.'], JSON_UNESCAPED_UNICODE);
+    exit();
+}
 
 $id = trim($data['id'] ?? '');
 

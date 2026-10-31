@@ -5,9 +5,17 @@
    ========================================================================== */
 
 class BcvRateStoreManager {
+  _getCalculatedRate() {
+    const isManual = (this.mode === 'manual');
+    if (isManual) {
+      return parseFloat(localStorage.getItem('tasa_manual') || localStorage.getItem('tasaManual')) || 780.00;
+    }
+    return parseFloat(localStorage.getItem('bcv_current_rate') || localStorage.getItem('tasa_auto') || localStorage.getItem('tasaAuto')) || 889.26;
+  }
+
   constructor() {
     this.mode = localStorage.getItem('modo_tasa') || localStorage.getItem('modoTasa') || 'auto';
-    this.rate = parseFloat(localStorage.getItem('tasa_manual') || localStorage.getItem('tasaManual')) || 780.00;
+    this.rate = this._getCalculatedRate();
     this.source = 'BCV Oficial';
     this.date = '';
     this.listeners = [];
@@ -15,17 +23,17 @@ class BcvRateStoreManager {
     // Escuchar actualizaciones entre pestañas en tiempo real (storage event)
     if (typeof window !== 'undefined') {
       window.addEventListener('storage', (e) => {
-        if (e.key === 'modo_tasa' || e.key === 'modoTasa' || e.key === 'tasa_manual' || e.key === 'tasaManual' || e.key === 'bcv_current_rate') {
+        if (e.key === 'modo_tasa' || e.key === 'modoTasa' || e.key === 'tasa_manual' || e.key === 'tasaManual' || e.key === 'tasa_auto' || e.key === 'tasaAuto' || e.key === 'bcv_current_rate') {
           this.mode = localStorage.getItem('modo_tasa') || localStorage.getItem('modoTasa') || 'auto';
-          this.rate = parseFloat(localStorage.getItem('tasa_manual') || localStorage.getItem('tasaManual')) || 780.00;
+          this.rate = this._getCalculatedRate();
           this.source = 'BCV Oficial';
           this.notifyListeners();
         }
       });
 
       window.addEventListener('bcvRateChanged', (e) => {
-        this.mode = localStorage.getItem('modo_tasa') || localStorage.getItem('modoTasa') || (e.detail && e.detail.mode) || 'auto';
-        this.rate = parseFloat(localStorage.getItem('tasa_manual') || localStorage.getItem('tasaManual')) || (e.detail && parseFloat(e.detail.rate)) || 780.00;
+        this.mode = (e.detail && e.detail.mode) || localStorage.getItem('modo_tasa') || 'auto';
+        this.rate = (e.detail && parseFloat(e.detail.rate)) || this._getCalculatedRate();
         this.source = 'BCV Oficial';
         this.notifyListeners();
       });
@@ -88,7 +96,7 @@ class BcvRateStoreManager {
     for (const url of apis) {
       try {
         const controller = typeof AbortController !== 'undefined' ? new AbortController() : null;
-        const timeoutId = controller ? setTimeout(() => controller.abort(), 1500) : null;
+        const timeoutId = controller ? setTimeout(() => controller.abort(), 4000) : null;
         const res = await fetch(`${url}?t=${Date.now()}`, { 
           cache: 'no-store',
           signal: controller ? controller.signal : undefined 
