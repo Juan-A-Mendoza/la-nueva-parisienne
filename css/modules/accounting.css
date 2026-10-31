@@ -164,6 +164,33 @@
   border-color: var(--color-gold);
 }
 
+.btn-acc-action.currency-toggle-btn {
+  background: rgba(212, 155, 84, 0.12);
+  border: 1.5px solid var(--color-gold);
+  color: var(--color-espresso);
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  transition: all var(--transition-fast);
+}
+
+.btn-acc-action.currency-toggle-btn:hover {
+  background: var(--color-gold-light);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 14px rgba(212, 155, 84, 0.3);
+}
+
+.currency-tag-pill {
+  font-size: 0.68rem;
+  padding: 0.15rem 0.45rem;
+  background: var(--color-gold-dark);
+  color: #FFFFFF;
+  border-radius: var(--radius-pill);
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
 .audit-status-strip {
   display: flex;
   align-items: center;

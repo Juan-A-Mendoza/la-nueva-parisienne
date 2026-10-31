@@ -13,19 +13,36 @@
 </head>
 <body>
   <main class="auth-wrapper">
-    <!-- CABECERA DE LA MARCA -->
-    <header class="auth-header">
-      <div class="logo-badge" aria-hidden="true">
-        <i data-lucide="croissant" class="icon-xl"></i>
-      </div>
-      <h1 class="brand-title">La Nueva Parisienne</h1>
-      <p class="sub-title">Sistema de Gestión Gerencial, Contabilidad y Punto de Venta</p>
-      <span class="academic-badge">Panadería &amp; Pastelería Artesanal</span>
-    </header>
+    <!-- CONTENEDOR HORIZONTAL PRINCIPAL PARA PC -->
+    <div class="auth-main-layout">
+      <!-- CABECERA / PANEL DE MARCA -->
+      <header class="auth-header">
+        <div class="logo-badge" aria-hidden="true">
+          <i data-lucide="croissant" class="icon-xl"></i>
+        </div>
+        <h1 class="brand-title">La Nueva Parisienne</h1>
+        <p class="sub-title">Sistema de Gestión Gerencial, Contabilidad y Punto de Venta</p>
+        <span class="academic-badge">Panadería &amp; Pastelería Artesanal</span>
 
-    <!-- TARJETA CLÁSICA DE INICIO DE SESIÓN CON DOBLE FACTOR (2FA) -->
-    <section class="auth-card-section" aria-label="Inicio de Sesión">
-      <div class="login-card">
+        <div class="auth-brand-highlights">
+          <div class="brand-highlight-item">
+            <i data-lucide="shield-check" class="icon-sm"></i>
+            <span>Seguridad Multi-Factor (2FA / Patrón)</span>
+          </div>
+          <div class="brand-highlight-item">
+            <i data-lucide="sparkles" class="icon-sm"></i>
+            <span>Control y Punto de Venta en Tiempo Real</span>
+          </div>
+          <div class="brand-highlight-item">
+            <i data-lucide="lock" class="icon-sm"></i>
+            <span>Sesión Cifrada y Auditoría Continua</span>
+          </div>
+        </div>
+      </header>
+
+      <!-- TARJETA CLÁSICA DE INICIO DE SESIÓN CON DOBLE FACTOR (2FA) -->
+      <section class="auth-card-section" aria-label="Inicio de Sesión">
+        <div class="login-card">
 
         <!-- PASO 1: CREDENCIALES PRIMARIAS -->
         <div id="step1Section" class="auth-step-container">
@@ -34,7 +51,7 @@
               <i data-lucide="shield-check" class="icon-lg"></i>
             </div>
             <h2 class="login-card-title">Iniciar Sesión</h2>
-            <p class="login-card-subtitle">Paso 1 de 2: Ingrese sus credenciales de usuario</p>
+            <p class="login-card-subtitle">Ingrese sus credenciales de usuario</p>
           </div>
 
           <form id="classicLoginForm" class="login-form" autocomplete="on">
@@ -93,10 +110,10 @@
               </div>
             </div>
 
-            <!-- BOTÓN DE ENVÍO PASO 1 -->
+            <!-- BOTÓN DE ENVÍO -->
             <button type="submit" id="loginSubmitBtn" class="btn-login-submit">
               <i data-lucide="arrow-right" class="icon-sm"></i>
-              <span>Continuar al Paso 2</span>
+              <span>Continuar</span>
             </button>
           </form>
         </div>
@@ -108,8 +125,8 @@
             <div id="step2AvatarIcon" class="login-avatar-icon" aria-hidden="true">
               <i data-lucide="shield-alert" class="icon-lg"></i>
             </div>
-            <h2 id="step2Title" class="login-card-title">Verificación de Dos Pasos</h2>
-            <p id="step2Subtitle" class="login-card-subtitle">Paso 2 de 2: Confirme su identidad para acceder</p>
+            <h2 id="step2Title" class="login-card-title">Verificación de Seguridad</h2>
+            <p id="step2Subtitle" class="login-card-subtitle">Confirme su identidad para acceder</p>
           </div>
 
           <!-- TARJETA DE PERFIL IDENTIFICADO -->
@@ -211,8 +228,8 @@
             <div id="step3AvatarIcon" class="login-avatar-icon superadmin-glow" aria-hidden="true">
               <i data-lucide="fingerprint" class="icon-lg"></i>
             </div>
-            <h2 id="step3Title" class="login-card-title">Tercer Factor de Seguridad</h2>
-            <p id="step3Subtitle" class="login-card-subtitle">Paso 3 de 3 &bull; Alta Dirección &bull; Trace su Patrón Gestual</p>
+            <h2 id="step3Title" class="login-card-title">Patrón de Seguridad</h2>
+            <p id="step3Subtitle" class="login-card-subtitle">Trace su patrón gestual para continuar</p>
           </div>
 
           <!-- TARJETA DE PERFIL SUPERADMIN -->
@@ -262,9 +279,10 @@
 
       </div>
     </section>
+  </div>
 
-    <!-- PIE DE PÁGINA -->
-    <footer class="auth-footer">
+  <!-- PIE DE PÁGINA -->
+  <footer class="auth-footer">
       <p>&copy; 2026 La Nueva Parisienne &mdash; Sistema de Gestión Integral &bull; Versión Empresarial</p>
     </footer>
   </main>

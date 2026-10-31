@@ -204,9 +204,7 @@ try {
             'mfa_tipo' => $mfaTipo,
             'is_superadmin' => $isSuperadmin,
             'temp_token' => $tempToken,
-            'message' => ($mfaTipo === 'ambos') 
-                ? 'Credenciales primarias correctas. Ingrese su código de Google Authenticator (Paso 2 de 3).'
-                : 'Credenciales primarias correctas. Ingrese su código de Google Authenticator (Paso 2 de 2).',
+            'message' => 'Credenciales correctas. Ingrese su código de Google Authenticator.',
             'user' => $userPayload
         ], JSON_UNESCAPED_UNICODE);
         exit();

@@ -50,6 +50,13 @@
           <i data-lucide="plus-circle" class="icon-sm"></i> <span>+ Nuevo Comprobante de Diario</span>
         </button>
 
+        <!-- BOTÓN CONMUTADOR DE MONEDA: BOLÍVARES (PRINCIPAL) / DÓLARES -->
+        <button id="btnToggleCurrency" type="button" class="btn-acc-action currency-toggle-btn" title="Alternar entre Bolívares (VES) y Dólares (USD)">
+          <i data-lucide="coins" class="icon-sm"></i>
+          <span id="btnToggleCurrencyText">Moneda: Bolívares (Bs.)</span>
+          <span class="currency-tag-pill" id="currencyTagPill">Principal</span>
+        </button>
+
         <button id="btnPrintBalance" type="button" class="btn-acc-action secondary">
           <i data-lucide="printer" class="icon-sm"></i> <span>Imprimir Balance de Comprobación</span>
         </button>
@@ -70,16 +77,16 @@
     <!-- CONTENIDO PRINCIPAL DE CONTABILIDAD -->
     <main class="accounting-content">
 
-      <!-- FRANJA DE CONTROL ADMINISTRATIVO / FISCAL (SOBRIA, SIN TARJETAS INFANTILES) -->
+      <!-- FRANJA DE CONTROL ADMINISTRATIVO / FISCAL -->
       <section class="accounting-control-bar" aria-label="Información Fiscal y del Ejercicio">
         <div class="control-item">
           <span class="control-label">Ejercicio Fiscal:</span>
           <span class="control-val">2026 (Período Regular)</span>
         </div>
         <div class="control-divider"></div>
-        <div class="control-item">
-          <span class="control-label">Moneda Funcional:</span>
-          <span class="control-val">USD ($) &bull; Ref. BCV Oficial</span>
+        <div class="control-item" id="controlItemCurrency">
+          <span class="control-label">Moneda Contable:</span>
+          <span id="controlFunctionalCurrency" class="control-val">VES (Bs.) &bull; Moneda Principal</span>
         </div>
         <div class="control-divider"></div>
         <div class="control-item">
@@ -89,12 +96,12 @@
         <div class="control-divider"></div>
         <div class="control-item">
           <span class="control-label">Sumas Iguales Débito:</span>
-          <span id="statTotalDebe" class="control-val highlight-debe">$0.00</span>
+          <span id="statTotalDebe" class="control-val highlight-debe">Bs. 0,00</span>
         </div>
         <div class="control-divider"></div>
         <div class="control-item">
           <span class="control-label">Sumas Iguales Crédito:</span>
-          <span id="statTotalHaber" class="control-val highlight-haber">$0.00</span>
+          <span id="statTotalHaber" class="control-val highlight-haber">Bs. 0,00</span>
         </div>
         <div class="control-divider"></div>
         <div class="control-item">
@@ -177,8 +184,8 @@
                 <th style="width: 130px;">Comprobante</th>
                 <th>Cuentas Contables y Glosa Explicativa (P/R)</th>
                 <th style="width: 100px; text-align: center;">Folio / PUC</th>
-                <th style="width: 130px; text-align: right;">Debe ($)</th>
-                <th style="width: 130px; text-align: right;">Haber ($)</th>
+                <th id="thJournalDebe" style="width: 130px; text-align: right;">Debe (Bs.)</th>
+                <th id="thJournalHaber" style="width: 130px; text-align: right;">Haber (Bs.)</th>
               </tr>
             </thead>
             <tbody id="journalTableBody">
@@ -286,10 +293,10 @@
                   <th style="width: 100px;">Código PUC</th>
                   <th>Denominación de la Cuenta</th>
                   <th style="width: 110px;">Clasificación</th>
-                  <th style="text-align: right; width: 140px;">Sumas Debe ($)</th>
-                  <th style="text-align: right; width: 140px;">Sumas Haber ($)</th>
-                  <th style="text-align: right; width: 140px;">Saldo Deudor ($)</th>
-                  <th style="text-align: right; width: 140px;">Saldo Acreedor ($)</th>
+                  <th id="thBalanceDebe" style="text-align: right; width: 140px;">Sumas Debe (Bs.)</th>
+                  <th id="thBalanceHaber" style="text-align: right; width: 140px;">Sumas Haber (Bs.)</th>
+                  <th id="thBalanceDeudor" style="text-align: right; width: 140px;">Saldo Deudor (Bs.)</th>
+                  <th id="thBalanceAcreedor" style="text-align: right; width: 140px;">Saldo Acreedor (Bs.)</th>
                 </tr>
               </thead>
               <tbody id="balanceBody">
@@ -414,8 +421,8 @@
                   <th style="width: 40px; text-align: center;">#</th>
                   <th style="min-width: 250px;">Cuenta Contable (PUC)</th>
                   <th style="min-width: 180px;">Referencia / Detalle Renglón</th>
-                  <th style="width: 130px; text-align: right;">Débito (Debe $)</th>
-                  <th style="width: 130px; text-align: right;">Crédito (Haber $)</th>
+                  <th id="thModalDebe" style="width: 130px; text-align: right;">Débito (Debe Bs.)</th>
+                  <th id="thModalHaber" style="width: 130px; text-align: right;">Crédito (Haber Bs.)</th>
                   <th style="width: 40px; text-align: center;"></th>
                 </tr>
               </thead>
@@ -429,9 +436,9 @@
         <!-- PIE DE CONTROL Y BALANCE DEL COMPROBANTE -->
         <div class="voucher-editor-footer-bar">
           <div class="editor-totals-box">
-            <div>TOTAL DEBE: <strong id="editorDebeTotal" class="highlight-debe">$0.00</strong></div>
-            <div>TOTAL HABER: <strong id="editorHaberTotal" class="highlight-haber">$0.00</strong></div>
-            <div>DIFERENCIA: <strong id="editorDiffTotal">$0.00</strong></div>
+            <div>TOTAL DEBE: <strong id="editorDebeTotal" class="highlight-debe">Bs. 0,00</strong></div>
+            <div>TOTAL HABER: <strong id="editorHaberTotal" class="highlight-haber">Bs. 0,00</strong></div>
+            <div>DIFERENCIA: <strong id="editorDiffTotal">Bs. 0,00</strong></div>
           </div>
           <div id="editorBalanceBadge" class="editor-balance-status status-balanced">
             <i data-lucide="check-circle-2" class="icon-xs"></i> Comprobante Cuadrado
@@ -487,7 +494,7 @@
   <script src="../js/core/icons.js"></script>
   <script src="../js/vendor/xlsx.style.min.js"></script>
   <script type="module" src="../js/core/modules-nav.js"></script>
-  <script type="module" src="../js/modules/accounting.js?v=20261024-xlsx-executive-v2"></script>
+  <script type="module" src="../js/modules/accounting.js?v=20261024-single-btn-v4"></script>
 
 </body>
 </html>

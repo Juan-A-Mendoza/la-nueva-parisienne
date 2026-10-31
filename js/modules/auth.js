@@ -210,7 +210,7 @@ document.addEventListener('DOMContentLoaded', () => {
         submitButton.disabled = false;
         submitButton.innerHTML = `
           <i data-lucide="arrow-right" class="icon-sm" aria-hidden="true"></i>
-          <span>Continuar al Paso 2</span>
+          <span>Continuar</span>
         `;
         window.LucideIcons?.refresh();
       }
@@ -242,8 +242,8 @@ document.addEventListener('DOMContentLoaded', () => {
         step2AvatarIcon.innerHTML = window.LucideIcons ? window.LucideIcons.render('shield-alert', 'icon-lg') : '';
         step2AvatarIcon.style.color = 'var(--color-gold-dark)';
       }
-      if (step2Title) step2Title.textContent = 'Segundo Factor de Seguridad';
-      if (step2Subtitle) step2Subtitle.textContent = 'Paso 2 de 3 • Ingrese código Google Authenticator';
+      if (step2Title) step2Title.textContent = 'Verificación de Seguridad';
+      if (step2Subtitle) step2Subtitle.textContent = 'Ingrese código de Google Authenticator';
       if (step2UserPill) step2UserPill.classList.add('superadmin-pill');
       if (step2UserRole) step2UserRole.textContent = 'SUPERADMINISTRADOR (NIVEL 3FA)';
       if (step2InputLabel) {
@@ -257,8 +257,8 @@ document.addEventListener('DOMContentLoaded', () => {
         step2AvatarIcon.innerHTML = window.LucideIcons ? window.LucideIcons.render('shield-check', 'icon-lg') : '';
         step2AvatarIcon.style.color = '';
       }
-      if (step2Title) step2Title.textContent = 'Verificación en Dos Pasos';
-      if (step2Subtitle) step2Subtitle.textContent = 'Paso 2 de 2 • Ingrese el código de su teléfono';
+      if (step2Title) step2Title.textContent = 'Verificación de Seguridad';
+      if (step2Subtitle) step2Subtitle.textContent = 'Ingrese el código de su aplicación Authenticator';
       if (step2UserPill) step2UserPill.classList.remove('superadmin-pill');
       if (step2UserRole) step2UserRole.textContent = currentUser?.role || 'Personal de Tienda';
       if (step2InputLabel) {
@@ -807,12 +807,10 @@ document.addEventListener('DOMContentLoaded', () => {
     const isAmbos = (currentUser?.mfaTipo === 'ambos') || (currentUser?.mfa_tipo === 'ambos');
 
     if (step3Title) {
-      step3Title.textContent = isAmbos ? 'Tercer Factor de Seguridad' : 'Segundo Factor de Seguridad';
+      step3Title.textContent = 'Patrón de Seguridad';
     }
     if (step3Subtitle) {
-      step3Subtitle.textContent = isAmbos 
-        ? 'Paso 3 de 3 • Trace su Patrón Gestual'
-        : 'Paso 2 de 2 • Trace su Patrón Gestual';
+      step3Subtitle.textContent = 'Trace su patrón gestual para continuar';
     }
 
     selectedPattern = [];

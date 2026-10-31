@@ -7,6 +7,7 @@
 import { SessionStore } from '../core/session-store.js';
 import { PLAN_CUENTAS, AUTOMATIC_ENTRIES, TRIAL_BALANCE_ACCOUNTS } from '../data/accounting-db.js';
 import { ensureStyleEngine, generateStyledExcelReport } from '../core/excel-styler.js';
+import { BcvRateStore } from '../core/bcv-rate-store.js';
 
 function initAccounting() {
   // 1. Verificación de Seguridad y Sesión
@@ -54,7 +55,11 @@ function initAccounting() {
     });
   }
 
-  // 2. Estado Contable
+  // 2. Estado Contable y Multimoneda
+  // La moneda principal es SIEMPRE Bolívares (VES), con opción de alternar a USD ($)
+  let currentCurrency = localStorage.getItem('accounting_currency') || 'VES';
+  let liveBcvRate = parseFloat(localStorage.getItem('bcv_current_rate')) || (BcvRateStore?.rate || 761.21);
+
   let automaticEntries = JSON.parse(JSON.stringify(AUTOMATIC_ENTRIES));
   let trialBalance = JSON.parse(JSON.stringify(TRIAL_BALANCE_ACCOUNTS));
   let livePlanCuentas = JSON.parse(JSON.stringify(PLAN_CUENTAS));
@@ -78,6 +83,12 @@ function initAccounting() {
   ];
 
   // 3. Referencias DOM
+  // Controles de moneda
+  const btnToggleCurrency = document.getElementById('btnToggleCurrency');
+  const btnToggleCurrencyText = document.getElementById('btnToggleCurrencyText');
+  const currencyTagPill = document.getElementById('currencyTagPill');
+  const controlFunctionalCurrency = document.getElementById('controlFunctionalCurrency');
+
   // Control Bar
   const statTotalVouchers = document.getElementById('statTotalVouchers');
   const statTotalDebe = document.getElementById('statTotalDebe');
@@ -150,7 +161,86 @@ function initAccounting() {
     entryDateInput.value = new Date().toISOString().split('T')[0];
   }
 
+  // =========================================================================
+  // FUNCIONES DE CONVERSIÓN Y FORMATO DE MONEDA
+  // =========================================================================
+  function getVoucherRate(voucher) {
+    return Number(voucher?.bcvRateHistorical || liveBcvRate || 761.21);
+  }
+
+  function formatAmount(valUSD, specificRate = null) {
+    const num = Number(valUSD || 0);
+    if (currentCurrency === 'VES') {
+      const rate = specificRate ? Number(specificRate) : liveBcvRate;
+      const ves = num * rate;
+      return `Bs. ${ves.toLocaleString('es-VE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+    } else {
+      return `$${num.toLocaleString('es-VE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+    }
+  }
+
+  function getCurrencyUnit() {
+    return currentCurrency === 'VES' ? 'Bs.' : '$';
+  }
+
+  function getCurrencyFullName() {
+    return currentCurrency === 'VES' ? 'Bolívares (VES)' : 'Dólares ($ USD)';
+  }
+
+  function updateTableHeadersCurrency() {
+    const unit = currentCurrency === 'VES' ? 'Bs.' : '$';
+
+    const thJournalDebe = document.getElementById('thJournalDebe');
+    const thJournalHaber = document.getElementById('thJournalHaber');
+    if (thJournalDebe) thJournalDebe.textContent = `Debe (${unit})`;
+    if (thJournalHaber) thJournalHaber.textContent = `Haber (${unit})`;
+
+    const thBalanceDebe = document.getElementById('thBalanceDebe');
+    const thBalanceHaber = document.getElementById('thBalanceHaber');
+    const thBalanceDeudor = document.getElementById('thBalanceDeudor');
+    const thBalanceAcreedor = document.getElementById('thBalanceAcreedor');
+    if (thBalanceDebe) thBalanceDebe.textContent = `Sumas Debe (${unit})`;
+    if (thBalanceHaber) thBalanceHaber.textContent = `Sumas Haber (${unit})`;
+    if (thBalanceDeudor) thBalanceDeudor.textContent = `Saldo Deudor (${unit})`;
+    if (thBalanceAcreedor) thBalanceAcreedor.textContent = `Saldo Acreedor (${unit})`;
+
+    const thModalDebe = document.getElementById('thModalDebe');
+    const thModalHaber = document.getElementById('thModalHaber');
+    if (thModalDebe) thModalDebe.textContent = `Débito (Debe ${unit})`;
+    if (thModalHaber) thModalHaber.textContent = `Crédito (Haber ${unit})`;
+  }
+
+  function updateCurrencyUIControls() {
+    const isVES = (currentCurrency === 'VES');
+    if (btnToggleCurrencyText) {
+      btnToggleCurrencyText.textContent = isVES ? 'Moneda: Bolívares (Bs.)' : 'Moneda: Dólares ($ USD)';
+    }
+    if (currencyTagPill) {
+      currencyTagPill.textContent = isVES ? 'Principal' : 'Alternativa';
+      currencyTagPill.style.background = isVES ? 'var(--color-gold-dark)' : 'var(--color-espresso)';
+    }
+    if (controlFunctionalCurrency) {
+      if (isVES) {
+        controlFunctionalCurrency.innerHTML = `<strong style="color: var(--color-gold-dark);">VES (Bs.)</strong> &bull; Moneda Principal (Ref. BCV)`;
+      } else {
+        controlFunctionalCurrency.innerHTML = `<strong style="color: var(--color-gold-dark);">$ USD</strong> &bull; Moneda Alternativa (Ref. BCV)`;
+      }
+    }
+  }
+
+  function toggleCurrency() {
+    currentCurrency = (currentCurrency === 'VES') ? 'USD' : 'VES';
+    localStorage.setItem('accounting_currency', currentCurrency);
+    updateCurrencyUIControls();
+    updateTableHeadersCurrency();
+    renderAll();
+  }
+
+  btnToggleCurrency?.addEventListener('click', toggleCurrency);
+
   // 4. Carga inicial
+  updateCurrencyUIControls();
+  updateTableHeadersCurrency();
   populateLedgerAccountPicker();
   renderAll();
   loadAccountingFromApi();
@@ -182,7 +272,23 @@ function initAccounting() {
   }
   window.addEventListener('movimientosChanged', () => loadAccountingFromApi());
 
+  // Suscribirse a actualizaciones de tasa BCV en vivo (con datos y DOM inicializados)
+  if (BcvRateStore && typeof BcvRateStore.subscribe === 'function') {
+    BcvRateStore.subscribe(data => {
+      if (data && data.rate) {
+        liveBcvRate = Number(data.rate);
+        renderControlBar();
+        if (currentCurrency === 'VES') {
+          renderAll();
+        }
+      }
+    });
+    BcvRateStore.fetchRate();
+  }
+
   function renderAll() {
+    updateCurrencyUIControls();
+    updateTableHeadersCurrency();
     renderControlBar();
     renderJournal();
     renderLedger();
@@ -204,8 +310,8 @@ function initAccounting() {
     const isBalanced = Math.abs(totDebe - totHaber) < 0.05;
 
     if (statTotalVouchers) statTotalVouchers.textContent = `${automaticEntries.length} Asientos`;
-    if (statTotalDebe) statTotalDebe.textContent = `$${totDebe.toLocaleString('es-VE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
-    if (statTotalHaber) statTotalHaber.textContent = `$${totHaber.toLocaleString('es-VE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+    if (statTotalDebe) statTotalDebe.textContent = formatAmount(totDebe);
+    if (statTotalHaber) statTotalHaber.textContent = formatAmount(totHaber);
 
     if (statBalanceStatus) {
       if (isBalanced) {
@@ -226,6 +332,8 @@ function initAccounting() {
         auditStatusBadge.innerHTML = `<i data-lucide="alert-circle" class="icon-xs"></i> Descuadre Detectado`;
       }
     }
+
+    updateCurrencyUIControls();
   }
 
   // 6. PILAR 1: LIBRO DIARIO GENERAL
@@ -293,8 +401,9 @@ function initAccounting() {
       const card = document.createElement('div');
       card.className = 'voucher-card';
 
-      const rateHist = Number(voucher.bcvRateHistorical || 761.21);
-      const vesTotal = Number(voucher.totalDebe) * rateHist;
+      const rateHist = getVoucherRate(voucher);
+      const isVES = (currentCurrency === 'VES');
+      const unit = isVES ? 'Bs.' : '$ USD';
 
       let rowsHtml = '';
       (voucher.details || []).forEach((det, idx) => {
@@ -307,14 +416,19 @@ function initAccounting() {
               ${isHaber ? '<span style="color: var(--color-muted); font-style: italic; margin-right: 0.35rem;">a</span>' : ''}<strong>${det.accountName}</strong>
             </td>
             <td class="debe-amount" style="text-align: right; width: 140px;">
-              ${Number(det.debe) > 0 ? '$' + Number(det.debe).toLocaleString('es-VE', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : '-'}
+              ${Number(det.debe) > 0 ? formatAmount(det.debe, rateHist) : '-'}
             </td>
             <td class="haber-amount" style="text-align: right; width: 140px;">
-              ${Number(det.haber) > 0 ? '$' + Number(det.haber).toLocaleString('es-VE', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : '-'}
+              ${Number(det.haber) > 0 ? formatAmount(det.haber, rateHist) : '-'}
             </td>
           </tr>
         `;
       });
+
+      const totalPrincipal = formatAmount(voucher.totalDebe, rateHist);
+      const secondarySummary = isVES
+        ? `Equivalente en Dólares: <strong style="color: var(--color-espresso);">$${Number(voucher.totalDebe).toLocaleString('es-VE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} USD</strong>`
+        : `Equivalente Fiscal Oficial: <strong style="color: var(--color-espresso);">Bs. ${(Number(voucher.totalDebe) * rateHist).toLocaleString('es-VE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</strong>`;
 
       card.innerHTML = `
         <div class="voucher-card-header">
@@ -342,8 +456,8 @@ function initAccounting() {
               <th style="width: 40px; text-align: center;">#</th>
               <th style="width: 95px;">Código PUC</th>
               <th>Denominación de la Cuenta</th>
-              <th style="text-align: right; width: 140px;">Debe ($ USD)</th>
-              <th style="text-align: right; width: 140px;">Haber ($ USD)</th>
+              <th style="text-align: right; width: 140px;">Debe (${unit})</th>
+              <th style="text-align: right; width: 140px;">Haber (${unit})</th>
             </tr>
           </thead>
           <tbody>
@@ -355,7 +469,7 @@ function initAccounting() {
           <div>
             <span style="color: var(--color-muted); font-style: italic; font-size: 0.82rem; font-weight: 500;">P/R: ${voucher.concept}</span>
             <div style="font-size: 0.74rem; color: var(--color-light-muted); margin-top: 0.2rem; font-weight: 600;">
-              Equivalente Fiscal Oficial: <strong style="color: var(--color-espresso);">Bs. ${vesTotal.toLocaleString('es-VE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</strong>
+              ${secondarySummary}
             </div>
           </div>
           <div style="display: flex; align-items: center; gap: 0.65rem; flex-wrap: wrap;">
@@ -363,7 +477,7 @@ function initAccounting() {
               <i data-lucide="shield-check" class="icon-xs"></i> Partida Doble Cuadrada
             </span>
             <strong style="font-size: 0.96rem; color: var(--color-espresso); font-variant-numeric: tabular-nums;">
-              Total: $${Number(voucher.totalDebe).toLocaleString('es-VE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+              Total: ${totalPrincipal}
             </strong>
             <button type="button" class="btn-print-voucher" data-code="${voucher.code}" title="Ver o imprimir este comprobante de diario oficial">
               <i data-lucide="printer" class="icon-xs"></i> <span>Imprimir Ficha</span>
@@ -423,7 +537,7 @@ function initAccounting() {
           <td style="font-family: monospace; font-weight: 700; font-size: 0.82rem; color: var(--color-espresso);">${voucher.code}</td>
           <td><strong>${det.accountName}</strong></td>
           <td style="text-align: center; font-family: monospace; font-weight: 700; color: var(--color-espresso);">${det.accountCode}</td>
-          <td class="debe-amount" style="text-align: right;">$${Number(det.debe).toLocaleString('es-VE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
+          <td class="debe-amount" style="text-align: right;">${formatAmount(det.debe, voucher.bcvRateHistorical)}</td>
           <td style="text-align: right; color: var(--color-light-muted);">-</td>
         `;
         journalTableBody.appendChild(tr);
@@ -439,7 +553,7 @@ function initAccounting() {
           <td class="account-cell" style="padding-left: 2rem;"><span style="color: var(--color-muted); font-style: italic; margin-right: 0.35rem;">a</span> <strong>${det.accountName}</strong></td>
           <td style="text-align: center; font-family: monospace; font-weight: 700; color: var(--color-espresso);">${det.accountCode}</td>
           <td style="text-align: right; color: var(--color-light-muted);">-</td>
-          <td class="haber-amount" style="text-align: right;">$${Number(det.haber).toLocaleString('es-VE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
+          <td class="haber-amount" style="text-align: right;">${formatAmount(det.haber, voucher.bcvRateHistorical)}</td>
         `;
         journalTableBody.appendChild(tr);
       });
@@ -453,7 +567,7 @@ function initAccounting() {
         <td colspan="4" style="padding: 0.55rem 1rem;">
           <div style="display: flex; justify-content: space-between; align-items: center;">
             <span><em style="color: var(--color-muted);">P/R: ${voucher.concept}</em></span>
-            <strong style="color: var(--color-espresso); font-variant-numeric: tabular-nums;">Sumas Iguales: $${Number(voucher.totalDebe).toLocaleString('es-VE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</strong>
+            <strong style="color: var(--color-espresso); font-variant-numeric: tabular-nums;">Sumas Iguales: ${formatAmount(voucher.totalDebe, voucher.bcvRateHistorical)}</strong>
           </div>
         </td>
       `;
@@ -539,6 +653,7 @@ function initAccounting() {
       card.className = 'ledger-folio-card';
 
       const isDeudora = (acc.nature || '').toLowerCase() === 'deudor' || (acc.nature || '').toLowerCase() === 'deudora';
+      const unit = getCurrencyUnit();
 
       // Extraer movimientos cronológicos para esta cuenta
       const moves = [];
@@ -550,7 +665,8 @@ function initAccounting() {
               voucherCode: voucher.code,
               concept: voucher.concept,
               debe: Number(det.debe || 0),
-              haber: Number(det.haber || 0)
+              haber: Number(det.haber || 0),
+              rate: voucher.bcvRateHistorical
             });
           }
         });
@@ -563,7 +679,7 @@ function initAccounting() {
         rowsHtml = `
           <tr>
             <td colspan="6" style="text-align: center; color: #94A3B8; padding: 1rem;">
-              Sin movimientos registrados en el período actual. Saldo inicial: $0.00.
+              Sin movimientos registrados en el período actual. Saldo inicial: ${formatAmount(0)}.
             </td>
           </tr>
         `;
@@ -580,10 +696,10 @@ function initAccounting() {
               <td style="font-family: monospace; color: #64748B;">${m.date}</td>
               <td style="font-family: monospace; font-weight: 700;">${m.voucherCode}</td>
               <td>${m.concept}</td>
-              <td class="debe-amount" style="text-align: right;">${m.debe > 0 ? '$' + m.debe.toLocaleString('es-VE', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : '-'}</td>
-              <td class="haber-amount" style="text-align: right;">${m.haber > 0 ? '$' + m.haber.toLocaleString('es-VE', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : '-'}</td>
+              <td class="debe-amount" style="text-align: right;">${m.debe > 0 ? formatAmount(m.debe, m.rate) : '-'}</td>
+              <td class="haber-amount" style="text-align: right;">${m.haber > 0 ? formatAmount(m.haber, m.rate) : '-'}</td>
               <td style="text-align: right; font-weight: 700; color: var(--color-espresso);">
-                $${runningBalance.toLocaleString('es-VE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                ${formatAmount(runningBalance, m.rate)}
               </td>
             </tr>
           `;
@@ -612,9 +728,9 @@ function initAccounting() {
               <th style="width: 140px;">Fecha</th>
               <th style="width: 130px;">Comprobante</th>
               <th>Concepto / Explicación del Movimiento</th>
-              <th style="width: 130px; text-align: right;">Debe ($)</th>
-              <th style="width: 130px; text-align: right;">Haber ($)</th>
-              <th style="width: 140px; text-align: right;">Saldo Progresivo ($)</th>
+              <th style="width: 130px; text-align: right;">Debe (${unit})</th>
+              <th style="width: 130px; text-align: right;">Haber (${unit})</th>
+              <th style="width: 140px; text-align: right;">Saldo Progresivo (${unit})</th>
             </tr>
           </thead>
           <tbody>
@@ -625,13 +741,13 @@ function initAccounting() {
         <div class="ledger-folio-footer">
           <div>
             <span>Sumas del Mayor: </span>
-            <span class="highlight-debe" style="margin-right: 1.5rem;">Debe: $${Number(acc.sumDebe).toLocaleString('es-VE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
-            <span class="highlight-haber">Haber: $${Number(acc.sumHaber).toLocaleString('es-VE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+            <span class="highlight-debe" style="margin-right: 1.5rem;">Debe: ${formatAmount(acc.sumDebe)}</span>
+            <span class="highlight-haber">Haber: ${formatAmount(acc.sumHaber)}</span>
           </div>
           <div>
             <span>${saldoTipo}: </span>
             <strong style="color: ${saldoDeudor > 0 ? '#166534' : (saldoAcreedor > 0 ? '#991B1B' : '#64748B')}; font-size: 0.95rem;">
-              $${saldoNeto.toLocaleString('es-VE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+              ${formatAmount(saldoNeto)}
             </strong>
           </div>
         </div>
@@ -645,6 +761,7 @@ function initAccounting() {
   function renderLedgerTAccountsView(accounts) {
     if (!tAccountsGridContainer) return;
     tAccountsGridContainer.innerHTML = '';
+    const unit = getCurrencyUnit();
 
     accounts.forEach(acc => {
       const card = document.createElement('div');
@@ -656,33 +773,33 @@ function initAccounting() {
       automaticEntries.forEach(voucher => {
         (voucher.details || []).forEach(det => {
           if (det.accountCode === acc.code) {
-            if (Number(det.debe) > 0) debits.push({ ref: voucher.code, val: Number(det.debe) });
-            if (Number(det.haber) > 0) credits.push({ ref: voucher.code, val: Number(det.haber) });
+            if (Number(det.debe) > 0) debits.push({ ref: voucher.code, val: Number(det.debe), rate: voucher.bcvRateHistorical });
+            if (Number(det.haber) > 0) credits.push({ ref: voucher.code, val: Number(det.haber), rate: voucher.bcvRateHistorical });
           }
         });
       });
 
       let debitsHtml = debits.length > 0 
-        ? debits.map(d => `<div class="t-movement-item"><span class="t-move-ref">${d.ref}</span><span class="debe-amount">$${d.val.toFixed(2)}</span></div>`).join('')
+        ? debits.map(d => `<div class="t-movement-item"><span class="t-move-ref">${d.ref}</span><span class="debe-amount">${formatAmount(d.val, d.rate)}</span></div>`).join('')
         : `<div style="color: #CBD5E1; font-size: 0.75rem; padding: 0.5rem 0;">- Sin cargos -</div>`;
 
       let creditsHtml = credits.length > 0 
-        ? credits.map(c => `<div class="t-movement-item"><span class="t-move-ref">${c.ref}</span><span class="haber-amount">$${c.val.toFixed(2)}</span></div>`).join('')
+        ? credits.map(c => `<div class="t-movement-item"><span class="t-move-ref">${c.ref}</span><span class="haber-amount">${formatAmount(c.val, c.rate)}</span></div>`).join('')
         : `<div style="color: #CBD5E1; font-size: 0.75rem; padding: 0.5rem 0;">- Sin abonos -</div>`;
 
       const saldoDeudor = Number(acc.saldoDeudor || 0);
       const saldoAcreedor = Number(acc.saldoAcreedor || 0);
       let saldoLabel = 'Saldo Cero';
-      let saldoMonto = '$0.00';
+      let saldoMonto = formatAmount(0);
       let saldoColor = '#64748B';
 
       if (saldoDeudor > 0) {
         saldoLabel = 'Saldo Deudor:';
-        saldoMonto = `$${saldoDeudor.toLocaleString('es-VE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+        saldoMonto = formatAmount(saldoDeudor);
         saldoColor = '#166534';
       } else if (saldoAcreedor > 0) {
         saldoLabel = 'Saldo Acreedor:';
-        saldoMonto = `$${saldoAcreedor.toLocaleString('es-VE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+        saldoMonto = formatAmount(saldoAcreedor);
         saldoColor = '#991B1B';
       }
 
@@ -694,20 +811,20 @@ function initAccounting() {
 
         <div class="t-columns-container">
           <div class="t-col debe">
-            <div class="t-col-title">DEBE (Cargos)</div>
+            <div class="t-col-title">DEBE (Cargos ${unit})</div>
             <div>${debitsHtml}</div>
             <div class="t-subtotal-box">
               <span>Σ Debe:</span>
-              <span class="debe-amount">$${Number(acc.sumDebe).toFixed(2)}</span>
+              <span class="debe-amount">${formatAmount(acc.sumDebe)}</span>
             </div>
           </div>
 
           <div class="t-col haber">
-            <div class="t-col-title">HABER (Abonos)</div>
+            <div class="t-col-title">HABER (Abonos ${unit})</div>
             <div>${creditsHtml}</div>
             <div class="t-subtotal-box">
               <span>Σ Haber:</span>
-              <span class="haber-amount">$${Number(acc.sumHaber).toFixed(2)}</span>
+              <span class="haber-amount">${formatAmount(acc.sumHaber)}</span>
             </div>
           </div>
         </div>
@@ -757,13 +874,13 @@ function initAccounting() {
         <td class="table-code-badge">${acc.code}</td>
         <td><strong>${acc.name}</strong></td>
         <td><span class="t-account-type-badge">${acc.type || 'Cuenta'}</span></td>
-        <td class="debe-amount" style="text-align: right;">$${sumDebe.toLocaleString('es-VE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
-        <td class="haber-amount" style="text-align: right;">$${sumHaber.toLocaleString('es-VE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
+        <td class="debe-amount" style="text-align: right;">${formatAmount(sumDebe)}</td>
+        <td class="haber-amount" style="text-align: right;">${formatAmount(sumHaber)}</td>
         <td style="text-align: right; font-weight: 700; color: ${saldoDeudor > 0 ? '#166534' : '#94A3B8'};">
-          ${saldoDeudor > 0 ? '$' + saldoDeudor.toLocaleString('es-VE', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : '-'}
+          ${saldoDeudor > 0 ? formatAmount(saldoDeudor) : '-'}
         </td>
         <td style="text-align: right; font-weight: 700; color: ${saldoAcreedor > 0 ? '#991B1B' : '#94A3B8'};">
-          ${saldoAcreedor > 0 ? '$' + saldoAcreedor.toLocaleString('es-VE', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : '-'}
+          ${saldoAcreedor > 0 ? formatAmount(saldoAcreedor) : '-'}
         </td>
       `;
       balanceBody.appendChild(tr);
@@ -776,25 +893,25 @@ function initAccounting() {
             <strong>TOTALES GENERALES DE COMPROBACIÓN:</strong>
           </td>
           <td style="text-align: right; color: #166534; font-weight: 800;">
-            $${totalSumDebe.toLocaleString('es-VE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+            ${formatAmount(totalSumDebe)}
           </td>
           <td style="text-align: right; color: #991B1B; font-weight: 800;">
-            $${totalSumHaber.toLocaleString('es-VE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+            ${formatAmount(totalSumHaber)}
           </td>
           <td style="text-align: right; color: #166534; font-weight: 800;">
-            $${totalSaldoDeudor.toLocaleString('es-VE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+            ${formatAmount(totalSaldoDeudor)}
           </td>
           <td style="text-align: right; color: #991B1B; font-weight: 800;">
-            $${totalSaldoAcreedor.toLocaleString('es-VE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+            ${formatAmount(totalSaldoAcreedor)}
           </td>
         </tr>
       `;
     }
 
-    if (verificationDebeTotal) verificationDebeTotal.textContent = `$${totalSumDebe.toLocaleString('es-VE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
-    if (verificationHaberTotal) verificationHaberTotal.textContent = `$${totalSumHaber.toLocaleString('es-VE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
-    if (verificationDeudorTotal) verificationDeudorTotal.textContent = `$${totalSaldoDeudor.toLocaleString('es-VE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
-    if (verificationAcreedorTotal) verificationAcreedorTotal.textContent = `$${totalSaldoAcreedor.toLocaleString('es-VE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+    if (verificationDebeTotal) verificationDebeTotal.textContent = formatAmount(totalSumDebe);
+    if (verificationHaberTotal) verificationHaberTotal.textContent = formatAmount(totalSumHaber);
+    if (verificationDeudorTotal) verificationDeudorTotal.textContent = formatAmount(totalSaldoDeudor);
+    if (verificationAcreedorTotal) verificationAcreedorTotal.textContent = formatAmount(totalSaldoAcreedor);
   }
 
   // 9. PILAR 4: CATÁLOGO DEL PUC
@@ -967,9 +1084,9 @@ function initAccounting() {
     const diff = Math.abs(tDebe - tHaber);
     const isBalanced = diff < 0.01 && tDebe > 0;
 
-    if (editorDebeTotal) editorDebeTotal.textContent = `$${tDebe.toFixed(2)}`;
-    if (editorHaberTotal) editorHaberTotal.textContent = `$${tHaber.toFixed(2)}`;
-    if (editorDiffTotal) editorDiffTotal.textContent = `$${diff.toFixed(2)}`;
+    if (editorDebeTotal) editorDebeTotal.textContent = formatAmount(tDebe);
+    if (editorHaberTotal) editorHaberTotal.textContent = formatAmount(tHaber);
+    if (editorDiffTotal) editorDiffTotal.textContent = formatAmount(diff);
 
     if (editorBalanceBadge) {
       if (isBalanced) {
@@ -977,7 +1094,7 @@ function initAccounting() {
         editorBalanceBadge.innerHTML = `<i data-lucide="check-circle-2" class="icon-xs"></i> Comprobante Cuadrado (Partida Doble)`;
       } else {
         editorBalanceBadge.className = 'editor-balance-status status-unbalanced';
-        editorBalanceBadge.innerHTML = `<i data-lucide="alert-triangle" class="icon-xs"></i> Descuadre de $${diff.toFixed(2)}`;
+        editorBalanceBadge.innerHTML = `<i data-lucide="alert-triangle" class="icon-xs"></i> Descuadre de ${formatAmount(diff)}`;
       }
       window.LucideIcons?.refresh();
     }
@@ -1240,6 +1357,8 @@ function initAccounting() {
     const now = new Date();
     const dateFormatted = now.toLocaleDateString('es-VE', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
     const timeFormatted = now.toLocaleTimeString('es-VE', { hour: '2-digit', minute: '2-digit' });
+    const unit = getCurrencyUnit();
+    const curName = getCurrencyFullName();
 
     let totalSumDebe = 0;
     let totalSumHaber = 0;
@@ -1257,15 +1376,15 @@ function initAccounting() {
       totalSaldoDeudor += saldoDeudor;
       totalSaldoAcreedor += saldoAcreedor;
 
-      const deudorText = saldoDeudor > 0 ? ('$' + saldoDeudor.toLocaleString('es-VE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })) : '-';
-      const acreedorText = saldoAcreedor > 0 ? ('$' + saldoAcreedor.toLocaleString('es-VE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })) : '-';
+      const deudorText = saldoDeudor > 0 ? formatAmount(saldoDeudor) : '-';
+      const acreedorText = saldoAcreedor > 0 ? formatAmount(saldoAcreedor) : '-';
 
       return `
         <tr>
           <td style="font-family: monospace; font-weight: 700;">${acc.code}</td>
           <td><strong>${acc.name}</strong></td>
-          <td style="text-align: right;">$${sumDebe.toLocaleString('es-VE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
-          <td style="text-align: right;">$${sumHaber.toLocaleString('es-VE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
+          <td style="text-align: right;">${formatAmount(sumDebe)}</td>
+          <td style="text-align: right;">${formatAmount(sumHaber)}</td>
           <td style="text-align: right;">${deudorText}</td>
           <td style="text-align: right;">${acreedorText}</td>
         </tr>
@@ -1296,7 +1415,7 @@ function initAccounting() {
             </tr>
             <tr>
               <td class="meta-label">MONEDA:</td>
-              <td class="meta-val">Dólares ($ USD) &bull; Ref. BCV</td>
+              <td class="meta-val">${curName} &bull; Tasa BCV: Bs. ${liveBcvRate.toFixed(2)}</td>
             </tr>
             <tr>
               <td class="meta-label">AUDITOR:</td>
@@ -1319,10 +1438,10 @@ function initAccounting() {
           <tr>
             <th style="width: 100px;">Código PUC</th>
             <th>Denominación de la Cuenta</th>
-            <th style="text-align: right;">Sumas Debe ($)</th>
-            <th style="text-align: right;">Sumas Haber ($)</th>
-            <th style="text-align: right;">Saldo Deudor ($)</th>
-            <th style="text-align: right;">Saldo Acreedor ($)</th>
+            <th style="text-align: right;">Sumas Debe (${unit})</th>
+            <th style="text-align: right;">Sumas Haber (${unit})</th>
+            <th style="text-align: right;">Saldo Deudor (${unit})</th>
+            <th style="text-align: right;">Saldo Acreedor (${unit})</th>
           </tr>
         </thead>
         <tbody>
@@ -1331,16 +1450,16 @@ function initAccounting() {
         <tfoot>
           <tr>
             <td colspan="2" style="text-align: right;"><strong>TOTALES GENERALES DE COMPROBACIÓN:</strong></td>
-            <td style="text-align: right;"><strong>$${totalSumDebe.toLocaleString('es-VE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</strong></td>
-            <td style="text-align: right;"><strong>$${totalSumHaber.toLocaleString('es-VE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</strong></td>
-            <td style="text-align: right; color: var(--color-success);"><strong>$${totalSaldoDeudor.toLocaleString('es-VE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</strong></td>
-            <td style="text-align: right; color: #1D4ED8;"><strong>$${totalSaldoAcreedor.toLocaleString('es-VE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</strong></td>
+            <td style="text-align: right;"><strong>${formatAmount(totalSumDebe)}</strong></td>
+            <td style="text-align: right;"><strong>${formatAmount(totalSumHaber)}</strong></td>
+            <td style="text-align: right; color: var(--color-success);"><strong>${formatAmount(totalSaldoDeudor)}</strong></td>
+            <td style="text-align: right; color: #1D4ED8;"><strong>${formatAmount(totalSaldoAcreedor)}</strong></td>
           </tr>
         </tfoot>
       </table>
 
       <div style="background: #FDFBF7; border-left: 4px solid var(--color-gold); border-top: 1px solid rgba(212, 155, 84, 0.25); border-right: 1px solid rgba(212, 155, 84, 0.25); border-bottom: 1px solid rgba(212, 155, 84, 0.25); padding: 0.95rem 1.25rem; font-size: 0.84rem; color: #4B5563; line-height: 1.5; margin: 1.5rem 0; border-radius: 6px;">
-        <strong style="color: var(--color-espresso);">Certificación de Auditoría Contable:</strong> Se hace constar que el presente Balance de Comprobación de Sumas y Saldos refleja fielmente la totalidad de las operaciones asentadas en el Libro Diario y Mayor de <em>La Nueva Parisienne Panadería &amp; Pastelería C.A.</em>, habiéndose verificado la exactitud matemática de las partidas dobles conforme a las Normas Internacionales de Información Financiera (NIIF para PYMES) y leyes mercantiles vigentes.
+        <strong style="color: var(--color-espresso);">Certificación de Auditoría Contable:</strong> Se hace constar que el presente Balance de Comprobación de Sumas y Saldos refleja fielmente la totalidad de las operaciones asentadas en el Libro Diario y Mayor de <em>La Nueva Parisienne Panadería &amp; Pastelería C.A.</em>, expresado en <strong>${curName}</strong> (Tasa Oficial BCV: Bs. ${liveBcvRate.toFixed(2)}), habiéndose verificado la exactitud matemática de las partidas dobles conforme a las Normas Internacionales de Información Financiera (NIIF para PYMES) y leyes mercantiles vigentes.
       </div>
 
       <div class="report-signatures-grid">
@@ -1366,8 +1485,9 @@ function initAccounting() {
     const voucher = automaticEntries.find(v => v.code === voucherCode);
     if (!voucher || !balanceSheet) return;
 
-    const rateHist = Number(voucher.bcvRateHistorical || 761.21);
-    const vesTotal = Number(voucher.totalDebe) * rateHist;
+    const rateHist = getVoucherRate(voucher);
+    const unit = getCurrencyUnit();
+    const curName = getCurrencyFullName();
 
     let rowsHtml = '';
     (voucher.details || []).forEach((det, idx) => {
@@ -1380,14 +1500,18 @@ function initAccounting() {
             ${isHaber ? '<span style="color: var(--color-muted); font-style: italic; margin-right: 0.25rem;">a</span> ' : ''}<strong>${det.accountName}</strong>
           </td>
           <td style="text-align: right; font-weight: 800; color: var(--color-success); font-variant-numeric: tabular-nums;">
-            ${Number(det.debe) > 0 ? '$' + Number(det.debe).toLocaleString('es-VE', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : '-'}
+            ${Number(det.debe) > 0 ? formatAmount(det.debe, rateHist) : '-'}
           </td>
           <td style="text-align: right; font-weight: 800; color: var(--color-terracotta); font-variant-numeric: tabular-nums;">
-            ${Number(det.haber) > 0 ? '$' + Number(det.haber).toLocaleString('es-VE', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : '-'}
+            ${Number(det.haber) > 0 ? formatAmount(det.haber, rateHist) : '-'}
           </td>
         </tr>
       `;
     });
+
+    const secondaryVal = currentCurrency === 'VES'
+      ? `$${Number(voucher.totalDebe).toLocaleString('es-VE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} USD`
+      : `Bs. ${(Number(voucher.totalDebe) * rateHist).toLocaleString('es-VE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 
     balanceSheet.innerHTML = `
       <div class="report-header-banner">
@@ -1416,8 +1540,8 @@ function initAccounting() {
               <td class="meta-val">${voucher.sourceModule}</td>
             </tr>
             <tr>
-              <td class="meta-label">TASA BCV:</td>
-              <td class="meta-val">Bs. ${rateHist.toFixed(2)}</td>
+              <td class="meta-label">MONEDA:</td>
+              <td class="meta-val">${curName} &bull; Tasa BCV: Bs. ${rateHist.toFixed(2)}</td>
             </tr>
             <tr>
               <td class="meta-label">ESTATUS:</td>
@@ -1438,8 +1562,8 @@ function initAccounting() {
             <th style="width: 45px; text-align: center;">#</th>
             <th style="width: 110px;">Código PUC</th>
             <th>Denominación de la Cuenta Contable</th>
-            <th style="text-align: right; width: 140px;">Débito ($ USD)</th>
-            <th style="text-align: right; width: 140px;">Crédito ($ USD)</th>
+            <th style="text-align: right; width: 140px;">Débito (${unit})</th>
+            <th style="text-align: right; width: 140px;">Crédito (${unit})</th>
           </tr>
         </thead>
         <tbody>
@@ -1448,14 +1572,14 @@ function initAccounting() {
         <tfoot>
           <tr>
             <td colspan="3" style="text-align: right;"><strong>SUMAS IGUALES DEL COMPROBANTE:</strong></td>
-            <td style="text-align: right; color: var(--color-success); font-weight: 800;">$${Number(voucher.totalDebe).toLocaleString('es-VE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
-            <td style="text-align: right; color: var(--color-terracotta); font-weight: 800;">$${Number(voucher.totalHaber).toLocaleString('es-VE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
+            <td style="text-align: right; color: var(--color-success); font-weight: 800;">${formatAmount(voucher.totalDebe, rateHist)}</td>
+            <td style="text-align: right; color: var(--color-terracotta); font-weight: 800;">${formatAmount(voucher.totalHaber, rateHist)}</td>
           </tr>
         </tfoot>
       </table>
 
       <div style="background: #FDFBF7; border: 1px solid rgba(212, 155, 84, 0.2); padding: 0.85rem 1.25rem; font-size: 0.82rem; color: #4B5563; line-height: 1.5; margin: 1.5rem 0; border-radius: 6px;">
-        <strong>Certificación de Auditoría Contable:</strong> Se hace constar que el presente comprobante de diario ha sido procesado cumpliendo fielmente con el principio universal de partida doble, registrando débitos y créditos en sumas iguales conforme a las Normas Internacionales de Información Financiera (NIIF para PYMES). Equivalente fiscal oficial: <strong>Bs. ${vesTotal.toLocaleString('es-VE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</strong>.
+        <strong>Certificación de Auditoría Contable:</strong> Se hace constar que el presente comprobante de diario ha sido procesado cumpliendo fielmente con el principio universal de partida doble, registrando débitos y créditos en sumas iguales conforme a las Normas Internacionales de Información Financiera (NIIF para PYMES). Expresado en <strong>${curName}</strong>. Equivalente referencial: <strong>${secondaryVal}</strong> (Tasa BCV: Bs. ${rateHist.toFixed(2)}).
       </div>
 
       <div class="report-signatures-grid">
@@ -1539,61 +1663,72 @@ function initAccounting() {
     const fechaEmision = now.toLocaleString('es-VE');
     await ensureStyleEngine();
 
+    const unit = getCurrencyUnit();
+    const isVes = currentCurrency === 'VES';
+    const rate = liveBcvRate || (typeof getBcvRate === 'function' ? getBcvRate() : 761.21);
+
     const headers = [
       "CÓDIGO PUC",
       "DENOMINACIÓN DE LA CUENTA",
       "GRUPO / CLASIFICACIÓN",
-      "SUMAS DEBE ($)",
-      "SUMAS HABER ($)",
-      "SALDO DEUDOR ($)",
-      "SALDO ACREEDOR ($)"
+      `SUMAS DEBE (${unit})`,
+      `SUMAS HABER (${unit})`,
+      `SALDO DEUDOR (${unit})`,
+      `SALDO ACREEDOR (${unit})`
     ];
 
     let tDebe = 0, tHaber = 0, tDeudor = 0, tAcreedor = 0;
     const rows = [];
     (trialBalance || []).forEach(acc => {
-      const sDebe = Number(acc.sumDebe || 0);
-      const sHaber = Number(acc.sumHaber || 0);
-      const sDeudor = Number(acc.saldoDeudor || 0);
-      const sAcreedor = Number(acc.saldoAcreedor || 0);
+      const rawDebe = Number(acc.sumDebe || 0);
+      const rawHaber = Number(acc.sumHaber || 0);
+      const rawDeudor = Number(acc.saldoDeudor || 0);
+      const rawAcreedor = Number(acc.saldoAcreedor || 0);
+
+      const sDebe = isVes ? rawDebe * rate : rawDebe;
+      const sHaber = isVes ? rawHaber * rate : rawHaber;
+      const sDeudor = isVes ? rawDeudor * rate : rawDeudor;
+      const sAcreedor = isVes ? rawAcreedor * rate : rawAcreedor;
 
       tDebe += sDebe;
       tHaber += sHaber;
       tDeudor += sDeudor;
       tAcreedor += sAcreedor;
 
+      const prefix = isVes ? 'Bs. ' : '$';
       rows.push([
         acc.code,
         acc.name,
         acc.type || 'Cuenta',
-        sDebe > 0 ? `$${sDebe.toFixed(2)}` : '$0.00',
-        sHaber > 0 ? `$${sHaber.toFixed(2)}` : '$0.00',
-        sDeudor > 0 ? `$${sDeudor.toFixed(2)}` : '$0.00',
-        sAcreedor > 0 ? `$${sAcreedor.toFixed(2)}` : '$0.00'
+        sDebe > 0 ? `${prefix}${sDebe.toLocaleString('es-VE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` : `${prefix}0,00`,
+        sHaber > 0 ? `${prefix}${sHaber.toLocaleString('es-VE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` : `${prefix}0,00`,
+        sDeudor > 0 ? `${prefix}${sDeudor.toLocaleString('es-VE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` : `${prefix}0,00`,
+        sAcreedor > 0 ? `${prefix}${sAcreedor.toLocaleString('es-VE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` : `${prefix}0,00`
       ]);
     });
 
+    const prefix = isVes ? 'Bs. ' : '$';
     const footer = [
       "TOTALES GENERALES:",
       "SUMAS IGUALES VERIFICADAS (DEBE = HABER)",
-      "ECUACIÓN PATRIMONIAL",
-      `$${tDebe.toFixed(2)}`,
-      `$${tHaber.toFixed(2)}`,
-      `$${tDeudor.toFixed(2)}`,
-      `$${tAcreedor.toFixed(2)}`
+      `MONEDA: ${getCurrencyFullName()}`,
+      `${prefix}${tDebe.toLocaleString('es-VE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`,
+      `${prefix}${tHaber.toLocaleString('es-VE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`,
+      `${prefix}${tDeudor.toLocaleString('es-VE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`,
+      `${prefix}${tAcreedor.toLocaleString('es-VE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
     ];
 
-    const cleanFileName = `balance_comprobacion_${now.toISOString().slice(0, 10)}.xlsx`;
+    const cleanFileName = `balance_comprobacion_${currentCurrency.toLowerCase()}_${now.toISOString().slice(0, 10)}.xlsx`;
     generateStyledExcelReport({
       fileName: cleanFileName,
       sheetName: 'Balance Comprobación',
-      title: 'Balance de Comprobación Contable Formal (Sumas y Saldos)',
+      title: `Balance de Comprobación Contable Formal en ${getCurrencyFullName()}`,
       periodo: 'Ejercicio Contable Vigente',
       fechaEmision,
-      bcvRate: typeof getBcvRate === 'function' ? getBcvRate() : 761.21,
+      bcvRate: rate,
       activeUser: { name: 'Juan Mendoza', role: 'Contador General & Gerente' },
       tables: [{
-        title: 'Plan Único de Cuentas (PUC) • Sumas de Diario y Saldos de Mayor',
+        title: `Plan Único de Cuentas (PUC) • Sumas y Saldos Expresados en ${getCurrencyFullName()} (Tasa BCV: Bs. ${rate.toFixed(2)})`,
         headers,
         rows,
         footer
