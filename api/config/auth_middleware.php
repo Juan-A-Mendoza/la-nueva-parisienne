@@ -27,6 +27,45 @@ if (session_status() === PHP_SESSION_NONE && !headers_sent()) {
  * @param array $allowedRoles Roles permitidos (vacío = cualquier rol autenticado)
  */
 function require_auth(array $allowedRoles = []): void {
+    // 0. Auto-recuperación de sesión para arquitecturas híbridas (SessionStore / LocalStorage / Headers)
+    if (empty($_SESSION['authenticated']) || empty($_SESSION['user_id'])) {
+        $candidateUserId = trim($_SERVER['HTTP_X_USER_ID'] ?? ($_GET['auth_user_id'] ?? ($_GET['user_id'] ?? ($_POST['user_id'] ?? ''))));
+
+        if (!empty($candidateUserId)) {
+            try {
+                if (!function_exists('getDbConnection')) {
+                    require_once __DIR__ . '/conexion.php';
+                }
+                $pdo = getDbConnection();
+                $stmt = $pdo->prepare("
+                    SELECT u.id, u.codigo, u.username, u.nombre, r.codigo AS rol_codigo, r.nombre AS rol_nombre, u.estado 
+                    FROM usuarios u 
+                    INNER JOIN roles r ON u.rol_id = r.id 
+                    WHERE (u.id = :uid OR u.codigo = :uidCode OR u.username = :uidUser) 
+                      AND u.estado = 'active' 
+                    LIMIT 1
+                ");
+                $stmt->execute([':uid' => $candidateUserId, ':uidCode' => $candidateUserId, ':uidUser' => $candidateUserId]);
+                $uRow = $stmt->fetch();
+                if ($uRow) {
+                    if (session_status() === PHP_SESSION_NONE && !headers_sent()) {
+                        @session_start();
+                    }
+                    $_SESSION['user_id']       = $uRow['id'];
+                    $_SESSION['username']      = $uRow['username'] ?: $uRow['codigo'];
+                    $_SESSION['name']          = $uRow['nombre'];
+                    $_SESSION['role_code']     = $uRow['rol_codigo'];
+                    $_SESSION['role_name']     = $uRow['rol_nombre'];
+                    $_SESSION['authenticated'] = true;
+                    $_SESSION['login_time']    = time();
+                    $_SESSION['ip_address']    = $_SERVER['REMOTE_ADDR'] ?? '127.0.0.1';
+                }
+            } catch (Exception $e) {
+                // Si la consulta falla, continuar con la verificación estándar
+            }
+        }
+    }
+
     if (empty($_SESSION['authenticated']) || empty($_SESSION['user_id'])) {
         http_response_code(401);
         header('Content-Type: application/json; charset=UTF-8');

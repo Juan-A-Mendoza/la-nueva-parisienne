@@ -66,6 +66,24 @@ try {
         ':icon' => $icon
     ]);
 
+    log_bitacora(
+        modulo: 'PROVEEDORES',
+        accion: 'CREAR_PROVEEDOR',
+        descripcion: "Nuevo proveedor comercial registrado: '{$name}' (RIF: {$rif}) - Términos: {$paymentTerms}",
+        severidad: 'INFO',
+        datosPrevios: null,
+        datosNuevos: [
+            'id' => $id,
+            'codigo' => $code,
+            'nombre' => $name,
+            'categoria' => $category,
+            'contacto' => $contact,
+            'telefono' => $phone,
+            'rif' => $rif,
+            'condicion_pago' => $paymentTerms
+        ]
+    );
+
     http_response_code(200);
     echo json_encode([
         'success' => true,

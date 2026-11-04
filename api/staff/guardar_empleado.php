@@ -170,6 +170,24 @@ try {
         $stmtUpd = $pdo->prepare($sqlUpd);
         $stmtUpd->execute($params);
 
+        log_bitacora(
+            modulo: 'PERSONAL',
+            accion: 'ACTUALIZAR_EMPLEADO',
+            descripcion: "Modificación de datos del usuario '{$name}' ({$id}) - Rol: {$finalRoleCode}",
+            severidad: 'WARNING',
+            datosPrevios: [
+                'id' => $existingUser['id'],
+                'nombre' => $existingUser['nombre'],
+                'rol_id' => $existingUser['rol_id']
+            ],
+            datosNuevos: [
+                'nombre' => $name,
+                'rol' => $finalRoleCode,
+                'turno' => $finalShift,
+                'estado' => $status
+            ]
+        );
+
         $code = $existingUser['codigo'];
 
         http_response_code(200);
@@ -249,6 +267,22 @@ try {
             ':patron'     => $finalPatron,
             ':totpEn'     => $totpEn
         ]);
+
+        log_bitacora(
+            modulo: 'PERSONAL',
+            accion: 'CREAR_EMPLEADO',
+            descripcion: "Registro de nuevo empleado '{$name}' ({$newId}) con rol {$finalRoleCode}",
+            severidad: 'INFO',
+            datosPrevios: null,
+            datosNuevos: [
+                'id' => $newId,
+                'codigo' => $code,
+                'username' => $username,
+                'nombre' => $name,
+                'rol' => $finalRoleCode,
+                'turno' => $shift
+            ]
+        );
 
         http_response_code(200);
         echo json_encode([

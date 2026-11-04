@@ -38,13 +38,32 @@ if (empty($id)) {
 try {
     $pdo = getDbConnection();
 
-    if ($tipo === 'raw_material' || $tipo === 'materia_prima' || str_starts_with($id, 'MAT-')) {
-        $stmt = $pdo->prepare("DELETE FROM materias_primas WHERE id = :id OR codigo = :id2");
-        $stmt->execute([':id' => $id, ':id2' => $id]);
-    } else {
-        $stmt = $pdo->prepare("DELETE FROM productos WHERE id = :id OR codigo = :id2");
-        $stmt->execute([':id' => $id, ':id2' => $id]);
-    }
+    $isRaw = ($tipo === 'raw_material' || $tipo === 'materia_prima' || str_starts_with($id, 'MAT-'));
+    $targetTable = $isRaw ? 'materias_primas' : 'productos';
+
+    $stmtInfo = $pdo->prepare("SELECT id, codigo, nombre, stock_actual FROM {$targetTable} WHERE id = :id OR codigo = :id2 LIMIT 1");
+    $stmtInfo->execute([':id' => $id, ':id2' => $id]);
+    $itemInfo = $stmtInfo->fetch() ?: ['id' => $id, 'codigo' => $id, 'nombre' => 'Desconocido', 'stock_actual' => 0];
+
+    $stmt = $pdo->prepare("DELETE FROM {$targetTable} WHERE id = :id OR codigo = :id2");
+    $stmt->execute([':id' => $id, ':id2' => $id]);
+
+    log_bitacora(
+        modulo: 'INVENTARIO',
+        accion: 'ELIMINAR_ITEM',
+        descripcion: "Eliminación definitiva de '{$itemInfo['nombre']}' ({$id}) de la tabla {$targetTable}",
+        severidad: 'DANGER',
+        datosPrevios: [
+            'id' => $itemInfo['id'],
+            'codigo' => $itemInfo['codigo'] ?? $id,
+            'nombre' => $itemInfo['nombre'],
+            'stock_al_eliminar' => $itemInfo['stock_actual'] ?? 0,
+            'tabla' => $targetTable
+        ],
+        datosNuevos: [
+            'accion' => 'REGISTRO_ELIMINADO'
+        ]
+    );
 
     echo json_encode([
         'success' => true,

@@ -139,10 +139,24 @@ try {
         $updatedTypes[] = "Modalidad MFA ({$valMfa})";
     }
 
-    // 5. Registrar acción en auditoría
     $clientIp = $_SERVER['REMOTE_ADDR'] ?? '127.0.0.1';
     $detallesAudit = "Superadmin actualizó: " . implode(', ', $updatedTypes) . " para {$targetUser['nombre']} ({$targetUser['username']})";
     security_log_access($targetUser['id'], $targetUser['username'], $clientIp, 'cambio_pin', 'exitoso', $detallesAudit);
+
+    log_bitacora(
+        modulo: 'PERSONAL',
+        accion: 'CAMBIO_CREDENCIALES',
+        descripcion: $detallesAudit,
+        severidad: 'WARNING',
+        datosPrevios: [
+            'id' => $targetUser['id'],
+            'username' => $targetUser['username'],
+            'nombre' => $targetUser['nombre']
+        ],
+        datosNuevos: [
+            'tipos_modificados' => $updatedTypes
+        ]
+    );
 
     http_response_code(200);
     echo json_encode([

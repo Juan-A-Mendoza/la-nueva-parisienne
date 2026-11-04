@@ -84,6 +84,29 @@ try {
         ':rate' => strval($tasaManual)
     ]);
 
+    log_bitacora(
+        modulo: 'CONFIGURACION',
+        accion: 'ACTUALIZAR_EMPRESA',
+        descripcion: "Actualización de datos corporativos de la empresa y parámetros cambiarios",
+        severidad: 'WARNING',
+        datosPrevios: [
+            'nombre' => $currentEmpresa['nombre'],
+            'rif' => $currentEmpresa['rif'],
+            'direccion' => $currentEmpresa['direccion'],
+            'telefono' => $currentEmpresa['telefono'],
+            'modo_tasa' => $confPairs['bcv_rate_mode'] ?? 'auto',
+            'tasa_manual' => isset($confPairs['bcv_manual_rate']) ? (float)$confPairs['bcv_manual_rate'] : null
+        ],
+        datosNuevos: [
+            'nombre' => $nombre,
+            'rif' => $rif,
+            'direccion' => $direccion,
+            'telefono' => $telefono,
+            'modo_tasa' => $modoTasa,
+            'tasa_manual' => $tasaManual
+        ]
+    );
+
     http_response_code(200);
     echo json_encode([
         'success' => true,

@@ -276,6 +276,26 @@ try {
     // Confirmar la Transacción en MySQL
     $pdo->commit();
 
+    $hasDiscount = ($discount > 0);
+    log_bitacora(
+        modulo: 'POS',
+        accion: $hasDiscount ? 'VENTA_CON_DESCUENTO' : 'VENTA_EMITIDA',
+        descripcion: "Venta {$orderNumber} procesada por total de \${$total} ({$totalBs} Bs.). Método: {$paymentMethod}" . ($hasDiscount ? " (Descuento: \${$discount})" : ""),
+        severidad: $hasDiscount ? 'WARNING' : 'INFO',
+        datosPrevios: null,
+        datosNuevos: [
+            'venta_id' => $saleId,
+            'numero_orden' => $orderNumber,
+            'total_usd' => $total,
+            'total_bs' => $totalBs,
+            'subtotal' => $subtotal,
+            'descuento' => $discount,
+            'metodo_pago' => $paymentMethod,
+            'items_count' => count($items)
+        ],
+        userId: $userId
+    );
+
     http_response_code(200);
     echo json_encode([
         'success' => true,

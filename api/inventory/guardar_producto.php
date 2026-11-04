@@ -47,12 +47,16 @@ try {
     // Si viene código, verificar si ya existe
     $existing = null;
     if (!empty($codigo)) {
-        $stmtChk = $pdo->prepare("SELECT id, codigo FROM productos WHERE codigo = :code LIMIT 1");
+        $stmtChk = $pdo->prepare("SELECT id, codigo, nombre, categoria_id, unidad_medida, precio_unitario, stock_actual, stock_minimo FROM productos WHERE codigo = :code LIMIT 1");
         $stmtChk->execute([':code' => $codigo]);
         $existing = $stmtChk->fetch(PDO::FETCH_ASSOC);
     }
 
     if ($existing) {
+        $oldPrice = (float)$existing['precio_unitario'];
+        $oldStock = (float)$existing['stock_actual'];
+        $priceChanged = (abs($oldPrice - $precio) > 0.001);
+
         // Actualizar
         $stmtUpd = $pdo->prepare("
             UPDATE productos 
@@ -75,6 +79,34 @@ try {
             ':icono' => $icono,
             ':id' => $existing['id']
         ]);
+
+        $accion = $priceChanged ? 'CAMBIO_PRECIO_PRODUCTO' : 'ACTUALIZAR_PRODUCTO';
+        $severidad = $priceChanged ? 'WARNING' : 'INFO';
+        $desc = $priceChanged 
+            ? "Modificación de precio de venta en '{$nombre}' ({$existing['codigo']}): \${$oldPrice} -> \${$precio}"
+            : "Actualización de producto '{$nombre}' ({$existing['codigo']}) en catálogo.";
+
+        log_bitacora(
+            modulo: 'INVENTARIO',
+            accion: $accion,
+            descripcion: $desc,
+            severidad: $severidad,
+            datosPrevios: [
+                'id' => $existing['id'],
+                'codigo' => $existing['codigo'],
+                'nombre' => $existing['nombre'],
+                'precio_anterior' => $oldPrice,
+                'stock_anterior' => $oldStock,
+                'stock_minimo' => (float)$existing['stock_minimo']
+            ],
+            datosNuevos: [
+                'nombre' => $nombre,
+                'precio_nuevo' => $precio,
+                'stock_nuevo' => $stock,
+                'stock_minimo' => $minStock,
+                'unidad' => $unidad
+            ]
+        );
 
         echo json_encode([
             'success' => true,
@@ -117,6 +149,24 @@ try {
             ':precio' => $precio,
             ':icono' => $icono
         ]);
+
+        log_bitacora(
+            modulo: 'INVENTARIO',
+            accion: 'CREAR_PRODUCTO',
+            descripcion: "Nuevo producto '{$nombre}' ({$codigo}) creado con precio de venta \${$precio} y stock inicial {$stock} {$unidad}",
+            severidad: 'INFO',
+            datosPrevios: null,
+            datosNuevos: [
+                'id' => $newId,
+                'codigo' => $codigo,
+                'nombre' => $nombre,
+                'precio_nuevo' => $precio,
+                'stock_nuevo' => $stock,
+                'stock_minimo' => $minStock,
+                'categoria' => $categoria,
+                'unidad' => $unidad
+            ]
+        );
 
         echo json_encode([
             'success' => true,

@@ -77,6 +77,22 @@ try {
 
     $pdo->commit();
 
+    log_bitacora(
+        modulo: 'PROVEEDORES',
+        accion: 'CREAR_ORDEN_COMPRA',
+        descripcion: "Emisión de nueva orden de compra {$code} por total de \${$totalAmount}. Entrega estimada: {$deliveryDate}",
+        severidad: 'INFO',
+        datosPrevios: null,
+        datosNuevos: [
+            'id' => $id,
+            'codigo' => $code,
+            'proveedor_id' => $supplierId,
+            'total_usd' => $totalAmount,
+            'fecha_entrega' => $deliveryDate,
+            'resumen_items' => $itemsSummary
+        ]
+    );
+
     http_response_code(200);
     echo json_encode([
         'success' => true,

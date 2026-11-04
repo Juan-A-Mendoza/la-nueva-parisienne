@@ -1,0 +1,605 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Bitácora de Auditoría y Seguridad - La Nueva Parisienne</title>
+  <meta name="description" content="Trazabilidad forense, registro de eventos críticos, modificaciones de inventario y auditoría de accesos.">
+  
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400&family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap" media="print" onload="this.media='all'">
+  
+  <link rel="stylesheet" href="../css/main.css">
+  <link rel="stylesheet" href="../css/modules/dashboard.css">
+  <link rel="stylesheet" href="../css/modules/bitacora.css">
+</head>
+<body>
+
+  <!-- LAYOUT PRINCIPAL DE LA BITÁCORA -->
+  <div class="bitacora-wrapper">
+
+    <!-- NAVBAR SUPERIOR -->
+    <header class="bitacora-navbar">
+      <div class="navbar-container">
+        <div class="bitacora-brand-group">
+          <div class="bitacora-brand-icon" aria-hidden="true"><i data-lucide="clipboard-list"></i></div>
+          <div>
+            <h1 class="brand-title">La Nueva Parisienne</h1>
+            <span class="sub-title">Bitácora &amp; Auditoría del Sistema</span>
+          </div>
+        </div>
+
+        <div class="dashboard-controls">
+          <div id="bcvRateBadge" class="bcv-rate-badge" title="Tasa Oficial del Banco Central de Venezuela">
+            <span><i data-lucide="coins" class="icon-xs"></i> BCV Oficial:</span> <strong id="bcvRateVal">Cargando...</strong>
+          </div>
+
+          <div class="cashier-badge">
+            <span id="userAvatar" class="cashier-avatar"><i data-lucide="shield-check"></i></span>
+            <div class="cashier-info">
+              <span id="userName" class="cashier-name">Auditor / Administrador</span>
+              <span id="userRole" class="shift-status">● Super Administrador</span>
+            </div>
+          </div>
+
+          <a href="dashboard.html" class="btn-navbar-config" title="Volver al Dashboard Gerencial">
+            <i data-lucide="layout-dashboard" class="icon-sm"></i> <span>Dashboard</span>
+          </a>
+
+          <button id="logoutBtn" class="btn-pos-logout" title="Cerrar sesión activa y volver al login">
+            <i data-lucide="log-out" class="icon-sm"></i> <span>Salir</span>
+          </button>
+        </div>
+      </div>
+    </header>
+
+    <!-- CONTENIDO PRINCIPAL -->
+    <main class="bitacora-content">
+
+      <!-- ENCABEZADO Y ACCIONES -->
+      <section class="bitacora-header-section" aria-label="Cabecera de Bitácora">
+        <div class="bitacora-title-group">
+          <h2>
+            <i data-lucide="shield-alert" style="color: var(--color-gold);"></i>
+            <span>Registro Central de Eventos y Auditoría</span>
+          </h2>
+          <p>Supervisión continua de operaciones críticas: autenticaciones, ajustes de inventario, anulación de ventas y cambios de configuración.</p>
+        </div>
+
+        <div class="bitacora-action-buttons">
+          <button id="btnVerifyIntegrity" type="button" class="btn-bitacora integrity-btn" title="Comprobar sellado criptográfico HMAC-SHA256 y cadena de custodia">
+            <i data-lucide="shield-check" class="icon-sm"></i> <span>Verificar Integridad</span>
+          </button>
+
+          <button id="btnExportPdf" type="button" class="btn-bitacora secondary" title="Imprimir o generar informe oficial en PDF">
+            <i data-lucide="printer" class="icon-sm"></i> <span>Exportar a PDF</span>
+          </button>
+
+          <button id="btnExportCsv" type="button" class="btn-bitacora secondary" title="Descargar reporte en formato Excel / CSV">
+            <i data-lucide="download" class="icon-sm"></i> <span>Exportar a Excel (CSV)</span>
+          </button>
+
+          <button id="btnMaintenance" type="button" class="btn-bitacora secondary" title="Mantenimiento de almacenamiento y archivado histórico">
+            <i data-lucide="archive" class="icon-sm"></i> <span>Mantenimiento</span>
+          </button>
+
+          <button id="btnRefreshLogs" type="button" class="btn-bitacora secondary" title="Recargar eventos">
+            <i data-lucide="refresh-cw" class="icon-sm"></i> <span>Actualizar</span>
+          </button>
+        </div>
+      </section>
+
+      <!-- INDICADORES KPI SUPERIORES (INTERACTIVOS) -->
+      <section class="bitacora-kpi-grid" aria-label="Métricas de Auditoría">
+        <div class="bitacora-kpi-card" data-kpi="all" role="button" tabindex="0" title="Ver todos los eventos registrados">
+          <div class="bitacora-kpi-icon general"><i data-lucide="database"></i></div>
+          <div class="bitacora-kpi-info">
+            <h3>Total Eventos Registrados</h3>
+            <div id="kpiTotalGeneral" class="bitacora-kpi-number">--</div>
+          </div>
+          <span class="kpi-click-hint"><i data-lucide="list-filter" class="icon-xs"></i> <span>Ver todo</span></span>
+        </div>
+
+        <div class="bitacora-kpi-card" data-kpi="danger" role="button" tabindex="0" title="Filtrar eventos críticos (Peligro)">
+          <div class="bitacora-kpi-icon danger"><i data-lucide="alert-octagon"></i></div>
+          <div class="bitacora-kpi-info">
+            <h3>Eventos Críticos (Peligro)</h3>
+            <div id="kpiTotalDanger" class="bitacora-kpi-number" style="color: var(--color-danger);">--</div>
+          </div>
+          <span class="kpi-click-hint danger"><i data-lucide="filter" class="icon-xs"></i> <span>Filtrar</span></span>
+        </div>
+
+        <div class="bitacora-kpi-card" data-kpi="warning" role="button" tabindex="0" title="Filtrar advertencias de negocio">
+          <div class="bitacora-kpi-icon warning"><i data-lucide="alert-triangle"></i></div>
+          <div class="bitacora-kpi-info">
+            <h3>Advertencias de Negocio</h3>
+            <div id="kpiTotalWarning" class="bitacora-kpi-number" style="color: #B57B36;">--</div>
+          </div>
+          <span class="kpi-click-hint warning"><i data-lucide="filter" class="icon-xs"></i> <span>Filtrar</span></span>
+        </div>
+
+        <div class="bitacora-kpi-card" data-kpi="today" role="button" tabindex="0" title="Filtrar actividad ocurrida hoy">
+          <div class="bitacora-kpi-icon today"><i data-lucide="calendar"></i></div>
+          <div class="bitacora-kpi-info">
+            <h3>Actividad de Hoy</h3>
+            <div id="kpiTotalHoy" class="bitacora-kpi-number" style="color: var(--color-success);">--</div>
+          </div>
+          <span class="kpi-click-hint today"><i data-lucide="calendar-check" class="icon-xs"></i> <span>Hoy</span></span>
+        </div>
+      </section>
+
+      <!-- TARJETA DE FILTROS AVANZADOS -->
+      <section class="bitacora-filter-card" aria-label="Filtros de Búsqueda">
+        <div class="filter-grid-row">
+          <!-- Búsqueda libre -->
+          <div class="filter-group">
+            <label for="inputSearch" class="filter-label">
+              <i data-lucide="search" class="icon-xs"></i> <span>Búsqueda Rápida</span>
+            </label>
+            <input 
+              type="text" 
+              id="inputSearch" 
+              class="filter-input" 
+              placeholder="Buscar por usuario, IP, descripción o acción..."
+            >
+          </div>
+
+          <!-- Módulo -->
+          <div class="filter-group">
+            <label for="selectModulo" class="filter-label">
+              <i data-lucide="layers" class="icon-xs"></i> <span>Módulo</span>
+            </label>
+            <select id="selectModulo" class="filter-select">
+              <option value="ALL">Todos los Módulos</option>
+              <option value="AUTH">Autenticación (AUTH)</option>
+              <option value="INVENTARIO">Inventario &amp; Stock</option>
+              <option value="POS">Punto de Venta (POS)</option>
+              <option value="PROVEEDORES">Proveedores &amp; Compras</option>
+              <option value="CONTABILIDAD">Contabilidad &amp; Asientos</option>
+              <option value="COCINA">Cocina &amp; Producción</option>
+              <option value="PERSONAL">Personal &amp; Permisos</option>
+              <option value="CONFIGURACION">Configuración General</option>
+            </select>
+          </div>
+
+          <!-- Severidad -->
+          <div class="filter-group">
+            <label for="selectSeveridad" class="filter-label">
+              <i data-lucide="alert-circle" class="icon-xs"></i> <span>Severidad</span>
+            </label>
+            <select id="selectSeveridad" class="filter-select">
+              <option value="ALL">Todas las Severidades</option>
+              <option value="INFO">Información (INFO)</option>
+              <option value="WARNING">Advertencia (WARNING)</option>
+              <option value="DANGER">Peligro / Crítico (DANGER)</option>
+            </select>
+          </div>
+
+          <!-- Fecha Inicio -->
+          <div class="filter-group">
+            <label for="inputFechaInicio" class="filter-label">
+              <i data-lucide="calendar" class="icon-xs"></i> <span>Desde</span>
+            </label>
+            <input type="date" id="inputFechaInicio" class="filter-input">
+          </div>
+
+          <!-- Fecha Fin -->
+          <div class="filter-group">
+            <label for="inputFechaFin" class="filter-label">
+              <i data-lucide="calendar" class="icon-xs"></i> <span>Hasta</span>
+            </label>
+            <input type="date" id="inputFechaFin" class="filter-input">
+          </div>
+
+          <!-- Botón Limpiar -->
+          <div class="filter-group">
+            <button id="btnResetFilters" type="button" class="btn-bitacora secondary" style="height: 42px;" title="Restablecer filtros">
+              <i data-lucide="x" class="icon-xs"></i> <span>Limpiar</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Filtros rápidos por período -->
+        <div class="filter-quick-chips">
+          <span class="quick-chip-label">Períodos rápidos:</span>
+          <button type="button" class="btn-chip" data-period="today">Hoy</button>
+          <button type="button" class="btn-chip" data-period="7days">Últimos 7 Días</button>
+          <button type="button" class="btn-chip" data-period="month">Este Mes</button>
+          <button type="button" class="btn-chip active" data-period="all">Histórico Completo</button>
+        </div>
+      </section>
+
+      <!-- TABLA DE REGISTROS DE AUDITORÍA -->
+      <section class="bitacora-table-card" aria-label="Tabla de Auditoría">
+        <div class="table-responsive-wrapper">
+          <table class="bitacora-table">
+            <thead>
+              <tr>
+                <th style="width: 140px;">Fecha y Hora</th>
+                <th style="width: 110px;">Severidad</th>
+                <th style="width: 130px;">Módulo</th>
+                <th style="width: 150px;">Acción</th>
+                <th style="width: 180px;">Usuario / Rol</th>
+                <th>Descripción del Evento</th>
+                <th style="width: 130px;">IP / Origen</th>
+                <th style="width: 110px; text-align: center;">Detalle</th>
+              </tr>
+            </thead>
+            <tbody id="bitacoraTableBody">
+              <!-- Rellenado dinámicamente con JS -->
+              <tr>
+                <td colspan="8" style="text-align: center; padding: 3rem;">
+                  <div style="display: flex; align-items: center; justify-content: center; gap: 0.75rem; color: var(--color-muted);">
+                    <i data-lucide="loader" class="icon-sm" style="animation: spin 1s linear infinite;"></i>
+                    <span>Cargando eventos de bitácora...</span>
+                  </div>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <!-- BARRA DE PAGINACIÓN -->
+        <div class="bitacora-pagination-bar">
+          <div id="paginationCounter" class="pagination-counter">
+            Mostrando 0 - 0 de 0 eventos
+          </div>
+
+          <div id="paginationControls" class="pagination-controls">
+            <!-- Botones dinámicos prev / next / pages -->
+          </div>
+        </div>
+      </section>
+
+    </main>
+
+  </div>
+
+  <!-- MODAL DE DETALLE Y COMPARACIÓN DE CAMBIOS (DIFF) -->
+  <div id="bitacoraDetailModal" class="bitacora-modal-overlay" role="dialog" aria-modal="true" aria-labelledby="modalDetailTitle">
+    <div class="bitacora-modal-card">
+      <div class="bitacora-modal-header">
+        <h3 id="modalDetailTitle">
+          <i data-lucide="git-commit"></i>
+          <span>Detalle de Auditoría &amp; Trazabilidad</span>
+        </h3>
+        <div class="modal-header-actions">
+          <button type="button" id="btnCopyDetail" class="btn-modal-action" title="Copiar resumen del evento al portapapeles">
+            <i data-lucide="copy" class="icon-xs"></i> <span>Copiar Resumen</span>
+          </button>
+          <button type="button" id="btnCloseModal" class="btn-modal-close" aria-label="Cerrar ventana">&times;</button>
+        </div>
+      </div>
+
+      <div class="bitacora-modal-body">
+        <!-- Metadatos de la operación -->
+        <div class="modal-meta-grid">
+          <div class="meta-field">
+            <label>ID Registro</label>
+            <span id="modalMetaId">#0</span>
+          </div>
+          <div class="meta-field">
+            <label>Fecha &amp; Hora Exacta</label>
+            <span id="modalMetaFecha">--</span>
+          </div>
+          <div class="meta-field">
+            <label>Módulo &amp; Acción</label>
+            <span id="modalMetaModuloAccion">--</span>
+          </div>
+          <div class="meta-field">
+            <label>Severidad</label>
+            <span id="modalMetaSeveridad">--</span>
+          </div>
+          <div class="meta-field">
+            <label>Usuario Responsable</label>
+            <span id="modalMetaUsuario">--</span>
+          </div>
+          <div class="meta-field">
+            <label>Dirección IP</label>
+            <span id="modalMetaIp">--</span>
+          </div>
+        </div>
+
+        <!-- Descripción Completa -->
+        <div class="modal-description-wrapper">
+          <label class="modal-section-label"><i data-lucide="file-text" class="icon-xs"></i> Descripción del Evento:</label>
+          <p id="modalMetaDescripcion" class="modal-description-box"></p>
+        </div>
+
+        <!-- SELLO CRIPTOGRÁFICO Y CADENA DE CUSTODIA (HMAC-SHA256) -->
+        <div class="modal-crypto-seal-wrapper">
+          <div class="crypto-seal-header">
+            <span class="crypto-seal-title">
+              <i data-lucide="shield-check" class="icon-xs"></i> Cadena de Custodia Criptográfica
+            </span>
+            <span class="crypto-seal-badge"><i data-lucide="lock" class="icon-xs"></i> HMAC-SHA256</span>
+          </div>
+          <div class="crypto-hash-row">
+            <span class="crypto-hash-label">Firma Digital (Hash):</span>
+            <code id="modalMetaHashFirma" class="crypto-hash-value">--</code>
+            <button type="button" class="btn-copy-mini" id="btnCopyHashFirma" title="Copiar Firma HMAC">
+              <i data-lucide="copy" class="icon-xs"></i> <span>Copiar</span>
+            </button>
+          </div>
+          <div class="crypto-hash-row secondary">
+            <span class="crypto-hash-label">Hash Bloque Previo:</span>
+            <code id="modalMetaHashPrevio" class="crypto-hash-value">--</code>
+          </div>
+        </div>
+
+        <!-- SECCIÓN DIFF CON TABS -->
+        <div class="modal-diff-section">
+          <div class="diff-tabs-bar">
+            <div class="diff-tabs-left">
+              <button type="button" id="tabBtnVisual" class="diff-tab-btn active">
+                <i data-lucide="git-compare" class="icon-xs"></i>
+                <span>Comparador Visual</span>
+                <span id="diffChangesBadge" class="diff-badge-count">0 cambios</span>
+              </button>
+              <button type="button" id="tabBtnJson" class="diff-tab-btn">
+                <i data-lucide="code" class="icon-xs"></i>
+                <span>Código JSON Crudo</span>
+              </button>
+            </div>
+            <div id="visualDiffFilterToggle" class="diff-filter-toggle">
+              <label class="toggle-checkbox-label">
+                <input type="checkbox" id="chkOnlyModified" checked>
+                <span>Solo campos modificados</span>
+              </label>
+            </div>
+          </div>
+
+          <!-- PANEL 1: COMPARADOR VISUAL INTELIGENTE (TABLA Y CARDS) -->
+          <div id="panelVisualDiff" class="diff-panel active">
+            <div id="visualDiffContent" class="visual-diff-content">
+              <!-- Renderizado dinámicamente con JS -->
+            </div>
+          </div>
+
+          <!-- PANEL 2: JSON CRUDO (ANTES VS DESPUÉS) -->
+          <div id="panelJsonDiff" class="diff-panel">
+            <div class="diff-comparison-container">
+              <!-- Antes -->
+              <div class="diff-box prior">
+                <div class="diff-box-header">
+                  <div class="diff-box-title">
+                    <i data-lucide="minus-circle" class="icon-xs"></i> <span>Datos Previos (Antes)</span>
+                  </div>
+                  <button type="button" class="btn-copy-mini" id="btnCopyPriorJson" title="Copiar JSON previo">
+                    <i data-lucide="copy" class="icon-xs"></i> <span>Copiar</span>
+                  </button>
+                </div>
+                <pre id="modalJsonPrevios">No hay datos previos registrados</pre>
+              </div>
+
+              <!-- Después -->
+              <div class="diff-box new">
+                <div class="diff-box-header">
+                  <div class="diff-box-title">
+                    <i data-lucide="plus-circle" class="icon-xs"></i> <span>Datos Nuevos (Después)</span>
+                  </div>
+                  <button type="button" class="btn-copy-mini" id="btnCopyNewJson" title="Copiar JSON nuevo">
+                    <i data-lucide="copy" class="icon-xs"></i> <span>Copiar</span>
+                  </button>
+                </div>
+                <pre id="modalJsonNuevos">No hay datos nuevos registrados</pre>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Dispositivo / Agente -->
+        <div class="modal-agent-wrapper">
+          <label class="modal-section-label"><i data-lucide="laptop" class="icon-xs"></i> Dispositivo / User-Agent:</label>
+          <small id="modalMetaUserAgent" class="modal-user-agent-box"></small>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL DE VERIFICACIÓN FORENSE DE INTEGRIDAD CRIPTOGRÁFICA -->
+  <div id="integrityModal" class="bitacora-modal-overlay" role="dialog" aria-modal="true" aria-labelledby="integrityModalTitle">
+    <div class="bitacora-modal-card integrity-card">
+      <div class="bitacora-modal-header">
+        <h3 id="integrityModalTitle">
+          <i data-lucide="shield-check" style="color: var(--color-gold);"></i>
+          <span>Auditoría Forense de Integridad Criptográfica</span>
+        </h3>
+        <button type="button" id="btnCloseIntegrityModal" class="btn-modal-close" aria-label="Cerrar">&times;</button>
+      </div>
+
+      <div class="bitacora-modal-body">
+        <!-- Banner de Estado de la Cadena -->
+        <div id="integrityHeroBanner" class="integrity-hero-banner status-loading">
+          <div id="integrityHeroIcon" class="integrity-hero-icon">
+            <i data-lucide="loader" class="icon-lg spin-icon"></i>
+          </div>
+          <div class="integrity-hero-info">
+            <h4 id="integrityHeroTitle">Ejecutando Verificación Matemática...</h4>
+            <p id="integrityHeroSubtitle">Analizando encadenamiento criptográfico HMAC-SHA256 en toda la base de datos.</p>
+          </div>
+        </div>
+
+        <!-- Métricas Forenses (4 Cards) -->
+        <div class="integrity-metrics-grid">
+          <div class="integrity-metric-card">
+            <div class="metric-label"><i data-lucide="database" class="icon-xs"></i> Registros Evaluados</div>
+            <div id="metricTotalVerified" class="metric-value">--</div>
+            <div class="metric-sub">100% de la bitácora</div>
+          </div>
+          <div class="integrity-metric-card">
+            <div class="metric-label"><i data-lucide="shield" class="icon-xs"></i> Algoritmo Forense</div>
+            <div class="metric-value code-font">HMAC-SHA256</div>
+            <div class="metric-sub">Merkle Chaining</div>
+          </div>
+          <div class="integrity-metric-card">
+            <div class="metric-label"><i data-lucide="timer" class="icon-xs"></i> Tiempo de Cómputo</div>
+            <div id="metricComputeTime" class="metric-value">-- ms</div>
+            <div class="metric-sub">Verificación en memoria</div>
+          </div>
+          <div class="integrity-metric-card">
+            <div class="metric-label"><i data-lucide="check-check" class="icon-xs"></i> Estado del Libro</div>
+            <div id="metricLedgerStatus" class="metric-value status-badge">--</div>
+            <div id="metricLedgerSub" class="metric-sub">Cadena sellada</div>
+          </div>
+        </div>
+
+        <!-- Sellado Criptográfico Actual -->
+        <div class="integrity-details-card">
+          <div class="detail-row">
+            <span class="detail-name"><i data-lucide="binary" class="icon-xs"></i> Hash Génesis (Origen):</span>
+            <code id="integrityGenesisHash" class="crypto-hash-value">--</code>
+          </div>
+          <div class="detail-row">
+            <span class="detail-name"><i data-lucide="key" class="icon-xs"></i> Último Sello Criptográfico:</span>
+            <code id="integrityLatestSeal" class="crypto-hash-value">--</code>
+          </div>
+          <div class="detail-row meta-row">
+            <span><i data-lucide="user" class="icon-xs"></i> Auditor: <strong id="integrityAuditorName">--</strong></span>
+            <span><i data-lucide="clock" class="icon-xs"></i> Fecha del Análisis: <strong id="integrityTimestamp">--</strong></span>
+          </div>
+        </div>
+
+        <!-- Contenedor de Anomalías / Manipulaciones (Oculto por defecto si todo está íntegro) -->
+        <div id="integrityAnomaliesSection" class="integrity-anomalies-section" style="display: none;">
+          <h5 class="anomalies-title">
+            <i data-lucide="alert-triangle" class="icon-sm"></i>
+            <span>Discrepancias Detectadas (<span id="anomaliesCount">0</span>)</span>
+          </h5>
+          <div id="integrityAnomaliesList" class="anomalies-list">
+            <!-- Rellenado dinámicamente si hay manipulación -->
+          </div>
+        </div>
+      </div>
+
+      <div class="bitacora-modal-footer">
+        <button type="button" id="btnReVerifyIntegrity" class="btn-bitacora secondary">
+          <i data-lucide="refresh-cw" class="icon-xs"></i> <span>Re-verificar Ahora</span>
+        </button>
+        <button type="button" id="btnCloseIntegrityModalBtn" class="btn-bitacora primary">
+          <span>Cerrar Verificador</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL DE MANTENIMIENTO Y ARCHIVADO HISTÓRICO -->
+  <div id="maintenanceModal" class="bitacora-modal-overlay" role="dialog" aria-modal="true" aria-labelledby="maintenanceModalTitle">
+    <div class="bitacora-modal-card maintenance-card">
+      <div class="bitacora-modal-header">
+        <h3 id="maintenanceModalTitle">
+          <i data-lucide="archive" style="color: var(--color-gold);"></i>
+          <span>Mantenimiento &amp; Archivado Histórico</span>
+        </h3>
+        <button type="button" id="btnCloseMaintenanceModal" class="btn-modal-close" aria-label="Cerrar">&times;</button>
+      </div>
+
+      <div class="bitacora-modal-body">
+        <!-- Diagnóstico de Almacenamiento -->
+        <div class="maintenance-diag-grid">
+          <div class="diag-card">
+            <span class="diag-label"><i data-lucide="database" class="icon-xs"></i> Registros Activos</span>
+            <strong id="diagTotalActivos" class="diag-value">--</strong>
+            <small id="diagRangoFechas" class="diag-sub">Calculando fechas...</small>
+          </div>
+          <div class="diag-card">
+            <span class="diag-label"><i data-lucide="hard-drive" class="icon-xs"></i> Espacio en Disco</span>
+            <strong id="diagTamanioMb" class="diag-value">-- MB</strong>
+            <small class="diag-sub">Índices y datos MySQL</small>
+          </div>
+          <div class="diag-card">
+            <span class="diag-label"><i data-lucide="archive" class="icon-xs"></i> Tabla Histórica</span>
+            <strong id="diagTotalHistorico" class="diag-value">--</strong>
+            <small class="diag-sub">bitacora_historico</small>
+          </div>
+        </div>
+
+        <!-- SECCIÓN 1: DESCARGA DE RESPALDO CRIPTOGRÁFICO JSON -->
+        <div class="maintenance-action-block">
+          <div class="action-block-header">
+            <div>
+              <h4><i data-lucide="download-cloud" class="icon-xs" style="color: var(--color-gold);"></i> 1. Exportar Respaldo Criptográfico Inmutable</h4>
+              <p>Descarga un archivo JSON sellado con firma digital HMAC-SHA256 y hash manifiesto para auditorías externas o copias frías de seguridad.</p>
+            </div>
+          </div>
+          <div class="action-block-controls">
+            <div class="input-group-mini">
+              <label for="selectBackupPeriod">Período de registros:</label>
+              <select id="selectBackupPeriod" class="form-select-sm">
+                <option value="0">Toda la bitácora activa (Completo)</option>
+                <option value="30">Con más de 30 días de antigüedad</option>
+                <option value="60">Con más de 60 días de antigüedad</option>
+                <option value="90" selected>Con más de 90 días de antigüedad</option>
+                <option value="180">Con más de 180 días de antigüedad</option>
+                <option value="365">Con más de 365 días de antigüedad</option>
+              </select>
+            </div>
+            <button type="button" id="btnDownloadBackupJson" class="btn-bitacora secondary">
+              <i data-lucide="file-json" class="icon-xs"></i> <span>Descargar Respaldo JSON</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- SECCIÓN 2: ARCHIVADO HISTÓRICO TRANSACCIONAL -->
+        <div class="maintenance-action-block highlight-danger">
+          <div class="action-block-header">
+            <div>
+              <h4><i data-lucide="archive-restore" class="icon-xs" style="color: var(--color-danger);"></i> 2. Trasladar Registros a Tabla Histórica (Purga Segura)</h4>
+              <p>Mueve transaccionalmente registros antiguos desde <code>bitacora</code> hacia <code>bitacora_historico</code>. Acelera consultas y mantiene intacta la cadena legal de trazabilidad.</p>
+            </div>
+          </div>
+
+          <div class="action-block-controls archive-controls">
+            <div class="input-group-mini">
+              <label for="selectArchiveDays">Antigüedad mínima a archivar:</label>
+              <select id="selectArchiveDays" class="form-select-sm">
+                <option value="90" selected>Más de 90 días (Recomendado)</option>
+                <option value="180">Más de 180 días (Semestral)</option>
+                <option value="365">Más de 365 días (Anual)</option>
+              </select>
+            </div>
+
+            <div class="archive-preview-badge">
+              <span id="archiveCandidatesCount">0 registros</span> serán trasladados
+            </div>
+          </div>
+
+          <div class="archive-auth-box">
+            <label for="inputArchivePassword"><i data-lucide="lock" class="icon-xs"></i> Contraseña / PIN de Administrador:</label>
+            <div class="auth-input-row">
+              <input type="password" id="inputArchivePassword" class="form-input-sm" placeholder="Ingrese su PIN o clave de acceso" autocomplete="current-password">
+              <button type="button" id="btnExecuteArchiving" class="btn-bitacora primary">
+                <i data-lucide="shield-alert" class="icon-xs"></i> <span>Ejecutar Archivado</span>
+              </button>
+            </div>
+            <small class="auth-hint"><i data-lucide="info" class="icon-xs"></i> Esta acción no destruye datos; traslada los eventos a la tabla histórica segura.</small>
+          </div>
+        </div>
+      </div>
+
+      <div class="bitacora-modal-footer">
+        <button type="button" id="btnRefreshMaintenanceStats" class="btn-bitacora secondary">
+          <i data-lucide="refresh-cw" class="icon-xs"></i> <span>Actualizar Diagnóstico</span>
+        </button>
+        <button type="button" id="btnCloseMaintenanceModalBtn" class="btn-bitacora primary">
+          <span>Cerrar</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- TOAST DE NOTIFICACIÓN DE ESTADO -->
+  <div id="toastNotification" class="toast-notification" role="status" aria-live="polite">
+    <span id="toastIcon"><i data-lucide="check-circle-2" class="icon-sm"></i></span>
+    <span id="toastText">Operación realizada con éxito.</span>
+  </div>
+
+  <!-- SCRIPTS MODULARES -->
+  <script src="../js/vendor/lucide.min.js"></script>
+  <script src="../js/core/icons.js"></script>
+  <script type="module" src="../js/core/modules-nav.js"></script>
+  <script type="module" src="../js/modules/bitacora.js?v=20261104-fix-v3"></script>
+
+</body>
+</html>

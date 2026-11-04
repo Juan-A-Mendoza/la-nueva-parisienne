@@ -419,6 +419,29 @@ CREATE TABLE IF NOT EXISTS `comandas_cocina` (
   INDEX `idx_comandas_fecha` (`fecha_hora`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
+-- ----------------------------------------------------------------------------
+-- 23. TABLA: bitacora (Registro Central de Auditoría y Eventos Críticos)
+-- ----------------------------------------------------------------------------
+CREATE TABLE IF NOT EXISTS `bitacora` (
+  `id` INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+  `user_id` VARCHAR(50) NULL,
+  `usuario` VARCHAR(100) NOT NULL,
+  `rol` VARCHAR(50) NOT NULL,
+  `modulo` VARCHAR(50) NOT NULL,
+  `accion` VARCHAR(50) NOT NULL,
+  `descripcion` TEXT NOT NULL,
+  `severidad` ENUM('INFO', 'WARNING', 'DANGER') NOT NULL DEFAULT 'INFO',
+  `datos_previos` LONGTEXT NULL,
+  `datos_nuevos` LONGTEXT NULL,
+  `ip_origen` VARCHAR(45) NOT NULL,
+  `user_agent` VARCHAR(255) NULL,
+  `creado_en` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  INDEX `idx_modulo_accion` (`modulo`, `accion`),
+  INDEX `idx_usuario` (`user_id`),
+  INDEX `idx_fecha` (`creado_en`),
+  INDEX `idx_severidad` (`severidad`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
 
 -- ============================================================================
 -- II. MIGRACIÓN / IDEMPOTENCIA DE ÍNDICES PARA TABLAS PREEXISTENTES

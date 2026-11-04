@@ -141,6 +141,26 @@ try {
 
     $pdo->commit();
 
+    log_bitacora(
+        modulo: 'COCINA',
+        accion: 'HORNEADO_COMPLETADO',
+        descripcion: "Descarga de horno {$ovenId}: {$netQty} und de '{$matchedProdName}' ingresadas a vitrina." . ($wasteQty > 0 ? " (Merma: {$wasteQty} und por {$wasteReason})" : ""),
+        severidad: ($wasteQty > 0 ? 'WARNING' : 'INFO'),
+        datosPrevios: [
+            'horno' => $ovenId,
+            'producto' => $matchedProdName,
+            'stock_anterior' => $prevStock
+        ],
+        datosNuevos: [
+            'total_horneado' => $totalBaked,
+            'merma' => $wasteQty,
+            'motivo_merma' => $wasteReason,
+            'ingreso_neto' => $netQty,
+            'stock_nuevo' => $newStock,
+            'panadero' => $bakerName
+        ]
+    );
+
     echo json_encode([
         'success' => true,
         'message' => "¡Lote horneado con éxito! Se ingresaron {$netQty} unidades de '{$matchedProdName}' a la vitrina del POS.",

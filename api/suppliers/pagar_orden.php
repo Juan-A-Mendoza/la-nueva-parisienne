@@ -151,6 +151,27 @@ try {
 
     $pdo->commit();
 
+    log_bitacora(
+        modulo: 'PROVEEDORES',
+        accion: 'PAGO_ORDEN_COMPRA',
+        descripcion: "Pago liquidado para orden {$order['codigo']} a {$proveedorNombre} por \${$montoTotal} ({$metodoLabel}, Ref: {$referencia}). Asiento contable: {$asientoCodigo}",
+        severidad: 'WARNING',
+        datosPrevios: [
+            'orden_id' => $actualOrderId,
+            'codigo_orden' => $order['codigo'],
+            'estado_anterior' => $order['estado'],
+            'proveedor' => $proveedorNombre,
+            'monto_total' => (float)$order['monto_total']
+        ],
+        datosNuevos: [
+            'estado_nuevo' => 'paid',
+            'monto_pagado' => $montoTotal,
+            'metodo_pago' => $metodoLabel,
+            'referencia' => $referencia,
+            'asiento_contable' => $asientoCodigo
+        ]
+    );
+
     http_response_code(200);
     echo json_encode([
         'success' => true,

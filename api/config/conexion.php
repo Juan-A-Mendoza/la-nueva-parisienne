@@ -7,6 +7,7 @@
 date_default_timezone_set('America/Caracas');
 
 require_once __DIR__ . '/security.php';
+require_once __DIR__ . '/audit.php';
 
 // SEGURIDAD: En producción, mover credenciales a variables de entorno o archivo .env
 // y crear un usuario MySQL dedicado con permisos mínimos (no usar root).

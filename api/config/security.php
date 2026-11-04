@@ -212,22 +212,25 @@ function api_error(Exception $e, string $context = 'Operación', int $httpCode =
  */
 function security_log_access(?string $userId, string $username, string $ip, string $tipoIntento, string $estado, ?string $detalles = null): void {
     try {
-        if (function_exists('getDbConnection')) {
-            $pdo = getDbConnection();
-            $device = substr($_SERVER['HTTP_USER_AGENT'] ?? 'Desconocido', 0, 250);
-            $stmt = $pdo->prepare("
-                INSERT INTO registro_accesos (usuario_id, username, ip_origen, dispositivo, tipo_intento, estado, detalles, fecha_hora)
-                VALUES (:uid, :uname, :ip, :device, :tipo, :estado, :detalles, NOW())
-            ");
-            $stmt->execute([
-                ':uid' => $userId,
-                ':uname' => substr($username, 0, 50),
-                ':ip' => substr($ip, 0, 45),
-                ':device' => $device,
-                ':tipo' => $tipoIntento,
-                ':estado' => $estado,
-                ':detalles' => substr($detalles ?? '', 0, 250)
-            ]);
+        if (function_exists('log_bitacora')) {
+            $isDanger = ($estado === 'fallido');
+            $accion = strtoupper("AUTH_{$tipoIntento}_" . ($isDanger ? 'FALLIDO' : 'EXITO'));
+            $severidad = $isDanger ? 'DANGER' : 'INFO';
+            $desc = $detalles ?: ("Intento de autenticación ({$tipoIntento}) - Estado: " . strtoupper($estado));
+            log_bitacora(
+                modulo: 'AUTH',
+                accion: $accion,
+                descripcion: $desc,
+                severidad: $severidad,
+                datosPrevios: null,
+                datosNuevos: [
+                    'tipo_intento' => $tipoIntento,
+                    'estado' => $estado,
+                    'detalles' => $detalles
+                ],
+                userId: $userId,
+                usuario: $username
+            );
         }
     } catch (Exception $e) {
         error_log("[LNP AUDIT LOG ERROR] " . $e->getMessage());

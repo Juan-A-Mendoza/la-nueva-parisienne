@@ -82,6 +82,23 @@ try {
 
     $pdo->commit();
 
+    log_bitacora(
+        modulo: 'PROVEEDORES',
+        accion: 'RECEPCION_MERCANCIA',
+        descripcion: "Recepción de mercancía para orden {$order['codigo']}. Se ingresaron " . count($itemsUpdated) . " materias primas al almacén.",
+        severidad: 'INFO',
+        datosPrevios: [
+            'orden_id' => $actualOrderId,
+            'codigo' => $order['codigo'],
+            'estado_anterior' => $order['estado']
+        ],
+        datosNuevos: [
+            'estado_nuevo' => 'received',
+            'monto_total' => (float)$order['monto_total'],
+            'items_recibidos' => $itemsUpdated
+        ]
+    );
+
     http_response_code(200);
     echo json_encode([
         'success' => true,

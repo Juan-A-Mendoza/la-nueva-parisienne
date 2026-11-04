@@ -58,6 +58,7 @@ export const SECONDARY_MODULES = [
   { id: 'inventory', name: 'Inventario & Stock', path: 'inventory.html', icon: 'package' },
   { id: 'suppliers', name: 'Proveedores & Compras', path: 'suppliers.html', icon: 'truck' },
   { id: 'staff', name: 'Personal & Permisos', path: 'staff.html', icon: 'users' },
+  { id: 'bitacora', name: 'Bitácora & Auditoría', path: 'bitacora.html', icon: 'clipboard-list' },
   { id: 'configuraciones', name: 'Configuraciones', path: 'configuraciones.html', icon: 'settings' },
   { id: 'settings', name: 'Ajustes del Sistema', path: 'settings.html', icon: 'sliders-horizontal' }
 ];
@@ -71,6 +72,7 @@ export const PAGE_PERMISSIONS = {
   'inventory.html': ['SUPERADMIN', 'ADMIN', 'BAKER', 'KITCHEN'],
   'suppliers.html': ['SUPERADMIN', 'ADMIN'],
   'staff.html': ['SUPERADMIN', 'ADMIN'],
+  'bitacora.html': ['SUPERADMIN', 'ADMIN'],
   'configuraciones.html': ['SUPERADMIN', 'ADMIN'],
   'settings.html': ['SUPERADMIN', 'ADMIN']
 };

@@ -81,6 +81,28 @@ try {
     $stmtUpdate = $pdo->prepare("UPDATE {$targetTable} SET stock_actual = :stock WHERE id = :id");
     $stmtUpdate->execute([':stock' => $newStock, ':id' => $item['id']]);
 
+    $diffQty = round($newStock - $currentStock, 2);
+    $severidad = ($newStock < $currentStock) ? 'WARNING' : 'INFO';
+    log_bitacora(
+        modulo: 'INVENTARIO',
+        accion: 'AJUSTE_STOCK',
+        descripcion: "Ajuste de inventario en '{$item['nombre']}' ({$targetTable}): stock {$currentStock} -> {$newStock} (" . ($diffQty >= 0 ? "+{$diffQty}" : "{$diffQty}") . "). Motivo: {$reason}",
+        severidad: $severidad,
+        datosPrevios: [
+            'id' => $item['id'],
+            'nombre' => $item['nombre'],
+            'tabla' => $targetTable,
+            'stock_anterior' => $currentStock
+        ],
+        datosNuevos: [
+            'stock_nuevo' => $newStock,
+            'diferencia' => $diffQty,
+            'tipo_ajuste' => $type,
+            'cantidad_operada' => $qty,
+            'motivo' => $reason
+        ]
+    );
+
     http_response_code(200);
     echo json_encode([
         'success' => true,

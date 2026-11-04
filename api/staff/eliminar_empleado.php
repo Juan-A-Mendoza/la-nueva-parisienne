@@ -90,6 +90,21 @@ try {
         $msg = "El usuario '{$user['nombre']}' fue eliminado exitosamente del sistema.";
     }
 
+    log_bitacora(
+        modulo: 'PERSONAL',
+        accion: $hasSales ? 'DESACTIVAR_EMPLEADO' : 'ELIMINAR_EMPLEADO',
+        descripcion: $msg,
+        severidad: 'DANGER',
+        datosPrevios: [
+            'id' => $user['id'],
+            'nombre' => $user['nombre'],
+            'username' => $user['username']
+        ],
+        datosNuevos: [
+            'tipo_eliminacion' => $hasSales ? 'DESACTIVACION_LOGICA' : 'ELIMINACION_FISICA'
+        ]
+    );
+
     http_response_code(200);
     echo json_encode([
         'success' => true,

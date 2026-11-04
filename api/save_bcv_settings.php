@@ -32,6 +32,11 @@ $manualRate = isset($input['manualRate']) && is_numeric($input['manualRate']) &&
 try {
     $pdo = getDbConnection();
     
+    $stmtOld = $pdo->query("SELECT clave, valor FROM configuraciones WHERE clave IN ('bcv_rate_mode', 'bcv_manual_rate')");
+    $oldConfig = $stmtOld->fetchAll(PDO::FETCH_KEY_PAIR) ?: [];
+    $oldMode = $oldConfig['bcv_rate_mode'] ?? 'auto';
+    $oldRate = $oldConfig['bcv_manual_rate'] ?? 'no establecida';
+
     $stmt = $pdo->prepare("
         INSERT INTO configuraciones (clave, valor, descripcion) 
         VALUES ('bcv_rate_mode', :mode, 'Modo de obtención de la tasa BCV: auto o manual')
@@ -45,6 +50,15 @@ try {
         ON DUPLICATE KEY UPDATE valor = :rate
     ");
     $stmt2->execute([':rate' => strval($manualRate)]);
+
+    log_bitacora(
+        modulo: 'CONFIGURACION',
+        accion: 'CAMBIO_TASABCV',
+        descripcion: "Actualización de tasa cambiaria: modo {$oldMode} -> {$mode}, valor {$oldRate} -> {$manualRate} Bs./$",
+        severidad: ($mode === 'manual' ? 'WARNING' : 'INFO'),
+        datosPrevios: ['modo' => $oldMode, 'tasa' => $oldRate],
+        datosNuevos: ['modo' => $mode, 'tasa' => $manualRate]
+    );
 
     echo json_encode([
         'success' => true,

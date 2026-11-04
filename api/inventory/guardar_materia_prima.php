@@ -46,12 +46,16 @@ try {
     // Si viene código, verificar si ya existe
     $existing = null;
     if (!empty($codigo)) {
-        $stmtChk = $pdo->prepare("SELECT id, codigo FROM materias_primas WHERE codigo = :code LIMIT 1");
+        $stmtChk = $pdo->prepare("SELECT id, codigo, nombre, unidad_medida, costo_unitario, stock_actual, stock_minimo FROM materias_primas WHERE codigo = :code LIMIT 1");
         $stmtChk->execute([':code' => $codigo]);
         $existing = $stmtChk->fetch(PDO::FETCH_ASSOC);
     }
 
     if ($existing) {
+        $oldCost = (float)$existing['costo_unitario'];
+        $oldStock = (float)$existing['stock_actual'];
+        $costChanged = (abs($oldCost - $costo) > 0.001);
+
         // Actualizar
         $stmtUpd = $pdo->prepare("
             UPDATE materias_primas 
@@ -72,6 +76,34 @@ try {
             ':icono' => $icono,
             ':id' => $existing['id']
         ]);
+
+        $accion = $costChanged ? 'CAMBIO_COSTO_INSUMO' : 'ACTUALIZAR_INSUMO';
+        $severidad = $costChanged ? 'WARNING' : 'INFO';
+        $desc = $costChanged 
+            ? "Modificación de costo unitario en materia prima '{$nombre}' ({$existing['codigo']}): \${$oldCost} -> \${$costo}"
+            : "Actualización de materia prima '{$nombre}' ({$existing['codigo']}) en almacén.";
+
+        log_bitacora(
+            modulo: 'INVENTARIO',
+            accion: $accion,
+            descripcion: $desc,
+            severidad: $severidad,
+            datosPrevios: [
+                'id' => $existing['id'],
+                'codigo' => $existing['codigo'],
+                'nombre' => $existing['nombre'],
+                'costo_anterior' => $oldCost,
+                'stock_anterior' => $oldStock,
+                'stock_minimo' => (float)$existing['stock_minimo']
+            ],
+            datosNuevos: [
+                'nombre' => $nombre,
+                'costo_nuevo' => $costo,
+                'stock_nuevo' => $stock,
+                'stock_minimo' => $minStock,
+                'unidad' => $unidad
+            ]
+        );
 
         echo json_encode([
             'success' => true,
@@ -112,6 +144,23 @@ try {
             ':costo' => $costo,
             ':icono' => $icono
         ]);
+
+        log_bitacora(
+            modulo: 'INVENTARIO',
+            accion: 'CREAR_INSUMO',
+            descripcion: "Nueva materia prima '{$nombre}' ({$codigo}) registrada con costo unitario \${$costo} y stock inicial {$stock} {$unidad}",
+            severidad: 'INFO',
+            datosPrevios: null,
+            datosNuevos: [
+                'id' => $newId,
+                'codigo' => $codigo,
+                'nombre' => $nombre,
+                'costo_nuevo' => $costo,
+                'stock_nuevo' => $stock,
+                'stock_minimo' => $minStock,
+                'unidad' => $unidad
+            ]
+        );
 
         echo json_encode([
             'success' => true,

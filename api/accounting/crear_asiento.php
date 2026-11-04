@@ -152,6 +152,24 @@ try {
 
     $pdo->commit();
 
+    log_bitacora(
+        modulo: 'CONTABILIDAD',
+        accion: 'ASIENTO_MANUAL',
+        descripcion: "Nuevo asiento contable {$codigo} ({$concept}) por total de \${$totalDebe}. Origen: {$sourceModule}",
+        severidad: 'INFO',
+        datosPrevios: null,
+        datosNuevos: [
+            'id' => $asientoId,
+            'codigo' => $codigo,
+            'concepto' => $concept,
+            'origen' => $sourceModule,
+            'total_debe' => $totalDebe,
+            'total_haber' => $totalHaber,
+            'partidas_count' => count($items),
+            'partidas' => $items
+        ]
+    );
+
     http_response_code(200);
     echo json_encode([
         'success' => true,
