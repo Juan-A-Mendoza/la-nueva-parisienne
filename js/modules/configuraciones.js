@@ -291,6 +291,17 @@ function inicializarEmpresaFiscalConfig() {
         telefono: empresaTelefono ? empresaTelefono.value.trim() : ''
       };
 
+      if (!payload.nombre) {
+        showStatus('El nombre de la empresa es obligatorio.', 'error');
+        empresaNombre?.focus();
+        return;
+      }
+      if (payload.rif && !/^[JVEGCjvegc]-?\d{8,9}-?\d?$/.test(payload.rif.replace(/\s+/g, ''))) {
+        showStatus('El formato del RIF es inválido (Ej: J-12345678-9).', 'error');
+        empresaRif?.focus();
+        return;
+      }
+
       try {
         localStorage.setItem('empresa_datos', JSON.stringify(payload));
       } catch (err) {}
@@ -308,10 +319,10 @@ function inicializarEmpresaFiscalConfig() {
           showStatus('¡Datos fiscales de la empresa guardados exitosamente en la base de datos MySQL!', 'success');
           showSuccessModal('¡Datos Fiscales Actualizados!', 'La información fiscal y de contacto de La Nueva Parisienne C.A. ha sido sincronizada y guardada en MySQL.');
         } else {
-          showStatus('¡Datos fiscales guardados!', 'success');
+          showStatus(res?.message || 'Error al guardar datos fiscales en MySQL.', 'error');
         }
       } catch (apiErr) {
-        showStatus('¡Datos fiscales guardados en la sesión actual!', 'success');
+        showStatus('Error de conexión al sincronizar con MySQL.', 'error');
       }
     });
   }

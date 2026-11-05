@@ -25,9 +25,22 @@ if (!$input) {
 }
 
 $mode = isset($input['mode']) && in_array(strtolower($input['mode']), ['auto', 'manual']) ? strtolower($input['mode']) : 'auto';
-$manualRate = isset($input['manualRate']) && is_numeric($input['manualRate']) && floatval($input['manualRate']) > 0 
-    ? floatval($input['manualRate']) 
-    : 761.21;
+
+if ($mode === 'manual') {
+    if (!isset($input['manualRate']) || !is_numeric($input['manualRate']) || floatval($input['manualRate']) <= 0) {
+        http_response_code(400);
+        echo json_encode([
+            'success' => false, 
+            'message' => 'Para el modo manual se requiere ingresar una tasa de cambio numérica y superior a cero.'
+        ], JSON_UNESCAPED_UNICODE);
+        exit();
+    }
+    $manualRate = floatval($input['manualRate']);
+} else {
+    $manualRate = isset($input['manualRate']) && is_numeric($input['manualRate']) && floatval($input['manualRate']) > 0 
+        ? floatval($input['manualRate']) 
+        : 761.21;
+}
 
 try {
     $pdo = getDbConnection();

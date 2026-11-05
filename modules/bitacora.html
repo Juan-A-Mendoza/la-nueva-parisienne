@@ -1,19 +1,24 @@
 <!DOCTYPE html>
 <html lang="es">
+
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Bitácora de Auditoría y Seguridad - La Nueva Parisienne</title>
-  <meta name="description" content="Trazabilidad forense, registro de eventos críticos, modificaciones de inventario y auditoría de accesos.">
-  
+  <meta name="description"
+    content="Trazabilidad forense, registro de eventos críticos, modificaciones de inventario y auditoría de accesos.">
+
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400&family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap" media="print" onload="this.media='all'">
-  
+  <link rel="stylesheet"
+    href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400&family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap"
+    media="print" onload="this.media='all'">
+
   <link rel="stylesheet" href="../css/main.css">
   <link rel="stylesheet" href="../css/modules/dashboard.css">
   <link rel="stylesheet" href="../css/modules/bitacora.css">
 </head>
+
 <body>
 
   <!-- LAYOUT PRINCIPAL DE LA BITÁCORA -->
@@ -32,7 +37,8 @@
 
         <div class="dashboard-controls">
           <div id="bcvRateBadge" class="bcv-rate-badge" title="Tasa Oficial del Banco Central de Venezuela">
-            <span><i data-lucide="coins" class="icon-xs"></i> BCV Oficial:</span> <strong id="bcvRateVal">Cargando...</strong>
+            <span><i data-lucide="coins" class="icon-xs"></i> BCV Oficial:</span> <strong
+              id="bcvRateVal">Cargando...</strong>
           </div>
 
           <div class="cashier-badge">
@@ -64,23 +70,28 @@
             <i data-lucide="shield-alert" style="color: var(--color-gold);"></i>
             <span>Registro Central de Eventos y Auditoría</span>
           </h2>
-          <p>Supervisión continua de operaciones críticas: autenticaciones, ajustes de inventario, anulación de ventas y cambios de configuración.</p>
+          <p>Supervisión continua de operaciones críticas: autenticaciones, ajustes de inventario, anulación de ventas y
+            cambios de configuración.</p>
         </div>
 
         <div class="bitacora-action-buttons">
-          <button id="btnVerifyIntegrity" type="button" class="btn-bitacora integrity-btn" title="Comprobar sellado criptográfico HMAC-SHA256 y cadena de custodia">
+          <button id="btnVerifyIntegrity" type="button" class="btn-bitacora integrity-btn"
+            title="Comprobar sellado criptográfico HMAC-SHA256 y cadena de custodia">
             <i data-lucide="shield-check" class="icon-sm"></i> <span>Verificar Integridad</span>
           </button>
 
-          <button id="btnExportPdf" type="button" class="btn-bitacora secondary" title="Imprimir o generar informe oficial en PDF">
+          <button id="btnExportPdf" type="button" class="btn-bitacora secondary"
+            title="Imprimir o generar informe oficial en PDF">
             <i data-lucide="printer" class="icon-sm"></i> <span>Exportar a PDF</span>
           </button>
 
-          <button id="btnExportCsv" type="button" class="btn-bitacora secondary" title="Descargar reporte en formato Excel / CSV">
+          <button id="btnExportCsv" type="button" class="btn-bitacora secondary"
+            title="Descargar reporte en formato Excel / CSV">
             <i data-lucide="download" class="icon-sm"></i> <span>Exportar a Excel (CSV)</span>
           </button>
 
-          <button id="btnMaintenance" type="button" class="btn-bitacora secondary" title="Mantenimiento de almacenamiento y archivado histórico">
+          <button id="btnMaintenance" type="button" class="btn-bitacora secondary"
+            title="Mantenimiento de almacenamiento y archivado histórico">
             <i data-lucide="archive" class="icon-sm"></i> <span>Mantenimiento</span>
           </button>
 
@@ -92,7 +103,8 @@
 
       <!-- INDICADORES KPI SUPERIORES (INTERACTIVOS) -->
       <section class="bitacora-kpi-grid" aria-label="Métricas de Auditoría">
-        <div class="bitacora-kpi-card" data-kpi="all" role="button" tabindex="0" title="Ver todos los eventos registrados">
+        <div class="bitacora-kpi-card" data-kpi="all" role="button" tabindex="0"
+          title="Ver todos los eventos registrados">
           <div class="bitacora-kpi-icon general"><i data-lucide="database"></i></div>
           <div class="bitacora-kpi-info">
             <h3>Total Eventos Registrados</h3>
@@ -101,7 +113,8 @@
           <span class="kpi-click-hint"><i data-lucide="list-filter" class="icon-xs"></i> <span>Ver todo</span></span>
         </div>
 
-        <div class="bitacora-kpi-card" data-kpi="danger" role="button" tabindex="0" title="Filtrar eventos críticos (Peligro)">
+        <div class="bitacora-kpi-card" data-kpi="danger" role="button" tabindex="0"
+          title="Filtrar eventos críticos (Peligro)">
           <div class="bitacora-kpi-icon danger"><i data-lucide="alert-octagon"></i></div>
           <div class="bitacora-kpi-info">
             <h3>Eventos Críticos (Peligro)</h3>
@@ -110,7 +123,8 @@
           <span class="kpi-click-hint danger"><i data-lucide="filter" class="icon-xs"></i> <span>Filtrar</span></span>
         </div>
 
-        <div class="bitacora-kpi-card" data-kpi="warning" role="button" tabindex="0" title="Filtrar advertencias de negocio">
+        <div class="bitacora-kpi-card" data-kpi="warning" role="button" tabindex="0"
+          title="Filtrar advertencias de negocio">
           <div class="bitacora-kpi-icon warning"><i data-lucide="alert-triangle"></i></div>
           <div class="bitacora-kpi-info">
             <h3>Advertencias de Negocio</h3>
@@ -119,13 +133,15 @@
           <span class="kpi-click-hint warning"><i data-lucide="filter" class="icon-xs"></i> <span>Filtrar</span></span>
         </div>
 
-        <div class="bitacora-kpi-card" data-kpi="today" role="button" tabindex="0" title="Filtrar actividad ocurrida hoy">
+        <div class="bitacora-kpi-card" data-kpi="today" role="button" tabindex="0"
+          title="Filtrar actividad ocurrida hoy">
           <div class="bitacora-kpi-icon today"><i data-lucide="calendar"></i></div>
           <div class="bitacora-kpi-info">
             <h3>Actividad de Hoy</h3>
             <div id="kpiTotalHoy" class="bitacora-kpi-number" style="color: var(--color-success);">--</div>
           </div>
-          <span class="kpi-click-hint today"><i data-lucide="calendar-check" class="icon-xs"></i> <span>Hoy</span></span>
+          <span class="kpi-click-hint today"><i data-lucide="calendar-check" class="icon-xs"></i>
+            <span>Hoy</span></span>
         </div>
       </section>
 
@@ -137,12 +153,8 @@
             <label for="inputSearch" class="filter-label">
               <i data-lucide="search" class="icon-xs"></i> <span>Búsqueda Rápida</span>
             </label>
-            <input 
-              type="text" 
-              id="inputSearch" 
-              class="filter-input" 
-              placeholder="Buscar por usuario, IP, descripción o acción..."
-            >
+            <input type="text" id="inputSearch" class="filter-input"
+              placeholder="Buscar por usuario, IP, descripción o acción...">
           </div>
 
           <!-- Módulo -->
@@ -181,7 +193,7 @@
             <label for="inputFechaInicio" class="filter-label">
               <i data-lucide="calendar" class="icon-xs"></i> <span>Desde</span>
             </label>
-            <input type="date" id="inputFechaInicio" class="filter-input">
+            <input type="date" id="inputFechaInicio" class="filter-input" title="Fecha inicial de auditoría">
           </div>
 
           <!-- Fecha Fin -->
@@ -189,12 +201,13 @@
             <label for="inputFechaFin" class="filter-label">
               <i data-lucide="calendar" class="icon-xs"></i> <span>Hasta</span>
             </label>
-            <input type="date" id="inputFechaFin" class="filter-input">
+            <input type="date" id="inputFechaFin" class="filter-input" title="Fecha final de auditoría">
           </div>
 
           <!-- Botón Limpiar -->
           <div class="filter-group">
-            <button id="btnResetFilters" type="button" class="btn-bitacora secondary" style="height: 42px;" title="Restablecer filtros">
+            <button id="btnResetFilters" type="button" class="btn-bitacora secondary" style="height: 42px;"
+              title="Restablecer filtros">
               <i data-lucide="x" class="icon-xs"></i> <span>Limpiar</span>
             </button>
           </div>
@@ -230,7 +243,8 @@
               <!-- Rellenado dinámicamente con JS -->
               <tr>
                 <td colspan="8" style="text-align: center; padding: 3rem;">
-                  <div style="display: flex; align-items: center; justify-content: center; gap: 0.75rem; color: var(--color-muted);">
+                  <div
+                    style="display: flex; align-items: center; justify-content: center; gap: 0.75rem; color: var(--color-muted);">
                     <i data-lucide="loader" class="icon-sm" style="animation: spin 1s linear infinite;"></i>
                     <span>Cargando eventos de bitácora...</span>
                   </div>
@@ -257,7 +271,8 @@
   </div>
 
   <!-- MODAL DE DETALLE Y COMPARACIÓN DE CAMBIOS (DIFF) -->
-  <div id="bitacoraDetailModal" class="bitacora-modal-overlay" role="dialog" aria-modal="true" aria-labelledby="modalDetailTitle">
+  <div id="bitacoraDetailModal" class="bitacora-modal-overlay" role="dialog" aria-modal="true"
+    aria-labelledby="modalDetailTitle">
     <div class="bitacora-modal-card">
       <div class="bitacora-modal-header">
         <h3 id="modalDetailTitle">
@@ -265,7 +280,8 @@
           <span>Detalle de Auditoría &amp; Trazabilidad</span>
         </h3>
         <div class="modal-header-actions">
-          <button type="button" id="btnCopyDetail" class="btn-modal-action" title="Copiar resumen del evento al portapapeles">
+          <button type="button" id="btnCopyDetail" class="btn-modal-action"
+            title="Copiar resumen del evento al portapapeles">
             <i data-lucide="copy" class="icon-xs"></i> <span>Copiar Resumen</span>
           </button>
           <button type="button" id="btnCloseModal" class="btn-modal-close" aria-label="Cerrar ventana">&times;</button>
@@ -303,7 +319,8 @@
 
         <!-- Descripción Completa -->
         <div class="modal-description-wrapper">
-          <label class="modal-section-label"><i data-lucide="file-text" class="icon-xs"></i> Descripción del Evento:</label>
+          <label class="modal-section-label"><i data-lucide="file-text" class="icon-xs"></i> Descripción del
+            Evento:</label>
           <p id="modalMetaDescripcion" class="modal-description-box"></p>
         </div>
 
@@ -391,7 +408,8 @@
 
         <!-- Dispositivo / Agente -->
         <div class="modal-agent-wrapper">
-          <label class="modal-section-label"><i data-lucide="laptop" class="icon-xs"></i> Dispositivo / User-Agent:</label>
+          <label class="modal-section-label"><i data-lucide="laptop" class="icon-xs"></i> Dispositivo /
+            User-Agent:</label>
           <small id="modalMetaUserAgent" class="modal-user-agent-box"></small>
         </div>
       </div>
@@ -399,7 +417,8 @@
   </div>
 
   <!-- MODAL DE VERIFICACIÓN FORENSE DE INTEGRIDAD CRIPTOGRÁFICA -->
-  <div id="integrityModal" class="bitacora-modal-overlay" role="dialog" aria-modal="true" aria-labelledby="integrityModalTitle">
+  <div id="integrityModal" class="bitacora-modal-overlay" role="dialog" aria-modal="true"
+    aria-labelledby="integrityModalTitle">
     <div class="bitacora-modal-card integrity-card">
       <div class="bitacora-modal-header">
         <h3 id="integrityModalTitle">
@@ -417,7 +436,8 @@
           </div>
           <div class="integrity-hero-info">
             <h4 id="integrityHeroTitle">Ejecutando Verificación Matemática...</h4>
-            <p id="integrityHeroSubtitle">Analizando encadenamiento criptográfico HMAC-SHA256 en toda la base de datos.</p>
+            <p id="integrityHeroSubtitle">Analizando encadenamiento criptográfico HMAC-SHA256 en toda la base de datos.
+            </p>
           </div>
         </div>
 
@@ -456,8 +476,10 @@
             <code id="integrityLatestSeal" class="crypto-hash-value">--</code>
           </div>
           <div class="detail-row meta-row">
-            <span><i data-lucide="user" class="icon-xs"></i> Auditor: <strong id="integrityAuditorName">--</strong></span>
-            <span><i data-lucide="clock" class="icon-xs"></i> Fecha del Análisis: <strong id="integrityTimestamp">--</strong></span>
+            <span><i data-lucide="user" class="icon-xs"></i> Auditor: <strong
+                id="integrityAuditorName">--</strong></span>
+            <span><i data-lucide="clock" class="icon-xs"></i> Fecha del Análisis: <strong
+                id="integrityTimestamp">--</strong></span>
           </div>
         </div>
 
@@ -485,7 +507,8 @@
   </div>
 
   <!-- MODAL DE MANTENIMIENTO Y ARCHIVADO HISTÓRICO -->
-  <div id="maintenanceModal" class="bitacora-modal-overlay" role="dialog" aria-modal="true" aria-labelledby="maintenanceModalTitle">
+  <div id="maintenanceModal" class="bitacora-modal-overlay" role="dialog" aria-modal="true"
+    aria-labelledby="maintenanceModalTitle">
     <div class="bitacora-modal-card maintenance-card">
       <div class="bitacora-modal-header">
         <h3 id="maintenanceModalTitle">
@@ -519,8 +542,10 @@
         <div class="maintenance-action-block">
           <div class="action-block-header">
             <div>
-              <h4><i data-lucide="download-cloud" class="icon-xs" style="color: var(--color-gold);"></i> 1. Exportar Respaldo Criptográfico Inmutable</h4>
-              <p>Descarga un archivo JSON sellado con firma digital HMAC-SHA256 y hash manifiesto para auditorías externas o copias frías de seguridad.</p>
+              <h4><i data-lucide="download-cloud" class="icon-xs" style="color: var(--color-gold);"></i> 1. Exportar
+                Respaldo Criptográfico Inmutable</h4>
+              <p>Descarga un archivo JSON sellado con firma digital HMAC-SHA256 y hash manifiesto para auditorías
+                externas o copias frías de seguridad.</p>
             </div>
           </div>
           <div class="action-block-controls">
@@ -545,8 +570,11 @@
         <div class="maintenance-action-block highlight-danger">
           <div class="action-block-header">
             <div>
-              <h4><i data-lucide="archive-restore" class="icon-xs" style="color: var(--color-danger);"></i> 2. Trasladar Registros a Tabla Histórica (Purga Segura)</h4>
-              <p>Mueve transaccionalmente registros antiguos desde <code>bitacora</code> hacia <code>bitacora_historico</code>. Acelera consultas y mantiene intacta la cadena legal de trazabilidad.</p>
+              <h4><i data-lucide="archive-restore" class="icon-xs" style="color: var(--color-danger);"></i> 2. Trasladar
+                Registros a Tabla Histórica (Purga Segura)</h4>
+              <p>Mueve transaccionalmente registros antiguos desde <code>bitacora</code> hacia
+                <code>bitacora_historico</code>. Acelera consultas y mantiene intacta la cadena legal de trazabilidad.
+              </p>
             </div>
           </div>
 
@@ -566,14 +594,17 @@
           </div>
 
           <div class="archive-auth-box">
-            <label for="inputArchivePassword"><i data-lucide="lock" class="icon-xs"></i> Contraseña / PIN de Administrador:</label>
+            <label for="inputArchivePassword"><i data-lucide="lock" class="icon-xs"></i> Contraseña / PIN de
+              Administrador:</label>
             <div class="auth-input-row">
-              <input type="password" id="inputArchivePassword" class="form-input-sm" placeholder="Ingrese su PIN o clave de acceso" autocomplete="current-password">
+              <input type="password" id="inputArchivePassword" class="form-input-sm"
+                placeholder="Ingrese su PIN o clave de acceso" autocomplete="current-password">
               <button type="button" id="btnExecuteArchiving" class="btn-bitacora primary">
                 <i data-lucide="shield-alert" class="icon-xs"></i> <span>Ejecutar Archivado</span>
               </button>
             </div>
-            <small class="auth-hint"><i data-lucide="info" class="icon-xs"></i> Esta acción no destruye datos; traslada los eventos a la tabla histórica segura.</small>
+            <small class="auth-hint"><i data-lucide="info" class="icon-xs"></i> Esta acción no destruye datos; traslada
+              los eventos a la tabla histórica segura.</small>
           </div>
         </div>
       </div>
@@ -602,4 +633,5 @@
   <script type="module" src="../js/modules/bitacora.js?v=20261104-fix-v3"></script>
 
 </body>
+
 </html>

@@ -8,6 +8,7 @@ import { SessionStore } from '../core/session-store.js';
 import { PLAN_CUENTAS, AUTOMATIC_ENTRIES, TRIAL_BALANCE_ACCOUNTS } from '../data/accounting-db.js';
 import { ensureStyleEngine, generateStyledExcelReport } from '../core/excel-styler.js';
 import { BcvRateStore } from '../core/bcv-rate-store.js';
+import { getLocalDateIso, isValidIsoDate } from '../core/date-validator.js';
 
 function initAccounting() {
   // 1. Verificación de Seguridad y Sesión
@@ -156,9 +157,12 @@ function initAccounting() {
   const btnExportBalanceExcel = document.getElementById('btnExportBalanceExcel');
   const btnCloseBalanceModal = document.getElementById('btnCloseBalanceModal');
 
-  // Inicializar fecha
+  // Inicializar fecha contable con límites de integridad
   if (entryDateInput) {
-    entryDateInput.value = new Date().toISOString().split('T')[0];
+    const todayIso = getLocalDateIso();
+    entryDateInput.min = '2024-01-01';
+    entryDateInput.max = todayIso;
+    entryDateInput.value = todayIso;
   }
 
   // =========================================================================
@@ -1170,12 +1174,30 @@ function initAccounting() {
     captureCurrentModalRows();
 
     const concept = (entryConceptInput?.value || '').trim();
-    const dateInputVal = entryDateInput?.value || new Date().toISOString().split('T')[0];
+    const dateInputVal = (entryDateInput?.value || '').trim() || getLocalDateIso();
     const type = entryTypeSelect?.value || 'Diario';
 
     if (!concept) {
       alert('Por favor ingrese la glosa o concepto explicativo del comprobante.');
       entryConceptInput?.focus();
+      return;
+    }
+
+    // Validación de fecha contable
+    const todayIso = getLocalDateIso();
+    if (!dateInputVal || !isValidIsoDate(dateInputVal)) {
+      alert('Por favor ingrese una fecha contable válida (AAAA-MM-DD).');
+      entryDateInput?.focus();
+      return;
+    }
+    if (dateInputVal > todayIso) {
+      alert('La fecha contable no puede ser posterior al día de hoy.');
+      entryDateInput?.focus();
+      return;
+    }
+    if (dateInputVal < '2024-01-01') {
+      alert('La fecha contable no puede ser anterior al inicio de operaciones (2024-01-01).');
+      entryDateInput?.focus();
       return;
     }
 
@@ -1246,7 +1268,9 @@ function initAccounting() {
           { accountCode: '5105', detail: '', debe: 0.00, haber: 0.00 },
           { accountCode: '1105', detail: '', debe: 0.00, haber: 0.00 }
         ];
-        if (entryDateInput) entryDateInput.value = new Date().toISOString().split('T')[0];
+        if (entryDateInput) {
+          entryDateInput.value = getLocalDateIso();
+        }
         closeManualEntryModal();
         alert(`Comprobante ${resJson.codigo} guardado exitosamente en el Libro Diario.`);
         return;
@@ -1261,8 +1285,13 @@ function initAccounting() {
 
   // Funciones de Apertura y Cierre de Modal
   function openManualEntryModal() {
-    if (entryDateInput && !entryDateInput.value) {
-      entryDateInput.value = new Date().toISOString().split('T')[0];
+    if (entryDateInput) {
+      const todayIso = getLocalDateIso();
+      entryDateInput.min = '2024-01-01';
+      entryDateInput.max = todayIso;
+      if (!entryDateInput.value) {
+        entryDateInput.value = todayIso;
+      }
     }
     renderModalRows();
     if (manualEntryModal) {

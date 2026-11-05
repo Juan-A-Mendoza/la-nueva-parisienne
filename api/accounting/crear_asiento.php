@@ -28,7 +28,25 @@ if (!$data) {
 
 $concept = trim($data['concept'] ?? 'Asiento Contable Manual');
 $fechaInput = trim($data['date'] ?? $data['fecha'] ?? '');
-$fechaHora = !empty($fechaInput) ? date('Y-m-d H:i:s', strtotime($fechaInput)) : date('Y-m-d H:i:s');
+
+// Validación de fecha contable (formato, existencia real, no futura, no anterior a 2024)
+$dateOnly = substr($fechaInput, 0, 10);
+if (empty($dateOnly)) {
+    $dateOnly = date('Y-m-d');
+}
+
+$dateCheck = validate_iso_date($dateOnly, '2024-01-01', date('Y-m-d'));
+if (!$dateCheck['valid']) {
+    http_response_code(400);
+    echo json_encode([
+        'success' => false,
+        'message' => "Fecha contable inválida: " . $dateCheck['error']
+    ], JSON_UNESCAPED_UNICODE);
+    exit();
+}
+
+$timePart = (strlen($fechaInput) >= 19) ? substr($fechaInput, 11, 8) : date('H:i:s');
+$fechaHora = "{$dateCheck['date']} {$timePart}";
 $sourceModule = trim($data['sourceModule'] ?? 'Manual Contador');
 $icon = trim($data['icon'] ?? 'file-edit');
 

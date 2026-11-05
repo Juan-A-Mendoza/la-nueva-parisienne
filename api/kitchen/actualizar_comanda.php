@@ -35,6 +35,16 @@ if (empty($comandaId) || empty($nuevoEstado)) {
     exit();
 }
 
+$allowedEstados = ['pending', 'in_progress', 'ready', 'delivered', 'archived', 'deleted', 'cancelled'];
+if (!in_array($nuevoEstado, $allowedEstados, true)) {
+    http_response_code(400);
+    echo json_encode([
+        'success' => false,
+        'message' => 'Estado de comanda no válido.'
+    ], JSON_UNESCAPED_UNICODE);
+    exit();
+}
+
 try {
     $pdo = getDbConnection();
 

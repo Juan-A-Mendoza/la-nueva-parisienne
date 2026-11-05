@@ -30,13 +30,46 @@ try {
     $limit = min(100, max(5, (int)($_GET['limit'] ?? 20)));
     $offset = ($page - 1) * $limit;
 
-    // 2. Parámetros de filtros
-    $modulo = trim($_GET['modulo'] ?? '');
-    $severidad = strtoupper(trim($_GET['severidad'] ?? ''));
-    $search = trim($_GET['search'] ?? '');
-    $fechaInicio = trim($_GET['fecha_inicio'] ?? '');
-    $fechaFin = trim($_GET['fecha_fin'] ?? '');
-    $usuario = trim($_GET['usuario'] ?? '');
+    // 2. Parámetros de filtros con validación robusta
+    $rawModulo = trim($_GET['modulo'] ?? 'ALL');
+    $modulo = validate_enum($rawModulo, [
+        'ALL', 'AUTH', 'INVENTARIO', 'POS', 'PROVEEDORES', 
+        'CONTABILIDAD', 'COCINA', 'PERSONAL', 'CONFIGURACION'
+    ], 'ALL');
+
+    $rawSeveridad = trim($_GET['severidad'] ?? 'ALL');
+    $severidad = validate_enum($rawSeveridad, ['ALL', 'INFO', 'WARNING', 'DANGER'], 'ALL');
+
+    $searchVal = validate_string($_GET['search'] ?? '', 100, true);
+    if (!$searchVal['valid']) {
+        api_validation_error($searchVal['error'], 400);
+    }
+    $search = $searchVal['value'];
+
+    $userVal = validate_string($_GET['usuario'] ?? '', 60, true);
+    if (!$userVal['valid']) {
+        api_validation_error($userVal['error'], 400);
+    }
+    $usuario = $userVal['value'];
+
+    // Validación estricta de fechas para auditoría (no futuras, min 2024, coherentes)
+    $dateValidation = validate_date_range(
+        $_GET['fecha_inicio'] ?? null,
+        $_GET['fecha_fin'] ?? null,
+        [
+            'allow_future'   => false,
+            'allow_empty'    => true,
+            'min_date'       => '2024-01-01',
+            'max_range_days' => 366
+        ]
+    );
+
+    if (!$dateValidation['valid']) {
+        api_validation_error($dateValidation['error'], 400);
+    }
+
+    $fechaInicio = $dateValidation['start'];
+    $fechaFin = $dateValidation['end'];
 
     $whereClauses = [];
     $params = [];

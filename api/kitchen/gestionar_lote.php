@@ -34,6 +34,24 @@ try {
         $temp = (int)($data['temperatura_recomendada'] ?? 200);
         $tiempoMin = (int)($data['tiempo_recomendado_min'] ?? 20);
         $icono = trim($data['icono'] ?? 'croissant');
+
+        if ($cantidad <= 0 || $cantidad > 5000) {
+            http_response_code(400);
+            echo json_encode(['success' => false, 'message' => 'La cantidad debe ser mayor a 0 y menor o igual a 5.000 unidades.'], JSON_UNESCAPED_UNICODE);
+            exit();
+        }
+
+        if ($temp < 50 || $temp > 320) {
+            http_response_code(400);
+            echo json_encode(['success' => false, 'message' => 'La temperatura debe estar comprendida entre 50°C y 320°C.'], JSON_UNESCAPED_UNICODE);
+            exit();
+        }
+
+        if ($tiempoMin < 1 || $tiempoMin > 240) {
+            http_response_code(400);
+            echo json_encode(['success' => false, 'message' => 'El tiempo recomendado debe estar entre 1 y 240 minutos.'], JSON_UNESCAPED_UNICODE);
+            exit();
+        }
         
         $batchId = 'batch_' . time() . '_' . rand(100, 999);
         $batchCode = 'Lote #' . date('d') . '-' . rand(10, 99);

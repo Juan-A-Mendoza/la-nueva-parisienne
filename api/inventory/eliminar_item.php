@@ -43,7 +43,23 @@ try {
 
     $stmtInfo = $pdo->prepare("SELECT id, codigo, nombre, stock_actual FROM {$targetTable} WHERE id = :id OR codigo = :id2 LIMIT 1");
     $stmtInfo->execute([':id' => $id, ':id2' => $id]);
-    $itemInfo = $stmtInfo->fetch() ?: ['id' => $id, 'codigo' => $id, 'nombre' => 'Desconocido', 'stock_actual' => 0];
+    $itemInfo = $stmtInfo->fetch();
+
+    if (!$itemInfo) {
+        http_response_code(404);
+        echo json_encode(['success' => false, 'message' => 'El ítem a eliminar no fue encontrado en la base de datos.'], JSON_UNESCAPED_UNICODE);
+        exit();
+    }
+
+    $currentStock = (float)($itemInfo['stock_actual'] ?? 0);
+    if ($currentStock > 0) {
+        http_response_code(400);
+        echo json_encode([
+            'success' => false,
+            'message' => "No se puede eliminar '{$itemInfo['nombre']}' porque aún posee existencias activas en inventario (Stock actual: {$currentStock}). Realice un ajuste de salida o merma a cero antes de eliminar."
+        ], JSON_UNESCAPED_UNICODE);
+        exit();
+    }
 
     $stmt = $pdo->prepare("DELETE FROM {$targetTable} WHERE id = :id OR codigo = :id2");
     $stmt->execute([':id' => $id, ':id2' => $id]);

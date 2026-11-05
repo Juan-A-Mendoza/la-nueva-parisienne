@@ -5,6 +5,7 @@
 
 import { SessionStore } from '../core/session-store.js';
 import { BcvRateStore } from '../core/bcv-rate-store.js';
+import { bindDateRangeValidation, getLocalDateIso, validateDateRange } from '../core/date-validator.js';
 
 // ESTADO GLOBAL DEL MÓDULO
 const state = {
@@ -34,6 +35,7 @@ const state = {
 
 let searchDebounceTimeout = null;
 let toastTimeout = null;
+let dateRangeController = null;
 
 if (document.readyState === 'loading') {
   document.addEventListener('DOMContentLoaded', () => {
@@ -151,7 +153,7 @@ function initBcvRate() {
           updateBcvDisplay(e.data.rate, e.data?.mode === 'manual');
         }
       };
-    } catch (err) {}
+    } catch (err) { }
   }
 }
 
@@ -186,19 +188,22 @@ function bindEvents() {
     loadLogs();
   });
 
-  // Rango de Fechas
-  const inputFechaInicio = document.getElementById('inputFechaInicio');
-  inputFechaInicio?.addEventListener('change', (e) => {
-    state.fechaInicio = e.target.value;
-    state.page = 1;
-    loadLogs();
-  });
-
-  const inputFechaFin = document.getElementById('inputFechaFin');
-  inputFechaFin?.addEventListener('change', (e) => {
-    state.fechaFin = e.target.value;
-    state.page = 1;
-    loadLogs();
+  // Rango de Fechas - Sincronización reactiva y prevención de fechas imposibles
+  dateRangeController = bindDateRangeValidation({
+    fromInput: '#inputFechaInicio',
+    toInput: '#inputFechaFin',
+    allowFuture: false,
+    minDate: '2024-01-01',
+    maxRangeDays: 366,
+    onChange: ({ from, to }) => {
+      state.fechaInicio = from;
+      state.fechaFin = to;
+      state.page = 1;
+      loadLogs();
+    },
+    onError: (errorMessage) => {
+      showToast(errorMessage, 'warning');
+    }
   });
 
   // Botón Limpiar Filtros
@@ -380,7 +385,7 @@ function bindEvents() {
   // Modal Detalle Cerrar
   const btnCloseModal = document.getElementById('btnCloseModal');
   const modalOverlay = document.getElementById('bitacoraDetailModal');
-  
+
   btnCloseModal?.addEventListener('click', closeModal);
   modalOverlay?.addEventListener('click', (e) => {
     if (e.target === modalOverlay) closeModal();
@@ -427,14 +432,19 @@ function resetFilters() {
   const inputSearch = document.getElementById('inputSearch');
   const selectModulo = document.getElementById('selectModulo');
   const selectSeveridad = document.getElementById('selectSeveridad');
-  const inputFechaInicio = document.getElementById('inputFechaInicio');
-  const inputFechaFin = document.getElementById('inputFechaFin');
 
   if (inputSearch) inputSearch.value = '';
   if (selectModulo) selectModulo.value = 'ALL';
   if (selectSeveridad) selectSeveridad.value = 'ALL';
-  if (inputFechaInicio) inputFechaInicio.value = '';
-  if (inputFechaFin) inputFechaFin.value = '';
+
+  if (dateRangeController) {
+    dateRangeController.reset();
+  } else {
+    const inputFechaInicio = document.getElementById('inputFechaInicio');
+    const inputFechaFin = document.getElementById('inputFechaFin');
+    if (inputFechaInicio) inputFechaInicio.value = '';
+    if (inputFechaFin) inputFechaFin.value = '';
+  }
 
   const chipButtons = document.querySelectorAll('.btn-chip');
   chipButtons.forEach(b => b.classList.toggle('active', b.dataset.period === 'all'));
@@ -447,31 +457,38 @@ function resetFilters() {
  */
 function applyQuickPeriod(period) {
   const today = new Date();
-  const formatDate = (d) => d.toISOString().split('T')[0];
-
-  const inputFechaInicio = document.getElementById('inputFechaInicio');
-  const inputFechaFin = document.getElementById('inputFechaFin');
+  let start = '';
+  let end = '';
 
   if (period === 'today') {
-    state.fechaInicio = formatDate(today);
-    state.fechaFin = formatDate(today);
+    start = getLocalDateIso(today);
+    end = getLocalDateIso(today);
   } else if (period === '7days') {
     const prior7 = new Date();
     prior7.setDate(today.getDate() - 7);
-    state.fechaInicio = formatDate(prior7);
-    state.fechaFin = formatDate(today);
+    start = getLocalDateIso(prior7);
+    end = getLocalDateIso(today);
   } else if (period === 'month') {
     const firstDay = new Date(today.getFullYear(), today.getMonth(), 1);
-    state.fechaInicio = formatDate(firstDay);
-    state.fechaFin = formatDate(today);
+    start = getLocalDateIso(firstDay);
+    end = getLocalDateIso(today);
   } else {
     // all
-    state.fechaInicio = '';
-    state.fechaFin = '';
+    start = '';
+    end = '';
   }
 
-  if (inputFechaInicio) inputFechaInicio.value = state.fechaInicio;
-  if (inputFechaFin) inputFechaFin.value = state.fechaFin;
+  state.fechaInicio = start;
+  state.fechaFin = end;
+
+  if (dateRangeController) {
+    dateRangeController.setRange(start, end, false);
+  } else {
+    const inputFechaInicio = document.getElementById('inputFechaInicio');
+    const inputFechaFin = document.getElementById('inputFechaFin');
+    if (inputFechaInicio) inputFechaInicio.value = start;
+    if (inputFechaFin) inputFechaFin.value = end;
+  }
 
   state.page = 1;
   loadLogs();
@@ -483,6 +500,30 @@ function applyQuickPeriod(period) {
 async function loadLogs() {
   const tableBody = document.getElementById('bitacoraTableBody');
   if (!tableBody) return;
+
+  // Pre-validar coherencia de fechas antes de consultar la API
+  const rangeCheck = validateDateRange(state.fechaInicio, state.fechaFin, {
+    allowFuture: false,
+    minDate: '2024-01-01',
+    maxRangeDays: 366
+  });
+
+  if (!rangeCheck.valid) {
+    showToast(rangeCheck.error, 'warning');
+    tableBody.innerHTML = `
+      <tr>
+        <td colspan="8" style="text-align: center; padding: 2.5rem; color: var(--color-warning, #B57B36);">
+          <div style="display: flex; flex-direction: column; align-items: center; gap: 0.5rem;">
+            <i data-lucide="alert-circle" class="icon-md"></i>
+            <strong>Filtro de fechas inválido</strong>
+            <span style="font-size: 0.85rem; color: var(--color-muted);">${rangeCheck.error}</span>
+          </div>
+        </td>
+      </tr>
+    `;
+    refreshIcons();
+    return;
+  }
 
   // Estado de carga visual
   tableBody.innerHTML = `
@@ -522,7 +563,14 @@ async function loadLogs() {
     });
 
     if (!response.ok) {
-      throw new Error(`HTTP ${response.status}: Error al recuperar datos de bitácora.`);
+      let errDetail = `HTTP ${response.status}: Error al recuperar datos de bitácora.`;
+      try {
+        const errJson = await response.json();
+        if (errJson.error || errJson.message) {
+          errDetail = errJson.error || errJson.message;
+        }
+      } catch (e) { }
+      throw new Error(errDetail);
     }
 
     const data = await response.json();
@@ -842,13 +890,13 @@ function openDetail(logId) {
   const preNuevos = document.getElementById('modalJsonNuevos');
 
   if (prePrevios) {
-    prePrevios.textContent = prevObj 
+    prePrevios.textContent = prevObj
       ? (typeof prevObj === 'object' ? JSON.stringify(prevObj, null, 2) : String(prevObj))
       : '(Sin datos previos registrados para esta acción)';
   }
 
   if (preNuevos) {
-    preNuevos.textContent = newObj 
+    preNuevos.textContent = newObj
       ? (typeof newObj === 'object' ? JSON.stringify(newObj, null, 2) : String(newObj))
       : '(Sin datos nuevos registrados para esta acción)';
   }
@@ -1319,8 +1367,12 @@ function applyKpiFilter(kpiType) {
     state.fechaInicio = '';
     state.fechaFin = '';
     if (selectSeveridad) selectSeveridad.value = 'ALL';
-    if (inputFechaInicio) inputFechaInicio.value = '';
-    if (inputFechaFin) inputFechaFin.value = '';
+    if (dateRangeController) {
+      dateRangeController.reset();
+    } else {
+      if (inputFechaInicio) inputFechaInicio.value = '';
+      if (inputFechaFin) inputFechaFin.value = '';
+    }
     chipButtons.forEach(b => b.classList.toggle('active', b.dataset.period === 'all'));
     showToast('Mostrando todos los eventos registrados.', 'info');
 
@@ -1330,8 +1382,12 @@ function applyKpiFilter(kpiType) {
     state.fechaInicio = '';
     state.fechaFin = '';
     if (selectSeveridad) selectSeveridad.value = 'DANGER';
-    if (inputFechaInicio) inputFechaInicio.value = '';
-    if (inputFechaFin) inputFechaFin.value = '';
+    if (dateRangeController) {
+      dateRangeController.reset();
+    } else {
+      if (inputFechaInicio) inputFechaInicio.value = '';
+      if (inputFechaFin) inputFechaFin.value = '';
+    }
     chipButtons.forEach(b => b.classList.toggle('active', b.dataset.period === 'all'));
     showToast('Filtrando por eventos críticos (Peligro).', 'error');
 
@@ -1341,8 +1397,12 @@ function applyKpiFilter(kpiType) {
     state.fechaInicio = '';
     state.fechaFin = '';
     if (selectSeveridad) selectSeveridad.value = 'WARNING';
-    if (inputFechaInicio) inputFechaInicio.value = '';
-    if (inputFechaFin) inputFechaFin.value = '';
+    if (dateRangeController) {
+      dateRangeController.reset();
+    } else {
+      if (inputFechaInicio) inputFechaInicio.value = '';
+      if (inputFechaFin) inputFechaFin.value = '';
+    }
     chipButtons.forEach(b => b.classList.toggle('active', b.dataset.period === 'all'));
     showToast('Filtrando por advertencias de negocio.', 'warning');
 
@@ -1351,11 +1411,15 @@ function applyKpiFilter(kpiType) {
     state.severidad = 'ALL';
     if (selectSeveridad) selectSeveridad.value = 'ALL';
 
-    const today = new Date().toISOString().split('T')[0];
+    const today = getLocalDateIso();
     state.fechaInicio = today;
     state.fechaFin = today;
-    if (inputFechaInicio) inputFechaInicio.value = today;
-    if (inputFechaFin) inputFechaFin.value = today;
+    if (dateRangeController) {
+      dateRangeController.setRange(today, today, false);
+    } else {
+      if (inputFechaInicio) inputFechaInicio.value = today;
+      if (inputFechaFin) inputFechaFin.value = today;
+    }
     chipButtons.forEach(b => b.classList.toggle('active', b.dataset.period === 'today'));
     showToast('Filtrando actividad ocurrida hoy.', 'success');
   }
@@ -1556,6 +1620,16 @@ function areValuesEqual(v1, v2) {
  * Exporta los resultados actuales a archivo CSV compatible con Excel
  */
 function exportToCsv() {
+  const dateCheck = validateDateRange(state.fechaInicio, state.fechaFin, {
+    allowFuture: false,
+    minDate: '2024-01-01',
+    maxRangeDays: 366
+  });
+  if (!dateCheck.valid) {
+    showToast(`No se puede exportar: ${dateCheck.error}`, 'warning');
+    return;
+  }
+
   const auth = getAuthContext();
   const queryParams = new URLSearchParams({
     modulo: state.modulo,
@@ -1575,6 +1649,16 @@ function exportToCsv() {
  * Exporta el reporte filtrado a formato PDF / Vista de Impresión oficial
  */
 function exportToPdf() {
+  const dateCheck = validateDateRange(state.fechaInicio, state.fechaFin, {
+    allowFuture: false,
+    minDate: '2024-01-01',
+    maxRangeDays: 366
+  });
+  if (!dateCheck.valid) {
+    showToast(`No se puede exportar: ${dateCheck.error}`, 'warning');
+    return;
+  }
+
   const auth = getAuthContext();
   const queryParams = new URLSearchParams({
     modulo: state.modulo,

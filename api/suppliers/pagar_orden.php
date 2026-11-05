@@ -18,6 +18,7 @@ if (($_SERVER['REQUEST_METHOD'] ?? '') === 'OPTIONS') {
 
 define('LNP_PUBLIC', true);
 require_once __DIR__ . '/../config/conexion.php';
+require_once __DIR__ . '/../config/validator.php';
 
 $rawInput = file_get_contents('php://input');
 $data = json_decode($rawInput, true);
@@ -31,6 +32,18 @@ $referencia = trim($data['referencia'] ?? $data['reference'] ?? $data['ref'] ?? 
 $fechaPago = trim($data['fechaPago'] ?? $data['fecha_pago'] ?? date('Y-m-d'));
 $notas = trim($data['notas'] ?? $data['observaciones'] ?? '');
 $montoCustom = isset($data['monto']) ? (float)$data['monto'] : (isset($data['amount']) ? (float)$data['amount'] : 0);
+
+// Validación de fecha de liquidación de pago (no futura, no anterior a 2024)
+$dateCheck = validate_iso_date($fechaPago, '2024-01-01', date('Y-m-d'));
+if (!$dateCheck['valid']) {
+    http_response_code(400);
+    echo json_encode([
+        'success' => false,
+        'message' => "Fecha de pago inválida: " . $dateCheck['error']
+    ], JSON_UNESCAPED_UNICODE);
+    exit();
+}
+$fechaPago = $dateCheck['date'];
 
 if (empty($orderId) && empty($orderCode)) {
     http_response_code(400);

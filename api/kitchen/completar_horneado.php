@@ -40,6 +40,42 @@ if (empty($ovenId) || $totalBaked <= 0) {
     exit();
 }
 
+if ($totalBaked > 5000) {
+    http_response_code(400);
+    echo json_encode([
+        'success' => false,
+        'message' => 'La cantidad horneada excede el límite máximo permitido (5.000 unidades).'
+    ], JSON_UNESCAPED_UNICODE);
+    exit();
+}
+
+if ($wasteQty < 0) {
+    http_response_code(400);
+    echo json_encode([
+        'success' => false,
+        'message' => 'La cantidad de merma no puede ser un valor negativo.'
+    ], JSON_UNESCAPED_UNICODE);
+    exit();
+}
+
+if ($wasteQty > $totalBaked) {
+    http_response_code(400);
+    echo json_encode([
+        'success' => false,
+        'message' => "La cantidad de merma ({$wasteQty}) no puede superar la cantidad total horneada ({$totalBaked})."
+    ], JSON_UNESCAPED_UNICODE);
+    exit();
+}
+
+if (mb_strlen($wasteReason) > 255) {
+    http_response_code(400);
+    echo json_encode([
+        'success' => false,
+        'message' => 'El motivo de la merma no puede exceder los 255 caracteres.'
+    ], JSON_UNESCAPED_UNICODE);
+    exit();
+}
+
 $netQty = max(0, $totalBaked - $wasteQty);
 
 try {

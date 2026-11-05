@@ -15,6 +15,7 @@ if (($_SERVER['REQUEST_METHOD'] ?? '') === 'OPTIONS') {
 }
 
 require_once __DIR__ . '/../config/conexion.php';
+require_once __DIR__ . '/../config/validator.php';
 
 $rawInput = file_get_contents('php://input');
 $data = json_decode($rawInput, true);
@@ -23,20 +24,34 @@ if (!$data) {
     $data = $_POST;
 }
 
-$nombre = trim($data['name'] ?? $data['nombre'] ?? '');
-$codigo = trim($data['code'] ?? $data['codigo'] ?? '');
+$rawNombre = trim($data['name'] ?? $data['nombre'] ?? '');
+$rawCodigo = trim($data['code'] ?? $data['codigo'] ?? '');
 $categoria = trim($data['category'] ?? $data['categoria'] ?? 'cat_panaderia');
 $unidad = trim($data['unit'] ?? $data['unidad'] ?? 'Und');
 $precio = (float)($data['price'] ?? $data['salePrice'] ?? $data['precio_unitario'] ?? 0);
-$stock = (float)($data['stock'] ?? $data['stock_actual'] ?? 0);
-$minStock = (float)($data['minStock'] ?? $data['stock_minimo'] ?? 10);
+$stock = max(0.0, (float)($data['stock'] ?? $data['stock_actual'] ?? 0));
+$minStock = max(0.0, (float)($data['minStock'] ?? $data['stock_minimo'] ?? 10));
 $icono = trim($data['icon'] ?? $data['icono'] ?? 'package');
 
-if (empty($nombre) || $precio <= 0) {
+$nombreCheck = validate_string($rawNombre, 100, false);
+if (!$nombreCheck['valid']) {
     http_response_code(400);
     echo json_encode([
         'success' => false,
-        'message' => 'Se requiere el nombre del producto y un precio de venta mayor a cero.'
+        'message' => 'Nombre de producto inválido: ' . $nombreCheck['error']
+    ], JSON_UNESCAPED_UNICODE);
+    exit();
+}
+$nombre = $nombreCheck['value'];
+
+$codigoCheck = validate_string($rawCodigo, 50, true);
+$codigo = $codigoCheck['value'];
+
+if ($precio <= 0) {
+    http_response_code(400);
+    echo json_encode([
+        'success' => false,
+        'message' => 'El precio de venta del producto debe ser estrictamente superior a cero.'
     ], JSON_UNESCAPED_UNICODE);
     exit();
 }

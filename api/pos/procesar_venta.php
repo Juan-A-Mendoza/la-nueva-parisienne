@@ -16,6 +16,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
 define('LNP_PUBLIC', true);
 
 require_once __DIR__ . '/../config/conexion.php';
+require_once __DIR__ . '/../config/validator.php';
 
 // Leer el cuerpo de la petición POST (JSON)
 $rawInput = file_get_contents('php://input');
@@ -55,8 +56,32 @@ $totalBs = isset($data['total_ves']) ? (float)$data['total_ves'] : round($baseIm
 $tax = isset($data['tax']) ? (float)$data['tax'] : ($bcvRate > 0 ? round($taxBs / $bcvRate, 2) : 0.0);
 $total = isset($data['total_usd']) ? (float)$data['total_usd'] : (isset($data['total']) ? (float)$data['total'] : ($bcvRate > 0 ? round($totalBs / $bcvRate, 2) : 0.0));
 
-$paymentMethod = isset($data['payment_method']) ? trim($data['payment_method']) : (isset($data['paymentMethod']) ? trim($data['paymentMethod']) : (isset($data['metodo_pago']) ? trim($data['metodo_pago']) : 'efectivo'));
+$rawPaymentMethod = isset($data['payment_method']) ? trim($data['payment_method']) : (isset($data['paymentMethod']) ? trim($data['paymentMethod']) : (isset($data['metodo_pago']) ? trim($data['metodo_pago']) : 'efectivo'));
+$paymentMethod = validate_enum(strtolower($rawPaymentMethod), ['efectivo', 'punto', 'pago_movil', 'dolares', 'zelle', 'tarjeta', 'transferencia', 'biopago', 'caja', 'multi_pago'], 'efectivo');
+
+if ($subtotal <= 0) {
+    http_response_code(400);
+    echo json_encode(['success' => false, 'message' => 'El subtotal del pedido debe ser un monto superior a cero.'], JSON_UNESCAPED_UNICODE);
+    exit();
+}
+
+if ($discount < 0 || $discount > $subtotal) {
+    http_response_code(400);
+    echo json_encode(['success' => false, 'message' => 'El descuento no puede ser negativo ni superior al subtotal.'], JSON_UNESCAPED_UNICODE);
+    exit();
+}
+
+if ($total < 0) {
+    http_response_code(400);
+    echo json_encode(['success' => false, 'message' => 'El total del pedido no puede ser un monto negativo.'], JSON_UNESCAPED_UNICODE);
+    exit();
+}
 $tenderAmount = isset($data['tender_amount']) ? (float)$data['tender_amount'] : (isset($data['monto_pagado']) ? (float)$data['monto_pagado'] : $total);
+if ($tenderAmount < 0) {
+    http_response_code(400);
+    echo json_encode(['success' => false, 'message' => 'El monto pagado no puede ser un valor negativo.'], JSON_UNESCAPED_UNICODE);
+    exit();
+}
 $changeDue = isset($data['change_due']) ? (float)$data['change_due'] : (isset($data['cambio']) ? (float)$data['cambio'] : 0.0);
 $orderType = isset($data['order_type']) ? trim($data['order_type']) : (isset($data['tipo_pedido']) ? trim($data['tipo_pedido']) : 'Para Llevar');
 
@@ -164,7 +189,12 @@ try {
             $pid = $productRow['id'];
         }
 
-        $qty = isset($item['quantity']) ? (int)$item['quantity'] : (isset($item['qty']) ? (int)$item['qty'] : 1);
+        $qty = isset($item['quantity']) ? (float)$item['quantity'] : (isset($item['qty']) ? (float)$item['qty'] : 1.0);
+        if ($qty <= 0 || $qty > 10000) {
+            http_response_code(400);
+            echo json_encode(['success' => false, 'message' => "Cantidad inválida ({$qty}) para '{$candidateName}'. Debe ser mayor a cero."], JSON_UNESCAPED_UNICODE);
+            exit();
+        }
         $price = isset($item['price']) ? (float)$item['price'] : (isset($item['unit_price']) ? (float)$item['unit_price'] : (isset($item['product']['price']) ? (float)$item['product']['price'] : 0.0));
         $subtotalLinea = isset($item['subtotal']) ? (float)$item['subtotal'] : ($qty * $price);
 
@@ -223,7 +253,12 @@ try {
     $comandaItems = [];
     foreach ($items as $item) {
         $candidateName = trim((string)($item['name'] ?? $item['productName'] ?? $item['product_name'] ?? ($item['product']['name'] ?? 'Producto')));
-        $qty = isset($item['quantity']) ? (int)$item['quantity'] : (isset($item['qty']) ? (int)$item['qty'] : 1);
+        $qty = isset($item['quantity']) ? (float)$item['quantity'] : (isset($item['qty']) ? (float)$item['qty'] : 1.0);
+        if ($qty <= 0 || $qty > 10000) {
+            http_response_code(400);
+            echo json_encode(['success' => false, 'message' => "Cantidad inválida ({$qty}) para '{$candidateName}'. Debe ser mayor a cero."], JSON_UNESCAPED_UNICODE);
+            exit();
+        }
         $comandaItems[] = "{$qty}x {$candidateName}";
     }
     if (!empty($comandaItems)) {

@@ -28,6 +28,7 @@ if (!$data) {
 try {
     define('LNP_PUBLIC', true);
     require_once __DIR__ . '/config/conexion.php';
+    require_once __DIR__ . '/config/validator.php';
     $pdo = getDbConnection();
 
     // Obtener valores actuales de la base de datos
@@ -42,18 +43,48 @@ try {
     $stmtConf = $pdo->query("SELECT clave, valor FROM configuraciones WHERE clave IN ('bcv_rate_mode', 'bcv_manual_rate')");
     $confPairs = $stmtConf->fetchAll(PDO::FETCH_KEY_PAIR);
 
-    $nombre = !empty($data['nombre']) ? trim($data['nombre']) : $currentEmpresa['nombre'];
-    $rif = !empty($data['rif']) ? trim($data['rif']) : $currentEmpresa['rif'];
-    $direccion = isset($data['direccion']) ? trim($data['direccion']) : $currentEmpresa['direccion'];
-    $telefono = isset($data['telefono']) ? trim($data['telefono']) : $currentEmpresa['telefono'];
-    $modoTasa = isset($data['modo_tasa']) ? strtolower(trim($data['modo_tasa'])) : ($confPairs['bcv_rate_mode'] ?? 'auto');
+    $rawNombre = !empty($data['nombre']) ? trim($data['nombre']) : $currentEmpresa['nombre'];
+    $nombreCheck = validate_string($rawNombre, 100, false);
+    if (!$nombreCheck['valid']) {
+        http_response_code(400);
+        echo json_encode(['success' => false, 'message' => 'Nombre de empresa inválido: ' . $nombreCheck['error']], JSON_UNESCAPED_UNICODE);
+        exit();
+    }
+    $nombre = $nombreCheck['value'];
+    
+    // Validación de RIF institucional
+    if (!empty($data['rif'])) {
+        $rifCheck = validate_rif($data['rif'], false);
+        if (!$rifCheck['valid']) {
+            http_response_code(400);
+            echo json_encode(['success' => false, 'message' => "RIF de empresa inválido: " . $rifCheck['error']], JSON_UNESCAPED_UNICODE);
+            exit();
+        }
+        $rif = $rifCheck['rif'];
+    } else {
+        $rif = $currentEmpresa['rif'];
+    }
+
+    $rawDir = isset($data['direccion']) ? trim($data['direccion']) : $currentEmpresa['direccion'];
+    $dirCheck = validate_string($rawDir, 250, true);
+    $direccion = $dirCheck['value'];
+
+    $rawTel = isset($data['telefono']) ? trim($data['telefono']) : $currentEmpresa['telefono'];
+    $telCheck = validate_string($rawTel, 35, true);
+    $telefono = $telCheck['value'];
+    
+    $rawModoTasa = isset($data['modo_tasa']) ? strtolower(trim($data['modo_tasa'])) : ($confPairs['bcv_rate_mode'] ?? 'auto');
+    $modoTasa = validate_enum($rawModoTasa, ['auto', 'manual'], 'auto');
     
     $tasaManual = isset($confPairs['bcv_manual_rate']) ? floatval(str_replace(',', '.', $confPairs['bcv_manual_rate'])) : 761.21;
     if (isset($data['tasa_manual'])) {
-        $rawManual = str_replace(',', '.', (string)$data['tasa_manual']);
-        if (is_numeric($rawManual) && floatval($rawManual) > 0) {
-            $tasaManual = floatval($rawManual);
+        $rawManual = floatval(str_replace(',', '.', (string)$data['tasa_manual']));
+        if ($rawManual <= 0) {
+            http_response_code(400);
+            echo json_encode(['success' => false, 'message' => 'La tasa de cambio manual debe ser estrictamente superior a cero.'], JSON_UNESCAPED_UNICODE);
+            exit();
         }
+        $tasaManual = $rawManual;
     }
 
     // 1. Guardar datos fiscales en configuracion_empresa (2FN)

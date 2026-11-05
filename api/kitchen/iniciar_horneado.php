@@ -40,6 +40,33 @@ if (empty($ovenId)) {
     exit();
 }
 
+if ($temp < 50 || $temp > 320) {
+    http_response_code(400);
+    echo json_encode([
+        'success' => false,
+        'message' => 'La temperatura de horneado debe estar comprendida entre 50°C y 320°C.'
+    ], JSON_UNESCAPED_UNICODE);
+    exit();
+}
+
+if ($timeMin < 1 || $timeMin > 240) {
+    http_response_code(400);
+    echo json_encode([
+        'success' => false,
+        'message' => 'El tiempo estimado de horneado debe estar entre 1 y 240 minutos.'
+    ], JSON_UNESCAPED_UNICODE);
+    exit();
+}
+
+if ($units <= 0 || $units > 5000) {
+    http_response_code(400);
+    echo json_encode([
+        'success' => false,
+        'message' => 'La cantidad de unidades en el lote debe ser mayor a 0 y menor o igual a 5.000 unidades.'
+    ], JSON_UNESCAPED_UNICODE);
+    exit();
+}
+
 try {
     $pdo = getDbConnection();
 

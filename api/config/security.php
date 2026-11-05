@@ -7,8 +7,9 @@
    - Sanitización de entradas y tokens criptográficos
    ========================================================================== */
 
-// 0. Cargar middleware de autenticación (sesiones PHP seguras)
+// 0. Cargar middleware de autenticación (sesiones PHP seguras) y validador central
 require_once __DIR__ . '/auth_middleware.php';
+require_once __DIR__ . '/validator.php';
 
 // 1. Cabeceras de seguridad HTTP y CORS restrictivo
 if (!headers_sent()) {

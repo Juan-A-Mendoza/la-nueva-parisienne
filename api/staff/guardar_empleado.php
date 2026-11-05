@@ -57,6 +57,17 @@ if (empty($name)) {
     exit();
 }
 
+// Validación de formato de correo electrónico si se proporciona
+if (!empty($email)) {
+    $emailCheck = validate_email($email, true);
+    if (!$emailCheck['valid']) {
+        http_response_code(400);
+        echo json_encode(['success' => false, 'message' => $emailCheck['error']], JSON_UNESCAPED_UNICODE);
+        exit();
+    }
+    $email = $emailCheck['email'];
+}
+
 try {
     $pdo = getDbConnection();
 

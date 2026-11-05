@@ -5,6 +5,7 @@
 
 import { SessionStore } from '../core/session-store.js';
 import { SUPPLIERS_DATABASE, PURCHASE_ORDERS_DATABASE } from '../data/suppliers-db.js';
+import { getLocalDateIso, isValidIsoDate, isValidRif, isValidEmail } from '../core/date-validator.js';
 
 document.addEventListener('DOMContentLoaded', () => {
   // 1. Verificación de Seguridad y Sesión Resiliente
@@ -341,6 +342,21 @@ document.addEventListener('DOMContentLoaded', () => {
   function openPOModal(supplierId = null) {
     populateSupplierSelect();
     if (supplierId) poSupplierSelect.value = supplierId;
+
+    // Configurar límites y fecha sugerida para entrega (hoy + 3 días)
+    const today = new Date();
+    const todayIso = getLocalDateIso(today);
+    const in3Days = new Date();
+    in3Days.setDate(today.getDate() + 3);
+
+    if (poDeliveryInput) {
+      poDeliveryInput.min = todayIso;
+      const maxFuture = new Date();
+      maxFuture.setDate(today.getDate() + 180);
+      poDeliveryInput.max = getLocalDateIso(maxFuture);
+      poDeliveryInput.value = getLocalDateIso(in3Days);
+    }
+
     poModal.classList.add('active');
   }
 
@@ -352,7 +368,25 @@ document.addEventListener('DOMContentLoaded', () => {
     const supId = poSupplierSelect.value;
     const items = poItemsInput.value || 'Insumos de panadería surtidos';
     const amount = parseFloat(poAmountInput.value) || 0;
-    const delivery = poDeliveryInput.value || '2026-08-15';
+    const delivery = (poDeliveryInput?.value || '').trim();
+
+    if (amount <= 0) {
+      alert('El monto total de la orden de compra debe ser superior a $0.00.');
+      poAmountInput?.focus();
+      return;
+    }
+
+    const todayIso = getLocalDateIso();
+    if (!delivery || !isValidIsoDate(delivery)) {
+      alert('Por favor especifique una fecha estimada de entrega válida.');
+      poDeliveryInput?.focus();
+      return;
+    }
+    if (delivery < todayIso) {
+      alert('La fecha estimada de entrega no puede ser anterior al día de hoy.');
+      poDeliveryInput?.focus();
+      return;
+    }
 
     try {
       const res = await fetch('../api/suppliers/crear_orden.php', {
@@ -404,23 +438,42 @@ document.addEventListener('DOMContentLoaded', () => {
 
   newSupplierForm?.addEventListener('submit', async (e) => {
     e.preventDefault();
-    const name = document.getElementById('supNameInput').value;
-    const category = document.getElementById('supCategoryInput').value;
-    const contact = document.getElementById('supContactInput').value;
-    const phone = document.getElementById('supPhoneInput').value;
-    const email = document.getElementById('supEmailInput').value;
+    const name = (document.getElementById('supNameInput')?.value || '').trim();
+    const rif = (document.getElementById('supRifInput')?.value || '').trim();
+    const category = (document.getElementById('supCategoryInput')?.value || '').trim();
+    const contact = (document.getElementById('supContactInput')?.value || '').trim();
+    const phone = (document.getElementById('supPhoneInput')?.value || '').trim();
+    const email = (document.getElementById('supEmailInput')?.value || '').trim();
+
+    if (!name) {
+      alert('Por favor ingrese el nombre o razón social del proveedor.');
+      document.getElementById('supNameInput')?.focus();
+      return;
+    }
+
+    if (!rif || !isValidRif(rif)) {
+      alert('Por favor ingrese un RIF fiscal válido (Ej: J-40123456-7, letras: J, V, E, G, C).');
+      document.getElementById('supRifInput')?.focus();
+      return;
+    }
+
+    if (!email || !isValidEmail(email)) {
+      alert('Por favor ingrese un correo electrónico válido (Ej: proveedor@empresa.com).');
+      document.getElementById('supEmailInput')?.focus();
+      return;
+    }
 
     try {
       const res = await fetch('../api/suppliers/guardar_proveedor.php', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name, category, contactPerson: contact, phone, email })
+        body: JSON.stringify({ name, rif, category, contactPerson: contact, phone, email })
       });
       const data = await res.json();
       if (data.success && data.supplier) {
         suppliers.push(data.supplier);
       } else {
-        throw new Error(data.message || 'Error');
+        throw new Error(data.message || 'Error al registrar proveedor');
       }
     } catch (err) {
       suppliers.push({
@@ -431,8 +484,8 @@ document.addEventListener('DOMContentLoaded', () => {
         contactPerson: contact,
         phone,
         email,
-        rif: 'J-50918273-0',
-        address: 'Caracas, Venezuela',
+        rif: rif.toUpperCase(),
+        address: 'Barquisimeto, Edo. Lara',
         paymentTerms: 'Crédito 30 días',
         rating: 5.0,
         icon: 'building-2'
@@ -454,7 +507,14 @@ document.addEventListener('DOMContentLoaded', () => {
     if (payModalSupplierName) payModalSupplierName.textContent = order.supplierName || 'Proveedor';
     if (payModalAmountDisplay) payModalAmountDisplay.textContent = `$${order.totalAmount.toFixed(2)}`;
     if (payAmountInput) payAmountInput.value = order.totalAmount.toFixed(2);
-    if (payDateInput) payDateInput.value = new Date().toISOString().split('T')[0];
+
+    const todayIso = getLocalDateIso();
+    if (payDateInput) {
+      payDateInput.min = '2024-01-01';
+      payDateInput.max = todayIso;
+      payDateInput.value = todayIso;
+    }
+
     if (payReferenceInput) payReferenceInput.value = '';
     if (payNotesInput) payNotesInput.value = '';
     if (payMethodSelect) payMethodSelect.value = 'banco';
@@ -501,9 +561,32 @@ document.addEventListener('DOMContentLoaded', () => {
     const method = payMethodSelect.value;
     const bank = payBankSelect.value;
     const ref = payReferenceInput.value.trim() || 'S/REF';
-    const date = payDateInput.value;
+    const date = (payDateInput?.value || '').trim();
     const amount = parseFloat(payAmountInput.value) || 0;
     const notes = payNotesInput.value.trim();
+
+    if (amount <= 0) {
+      alert('El monto pagado debe ser superior a $0.00.');
+      payAmountInput?.focus();
+      return;
+    }
+
+    const todayIso = getLocalDateIso();
+    if (!date || !isValidIsoDate(date)) {
+      alert('Por favor ingrese una fecha de pago válida (AAAA-MM-DD).');
+      payDateInput?.focus();
+      return;
+    }
+    if (date > todayIso) {
+      alert('La fecha de pago no puede ser una fecha futura.');
+      payDateInput?.focus();
+      return;
+    }
+    if (date < '2024-01-01') {
+      alert('La fecha de pago no puede ser anterior a la apertura del sistema (2024-01-01).');
+      payDateInput?.focus();
+      return;
+    }
 
     const order = purchaseOrders.find(o => o.id === oid || o.code === ocode);
 

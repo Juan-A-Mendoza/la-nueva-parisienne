@@ -40,6 +40,15 @@ if ($units <= 0 || empty($ingredients)) {
     exit();
 }
 
+if ($units > 5000) {
+    http_response_code(400);
+    echo json_encode([
+        'success' => false,
+        'message' => 'El lote a producir supera el límite máximo permitido (5.000 unidades).'
+    ], JSON_UNESCAPED_UNICODE);
+    exit();
+}
+
 try {
     $pdo = getDbConnection();
     $pdo->beginTransaction();
@@ -54,6 +63,7 @@ try {
         $qtyNeeded = (float)($ing['qtyNeeded'] ?? $ing['qty'] ?? 0);
 
         if (empty($matCode) && empty($name)) continue;
+        if ($qtyNeeded <= 0) continue;
 
         // Buscar en materias_primas
         $stmtMat = $pdo->prepare("SELECT id, codigo, nombre, stock_actual, unidad_medida FROM materias_primas WHERE codigo = :code OR nombre = :name LIMIT 1");

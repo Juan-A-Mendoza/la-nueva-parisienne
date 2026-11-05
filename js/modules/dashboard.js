@@ -7,6 +7,7 @@ import { SessionStore } from '../core/session-store.js';
 import { BcvRateStore } from '../core/bcv-rate-store.js';
 import { DASHBOARD_KPIS, SALES_TREND_DATA, SALES_TREND_PERIODS, RECENT_MOVEMENTS } from '../data/dashboard-db.js?v=20261005-chart-filters';
 import { ensureStyleEngine, generateStyledExcelReport } from '../core/excel-styler.js';
+import { bindDateRangeValidation, validateDateRange } from '../core/date-validator.js';
 
 // ==========================================================================
 // 1. MAESTRO DE DATOS Y ESTADO GLOBAL DEL MÓDULO
@@ -2653,7 +2654,19 @@ function inicializarReporteEjecutivo() {
   function initDefaultDates() {
     const today = new Date();
     const firstDay = new Date(today.getFullYear(), today.getMonth(), 1);
-    if (repDateFrom) repDateFrom.value = toIsoDate(firstDay);
+    const repDateController = bindDateRangeValidation({
+      fromInput: repDateFrom,
+      toInput: repDateTo,
+      allowFuture: false,
+      minDate: '2024-01-01',
+      maxRangeDays: 366,
+      onError: (err) => alert(err)
+    });
+    if (repDateController) {
+      repDateController.setRange(toIsoDate(firstDay), toIsoDate(today), false);
+    } else {
+      if (repDateFrom) repDateFrom.value = toIsoDate(firstDay);
+    }
     if (repDateTo) repDateTo.value = toIsoDate(today);
   }
 
@@ -3423,6 +3436,12 @@ function inicializarReporteEjecutivo() {
     actualizarVisibilidadFiltros(reportType);
     const fromDate = repDateFrom ? repDateFrom.value : '';
     const toDate = repDateTo ? repDateTo.value : '';
+
+    const dateCheck = validateDateRange(fromDate, toDate, { allowFuture: false, minDate: '2024-01-01', maxRangeDays: 366 });
+    if (!dateCheck.valid) {
+      alert(dateCheck.error);
+      return;
+    }
     const cashierVal = repCashierSelect ? repCashierSelect.value : '';
     const paymentVal = repPaymentSelect ? repPaymentSelect.value : '';
     const categoryVal = repCategorySelect ? repCategorySelect.value : '';

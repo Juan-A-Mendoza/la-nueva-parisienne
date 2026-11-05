@@ -15,6 +15,7 @@ if (($_SERVER['REQUEST_METHOD'] ?? '') === 'OPTIONS') {
 }
 
 require_once __DIR__ . '/../config/conexion.php';
+require_once __DIR__ . '/../config/validator.php';
 
 $rawInput = file_get_contents('php://input');
 $data = json_decode($rawInput, true);
@@ -25,17 +26,30 @@ if (!$data) {
 
 $productId = trim($data['productId'] ?? $data['id'] ?? '');
 $qty = (float)($data['quantity'] ?? $data['qty'] ?? 0);
-$type = strtolower(trim($data['type'] ?? 'add')); // 'add', 'subtract', 'set'
-$reason = trim($data['reason'] ?? 'Ajuste manual');
+$rawType = strtolower(trim($data['type'] ?? 'add'));
+$type = validate_enum($rawType, ['add', 'subtract', 'set'], 'add');
+$reasonRaw = trim($data['reason'] ?? 'Ajuste manual');
 
-if (empty($productId) || $qty <= 0) {
+if (empty($productId)) {
     http_response_code(400);
     echo json_encode([
         'success' => false,
-        'message' => 'Parámetros inválidos. Se requiere producto y cantidad mayor a cero.'
+        'message' => 'Parámetro inválido: Se requiere especificar el producto a ajustar.'
     ], JSON_UNESCAPED_UNICODE);
     exit();
 }
+
+if ($qty <= 0 || $qty > 1000000) {
+    http_response_code(400);
+    echo json_encode([
+        'success' => false,
+        'message' => 'La cantidad de ajuste debe ser un valor mayor a cero y no superar 1.000.000 de unidades.'
+    ], JSON_UNESCAPED_UNICODE);
+    exit();
+}
+
+$reasonCheck = validate_string($reasonRaw, 250, true);
+$reason = $reasonCheck['value'] ?: 'Ajuste manual de inventario';
 
 try {
     $pdo = getDbConnection();

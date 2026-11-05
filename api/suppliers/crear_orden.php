@@ -16,6 +16,7 @@ if (($_SERVER['REQUEST_METHOD'] ?? '') === 'OPTIONS') {
 
 define('LNP_PUBLIC', true);
 require_once __DIR__ . '/../config/conexion.php';
+require_once __DIR__ . '/../config/validator.php';
 
 $rawInput = file_get_contents('php://input');
 $data = json_decode($rawInput, true);
@@ -31,6 +32,20 @@ if (empty($supplierId) || $totalAmount <= 0) {
     echo json_encode(['success' => false, 'message' => 'Se requiere el proveedor y el monto total mayor a cero.'], JSON_UNESCAPED_UNICODE);
     exit();
 }
+
+// Validación de fecha estimada de entrega (mínimo hoy, máximo 180 días a futuro)
+$today = date('Y-m-d');
+$maxDelivery = date('Y-m-d', strtotime('+180 days'));
+$dateCheck = validate_iso_date($deliveryDate, $today, $maxDelivery);
+if (!$dateCheck['valid']) {
+    http_response_code(400);
+    echo json_encode([
+        'success' => false,
+        'message' => "Fecha de entrega inválida: " . $dateCheck['error']
+    ], JSON_UNESCAPED_UNICODE);
+    exit();
+}
+$deliveryDate = $dateCheck['date'];
 
 try {
     $pdo = getDbConnection();

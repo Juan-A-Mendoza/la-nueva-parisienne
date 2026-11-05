@@ -27,11 +27,25 @@ $detalles = trim($data['detalles_pedido'] ?? $data['detalles'] ?? '');
 $numeroFactura = trim($data['numero_factura'] ?? $data['numero'] ?? ('ENC-' . date('His')));
 $estado = trim($data['estado'] ?? 'pending');
 
+$allowedEstados = ['pending', 'in_progress', 'ready', 'delivered'];
+if (!in_array($estado, $allowedEstados, true)) {
+    $estado = 'pending';
+}
+
 if (empty($detalles)) {
     http_response_code(400);
     echo json_encode([
         'success' => false,
         'message' => 'Se requiere especificar los detalles del pedido o productos.'
+    ], JSON_UNESCAPED_UNICODE);
+    exit();
+}
+
+if (mb_strlen($detalles) > 1000) {
+    http_response_code(400);
+    echo json_encode([
+        'success' => false,
+        'message' => 'Los detalles del pedido no pueden exceder los 1.000 caracteres.'
     ], JSON_UNESCAPED_UNICODE);
     exit();
 }

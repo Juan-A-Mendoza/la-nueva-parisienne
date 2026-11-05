@@ -34,13 +34,47 @@ try {
         // Fallback a valores por defecto
     }
 
-    // 2. Parámetros de filtros aplicados
-    $modulo = trim($_GET['modulo'] ?? '');
-    $severidad = strtoupper(trim($_GET['severidad'] ?? ''));
-    $search = trim($_GET['search'] ?? '');
-    $fechaInicio = trim($_GET['fecha_inicio'] ?? '');
-    $fechaFin = trim($_GET['fecha_fin'] ?? '');
-    $usuario = trim($_GET['usuario'] ?? '');
+    // 2. Parámetros de filtros aplicados con validación robusta
+    $rawModulo = trim($_GET['modulo'] ?? 'ALL');
+    $modulo = validate_enum($rawModulo, [
+        'ALL', 'AUTH', 'INVENTARIO', 'POS', 'PROVEEDORES', 
+        'CONTABILIDAD', 'COCINA', 'PERSONAL', 'CONFIGURACION'
+    ], 'ALL');
+
+    $rawSeveridad = trim($_GET['severidad'] ?? 'ALL');
+    $severidad = validate_enum($rawSeveridad, ['ALL', 'INFO', 'WARNING', 'DANGER'], 'ALL');
+
+    $searchVal = validate_string($_GET['search'] ?? '', 100, true);
+    if (!$searchVal['valid']) {
+        http_response_code(400);
+        echo "<div style='font-family: sans-serif; padding: 2rem; color: #b91c1c; background: #fef2f2; border: 1px solid #fecaca; border-radius: 8px; margin: 2rem;'><h2>Parámetro de búsqueda inválido</h2><p>" . htmlspecialchars($searchVal['error']) . "</p></div>";
+        exit();
+    }
+    $search = $searchVal['value'];
+
+    $userVal = validate_string($_GET['usuario'] ?? '', 60, true);
+    $usuario = $userVal['valid'] ? $userVal['value'] : '';
+
+    // Validación de fechas
+    $dateValidation = validate_date_range(
+        $_GET['fecha_inicio'] ?? null,
+        $_GET['fecha_fin'] ?? null,
+        [
+            'allow_future'   => false,
+            'allow_empty'    => true,
+            'min_date'       => '2024-01-01',
+            'max_range_days' => 366
+        ]
+    );
+
+    if (!$dateValidation['valid']) {
+        http_response_code(400);
+        echo "<div style='font-family: sans-serif; padding: 2rem; color: #b91c1c; background: #fef2f2; border: 1px solid #fecaca; border-radius: 8px; margin: 2rem;'><h2>Parámetros de auditoría inválidos</h2><p>" . htmlspecialchars($dateValidation['error']) . "</p><button onclick='window.close()' style='padding: 0.5rem 1rem; cursor: pointer; border-radius: 4px; border: 1px solid #ccc;'>Cerrar</button></div>";
+        exit();
+    }
+
+    $fechaInicio = $dateValidation['start'];
+    $fechaFin = $dateValidation['end'];
     $autoPrint = isset($_GET['auto_print']) && $_GET['auto_print'] == '1';
 
     $whereClauses = [];

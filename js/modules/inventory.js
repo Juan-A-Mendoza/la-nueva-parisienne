@@ -325,6 +325,11 @@ document.addEventListener('DOMContentLoaded', () => {
     const type = adjustTypeSelect.value; // 'entrada' o 'salida'
     const apiType = type === 'entrada' ? 'add' : 'subtract';
 
+    if (qty <= 0) {
+      alert('La cantidad a ajustar debe ser un número mayor a cero.');
+      return;
+    }
+
     try {
       const res = await fetch('../api/inventory/adjust_stock.php', {
         method: 'POST',
@@ -377,6 +382,11 @@ document.addEventListener('DOMContentLoaded', () => {
     const itemId = mermaItemSelect.value;
     const qty = parseFloat(mermaQtyInput.value) || 0;
     const reason = mermaReasonSelect.value;
+
+    if (qty <= 0) {
+      alert('La cantidad de merma debe ser un número mayor a cero.');
+      return;
+    }
 
     try {
       const res = await fetch('../api/inventory/adjust_stock.php', {
@@ -463,7 +473,22 @@ document.addEventListener('DOMContentLoaded', () => {
     const stock = parseFloat(document.getElementById('nuevoItemStock')?.value || 0);
     const minStock = parseFloat(document.getElementById('nuevoItemMinStock')?.value || 10);
 
-    if (!nombre || precio <= 0) return;
+    if (!nombre) {
+      alert('Por favor ingrese el nombre del ítem.');
+      return;
+    }
+    if (isNaN(precio) || precio <= 0) {
+      alert(tipo === 'raw_material' ? 'El costo unitario debe ser mayor a 0.' : 'El precio de venta debe ser mayor a 0.');
+      return;
+    }
+    if (isNaN(stock) || stock < 0) {
+      alert('El stock inicial no puede ser negativo.');
+      return;
+    }
+    if (isNaN(minStock) || minStock < 0) {
+      alert('El stock mínimo no puede ser negativo.');
+      return;
+    }
 
     try {
       const endpoint = tipo === 'raw_material' 

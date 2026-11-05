@@ -16,6 +16,7 @@ if (($_SERVER['REQUEST_METHOD'] ?? '') === 'OPTIONS') {
 
 define('LNP_PUBLIC', true);
 require_once __DIR__ . '/../config/conexion.php';
+require_once __DIR__ . '/../config/validator.php';
 
 try {
     $pdo = getDbConnection();
@@ -33,15 +34,35 @@ try {
     $fechaDesde = trim($_GET['fecha_desde'] ?? $_GET['date_from'] ?? '');
     $fechaHasta = trim($_GET['fecha_hasta'] ?? $_GET['date_to'] ?? '');
 
+    // Validación de rango de fechas contable
+    $dateCheck = validate_date_range($fechaDesde, $fechaHasta, [
+        'allow_future'   => false,
+        'allow_empty'    => true,
+        'min_date'       => '2024-01-01',
+        'max_range_days' => 366
+    ]);
+
+    if (!$dateCheck['valid']) {
+        http_response_code(400);
+        echo json_encode([
+            'success' => false,
+            'message' => "Filtro de fechas contables inválido: " . $dateCheck['error']
+        ], JSON_UNESCAPED_UNICODE);
+        exit();
+    }
+
+    $cleanDesde = $dateCheck['start'];
+    $cleanHasta = $dateCheck['end'];
+
     $whereAsientos = [];
     $paramsAsientos = [];
-    if (!empty($fechaDesde)) {
+    if (!empty($cleanDesde)) {
         $whereAsientos[] = "fecha_hora >= :f_desde";
-        $paramsAsientos[':f_desde'] = $fechaDesde . ' 00:00:00';
+        $paramsAsientos[':f_desde'] = $cleanDesde . ' 00:00:00';
     }
-    if (!empty($fechaHasta)) {
+    if (!empty($cleanHasta)) {
         $whereAsientos[] = "fecha_hora <= :f_hasta";
-        $paramsAsientos[':f_hasta'] = $fechaHasta . ' 23:59:59';
+        $paramsAsientos[':f_hasta'] = $cleanHasta . ' 23:59:59';
     }
     $whereSqlAsientos = !empty($whereAsientos) ? " WHERE " . implode(" AND ", $whereAsientos) : "";
 

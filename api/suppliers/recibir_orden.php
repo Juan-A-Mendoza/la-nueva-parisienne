@@ -46,6 +46,13 @@ try {
         exit();
     }
 
+    if ($order['estado'] === 'received') {
+        $pdo->rollBack();
+        http_response_code(400);
+        echo json_encode(['success' => false, 'message' => 'Esta orden de compra ya fue recibida en almacén previamente.'], JSON_UNESCAPED_UNICODE);
+        exit();
+    }
+
     $actualOrderId = $order['id'];
 
     // 2. Actualizar estado de la orden a 'received'

@@ -16,6 +16,7 @@ if (($_SERVER['REQUEST_METHOD'] ?? '') === 'OPTIONS') {
 
 define('LNP_PUBLIC', true);
 require_once __DIR__ . '/../config/conexion.php';
+require_once __DIR__ . '/../config/validator.php';
 
 $rawInput = file_get_contents('php://input');
 $data = json_decode($rawInput, true);
@@ -25,8 +26,8 @@ $name = trim($data['name'] ?? $data['nombre'] ?? $data['nombre_empresa'] ?? '');
 $category = trim($data['category'] ?? $data['categoria'] ?? 'Insumos Generales');
 $contact = trim($data['contactPerson'] ?? $data['contact'] ?? $data['contacto'] ?? '');
 $phone = trim($data['phone'] ?? $data['telefono'] ?? '');
-$email = trim($data['email'] ?? $data['correo'] ?? '');
-$rif = trim($data['rif'] ?? ('J-' . rand(10000000, 99999999) . '-' . rand(0, 9)));
+$rawEmail = trim($data['email'] ?? $data['correo'] ?? '');
+$rawRif = trim($data['rif'] ?? '');
 $address = trim($data['address'] ?? $data['direccion'] ?? 'Barquisimeto, Edo. Lara');
 $paymentTerms = trim($data['paymentTerms'] ?? $data['condicion_pago'] ?? 'Crédito 30 días');
 $icon = trim($data['icon'] ?? $data['icono'] ?? 'building-2');
@@ -36,6 +37,24 @@ if (empty($name) || empty($phone)) {
     echo json_encode(['success' => false, 'message' => 'Se requiere el nombre y teléfono del proveedor.'], JSON_UNESCAPED_UNICODE);
     exit();
 }
+
+// Validación estricta de RIF fiscal venezolano
+$rifCheck = validate_rif($rawRif, false);
+if (!$rifCheck['valid']) {
+    http_response_code(400);
+    echo json_encode(['success' => false, 'message' => $rifCheck['error']], JSON_UNESCAPED_UNICODE);
+    exit();
+}
+$rif = $rifCheck['rif'];
+
+// Validación de formato de correo electrónico
+$emailCheck = validate_email($rawEmail, false);
+if (!$emailCheck['valid']) {
+    http_response_code(400);
+    echo json_encode(['success' => false, 'message' => $emailCheck['error']], JSON_UNESCAPED_UNICODE);
+    exit();
+}
+$email = $emailCheck['email'];
 
 try {
     $pdo = getDbConnection();
